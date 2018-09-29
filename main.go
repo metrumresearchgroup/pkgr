@@ -5,39 +5,21 @@ import (
 
 	"github.com/dpastoor/rpackagemanager/installer"
 	"github.com/dpastoor/rpackagemanager/packrat"
+	"github.com/spf13/afero"
 )
 
 func main() {
-	// 	pkg1 := []byte(`Package: PKPDmisc
-	// Source: CRAN
-	// Version: 2.1.1
-	// Hash: 5cb470e20683af7fe4ee68681194d3dd
-	// Requires: BH, Rcpp, data.table, dplyr, ggplot2, lazyeval, magrittr,
-	// 	purrr, readr, rlang, stringr, tibble
-	// `)
-	pkg1 := []byte(`Package: PKPDmisc
-Source: CRAN
-Version: 2.1.1
-Hash: 5cb470e20683af7fe4ee68681194d3dd
-Requires: BH, Rcpp
-`)
-	pkg2 := []byte(`Package: BH
-Source: CRAN
-Version: 1.66.0-1
-Hash: 4cc8883584b955ed01f38f68bc03af6d`)
-	pkg3 := []byte(`Package: Rcpp
-Source: CRAN
-Version: 1.66.0-1
-Hash: 4cc8883584b955ed01f38f68bc03af6d`)
 
-	var pkgs [][]byte
+	appFS := afero.NewOsFs()
+	lf, _ := afero.ReadFile(appFS, "installer/testdata/01-mixed_gh_cran_packrat.lock")
+	pm := packrat.ChunkLockfile(lf)
+
 	var workingGraph installer.Graph
-	pkgs = append(pkgs, pkg1, pkg2, pkg3)
-	for _, p := range pkgs {
-		pc := packrat.CollapseIndentation(p)
-		pv := packrat.ParsePackageReqs(pc)
-		fmt.Println(pv)
-		workingGraph = append(workingGraph, installer.NewNode(pv.Package, pv.Requires))
+	for _, p := range pm.CRANlike {
+		workingGraph = append(workingGraph, installer.NewNode(p.Package, p.Requires))
+	}
+	for _, p := range pm.Github {
+		workingGraph = append(workingGraph, installer.NewNode(p.Reqs.Package, p.Reqs.Requires))
 	}
 
 	installer.DisplayGraph(workingGraph)
