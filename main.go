@@ -49,7 +49,7 @@ Hash: 4cc8883584b955ed01f38f68bc03af6d`)
 		fmt.Println("The dependency graph resolved successfully")
 	}
 
-	for _, node := range resolved {
-		fmt.Println(node.Name)
+	for _, pkglayer := range resolved {
+		fmt.Println(pkglayer)
 	}
 }

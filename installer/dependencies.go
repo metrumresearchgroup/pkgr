@@ -38,7 +38,11 @@ func DisplayGraph(graph Graph) {
 }
 
 // ResolveGraph Resolves the dependency graph
-func ResolveGraph(graph Graph) (Graph, error) {
+// providing the layers of dependencies such that
+// each layer only dependends on elements from above
+// allowing confident parallel installation at any
+// layer
+func ResolveGraph(graph Graph) ([][]string, error) {
 	// A map containing the node names and the actual node object
 	nodeNames := make(map[string]*Node)
 
@@ -59,7 +63,7 @@ func ResolveGraph(graph Graph) (Graph, error) {
 	// Iteratively find and remove nodes from the graph which have no dependencies.
 	// If at some point there are still nodes in the graph and we cannot find
 	// nodes without dependencies, that means we have a circular dependency
-	var resolved Graph
+	var resolved [][]string
 	for len(nodeDependencies) != 0 {
 		// Get all nodes from the graph which have no dependencies
 		readySet := mapset.NewSet()
@@ -73,19 +77,16 @@ func ResolveGraph(graph Graph) (Graph, error) {
 
 		// If there aren't any ready nodes, then we have a cicular dependency
 		if readySet.Cardinality() == 0 {
-			var g Graph
-			for name := range nodeDependencies {
-				g = append(g, nodeNames[name])
-			}
-
-			return g, errors.New("Circular dependency found")
+			return resolved, errors.New("Circular dependency found")
 		}
 
 		// Remove the ready nodes and add them to the resolved graph
+		var dl []string
 		for name := range readySet.Iter() {
 			delete(nodeDependencies, name.(string))
-			resolved = append(resolved, nodeNames[name.(string)])
+			dl = append(dl, name.(string))
 		}
+		resolved = append(resolved, dl)
 
 		// Also make sure to remove the ready nodes from the
 		// remaining node dependencies as well
