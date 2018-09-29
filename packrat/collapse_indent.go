@@ -6,5 +6,7 @@ import "bytes"
 // as it makes it easier for simple parsers to understand
 // instead of having to look ahead/behind
 func CollapseIndentation(b []byte) []byte {
-	return bytes.Replace(b, []byte("\n\t"), []byte(""), -1)
+	b = bytes.Replace(b, []byte("\n\t"), []byte(""), -1)
+	b = bytes.Replace(b, []byte("\n    "), []byte(""), -1)
+	return b
 }
