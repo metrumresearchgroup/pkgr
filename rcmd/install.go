@@ -14,6 +14,7 @@ func NewDefaultInstallArgs() *InstallArgs {
 	return &InstallArgs{
 		WithKeepSource: true,
 		NoMultiarch:    true,
+		InstallTests:   true,
 		Build:          true,
 	}
 }

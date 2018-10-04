@@ -19,8 +19,12 @@ func TestInstallArgs(t *testing.T) {
 			[]string{},
 		},
 		{
+			&InstallArgs{Clean: true},
+			[]string{"--clean"},
+		},
+		{
 			NewDefaultInstallArgs(),
-			[]string{"--build", "--no-multiarch", "--with-keep.source"},
+			[]string{"--build", "--install-tests", "--no-multiarch", "--with-keep.source"},
 		},
 	}
 	for i, tt := range installArgsTests {
