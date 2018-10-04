@@ -20,7 +20,7 @@ func NewDefaultInstallArgs() *InstallArgs {
 // CliArgs converts the InstallArgs struct to the proper cli args
 // including only returning the relevant args
 func (i *InstallArgs) CliArgs() []string {
-	var args []string
+	args := []string{}
 	is := structs.New(i)
 	nms := structs.Names(i)
 	for _, n := range nms {
