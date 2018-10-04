@@ -9,23 +9,7 @@ import (
 	"github.com/thoas/go-funk"
 )
 
-// type InstallArgs struct {
-// 	Clean          bool `rcmd:"clean"`
-// 	Preclean       bool `rcmd:"preclean"`
-// 	Debug          bool `rcmd:"debug"`
-// 	NoConfigure    bool `rcmd:"no-configure"`
-// 	Example        bool `rcmd:"example"`
-// 	Fake           bool `rcmd:"fake"`
-// 	Build          bool `rcmd:"build"`
-// 	InstallTests   bool `rcmd:"install-tests"`
-// 	NoMultiarch    bool `rcmd:"no-multiarch"`
-// 	WithKeepSource bool `rcmd:"with-keep.source"`
-// 	ByteCompile    bool `rcmd:"byte-compile"`
-// 	NoTestLoad     bool `rcmd:"no-test-load"`
-// 	NoCleanOnError bool `rcmd:"no-clean-on-error"`
-// 	//set
-// 	Library string `rcmd:"library=%s,fmt"`
-// }
+// NewDefaultInstallArgs provides a set of sane default installation args
 func NewDefaultInstallArgs() *InstallArgs {
 	return &InstallArgs{
 		WithKeepSource: true,
@@ -33,6 +17,8 @@ func NewDefaultInstallArgs() *InstallArgs {
 	}
 }
 
+// CliArgs converts the InstallArgs struct to the proper cli args
+// including only returning the relevant args
 func (i *InstallArgs) CliArgs() []string {
 	var args []string
 	is := structs.New(i)
