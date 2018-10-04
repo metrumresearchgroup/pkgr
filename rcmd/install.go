@@ -26,14 +26,14 @@ import (
 // 	//set
 // 	Library string `rcmd:"library=%s,fmt"`
 // }
-func NewDefaultInstallArgs() InstallArgs {
-	return InstallArgs{
+func NewDefaultInstallArgs() *InstallArgs {
+	return &InstallArgs{
 		WithKeepSource: true,
 		NoMultiarch:    true,
 	}
 }
 
-func (i InstallArgs) CliArgs() []string {
+func (i *InstallArgs) CliArgs() []string {
 	var args []string
 	is := structs.New(i)
 	nms := structs.Names(i)
@@ -41,15 +41,13 @@ func (i InstallArgs) CliArgs() []string {
 		fld := is.Field(n)
 		if !fld.IsZero() {
 			// ... and start using structtag by parsing the tag
-			tag, _ := reflect.TypeOf(i).FieldByName(fld.Name())
+			tag, _ := reflect.TypeOf(i).Elem().FieldByName(fld.Name())
 			// ... and start using structtag by parsing the tag
 			tags, err := structtag.Parse(string(tag.Tag))
 			if err != nil {
 				panic(err)
 			}
 			rcmd, err := tags.Get("rcmd")
-			fmt.Println(rcmd.Name)
-			fmt.Println(rcmd.Options)
 			if fld.Kind() == reflect.String && funk.Contains(rcmd.Options, "fmt") {
 				// format the tag name by injecting any value into the tag name
 				// for example lib=%s and struct value is some/path -> lib=some/path
