@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/dpastoor/rpackagemanager/installer"
+	"github.com/dpastoor/rpackagemanager/gpsr"
 	"github.com/dpastoor/rpackagemanager/packrat"
 	"github.com/spf13/afero"
 )
@@ -11,20 +11,20 @@ import (
 func main() {
 
 	appFS := afero.NewOsFs()
-	lf, _ := afero.ReadFile(appFS, "installer/testdata/01-mixed_gh_cran_packrat.lock")
+	lf, _ := afero.ReadFile(appFS, "gpsr/testdata/01-mixed_gh_cran_packrat.lock")
 	pm := packrat.ChunkLockfile(lf)
 
-	var workingGraph installer.Graph
+	var workingGraph gpsr.Graph
 	for _, p := range pm.CRANlike {
-		workingGraph = append(workingGraph, installer.NewNode(p.Package, p.Requires))
+		workingGraph = append(workingGraph, gpsr.NewNode(p.Package, p.Requires))
 	}
 	for _, p := range pm.Github {
-		workingGraph = append(workingGraph, installer.NewNode(p.Reqs.Package, p.Reqs.Requires))
+		workingGraph = append(workingGraph, gpsr.NewNode(p.Reqs.Package, p.Reqs.Requires))
 	}
 
-	installer.DisplayGraph(workingGraph)
+	gpsr.DisplayGraph(workingGraph)
 
-	resolved, err := installer.ResolveGraph(workingGraph)
+	resolved, err := gpsr.ResolveGraph(workingGraph)
 	if err != nil {
 		fmt.Printf("Failed to resolve dependency graph: %s\n", err)
 	} else {
