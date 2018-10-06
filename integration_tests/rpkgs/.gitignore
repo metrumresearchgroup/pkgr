@@ -1,0 +1,4 @@
+# ignore built tarballs in this folder
+# as they should be in the src folder
+*.tgz
+*.tar.gz

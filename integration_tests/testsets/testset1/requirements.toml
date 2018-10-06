@@ -1,0 +1,5 @@
+src = "../src"
+tarballs = [
+   "test1_0.0.1.tar.gz",
+   "test2_0.0.1.tar.gz",
+]
