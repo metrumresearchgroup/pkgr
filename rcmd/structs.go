@@ -2,9 +2,9 @@ package rcmd
 
 // CmdResult stores information about the executed cmd
 type CmdResult struct {
-	Stdout   string
-	Stderr   string
-	ExitCode int
+	Stdout   string `json:"stdout,omitempty"`
+	Stderr   string `json:"stderr,omitempty"`
+	ExitCode int    `json:"exit_code,omitempty"`
 }
 
 // ExecSettings controls settings related to R execution
