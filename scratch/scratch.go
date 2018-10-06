@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/dpastoor/rpackagemanager/rcmd"
 	"github.com/sirupsen/logrus"
@@ -11,7 +12,12 @@ import (
 func main() {
 	// ia := rcmd.InstallArgs{Library: "some/path"}
 	ia := rcmd.NewDefaultInstallArgs()
-	ia.Library = "../integration_tests/lib"
+	tmpdir := os.TempDir()
+	fmt.Println("tmpdir: ", tmpdir)
+	ia.Library = tmpdir
+	ib := &rcmd.InstallArgs{
+		Library: "../integration_tests/lib",
+	}
 	fmt.Println(ia.CliArgs())
 	appFS := afero.NewOsFs()
 	lg := logrus.New()
@@ -20,6 +26,12 @@ func main() {
 	res, err := rcmd.Install(appFS,
 		"../integration_tests/src/test1_0.0.1.tar.gz",
 		ia,
+		rcmd.RSettings{},
+		rcmd.ExecSettings{},
+		lg)
+	res, err = rcmd.Install(appFS,
+		"test1_0.0.1.tgz",
+		ib,
 		rcmd.RSettings{},
 		rcmd.ExecSettings{},
 		lg)
