@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"reflect"
 	"syscall"
 
@@ -58,17 +59,56 @@ func (i *InstallArgs) CliArgs() []string {
 func Install(
 	fs afero.Fs,
 	tbp string, // tarball path
-	args InstallArgs,
+	args *InstallArgs,
 	rs RSettings,
 	es ExecSettings,
 	lg *logrus.Logger,
-) (string, error, int) {
+) (CmdResult, error) {
+
+	rdir := es.WorkDir
+	if rdir == "" {
+		rdir, _ = os.Getwd()
+		lg.WithFields(
+			logrus.Fields{"rdir": rdir},
+		).Debug("launch dir")
+	} else {
+		ok, err := afero.DirExists(fs, rdir)
+		if !ok || err != nil {
+			// TODO replace with better error
+			return CmdResult{
+				Stderr:   err.Error(),
+				ExitCode: 1,
+			}, err
+		}
+	}
+	tarPath := filepath.Clean(filepath.Join(rdir, tbp))
+
+	ok, err := afero.Exists(fs, tarPath)
+	if !ok || err != nil {
+		lg.WithFields(logrus.Fields{
+			"path": tarPath,
+			"ok":   ok,
+			"err":  err,
+		}).Error("package tarball not found")
+		var errs string
+		if err != nil {
+			errs = err.Error()
+		} else {
+			// nil error not ok
+			errs = fmt.Sprintf("%s does not exist", tarPath)
+		}
+		return CmdResult{
+			Stderr:   fmt.Sprintf("err: %s, ok: %v", errs, ok),
+			ExitCode: 1,
+		}, err
+	}
 
 	cmdArgs := []string{
 		"CMD",
 		"install",
 	}
 	cmdArgs = append(cmdArgs, args.CliArgs()...)
+	cmdArgs = append(cmdArgs, tarPath)
 	envVars := os.Environ()
 
 	lg.WithFields(
@@ -78,11 +118,6 @@ func Install(
 			"RSettings": rs,
 			"env":       envVars,
 		}).Debug("command args")
-	lg.WithFields(
-		logrus.Fields{
-			"cmd":  "install",
-			"exec": es,
-		}).Debug("execution")
 
 	// --vanilla is a command for R and should be specified before the CMD, eg
 	// R --vanilla CMD check
@@ -94,19 +129,12 @@ func Install(
 		cmdArgs...,
 	)
 
-	rdir := es.WorkDir
-	if rdir == "" {
-		rdir, _ = os.Getwd()
-		lg.WithFields(
-			logrus.Fields{"rdir": rdir},
-		).Debug("launch dir")
-	}
 	cmd.Dir = rdir
 	var outbuf, errbuf bytes.Buffer
 	cmd.Stdout = &outbuf
 	cmd.Stderr = &errbuf
 
-	err := cmd.Run()
+	err = cmd.Run()
 	stdout := outbuf.String()
 	stderr := errbuf.String()
 	exitCode := defaultSuccessCode
@@ -130,11 +158,17 @@ func Install(
 		ws := cmd.ProcessState.Sys().(syscall.WaitStatus)
 		exitCode = ws.ExitStatus()
 	}
+
+	cmdResult := CmdResult{
+		Stdout:   stdout,
+		Stderr:   stderr,
+		ExitCode: exitCode,
+	}
 	lg.WithFields(
 		logrus.Fields{
 			"stdout":   stdout,
 			"stderr":   stderr,
 			"exitCode": exitCode,
 		}).Info("cmd output")
-	return stdout, err, exitCode
+	return cmdResult, err
 }

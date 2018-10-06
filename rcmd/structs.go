@@ -1,8 +1,15 @@
 package rcmd
 
+// CmdResult stores information about the executed cmd
+type CmdResult struct {
+	Stdout   string
+	Stderr   string
+	ExitCode int
+}
+
 // ExecSettings controls settings related to R execution
 type ExecSettings struct {
-	WorkDir string
+	WorkDir string `json:"work_dir,omitempty"`
 }
 
 // RSettings controls settings related to managing libraries
