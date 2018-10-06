@@ -1,0 +1,22 @@
+# goreleaser.yml
+# Build customization
+project_name: pkgr
+
+release:
+  prerelease: true
+
+build:
+  binary: pkgr
+  goos:
+    - windows
+    - darwin
+    - linux
+  goarch:
+    - amd64
+
+# goreleaser.yml
+brew:
+  # Repository to push the tap to.
+  github:
+    owner: dpastoor 
+    name: homebrew-tap 
