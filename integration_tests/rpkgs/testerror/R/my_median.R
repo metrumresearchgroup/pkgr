@@ -4,3 +4,5 @@
 my_median <- function(...) {
   stats::median(...)
 }
+
+stop("oh no failed")
