@@ -23,6 +23,10 @@ func TestInstallArgs(t *testing.T) {
 			[]string{"--clean"},
 		},
 		{
+			&InstallArgs{Library: "path/to/lib"},
+			[]string{"--library=path/to/lib"},
+		},
+		{
 			NewDefaultInstallArgs(),
 			[]string{"--build", "--install-tests", "--no-multiarch", "--with-keep.source"},
 		},
