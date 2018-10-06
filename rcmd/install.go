@@ -118,6 +118,12 @@ func Install(
 			"RSettings": rs,
 			"env":       envVars,
 		}).Debug("command args")
+	lg.WithFields(
+		logrus.Fields{
+			"cmd":       "install",
+			"cmdArgs":   cmdArgs,
+			"RSettings": rs,
+		}).Info("command args")
 
 	// --vanilla is a command for R and should be specified before the CMD, eg
 	// R --vanilla CMD check
