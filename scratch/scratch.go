@@ -16,7 +16,7 @@ func main() {
 	lg := logrus.New()
 
 	lg.Level = logrus.DebugLevel
-	res, err := rcmd.InstallBinary(appFS,
+	res, binaryPath, err := rcmd.InstallBinary(appFS,
 		"../integration_tests/src/test1_0.0.1.tar.gz",
 		ia,
 		rcmd.RSettings{},
@@ -24,5 +24,6 @@ func main() {
 		lg)
 
 	fmt.Println("res: ", res)
+	fmt.Println("binary path: ", binaryPath)
 	fmt.Println("err: ", err)
 }
