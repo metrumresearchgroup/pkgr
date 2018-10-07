@@ -195,6 +195,9 @@ func Install(
 // by first installing and generating a binary in
 // a tmp dir, then installs the binary to the desired
 // library location
+// In addition to returning the CmdResult and any errors
+// the path to the binary is also provided for
+// additional handling of the binary such as caching
 func InstallBinary(
 	fs afero.Fs,
 	tbp string, // tarball path
@@ -202,7 +205,7 @@ func InstallBinary(
 	rs RSettings,
 	es ExecSettings,
 	lg *logrus.Logger,
-) (CmdResult, error) {
+) (CmdResult, string, error) {
 	tmpdir := os.TempDir()
 	origDir := es.WorkDir
 	if origDir == "" {
@@ -263,7 +266,7 @@ func InstallBinary(
 			// the successful initial install should still bubble up through
 			// the stderr/out
 			res.ExitCode = 1
-			return res, errors.New("no binary found")
+			return res, "", errors.New("no binary found")
 		}
 		res, err = Install(fs,
 			binaryBall,
@@ -271,6 +274,7 @@ func InstallBinary(
 			rs,
 			es,
 			lg)
+		return res, binaryBall, err
 	}
-	return res, err
+	return res, "", err
 }
