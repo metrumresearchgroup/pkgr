@@ -65,6 +65,10 @@ func loadDefaultSettings() {
 	viper.SetDefault("rpath", "R")
 	viper.SetDefault("threads", runtime.NumCPU())
 
+	// packrat related
+	viper.SetDefault("pr_lockfile", "")
+	viper.SetDefault("pr_dir", "")
+
 }
 
 func expand(s string) string {
