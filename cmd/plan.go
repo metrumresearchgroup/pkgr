@@ -54,7 +54,9 @@ func plan(cmd *cobra.Command, args []string) error {
 		workingGraph = append(workingGraph, gpsr.NewNode(p.Reqs.Package, p.Reqs.Requires))
 	}
 
-	gpsr.DisplayGraph(workingGraph)
+	if viper.GetBool("preview") {
+		gpsr.DisplayGraph(workingGraph)
+	}
 
 	resolved, err := gpsr.ResolveGraph(workingGraph)
 	if err != nil {
