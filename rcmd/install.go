@@ -2,11 +2,13 @@ package rcmd
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"syscall"
 
 	"github.com/fatih/structs"
@@ -64,7 +66,6 @@ func Install(
 	es ExecSettings,
 	lg *logrus.Logger,
 ) (CmdResult, error) {
-
 	rdir := es.WorkDir
 	if rdir == "" {
 		rdir, _ = os.Getwd()
@@ -81,12 +82,14 @@ func Install(
 			}, err
 		}
 	}
-	tarPath := filepath.Clean(filepath.Join(rdir, tbp))
+	if !filepath.IsAbs(tbp) {
+		tbp = filepath.Clean(filepath.Join(rdir, tbp))
+	}
 
-	ok, err := afero.Exists(fs, tarPath)
+	ok, err := afero.Exists(fs, tbp)
 	if !ok || err != nil {
 		lg.WithFields(logrus.Fields{
-			"path": tarPath,
+			"path": tbp,
 			"ok":   ok,
 			"err":  err,
 		}).Error("package tarball not found")
@@ -95,7 +98,7 @@ func Install(
 			errs = err.Error()
 		} else {
 			// nil error not ok
-			errs = fmt.Sprintf("%s does not exist", tarPath)
+			errs = fmt.Sprintf("%s does not exist", tbp)
 		}
 		return CmdResult{
 			Stderr:   fmt.Sprintf("err: %s, ok: %v", errs, ok),
@@ -108,7 +111,7 @@ func Install(
 		"install",
 	}
 	cmdArgs = append(cmdArgs, args.CliArgs()...)
-	cmdArgs = append(cmdArgs, tarPath)
+	cmdArgs = append(cmdArgs, tbp)
 	envVars := os.Environ()
 
 	lg.WithFields(
@@ -170,11 +173,104 @@ func Install(
 		Stderr:   stderr,
 		ExitCode: exitCode,
 	}
-	lg.WithFields(
-		logrus.Fields{
-			"stdout":   stdout,
-			"stderr":   stderr,
-			"exitCode": exitCode,
-		}).Info("cmd output")
+	if exitCode != 0 {
+		lg.WithFields(
+			logrus.Fields{
+				"stdout":   stdout,
+				"stderr":   stderr,
+				"exitCode": exitCode,
+			}).Error("cmd output")
+	} else {
+		lg.WithFields(
+			logrus.Fields{
+				"stdout":   stdout,
+				"stderr":   stderr,
+				"exitCode": exitCode,
+			}).Info("cmd output")
+	}
 	return cmdResult, err
+}
+
+// InstallBinary installs in a two pass fashion
+// by first installing and generating a binary in
+// a tmp dir, then installs the binary to the desired
+// library location
+func InstallBinary(
+	fs afero.Fs,
+	tbp string, // tarball path
+	args *InstallArgs,
+	rs RSettings,
+	es ExecSettings,
+	lg *logrus.Logger,
+) (CmdResult, error) {
+	tmpdir := os.TempDir()
+	origDir := es.WorkDir
+	if origDir == "" {
+		origDir, _ = os.Getwd()
+	}
+	es.WorkDir = tmpdir
+	finalLib := args.Library
+
+	// since moving directories to tmp for execution,
+	// should treat everything as absolute
+	if !filepath.IsAbs(tbp) {
+		tbp = filepath.Clean(filepath.Join(origDir, tbp))
+	}
+	if !filepath.IsAbs(finalLib) {
+		finalLib = filepath.Clean(filepath.Join(origDir, finalLib))
+	}
+	// instead install to tmpdir rather than the library
+	// for the first pass, then will ultimately install the
+	// generated binary to the proper location
+	// this will prevent failed installs overwriting existing
+	// properly installed packages in the final lib
+	args.Library = tmpdir
+	ib := &InstallArgs{
+		Library: finalLib,
+	}
+
+	// built binaries have the path extension .tgz rather than tar.gz
+	// but otherwise have the same name from empirical testing
+	// pkg_0.0.1.tar.gz --> pkg_0.0.1.tgz
+	lg.WithFields(logrus.Fields{
+		"tbp":  tbp,
+		"args": args,
+	}).Debug("installing tarball")
+	res, err := Install(fs,
+		tbp,
+		args,
+		rs,
+		es,
+		lg)
+	if err == nil && res.ExitCode == 0 {
+		bbp := strings.Replace(filepath.Base(tbp), "tar.gz", "tgz", 1)
+		binaryBall := filepath.Join(tmpdir, bbp)
+		lg.WithFields(logrus.Fields{
+			"tbp":        tbp,
+			"bbp":        bbp,
+			"binaryBall": binaryBall,
+		}).Debug("binary location prior to install")
+		ok, _ := afero.Exists(fs, binaryBall)
+		if !ok {
+			lg.WithFields(logrus.Fields{
+				// check previous stderror, which R logs to installation status
+				"stderr":     res.Stderr,
+				"tmpdir":     tmpdir,
+				"binaryPath": binaryBall,
+			}).Error("could not find binary")
+			// change the exit code in case top level just blindly looks for
+			// 0 exit code means good
+			// the successful initial install should still bubble up through
+			// the stderr/out
+			res.ExitCode = 1
+			return res, errors.New("no binary found")
+		}
+		res, err = Install(fs,
+			binaryBall,
+			ib,
+			rs,
+			es,
+			lg)
+	}
+	return res, err
 }
