@@ -68,9 +68,7 @@ func ResolveGraph(graph Graph) ([][]string, error) {
 		// Get all nodes from the graph which have no dependencies
 		readySet := mapset.NewSet()
 		for name, deps := range nodeDependencies {
-			fmt.Printf("identifying deps for: %s\n", name)
 			if deps.Cardinality() == 0 {
-				fmt.Printf("adding to readyset: %s\n", name)
 				readySet.Add(name)
 			}
 		}
