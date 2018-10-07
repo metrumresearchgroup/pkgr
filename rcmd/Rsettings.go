@@ -19,7 +19,7 @@ func (rs RSettings) R() string {
 	return strings.TrimSuffix(rpath, "/")
 }
 
-// LibPathsEnv returns the libpaths formatted in the style to be set as an environment variable
+// LibPathsEnv returns the library formatted in the style to be set as an environment variable
 func (rs RSettings) LibPathsEnv() (bool, string) {
 	if len(rs.LibPaths) == 0 {
 		return false, ""

@@ -17,9 +17,6 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/spf13/viper"
-
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -43,7 +40,7 @@ func rExperiment(cmd *cobra.Command, args []string) error {
 	// }
 	// defer f.Close()
 
-	
+	fmt.Println("hello")
 	return nil
 }
 

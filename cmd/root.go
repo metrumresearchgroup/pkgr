@@ -58,7 +58,7 @@ func init() {
 	// will be global for your application.
 	RootCmd.PersistentFlags().String("config", "", "config file (default is $HOME/pkgr.yml)")
 	RootCmd.PersistentFlags().String("loglevel", "", "level for logging")
-	RootCmd.PersistentFlags().String("library", "", "library paths, colon separated list")
+	RootCmd.PersistentFlags().String("library", "", "library to install packages to")
 	RootCmd.PersistentFlags().Int("threads", 0, "number of threads to execute with")
 	RootCmd.PersistentFlags().Bool("preview", false, "preview action, but don't actually run command")
 	RootCmd.PersistentFlags().Bool("debug", false, "use debug mode")
