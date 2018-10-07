@@ -57,19 +57,28 @@ func init() {
 	// Cobra supports Persistent Flags, which, if defined here,
 	// will be global for your application.
 	RootCmd.PersistentFlags().String("config", "", "config file (default is $HOME/pkgr.yml)")
-	RootCmd.PersistentFlags().String("loglevel", "", "level for logging")
-	RootCmd.PersistentFlags().Int("threads", 0, "number of threads to execute with")
-	RootCmd.PersistentFlags().Bool("preview", false, "preview action, but don't actually run command")
-	RootCmd.PersistentFlags().Bool("debug", false, "use debug mode")
 	viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
+
+	RootCmd.PersistentFlags().String("loglevel", "", "level for logging")
 	viper.BindPFlag("loglevel", RootCmd.PersistentFlags().Lookup("loglevel"))
+
+	RootCmd.PersistentFlags().Int("threads", 0, "number of threads to execute with")
 	viper.BindPFlag("threads", RootCmd.PersistentFlags().Lookup("threads"))
+
+	RootCmd.PersistentFlags().Bool("preview", false, "preview action, but don't actually run command")
 	viper.BindPFlag("preview", RootCmd.PersistentFlags().Lookup("preview"))
+
+	RootCmd.PersistentFlags().Bool("debug", false, "use debug mode")
 	viper.BindPFlag("debug", RootCmd.PersistentFlags().Lookup("debug"))
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	// globals
 
+	// packrat related
+	RootCmd.PersistentFlags().String("pr_lockfile", "", "packrat lockfile")
+	viper.BindPFlag("pr_lockfile", RootCmd.PersistentFlags().Lookup("pr_lockfile"))
+	RootCmd.PersistentFlags().String("pr_dir", "", "packrat dir")
+	viper.BindPFlag("pr_dir", RootCmd.PersistentFlags().Lookup("pr_dir"))
 }
 
 func setGlobals() {
