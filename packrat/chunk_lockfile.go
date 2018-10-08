@@ -14,9 +14,11 @@ func ChunkLockfile(b []byte) LockFile {
 		if bytes.HasPrefix(p, []byte("PackratFormat")) {
 			fmt.Printf("%s\n", p)
 		} else if bytes.Contains(p, []byte("GithubRepo")) {
-			lf.Github = append(lf.Github, ParsePackageReqsGH(p))
+			gpkg := ParsePackageReqsGH(p)
+			lf.Github[gpkg.Reqs.Package] = gpkg
 		} else {
-			lf.CRANlike = append(lf.CRANlike, ParsePackageReqs(p))
+			pkg := ParsePackageReqs(p)
+			lf.CRANlike[pkg.Package] = pkg
 		}
 	}
 	return lf
