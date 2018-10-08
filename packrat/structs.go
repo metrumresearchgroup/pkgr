@@ -25,8 +25,10 @@ type PackratMetadata struct {
 	RVersion string
 	Repos    []string
 }
+
+// LockFile contains information from the lockfile
 type LockFile struct {
 	Metadata PackratMetadata
-	CRANlike []PackageReqs
-	Github   []GithubPackageReqs
+	CRANlike map[string]PackageReqs
+	Github   map[string]GithubPackageReqs
 }
