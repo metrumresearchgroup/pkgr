@@ -15,10 +15,9 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/dpastoor/rpackagemanager/gpsr"
 	"github.com/dpastoor/rpackagemanager/packrat"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -60,13 +59,18 @@ func plan(cmd *cobra.Command, args []string) error {
 
 	resolved, err := gpsr.ResolveGraph(workingGraph)
 	if err != nil {
-		fmt.Printf("Failed to resolve dependency graph: %s\n", err)
+		log.Fatalf("Failed to resolve dependency graph: %s\n", err)
 	} else {
-		fmt.Println("The dependency graph resolved successfully")
+		log.Info("The dependency graph resolved successfully")
 	}
 
-	for _, pkglayer := range resolved {
-		fmt.Println(pkglayer)
+	for i, pkglayer := range resolved {
+		log.WithFields(
+			logrus.Fields{
+				"layer": i + 1,
+				"npkgs": len(pkglayer),
+			},
+		).Info(pkglayer)
 	}
 	return nil
 }
