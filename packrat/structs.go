@@ -18,17 +18,17 @@ type GithubPackageReqs struct {
 	GithubSha1     string
 }
 
-// PackratMetadata contains the metadata about the packrat lock file
-type PackratMetadata struct {
+// Metadata contains the metadata about the packrat lock file
+type Metadata struct {
 	Format   float32
 	Version  string
 	RVersion string
 	Repos    []string
 }
 
-// LockFile contains information from the lockfile
-type LockFile struct {
-	Metadata PackratMetadata
+// LockFileDb contains information from the lockfile
+type LockFileDb struct {
+	Metadata Metadata
 	CRANlike map[string]PackageReqs
 	Github   map[string]GithubPackageReqs
 }
