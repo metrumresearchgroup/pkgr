@@ -6,8 +6,8 @@ import (
 )
 
 // ChunkLockfile breaks a packrat lockfile into chunks
-func ChunkLockfile(b []byte) LockFileDb {
-	lf := LockFileDb{}
+func ChunkLockfile(b []byte) *LockFileDb {
+	lf := NewLockFileDb()
 	cb := bytes.Split(b, []byte("\n\n"))
 	for _, p := range cb {
 		p = CollapseIndentation(p)
