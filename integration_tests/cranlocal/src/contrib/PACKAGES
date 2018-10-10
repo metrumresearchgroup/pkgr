@@ -1,0 +1,26 @@
+Package: test1
+Version: 0.0.1
+Depends: R (>= 3.4.0)
+Imports: stats
+Suggests: testthat, knitr
+License: MIT + file LICENSE
+MD5sum: 43ff4f49dfe4c9628c9b48160264dfb2
+NeedsCompilation: no
+
+Package: test11
+Version: 0.0.1
+Depends: R (>= 3.4.0)
+Imports: test1
+Suggests: testthat, knitr
+License: MIT + file LICENSE
+MD5sum: 75a5f74b4d5579cfac621236a0ba00d2
+NeedsCompilation: no
+
+Package: test2
+Version: 0.0.1
+Depends: R (>= 3.4.0)
+Imports: stats
+Suggests: testthat, knitr
+License: MIT + file LICENSE
+MD5sum: e408eb3d7f0961928afe18b50f24ff53
+NeedsCompilation: no
