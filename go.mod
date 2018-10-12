@@ -10,4 +10,6 @@ require (
 	github.com/spf13/viper v1.2.1
 	github.com/stretchr/testify v1.2.2
 	github.com/thoas/go-funk v0.0.0-20180716193722-1060394a7713
+	pault.ag/go/debian v0.0.0-20180722221659-90aeb542bd40
+	pault.ag/go/topsort v0.0.0-20160530003732-f98d2ad46e1a // indirect
 )
