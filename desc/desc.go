@@ -2,6 +2,7 @@ package desc
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -91,6 +92,16 @@ func ReadDesc(p string) (Desc, error) {
 	fmt.Println(dsc)
 	fmt.Println(err)
 	fmt.Println("remotes: ", dsc.Remotes)
+	if err != nil {
+		return NewDesc(dsc), err
+	}
+	return NewDesc(dsc), nil
+}
+
+// ParseDesc parses a desc file
+func ParseDesc(r io.Reader) (Desc, error) {
+	var dsc desc
+	err := control.Unmarshal(&dsc, r)
 	if err != nil {
 		return NewDesc(dsc), err
 	}
