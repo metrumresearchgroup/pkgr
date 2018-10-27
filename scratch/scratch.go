@@ -2,40 +2,36 @@ package main
 
 import (
 	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"time"
 
 	"github.com/dpastoor/rpackagemanager/desc"
+	"github.com/spf13/afero"
 )
 
 func main() {
-	packages := []byte(`Package: logrrr
-Version: 0.1.0.9000
-Imports: R6, crayon, glue (>= 1.3.0), rlang (>=
-	0.2.1)
-Suggests: testthat, jsonlite, covr, sessioninfo
-License: MIT + file LICENSE
-MD5sum: 2ac5e74d5161c40fb26dd78b8c19cc8d
-NeedsCompilation: no
-
-Package: rrsq
-Version: 0.0.2.9000
-Imports: R6, purrr, magrittr, httr, jsonlite,
-     logrrr (>= 0.0.1)
-Suggests: testthat
-License: MIT + file LICENSE
-MD5sum: ec57bc69465f4ae31c2d59c673f3113d
-NeedsCompilation: no
-`)
-	cb := bytes.Split(packages, []byte("\n\n"))
-	for _, p := range cb {
-		reader := bytes.NewReader(p)
-		d, err := desc.ParseDesc(reader)
-		if err != nil {
-			panic(err)
-		}
-		PrettyPrint(d)
+	GobDB()
+	dmap := make(map[string]desc.Desc)
+	file, err := os.Open("crandb.gob")
+	if err != nil {
+		fmt.Println("problem creating crandb")
+		panic(err)
 	}
+	d := gob.NewDecoder(file)
+
+	// Decoding the serialized data
+	err = d.Decode(&dmap)
+	if err != nil {
+		panic(err)
+	}
+
+	PrettyPrint(dmap["dplyr"])
+	PrettyPrint(dmap["PKPDmisc"])
 }
 
 func PrettyPrint(v interface{}) (err error) {
@@ -44,4 +40,46 @@ func PrettyPrint(v interface{}) (err error) {
 		fmt.Println(string(b))
 	}
 	return
+}
+
+func GobDB() {
+	appFS := afero.NewOsFs()
+	ok, _ := afero.Exists(appFS, "crandb.gob")
+	if !ok {
+		startTime := time.Now()
+		res, err := http.Get("https://cran.rstudio.com/src/contrib/PACKAGES")
+		if err != nil {
+			fmt.Println("problem getting packages")
+			panic(err)
+		}
+		file, err := os.Create("crandb.gob")
+		if err != nil {
+			fmt.Println("problem creating crandb")
+			panic(err)
+		}
+		dmap := make(map[string]desc.Desc)
+		defer res.Body.Close()
+		body, err := ioutil.ReadAll(res.Body)
+		cb := bytes.Split(body, []byte("\n\n"))
+		for _, p := range cb {
+			reader := bytes.NewReader(p)
+			d, err := desc.ParseDesc(reader)
+			dmap[d.Package] = d
+			if err != nil {
+				fmt.Println("problem parsing")
+				panic(err)
+			}
+			//PrettyPrint(d)
+		}
+		fmt.Println("duration:", time.Since(startTime))
+		fmt.Println("length: ", len(dmap))
+
+		e := gob.NewEncoder(file)
+
+		// Encoding the map
+		err = e.Encode(dmap)
+		if err != nil {
+			panic(err)
+		}
+	}
 }
