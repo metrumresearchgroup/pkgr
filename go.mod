@@ -2,6 +2,7 @@ module github.com/dpastoor/rpackagemanager
 
 require (
 	github.com/deckarep/golang-set v1.7.1
+	github.com/dpastoor/goutils v1.2.0
 	github.com/fatih/structs v1.0.0
 	github.com/fatih/structtag v1.0.0
 	github.com/sirupsen/logrus v1.1.0
