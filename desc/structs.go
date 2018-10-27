@@ -10,6 +10,8 @@ const (
 	GTE
 	GT
 	Equals
+	LTE
+	LT
 )
 
 // Version represents a package version
