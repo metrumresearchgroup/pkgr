@@ -48,7 +48,7 @@ type Desc struct {
 	Imports     map[string]Dep
 	Suggests    map[string]Dep
 	Depends     map[string]Dep
-	LinkingTo   []string
+	LinkingTo   map[string]Dep
 }
 
 // TODO figure out unmarshalling pattern so can

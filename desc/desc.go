@@ -59,11 +59,7 @@ func NewDesc(d desc) Desc {
 		Imports:     make(map[string]Dep),
 		Suggests:    make(map[string]Dep),
 		Depends:     make(map[string]Dep),
-		// the reason linkingTo is not also a map is it
-		// will only contain the package name its linking to
-		// since the imports/depends field will give more
-		// information about the dependency
-		LinkingTo: d.LinkingTo,
+		LinkingTo:   make(map[string]Dep),
 	}
 	if len(d.Imports) > 0 {
 		for _, dp := range d.Imports {
@@ -84,6 +80,12 @@ func NewDesc(d desc) Desc {
 			dsc.Depends[dep.Name] = dep
 		}
 	}
+	if len(d.LinkingTo) > 0 {
+		for _, dp := range d.LinkingTo {
+			dep := ParseDep(dp)
+			dsc.LinkingTo[dep.Name] = dep
+		}
+	}
 	return dsc
 }
 
@@ -96,9 +98,6 @@ func ReadDesc(p string) (Desc, error) {
 	}
 	defer f.Close()
 	err = control.Unmarshal(&dsc, f)
-	fmt.Println(dsc)
-	fmt.Println(err)
-	fmt.Println("remotes: ", dsc.Remotes)
 	if err != nil {
 		return NewDesc(dsc), err
 	}
