@@ -51,7 +51,11 @@ func NewDesc(d desc) Desc {
 		Imports:     make(map[string]Dep),
 		Suggests:    make(map[string]Dep),
 		Depends:     make(map[string]Dep),
-		LinkingTo:   d.LinkingTo,
+		// the reason linkingTo is not also a map is it
+		// will only contain the package name its linking to
+		// since the imports/depends field will give more
+		// information about the dependency
+		LinkingTo: d.LinkingTo,
 	}
 	if len(d.Imports) > 0 {
 		for _, dp := range d.Imports {

@@ -2,7 +2,7 @@ PackratFormat: 1.4
 PackratVersion: 0.4.9.3
 RVersion: 3.5.1
 Repos: CRAN=https://cran.rstudio.com/,
-    int=file:///Users/devinp/go/src/github.com/dpastoor/rpackagemanager/integration_tests/cranlocal
+    cranlocal=file:///Users/devinp/go/src/github.com/dpastoor/rpackagemanager/integration_tests/cranlocal
 
 Package: packrat
 Source: CRAN
