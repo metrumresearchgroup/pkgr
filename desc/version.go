@@ -7,7 +7,7 @@ import (
 
 // ParseVersion parses a package string to a version
 func ParseVersion(v string) Version {
-	ver := Version{}
+	ver := Version{String: v}
 	parts := regexp.MustCompile(`[\.-]`).Split(v, 4)
 	ver.Major, _ = strconv.Atoi(parts[0])
 	ver.Minor, _ = strconv.Atoi(parts[1])

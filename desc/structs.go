@@ -26,6 +26,8 @@ type Version struct {
 	Dev   int
 	// max amount detected on CRAN was 5
 	Other int
+	// So Can Store the Original version in case needed
+	String string
 }
 
 // Dep represents a dependency
