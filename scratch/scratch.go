@@ -11,12 +11,17 @@ import (
 	"time"
 
 	"github.com/dpastoor/rpackagemanager/desc"
+	"github.com/dpastoor/rpackagemanager/gpsr"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
 
 func main() {
 	GobDB()
 	dmap := make(map[string]desc.Desc)
+	log := logrus.New()
+	log.Level = logrus.DebugLevel
+
 	file, err := os.Open("crandb.gob")
 	if err != nil {
 		fmt.Println("problem creating crandb")
@@ -30,10 +35,68 @@ func main() {
 		panic(err)
 	}
 
-	PrettyPrint(dmap["dplyr"])
-	PrettyPrint(dmap["PKPDmisc"])
-}
+	// PrettyPrint(dmap["dplyr"])
+	// PrettyPrint(dmap["PKPDmisc"])
+	//AppFs := afero.NewOsFs()
+	// can use this to redirect log output
+	// f, err := os.OpenFile("testlogfile", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	// if err != nil {
+	// 	log.Fatalf("error opening file: %v", err)
+	// }
+	// defer f.Close()
+	r6g := dmap["PKPDmisc"]
 
+	workingGraph := gpsr.NewGraph()
+	appendToGraph(workingGraph, r6g, dmap)
+
+	resolved, err := gpsr.ResolveGraph(workingGraph)
+	if err != nil {
+		log.Fatalf("Failed to resolve dependency graph: %s\n", err)
+	} else {
+		log.Info("The dependency graph resolved successfully")
+	}
+
+	for i, pkglayer := range resolved {
+		log.WithFields(
+			logrus.Fields{
+				"layer": i + 1,
+				"npkgs": len(pkglayer),
+			},
+		).Info(pkglayer)
+	}
+}
+func appendToGraph(m gpsr.Graph, d desc.Desc, dmap map[string]desc.Desc) {
+	var reqs []string
+	for r := range d.Imports {
+		_, ok := dmap[r]
+		if ok {
+			reqs = append(reqs, r)
+		}
+	}
+	for r := range d.Depends {
+		_, ok := dmap[r]
+		if ok {
+			reqs = append(reqs, r)
+		}
+	}
+	for r := range d.LinkingTo {
+		_, ok := dmap[r]
+		if ok {
+			reqs = append(reqs, r)
+		}
+	}
+	fmt.Println("pkg: ", d.Package)
+	fmt.Println("new reqs: ", reqs)
+	m[d.Package] = gpsr.NewNode(d.Package, reqs)
+	if len(reqs) > 0 {
+		for _, pn := range reqs {
+			_, ok := m[pn]
+			if pn != "R" && !ok {
+				appendToGraph(m, dmap[pn], dmap)
+			}
+		}
+	}
+}
 func PrettyPrint(v interface{}) (err error) {
 	b, err := json.MarshalIndent(v, "", "  ")
 	if err == nil {
