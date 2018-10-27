@@ -40,15 +40,16 @@ func (ldb LockFileDb) GetPackageReqs(pkg string) (bool, PackageReqs) {
 
 // SolveLockfile provides a solution give a lockfile spec
 func SolveLockfile(ldb LockFileDb) ([][]string, error) {
-	var workingGraph gpsr.Graph
+	workingGraph := gpsr.NewGraph()
+
 	for _, p := range ldb.CRANlike {
-		workingGraph = append(workingGraph, NewNode(ldb.Package, ldb.Requires))
+		workingGraph[p.Package] = gpsr.NewNode(p.Package, p.Requires)
 	}
 	for _, p := range ldb.Github {
-		workingGraph = append(workingGraph, NewNode(ldb.Reqs.Package, ldb.Reqs.Requires))
+		workingGraph[p.Reqs.Package] = gpsr.NewNode(p.Reqs.Package, p.Reqs.Requires)
 	}
 
-	resolved, err := gspr.ResolveGraph(workingGraph)
+	resolved, err := gpsr.ResolveGraph(workingGraph)
 
 	return resolved, err
 }

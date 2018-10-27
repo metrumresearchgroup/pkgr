@@ -45,12 +45,12 @@ func plan(cmd *cobra.Command, args []string) error {
 	appFS := afero.NewOsFs()
 	lf, _ := afero.ReadFile(appFS, viper.GetString("pr_lockfile"))
 	pm := packrat.ChunkLockfile(lf)
-	var workingGraph gpsr.Graph
+	workingGraph := gpsr.NewGraph()
 	for _, p := range pm.CRANlike {
-		workingGraph = append(workingGraph, gpsr.NewNode(p.Package, p.Requires))
+		workingGraph[p.Package] = gpsr.NewNode(p.Package, p.Requires)
 	}
 	for _, p := range pm.Github {
-		workingGraph = append(workingGraph, gpsr.NewNode(p.Reqs.Package, p.Reqs.Requires))
+		workingGraph[p.Reqs.Package] = gpsr.NewNode(p.Reqs.Package, p.Reqs.Requires)
 	}
 
 	if viper.GetBool("preview") {

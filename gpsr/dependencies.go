@@ -7,7 +7,12 @@ import (
 	"github.com/deckarep/golang-set"
 )
 
-type Graph []*Node
+type Graph map[string]*Node
+
+// Initialize a new graph
+func NewGraph() Graph {
+	return make(map[string]*Node)
+}
 
 // Node represents a single node in the graph with it's dependencies
 type Node struct {
@@ -43,21 +48,17 @@ func DisplayGraph(graph Graph) {
 // allowing confident parallel installation at any
 // layer
 func ResolveGraph(graph Graph) ([][]string, error) {
-	// A map containing the node names and the actual node object
-	nodeNames := make(map[string]*Node)
-
 	// A map containing the nodes and their dependencies
 	nodeDependencies := make(map[string]mapset.Set)
 
 	// Populate the maps
-	for _, node := range graph {
-		nodeNames[node.Name] = node
+	for nm, node := range graph {
 
 		dependencySet := mapset.NewSet()
 		for _, dep := range node.Deps {
 			dependencySet.Add(dep)
 		}
-		nodeDependencies[node.Name] = dependencySet
+		nodeDependencies[nm] = dependencySet
 	}
 
 	// Iteratively find and remove nodes from the graph which have no dependencies.
