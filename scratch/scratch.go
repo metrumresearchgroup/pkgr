@@ -44,10 +44,25 @@ func main() {
 	// 	log.Fatalf("error opening file: %v", err)
 	// }
 	// defer f.Close()
-	r6g := dmap["PKPDmisc"]
-
+	pkgs := []string{
+		"PKPDmisc",
+		"mrgsolve",
+		"rmarkdown",
+		"bitops",
+		"caTools",
+		"GGally",
+		"knitr",
+		"gridExtra",
+		"htmltools",
+		"xtable",
+		"tidyverse",
+		"shiny",
+		"shinydashboard",
+	}
 	workingGraph := gpsr.NewGraph()
-	appendToGraph(workingGraph, r6g, dmap)
+	for _, p := range pkgs {
+		appendToGraph(workingGraph, dmap[p], dmap)
+	}
 
 	resolved, err := gpsr.ResolveGraph(workingGraph)
 	if err != nil {
