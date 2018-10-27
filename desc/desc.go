@@ -31,7 +31,14 @@ func ParseDep(d string) Dep {
 		} else if strings.Contains(pv, ">") {
 			dep.Constraint = GT
 			dep.Version = ParseVersion(strings.TrimSpace(strings.Replace(pv, ">", " ", 1)))
+		} else if strings.Contains(pv, "<=") {
+			dep.Constraint = LTE
+			dep.Version = ParseVersion(strings.TrimSpace(strings.Replace(pv, "<=", " ", 1)))
+		} else if strings.Contains(pv, "<") {
+			dep.Constraint = LT
+			dep.Version = ParseVersion(strings.TrimSpace(strings.Replace(pv, "<", " ", 1)))
 		} else {
+			fmt.Println(pv)
 			panic(pv)
 		}
 	}
