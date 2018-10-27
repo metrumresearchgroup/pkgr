@@ -1,30 +1,41 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
 	"github.com/dpastoor/rpackagemanager/desc"
-	"github.com/dpastoor/rpackagemanager/rpkg"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/afero"
 )
 
 func main() {
-	// ia := rcmd.InstallArgs{Library: "some/path"}
-	appFS := afero.NewOsFs()
-	lg := logrus.New()
-	lg.Level = logrus.DebugLevel
+	packages := []byte(`Package: logrrr
+Version: 0.1.0.9000
+Imports: R6, crayon, glue (>= 1.3.0), rlang (>=
+	0.2.1)
+Suggests: testthat, jsonlite, covr, sessioninfo
+License: MIT + file LICENSE
+MD5sum: 2ac5e74d5161c40fb26dd78b8c19cc8d
+NeedsCompilation: no
 
-	// b28ba6e911e86ae4e682f834741e85e0
-	hash, _ := rpkg.Hash(appFS, "../integration_tests/src/test1_0.0.1.tar.gz")
-	fmt.Println(hash)
-
-	d, err := desc.ReadDesc("../desc/testdata/D2")
-	if err != nil {
-		panic(err)
+Package: rrsq
+Version: 0.0.2.9000
+Imports: R6, purrr, magrittr, httr, jsonlite,
+     logrrr (>= 0.0.1)
+Suggests: testthat
+License: MIT + file LICENSE
+MD5sum: ec57bc69465f4ae31c2d59c673f3113d
+NeedsCompilation: no
+`)
+	cb := bytes.Split(packages, []byte("\n\n"))
+	for _, p := range cb {
+		reader := bytes.NewReader(p)
+		d, err := desc.ParseDesc(reader)
+		if err != nil {
+			panic(err)
+		}
+		PrettyPrint(d)
 	}
-	PrettyPrint(d)
 }
 
 func PrettyPrint(v interface{}) (err error) {
