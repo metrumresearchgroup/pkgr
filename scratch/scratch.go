@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/dpastoor/rpackagemanager/cran"
 	"github.com/dpastoor/rpackagemanager/desc"
 	"github.com/dpastoor/rpackagemanager/gpsr"
 	"github.com/sirupsen/logrus"
@@ -19,6 +20,7 @@ import (
 func main() {
 	GobDB()
 	dmap := make(map[string]desc.Desc)
+	appFS := afero.NewOsFs()
 	log := logrus.New()
 	log.Level = logrus.DebugLevel
 
@@ -70,8 +72,11 @@ func main() {
 	} else {
 		log.Info("The dependency graph resolved successfully")
 	}
-
+	var toDl []desc.Desc
 	for i, pkglayer := range resolved {
+		for _, p := range pkglayer {
+			toDl = append(toDl, dmap[p])
+		}
 		log.WithFields(
 			logrus.Fields{
 				"layer": i + 1,
@@ -79,6 +84,22 @@ func main() {
 			},
 		).Info(pkglayer)
 	}
+	startTime := time.Now()
+	// want to download the packages and return the full path of any downloaded package
+	dl, err := cran.DownloadPackages(appFS, toDl, "https://cran.rstudio.com", cran.Source, "dump")
+	if err != nil {
+		fmt.Println(err)
+		panic(err)
+	}
+	fmt.Println("duration:", time.Since(startTime))
+
+	// ia := rcmd.NewDefaultInstallArgs()
+	// ia.Library = "../integration_tests/lib"
+	for pn, p := range dl {
+		fmt.Println(pn, p)
+	}
+	// fmt.Println("library: ", viper.GetString("library"))
+	//rcmd.InstallThroughBinary(appFS, "", ia, rcmd.RSettings{}, rcmd.ExecSettings{}, log)
 }
 func appendToGraph(m gpsr.Graph, d desc.Desc, dmap map[string]desc.Desc) {
 	var reqs []string
