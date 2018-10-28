@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/dpastoor/goutils"
@@ -13,26 +14,28 @@ import (
 )
 
 // DownloadPackages downloads a set of packages concurrently
-func DownloadPackages(fs afero.OsFs, ds []desc.Desc, url string, dir string) error {
+func DownloadPackages(fs afero.Fs, ds []desc.Desc, url string, dir string) error {
 	// bound to
 	sem := make(chan struct{}, 10)
 	wg := sync.WaitGroup{}
 	for _, d := range ds {
 		wg.Add(1)
-		go func(d desc.Desc) {
-			<-sem
-			fmt.Println("downloading package ", d.Package)
-			DownloadPackage(fs, d, url, filepath.Join(dir, fmt.Sprintf("%s_%s.tar.gz", d.Package, d.Version)))
+		go func(d desc.Desc, wg *sync.WaitGroup) {
 			sem <- struct{}{}
-			wg.Done()
-		}(d)
+			defer func() {
+				<-sem
+				wg.Done()
+			}()
+			pkgdir := filepath.Join(dir, fmt.Sprintf("%s_%s.tar.gz", d.Package, d.Version))
+			DownloadPackage(fs, d, url, pkgdir)
+		}(d, &wg)
 	}
-	wg.Done()
+	wg.Wait()
 	fmt.Println("all packages downloaded")
 	return nil
 }
 
-func DownloadPackage(fs afero.OsFs, d desc.Desc, url string, dest string) error {
+func DownloadPackage(fs afero.Fs, d desc.Desc, url string, dest string) error {
 
 	ok, err := goutils.Exists(fs, dest)
 	if err != nil {
@@ -42,7 +45,7 @@ func DownloadPackage(fs afero.OsFs, d desc.Desc, url string, dest string) error 
 		fmt.Println("already have ", d.Package, " downloaded")
 		return nil
 	}
-	pkgdl := filepath.Clean(fmt.Sprintf("%s/src/contrib/%s_%s.tar.gz", url, d.Package, d.Version))
+	pkgdl := fmt.Sprintf("%s/src/contrib/%s_%s.tar.gz", strings.TrimSuffix(url, "/"), d.Package, d.Version)
 	fmt.Println("downloading from: ", pkgdl)
 	resp, err := http.Get(pkgdl)
 	if err != nil {
@@ -50,11 +53,13 @@ func DownloadPackage(fs afero.OsFs, d desc.Desc, url string, dest string) error 
 		return err
 	}
 	defer resp.Body.Close()
-	file, err := fs.Open(dest)
+	file, err := fs.Create(dest)
 	if err != nil {
 		fmt.Println("couldn't create tarball for ", d.Package)
+		fmt.Println(err)
 		return err
 	}
+	defer file.Close()
 	_, err = io.Copy(file, resp.Body)
 	if err != nil {
 		return err
