@@ -191,14 +191,14 @@ func Install(
 	return cmdResult, err
 }
 
-// InstallBinary installs in a two pass fashion
+// InstallThroughBinary installs in a two pass fashion
 // by first installing and generating a binary in
 // a tmp dir, then installs the binary to the desired
 // library location
 // In addition to returning the CmdResult and any errors
 // the path to the binary is also provided for
 // additional handling of the binary such as caching
-func InstallBinary(
+func InstallThroughBinary(
 	fs afero.Fs,
 	tbp string, // tarball path
 	args *InstallArgs,
