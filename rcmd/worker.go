@@ -96,30 +96,36 @@ func NewInstallQueue(n int,
 		UpdateQueue: uq,
 	}
 	for i := 0; i < n; i++ {
-		iq.RegisterNewWorker(i+1, lg)
+		iq.RegisterNewWorker(i+1, installFunc, lg)
 	}
 	go iq.HandleUpdates(updateFunc)
 	return &iq
 }
 
 // HandleUpdates handles updates
-func (j *InstallQueue) HandleUpdates(fn func(InstallUpdate)) {
+func (i *InstallQueue) HandleUpdates(fn func(InstallUpdate)) {
 	for {
-		ju := <-j.UpdateQueue
-		if ju.ShouldUpdate {
-			fn(ju)
+		iu := <-i.UpdateQueue
+		if iu.ShouldUpdate {
+			fn(iu)
 		}
 	}
 }
 
 // RegisterNewWorker registers new workers
-func (i *InstallQueue) RegisterNewWorker(id int, lg *logrus.Logger) {
+func (i *InstallQueue) RegisterNewWorker(id int, fn func(fs afero.Fs,
+	tbp string, // tarball path
+	args *InstallArgs,
+	rs RSettings,
+	es ExecSettings,
+	lg *logrus.Logger) (CmdResult, string, error), lg *logrus.Logger) {
 	// Create, and return the worker.
 	worker := Worker{
 		ID:          id,
 		WorkQueue:   i.WorkQueue,
 		UpdateQueue: i.UpdateQueue,
 		Quit:        make(chan bool),
+		InstallFunc: fn,
 	}
 	worker.Start(lg)
 	i.Workers = append(i.Workers, worker)
