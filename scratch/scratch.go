@@ -13,6 +13,7 @@ import (
 	"github.com/dpastoor/rpackagemanager/cran"
 	"github.com/dpastoor/rpackagemanager/desc"
 	"github.com/dpastoor/rpackagemanager/gpsr"
+	"github.com/dpastoor/rpackagemanager/rcmd"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
@@ -98,6 +99,8 @@ func main() {
 	for pn, p := range dl {
 		fmt.Println(pn, p)
 	}
+
+	rcmd.InstallPackageLayers(appFS, resolved, rcmd.NewDefaultInstallArgs(), rcmd.RSettings{}, rcmd.ExecSettings{}, log, 4)
 	// fmt.Println("library: ", viper.GetString("library"))
 	//rcmd.InstallThroughBinary(appFS, "", ia, rcmd.RSettings{}, rcmd.ExecSettings{}, log)
 }
