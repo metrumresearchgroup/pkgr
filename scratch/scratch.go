@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/dpastoor/rpackagemanager/cran"
@@ -24,6 +25,9 @@ func main() {
 	appFS := afero.NewOsFs()
 	log := logrus.New()
 	log.Level = logrus.DebugLevel
+	log.SetFormatter(&logrus.JSONFormatter{})
+	logf, _ := appFS.OpenFile("logfile.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	log.SetOutput(logf)
 
 	file, err := os.Open("crandb.gob")
 	if err != nil {
@@ -47,20 +51,23 @@ func main() {
 	// 	log.Fatalf("error opening file: %v", err)
 	// }
 	// defer f.Close()
+	// pkgs := []string{
+	// 	"PKPDmisc",
+	// 	"mrgsolve",
+	// 	"rmarkdown",
+	// 	"bitops",
+	// 	"caTools",
+	// 	"GGally",
+	// 	"knitr",
+	// 	"gridExtra",
+	// 	"htmltools",
+	// 	"xtable",
+	// 	"tidyverse",
+	// 	"shiny",
+	// 	"shinydashboard",
+	// }
 	pkgs := []string{
 		"PKPDmisc",
-		"mrgsolve",
-		"rmarkdown",
-		"bitops",
-		"caTools",
-		"GGally",
-		"knitr",
-		"gridExtra",
-		"htmltools",
-		"xtable",
-		"tidyverse",
-		"shiny",
-		"shinydashboard",
 	}
 	workingGraph := gpsr.NewGraph()
 	for _, p := range pkgs {
@@ -99,8 +106,16 @@ func main() {
 	for pn, p := range dl {
 		fmt.Println(pn, p)
 	}
-
-	rcmd.InstallPackageLayers(appFS, resolved, rcmd.NewDefaultInstallArgs(), rcmd.RSettings{}, rcmd.ExecSettings{}, log, 4)
+	ia := rcmd.NewDefaultInstallArgs()
+	ia.Library, _ = filepath.Abs("dump/test1lib/")
+	fmt.Println("library set to: ", ia.Library)
+	startTime = time.Now()
+	err = rcmd.InstallPackageLayers(appFS, resolved, dl, ia, rcmd.RSettings{}, rcmd.ExecSettings{}, log, 6)
+	if err != nil {
+		fmt.Println("failed package install")
+		fmt.Println(err)
+	}
+	fmt.Println("duration:", time.Since(startTime))
 	// fmt.Println("library: ", viper.GetString("library"))
 	//rcmd.InstallThroughBinary(appFS, "", ia, rcmd.RSettings{}, rcmd.ExecSettings{}, log)
 }
