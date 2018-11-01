@@ -104,7 +104,7 @@ func NewInstallQueue(n int,
 		lg *logrus.Logger) (CmdResult, string, error),
 	updateFunc func(InstallUpdate), lg *logrus.Logger) *InstallQueue {
 	wq := make(chan InstallRequest, 2000)
-	uq := make(chan InstallUpdate, 50)
+	uq := make(chan InstallUpdate, 500)
 	iq := InstallQueue{
 		WorkQueue:   wq,
 		UpdateQueue: uq,
