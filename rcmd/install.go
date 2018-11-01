@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/dpastoor/goutils"
 	"github.com/dpastoor/rpackagemanager/cran"
 	"github.com/fatih/structs"
 	"github.com/fatih/structtag"
@@ -319,7 +320,13 @@ func InstallPackageLayers(
 		lg.WithField("layer", i+1).Info("starting layer")
 		startTime := time.Now()
 		for _, p := range lp {
+			exists, _ := goutils.DirExists(fs, filepath.Join(args.Library, p))
+			if exists {
+				lg.WithField("package", p).Info("package already installed")
+				continue
+			}
 			wg.Add(1)
+			fmt.Println("pushing package ", p)
 			iq.Push(InstallRequest{
 				Package:      p,
 				Path:         dl[p].Path,
@@ -328,11 +335,13 @@ func InstallPackageLayers(
 				ExecSettings: es,
 			})
 		}
+		fmt.Println("waiting while installing layer...")
 		wg.Wait()
+		fmt.Println("done waiting while installing layer... ", time.Since(startTime))
 		lg.WithField("duration", time.Since(startTime)).Info("layer install time")
 	}
 	if anyFailed {
-		return fmt.Errorf("installation failed for packages: %s \n", strings.Join(failedPkgs, ", "))
+		return fmt.Errorf("installation failed for packages: %s", strings.Join(failedPkgs, ", "))
 	}
 	return nil
 }
