@@ -11,7 +11,9 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
+	"github.com/dpastoor/rpackagemanager/cran"
 	"github.com/fatih/structs"
 	"github.com/fatih/structtag"
 	"github.com/sirupsen/logrus"
@@ -20,8 +22,8 @@ import (
 )
 
 // NewDefaultInstallArgs provides a set of sane default installation args
-func NewDefaultInstallArgs() *InstallArgs {
-	return &InstallArgs{
+func NewDefaultInstallArgs() InstallArgs {
+	return InstallArgs{
 		WithKeepSource: true,
 		NoMultiarch:    true,
 		InstallTests:   true,
@@ -31,7 +33,7 @@ func NewDefaultInstallArgs() *InstallArgs {
 
 // CliArgs converts the InstallArgs struct to the proper cli args
 // including only returning the relevant args
-func (i *InstallArgs) CliArgs() []string {
+func (i InstallArgs) CliArgs() []string {
 	args := []string{}
 	is := structs.New(i)
 	nms := structs.Names(i)
@@ -39,7 +41,7 @@ func (i *InstallArgs) CliArgs() []string {
 		fld := is.Field(n)
 		if !fld.IsZero() {
 			// ... and start using structtag by parsing the tag
-			tag, _ := reflect.TypeOf(i).Elem().FieldByName(fld.Name())
+			tag, _ := reflect.TypeOf(i).FieldByName(fld.Name())
 			// ... and start using structtag by parsing the tag
 			tags, err := structtag.Parse(string(tag.Tag))
 			if err != nil {
@@ -62,7 +64,7 @@ func (i *InstallArgs) CliArgs() []string {
 func Install(
 	fs afero.Fs,
 	tbp string, // tarball path
-	args *InstallArgs,
+	args InstallArgs,
 	rs RSettings,
 	es ExecSettings,
 	lg *logrus.Logger,
@@ -202,7 +204,7 @@ func Install(
 func InstallThroughBinary(
 	fs afero.Fs,
 	tbp string, // tarball path
-	args *InstallArgs,
+	args InstallArgs,
 	rs RSettings,
 	es ExecSettings,
 	lg *logrus.Logger,
@@ -212,9 +214,11 @@ func InstallThroughBinary(
 	if origDir == "" {
 		origDir, _ = os.Getwd()
 	}
+	fmt.Println("tbp: ", tbp)
+	fmt.Println("starting from dir: ", origDir)
 	es.WorkDir = tmpdir
 	finalLib := args.Library
-
+	fmt.Println("set lib to install: ", args.Library)
 	// since moving directories to tmp for execution,
 	// should treat everything as absolute
 	if !filepath.IsAbs(tbp) {
@@ -229,7 +233,8 @@ func InstallThroughBinary(
 	// this will prevent failed installs overwriting existing
 	// properly installed packages in the final lib
 	args.Library = tmpdir
-	ib := &InstallArgs{
+	fmt.Println("final lib to install: ", finalLib)
+	ib := InstallArgs{
 		Library: finalLib,
 	}
 
@@ -284,41 +289,51 @@ func InstallThroughBinary(
 func InstallPackageLayers(
 	fs afero.Fs,
 	layers [][]string,
-	args *InstallArgs,
+	dl map[string]cran.Download,
+	args InstallArgs,
 	rs RSettings,
 	es ExecSettings,
 	lg *logrus.Logger,
 	ncpu int,
 ) error {
 	wg := sync.WaitGroup{}
+	anyFailed := false
+	failedPkgs := []string{}
 	iq := NewInstallQueue(ncpu,
-		func(fs afero.Fs,
-			tbp string, // tarball path
-			args *InstallArgs,
-			rs RSettings,
-			es ExecSettings,
-			lg *logrus.Logger) (CmdResult, string, error) {
-			return CmdResult{}, tbp, nil
-		},
+		InstallThroughBinary,
 		func(iu InstallUpdate) {
+			if iu.Err != nil {
+				fmt.Println("error installing", iu.Err)
+				anyFailed = true
+				failedPkgs = append(failedPkgs, iu.Package)
+			}
 			wg.Done()
-			fmt.Println("would have installed tarball at: ", iu.BinaryPath)
+			fmt.Println("installed with message: ", iu.Result.Stderr)
 		}, lg,
 	)
 	for i, lp := range layers {
-		fmt.Println("starting layer ", i)
+		if anyFailed {
+			lg.WithField("layer", i+1).Info("not installing layer as previous failure occurred")
+			continue
+		}
+		lg.WithField("layer", i+1).Info("starting layer")
+		startTime := time.Now()
 		for _, p := range lp {
 			wg.Add(1)
 			iq.Push(InstallRequest{
 				Package:      p,
-				Path:         p,
+				Path:         dl[p].Path,
 				InstallArgs:  args,
 				RSettings:    rs,
 				ExecSettings: es,
 			})
 		}
+		wg.Wait()
+		lg.WithField("duration", time.Since(startTime)).Info("layer install time")
 	}
-	wg.Wait()
+	if anyFailed {
+		return fmt.Errorf("installation failed for packages: %s \n", strings.Join(failedPkgs, ", "))
+	}
 	return nil
 }
 
