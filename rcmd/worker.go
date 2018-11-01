@@ -1,6 +1,8 @@
 package rcmd
 
 import (
+	"time"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
@@ -9,7 +11,7 @@ import (
 type InstallRequest struct {
 	Package      string
 	Path         string
-	InstallArgs  *InstallArgs
+	InstallArgs  InstallArgs
 	ExecSettings ExecSettings
 	RSettings    RSettings
 }
@@ -17,6 +19,7 @@ type InstallRequest struct {
 // InstallUpdate provides information about the Job in the queue
 type InstallUpdate struct {
 	Result       CmdResult
+	Package      string
 	BinaryPath   string
 	Msg          string
 	Err          error
@@ -31,7 +34,7 @@ type Worker struct {
 	Quit        chan bool
 	InstallFunc func(fs afero.Fs,
 		tbp string, // tarball path
-		args *InstallArgs,
+		args InstallArgs,
 		rs RSettings,
 		es ExecSettings,
 		lg *logrus.Logger) (CmdResult, string, error)
@@ -53,14 +56,25 @@ func (w *Worker) Start(lg *logrus.Logger) {
 			select {
 			case ir := <-w.WorkQueue:
 				// Receive a work request.
+				startTime := time.Now()
+				lg.WithFields(logrus.Fields{
+					"WID":     w.ID,
+					"package": ir.Package,
+				}).Info("package install request received")
 				res, bPath, err := w.InstallFunc(appFS, ir.Path, ir.InstallArgs, ir.RSettings, ir.ExecSettings, lg)
 				w.UpdateQueue <- InstallUpdate{
 					Result:       res,
+					Package:      ir.Package,
 					BinaryPath:   bPath,
-					Msg:          "completed job",
+					Msg:          "need better message",
 					Err:          err,
 					ShouldUpdate: true,
 				}
+				lg.WithFields(logrus.Fields{
+					"WID":      w.ID,
+					"package":  ir.Package,
+					"duration": time.Since(startTime),
+				}).Info("package install request completed")
 
 			case <-w.Quit:
 				// We have been asked to stop.
@@ -84,7 +98,7 @@ func (w *Worker) Stop() {
 func NewInstallQueue(n int,
 	installFunc func(fs afero.Fs,
 		tbp string, // tarball path
-		args *InstallArgs,
+		args InstallArgs,
 		rs RSettings,
 		es ExecSettings,
 		lg *logrus.Logger) (CmdResult, string, error),
@@ -115,7 +129,7 @@ func (i *InstallQueue) HandleUpdates(fn func(InstallUpdate)) {
 // RegisterNewWorker registers new workers
 func (i *InstallQueue) RegisterNewWorker(id int, fn func(fs afero.Fs,
 	tbp string, // tarball path
-	args *InstallArgs,
+	args InstallArgs,
 	rs RSettings,
 	es ExecSettings,
 	lg *logrus.Logger) (CmdResult, string, error), lg *logrus.Logger) {
