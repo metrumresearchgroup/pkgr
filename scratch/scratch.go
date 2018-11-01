@@ -26,6 +26,7 @@ func main() {
 	log := logrus.New()
 	log.Level = logrus.DebugLevel
 	log.SetFormatter(&logrus.JSONFormatter{})
+	appFS.Remove("logfile.txt")
 	logf, _ := appFS.OpenFile("logfile.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	log.SetOutput(logf)
 
@@ -67,7 +68,7 @@ func main() {
 	// 	"shinydashboard",
 	// }
 	pkgs := []string{
-		"PKPDmisc",
+		"ggplot2",
 	}
 	workingGraph := gpsr.NewGraph()
 	for _, p := range pkgs {
