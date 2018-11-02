@@ -15,6 +15,7 @@ import (
 
 	"github.com/dpastoor/goutils"
 	"github.com/dpastoor/rpackagemanager/cran"
+	"github.com/dpastoor/rpackagemanager/gpsr"
 	"github.com/fatih/structs"
 	"github.com/fatih/structtag"
 	"github.com/sirupsen/logrus"
@@ -204,26 +205,31 @@ func Install(
 // additional handling of the binary such as caching
 func InstallThroughBinary(
 	fs afero.Fs,
-	tbp string, // tarball path
-	args InstallArgs,
-	rs RSettings,
-	es ExecSettings,
+	ir InstallRequest,
 	lg *logrus.Logger,
 ) (CmdResult, string, error) {
+	exists, _ := goutils.DirExists(fs, filepath.Join(ir.InstallArgs.Library, ir.Package))
+	if exists {
+		lg.WithField("package", ir.Package).Info("package already installed")
+		return CmdResult{
+			ExitCode: 0,
+			Stderr:   fmt.Sprintf("already installed: %s", ir.Package),
+		}, "", nil
+	}
 	tmpdir := os.TempDir()
-	origDir := es.WorkDir
+	origDir := ir.ExecSettings.WorkDir
 	if origDir == "" {
 		origDir, _ = os.Getwd()
 	}
-	fmt.Println("tbp: ", tbp)
+	fmt.Println("tbp: ", ir.Path)
 	fmt.Println("starting from dir: ", origDir)
-	es.WorkDir = tmpdir
-	finalLib := args.Library
-	fmt.Println("set lib to install: ", args.Library)
+	ir.ExecSettings.WorkDir = tmpdir
+	finalLib := ir.InstallArgs.Library
+	fmt.Println("set lib to install: ", ir.InstallArgs.Library)
 	// since moving directories to tmp for execution,
 	// should treat everything as absolute
-	if !filepath.IsAbs(tbp) {
-		tbp = filepath.Clean(filepath.Join(origDir, tbp))
+	if !filepath.IsAbs(ir.Path) {
+		ir.Path = filepath.Clean(filepath.Join(origDir, ir.Path))
 	}
 	if !filepath.IsAbs(finalLib) {
 		finalLib = filepath.Clean(filepath.Join(origDir, finalLib))
@@ -233,7 +239,7 @@ func InstallThroughBinary(
 	// generated binary to the proper location
 	// this will prevent failed installs overwriting existing
 	// properly installed packages in the final lib
-	args.Library = tmpdir
+	ir.InstallArgs.Library = tmpdir
 	fmt.Println("final lib to install: ", finalLib)
 	ib := InstallArgs{
 		Library: finalLib,
@@ -243,20 +249,20 @@ func InstallThroughBinary(
 	// but otherwise have the same name from empirical testing
 	// pkg_0.0.1.tar.gz --> pkg_0.0.1.tgz
 	lg.WithFields(logrus.Fields{
-		"tbp":  tbp,
-		"args": args,
+		"tbp":  ir.Path,
+		"args": ir.InstallArgs,
 	}).Debug("installing tarball")
 	res, err := Install(fs,
-		tbp,
-		args,
-		rs,
-		es,
+		ir.Path,
+		ir.InstallArgs,
+		ir.RSettings,
+		ir.ExecSettings,
 		lg)
 	if err == nil && res.ExitCode == 0 {
-		bbp := strings.Replace(filepath.Base(tbp), "tar.gz", "tgz", 1)
+		bbp := strings.Replace(filepath.Base(ir.Path), "tar.gz", "tgz", 1)
 		binaryBall := filepath.Join(tmpdir, bbp)
 		lg.WithFields(logrus.Fields{
-			"tbp":        tbp,
+			"tbp":        ir.Path,
 			"bbp":        bbp,
 			"binaryBall": binaryBall,
 		}).Debug("binary location prior to install")
@@ -278,8 +284,8 @@ func InstallThroughBinary(
 		res, err = Install(fs,
 			binaryBall,
 			ib,
-			rs,
-			es,
+			ir.RSettings,
+			ir.ExecSettings,
 			lg)
 		return res, binaryBall, err
 	}

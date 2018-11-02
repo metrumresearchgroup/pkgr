@@ -33,10 +33,7 @@ type Worker struct {
 	UpdateQueue chan<- InstallUpdate
 	Quit        chan bool
 	InstallFunc func(fs afero.Fs,
-		tbp string, // tarball path
-		args InstallArgs,
-		rs RSettings,
-		es ExecSettings,
+		ir InstallRequest,
 		lg *logrus.Logger) (CmdResult, string, error)
 }
 
@@ -61,7 +58,7 @@ func (w *Worker) Start(lg *logrus.Logger) {
 					"WID":     w.ID,
 					"package": ir.Package,
 				}).Info("package install request received")
-				res, bPath, err := w.InstallFunc(appFS, ir.Path, ir.InstallArgs, ir.RSettings, ir.ExecSettings, lg)
+				res, bPath, err := w.InstallFunc(appFS, ir, lg)
 				w.UpdateQueue <- InstallUpdate{
 					Result:       res,
 					Package:      ir.Package,
@@ -97,10 +94,7 @@ func (w *Worker) Stop() {
 //NewInstallQueue provides a new Installation queue with a set number of workers
 func NewInstallQueue(n int,
 	installFunc func(fs afero.Fs,
-		tbp string, // tarball path
-		args InstallArgs,
-		rs RSettings,
-		es ExecSettings,
+		ir InstallRequest,
 		lg *logrus.Logger) (CmdResult, string, error),
 	updateFunc func(InstallUpdate), lg *logrus.Logger) *InstallQueue {
 	wq := make(chan InstallRequest, 2000)
@@ -128,10 +122,7 @@ func (i *InstallQueue) HandleUpdates(fn func(InstallUpdate)) {
 
 // RegisterNewWorker registers new workers
 func (i *InstallQueue) RegisterNewWorker(id int, fn func(fs afero.Fs,
-	tbp string, // tarball path
-	args InstallArgs,
-	rs RSettings,
-	es ExecSettings,
+	ir InstallRequest,
 	lg *logrus.Logger) (CmdResult, string, error), lg *logrus.Logger) {
 	// Create, and return the worker.
 	worker := Worker{
