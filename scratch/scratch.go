@@ -70,48 +70,47 @@ func main() {
 	pkgs := []string{
 		"ggplot2",
 	}
-	workingGraph := gpsr.NewGraph()
-	for _, p := range pkgs {
-		appendToGraph(workingGraph, dmap[p], dmap)
+	startTime := time.Now()
+	ip, err := gpsr.ResolveInstallationReqs(pkgs, dmap)
+	if err != nil {
+		fmt.Println(err)
+		panic(err)
 	}
-
-	resolved, err := gpsr.ResolveGraph(workingGraph)
+	fmt.Println(time.Since(startTime))
+	PrettyPrint(ip)
+	fmt.Println("inverted dependencies: ")
+	PrettyPrint(ip.InvertDependencies())
 	if err != nil {
 		log.Fatalf("Failed to resolve dependency graph: %s\n", err)
 	} else {
 		log.Info("The dependency graph resolved successfully")
 	}
 	var toDl []desc.Desc
-	for i, pkglayer := range resolved {
-		for _, p := range pkglayer {
+	// starting packages
+	for _, p := range ip.StartingPackages {
 			toDl = append(toDl, dmap[p])
-		}
-		log.WithFields(
-			logrus.Fields{
-				"layer": i + 1,
-				"npkgs": len(pkglayer),
-			},
-		).Info(pkglayer)
 	}
-	startTime := time.Now()
-	// want to download the packages and return the full path of any downloaded package
+	// all other packages
+	for p := range ip.DepDb {
+			toDl = append(toDl, dmap[p])
+	}
+	// // want to download the packages and return the full path of any downloaded package
 	dl, err := cran.DownloadPackages(appFS, toDl, "https://cran.rstudio.com", cran.Source, "dump")
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
 	}
-	fmt.Println("duration:", time.Since(startTime))
 
-	// ia := rcmd.NewDefaultInstallArgs()
-	// ia.Library = "../integration_tests/lib"
-	for pn, p := range dl {
-		fmt.Println(pn, p)
-	}
+	// // ia := rcmd.NewDefaultInstallArgs()
+	// // ia.Library = "../integration_tests/lib"
+	// for pn, p := range dl {
+	// 	fmt.Println(pn, p)
+	// }
 	ia := rcmd.NewDefaultInstallArgs()
 	ia.Library, _ = filepath.Abs("dump/test1lib/")
 	fmt.Println("library set to: ", ia.Library)
 	startTime = time.Now()
-	err = rcmd.InstallPackageLayers(appFS, resolved, dl, ia, rcmd.RSettings{}, rcmd.ExecSettings{}, log, 6)
+	err = rcmd.InstallPackagePlan(appFS, ip, dl, ia, rcmd.RSettings{}, rcmd.ExecSettings{}, log, 6)
 	if err != nil {
 		fmt.Println("failed package install")
 		fmt.Println(err)
@@ -119,38 +118,6 @@ func main() {
 	fmt.Println("duration:", time.Since(startTime))
 	// fmt.Println("library: ", viper.GetString("library"))
 	//rcmd.InstallThroughBinary(appFS, "", ia, rcmd.RSettings{}, rcmd.ExecSettings{}, log)
-}
-func appendToGraph(m gpsr.Graph, d desc.Desc, dmap map[string]desc.Desc) {
-	var reqs []string
-	for r := range d.Imports {
-		_, ok := dmap[r]
-		if ok {
-			reqs = append(reqs, r)
-		}
-	}
-	for r := range d.Depends {
-		_, ok := dmap[r]
-		if ok {
-			reqs = append(reqs, r)
-		}
-	}
-	for r := range d.LinkingTo {
-		_, ok := dmap[r]
-		if ok {
-			reqs = append(reqs, r)
-		}
-	}
-	fmt.Println("pkg: ", d.Package)
-	fmt.Println("new reqs: ", reqs)
-	m[d.Package] = gpsr.NewNode(d.Package, reqs)
-	if len(reqs) > 0 {
-		for _, pn := range reqs {
-			_, ok := m[pn]
-			if pn != "R" && !ok {
-				appendToGraph(m, dmap[pn], dmap)
-			}
-		}
-	}
 }
 func PrettyPrint(v interface{}) (err error) {
 	b, err := json.MarshalIndent(v, "", "  ")
