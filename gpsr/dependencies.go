@@ -5,11 +5,12 @@ import (
 	"fmt"
 
 	"github.com/deckarep/golang-set"
+	"github.com/dpastoor/rpackagemanager/desc"
 )
 
 type Graph map[string]*Node
 
-// Initialize a new graph
+// NewGraph initializes a new graph
 func NewGraph() Graph {
 	return make(map[string]*Node)
 }
@@ -42,12 +43,12 @@ func DisplayGraph(graph Graph) {
 	}
 }
 
-// ResolveGraph Resolves the dependency graph
+// ResolveLayers Resolves the dependency graph
 // providing the layers of dependencies such that
 // each layer only dependends on elements from above
 // allowing confident parallel installation at any
 // layer
-func ResolveGraph(graph Graph) ([][]string, error) {
+func ResolveLayers(graph Graph) ([][]string, error) {
 	// A map containing the nodes and their dependencies
 	nodeDependencies := make(map[string]mapset.Set)
 
@@ -56,7 +57,9 @@ func ResolveGraph(graph Graph) ([][]string, error) {
 
 		dependencySet := mapset.NewSet()
 		for _, dep := range node.Deps {
-			dependencySet.Add(dep)
+			if !isDefaultPackage(dep) {
+				dependencySet.Add(dep)
+			}
 		}
 		nodeDependencies[nm] = dependencySet
 	}
@@ -96,4 +99,69 @@ func ResolveGraph(graph Graph) ([][]string, error) {
 	}
 
 	return resolved, nil
+}
+
+// ResolveInstallationReqs resolves all the installation requirements
+func ResolveInstallationReqs(pkgs []string, ddb map[string]desc.Desc) (InstallPlan, error) {
+	workingGraph := NewGraph()
+	depDb := make(map[string][]string)
+	for _, p := range pkgs {
+		appendToGraph(workingGraph, ddb[p], ddb)
+	}
+	resolved, err := ResolveLayers(workingGraph)
+	if err != nil {
+		fmt.Println("error resolving graph")
+		return InstallPlan{}, err
+	}
+	for i, l := range resolved {
+		if i == 0 {
+			// don't need to know dep tree for first layer as shouldn't have any deps
+			continue
+		}
+		for _, p := range l {
+			workingGraph := NewGraph()
+			appendToGraph(workingGraph, ddb[p], ddb)
+			resolved, err := ResolveLayers(workingGraph)
+			if err != nil {
+				fmt.Println("error resolving graph")
+				return InstallPlan{}, err
+			}
+			allDeps := resolved[0]
+			for j, rl := range resolved {
+				if j == 0 {
+					continue
+				}
+				if j+1 == len(resolved) {
+					// for last layer don't add the package itself
+					for _, pkg := range rl {
+						if pkg != p {
+							allDeps = append(allDeps, pkg)
+						}
+					}
+				} else {
+					allDeps = append(allDeps, rl...)
+				}
+			}
+			depDb[p] = allDeps
+		}
+	}
+	return InstallPlan{StartingPackages: resolved[0],
+		DepDb: depDb}, nil
+}
+
+// InvertDependencies provides an inversion of the dependencies
+// such that each element contains a slice of all packages that depend on it
+// This can be used when a package is installed to identify which
+// other packages may have all their dependencies satisfied.
+func (ip InstallPlan) InvertDependencies() map[string][]string {
+	ddb := ip.DepDb
+	idb := make(map[string][]string)
+	for pkg, deps := range ddb {
+		for _, p := range deps {
+			d := idb[p]
+			d = append(d, pkg)
+			idb[p] = d
+		}
+	}
+	return idb
 }
