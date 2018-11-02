@@ -304,6 +304,7 @@ func InstallPackagePlan(
 	ncpu int,
 ) error {
 	wg := sync.WaitGroup{}
+	startTime := time.Now()
 	// for now this will only be updated in the Update function
 	// however if it may be concurrently accessed should consider a syncmap implementation
 	installedPkgs := make(map[string]bool)
@@ -371,11 +372,8 @@ func InstallPackagePlan(
 		wg.Add(1)
 		shouldInstall <- p
 	}
-	fmt.Println("waiting while installing layer...")
-	startTime := time.Now()
-	fmt.Println("done waiting while installing layer... ", time.Since(startTime))
-	lg.WithField("duration", time.Since(startTime)).Info("layer install time")
 	wg.Wait()
+	lg.WithField("duration", time.Since(startTime)).Info("layer install time")
 	if anyFailed {
 		return fmt.Errorf("installation failed for packages: %s", strings.Join(failedPkgs, ", "))
 	}
