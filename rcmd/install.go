@@ -292,10 +292,10 @@ func InstallThroughBinary(
 	return res, "", err
 }
 
-// InstallPackageLayers installs a set of packages by layer
-func InstallPackageLayers(
+// InstallPackagePlan installs a set of packages by layer
+func InstallPackagePlan(
 	fs afero.Fs,
-	layers [][]string,
+	plan gpsr.InstallPlan,
 	dl map[string]cran.Download,
 	args InstallArgs,
 	rs RSettings,
@@ -304,7 +304,13 @@ func InstallPackageLayers(
 	ncpu int,
 ) error {
 	wg := sync.WaitGroup{}
+	// for now this will only be updated in the Update function
+	// however if it may be concurrently accessed should consider a syncmap implementation
+	installedPkgs := make(map[string]bool)
+	// if packages ID'd as ready to install signal so can push them only the queue
+	shouldInstall := make(chan string)
 	anyFailed := false
+	iDeps := plan.InvertDependencies()
 	failedPkgs := []string{}
 	iq := NewInstallQueue(ncpu,
 		InstallThroughBinary,
@@ -313,25 +319,43 @@ func InstallPackageLayers(
 				fmt.Println("error installing", iu.Err)
 				anyFailed = true
 				failedPkgs = append(failedPkgs, iu.Package)
+			} else {
+				// set that the package is installed,
+				// then check if any of the inverse dependencies are
+				// ready to be installed, and if so, signal they should
+				// be installed
+				installedPkgs[iu.Package] = true
+				deps, exists := iDeps[iu.Package]
+				if exists {
+					for _, maybeInstall := range deps {
+						needDeps := plan.DepDb[maybeInstall]
+						allInstalled := true
+						for _, d := range needDeps {
+							_, installed := installedPkgs[d]
+							if !installed {
+								allInstalled = false
+							}
+						}
+						if allInstalled {
+							wg.Add(1)
+							shouldInstall <- maybeInstall
+						}
+					}
+				}
 			}
 			wg.Done()
 			fmt.Println("installed with message: ", iu.Result.Stderr)
 		}, lg,
 	)
-	for i, lp := range layers {
-		if anyFailed {
-			lg.WithField("layer", i+1).Info("not installing layer as previous failure occurred")
-			continue
-		}
-		lg.WithField("layer", i+1).Info("starting layer")
-		startTime := time.Now()
-		for _, p := range lp {
-			exists, _ := goutils.DirExists(fs, filepath.Join(args.Library, p))
-			if exists {
-				lg.WithField("package", p).Info("package already installed")
+	go func(c chan string) {
+		for p := range c {
+			if anyFailed {
+				// stop trying to install any more
 				continue
 			}
-			wg.Add(1)
+			
+			// wg added from updater before pushing here
+			// wg.Add(1)
 			fmt.Println("pushing package ", p)
 			iq.Push(InstallRequest{
 				Package:      p,
@@ -341,11 +365,17 @@ func InstallPackageLayers(
 				ExecSettings: es,
 			})
 		}
-		fmt.Println("waiting while installing layer...")
-		wg.Wait()
-		fmt.Println("done waiting while installing layer... ", time.Since(startTime))
-		lg.WithField("duration", time.Since(startTime)).Info("layer install time")
+	}(shouldInstall)
+	lg.WithField("packages", strings.Join(plan.StartingPackages, ", ")).Info("starting initial install")
+	for _, p := range plan.StartingPackages {
+		wg.Add(1)
+		shouldInstall <- p
 	}
+	fmt.Println("waiting while installing layer...")
+	startTime := time.Now()
+	fmt.Println("done waiting while installing layer... ", time.Since(startTime))
+	lg.WithField("duration", time.Since(startTime)).Info("layer install time")
+	wg.Wait()
 	if anyFailed {
 		return fmt.Errorf("installation failed for packages: %s", strings.Join(failedPkgs, ", "))
 	}
