@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/dpastoor/rpackagemanager/desc"
@@ -67,12 +68,12 @@ func (r *RepoDb) Decode(file string) error {
 		return err
 	}
 	d := gob.NewDecoder(f)
-	return d.Decode(r.Db)
+	return d.Decode(&r.Db)
 }
 
 // Encode encodes the PackageDatabase
 func (r *RepoDb) Encode(file string) error {
-	err := os.MkdirAll(filepath.Dir(file), 0644)
+	err := os.MkdirAll(filepath.Dir(file), 0777)
 	if err != nil {
 		return err
 	}
@@ -105,7 +106,7 @@ func (r *RepoDb) Encode(file string) error {
 // R_AVAILABLE_PACKAGES_CACHE_CONTROL_MAX_AGE controls the timing to requery the cache in R
 func (r *RepoDb) GetPackages() error {
 	// just get src versions for now
-	pkgURL := filepath.Join(r.Repo.URL, "src/contrib/PACKAGES")
+	pkgURL := strings.TrimSuffix(r.Repo.URL, "/") + "/src/contrib/PACKAGES"
 	cdir, err := os.UserCacheDir()
 	if err != nil {
 		fmt.Println("could not use user cache dir, using temp dir")
@@ -129,6 +130,7 @@ func (r *RepoDb) GetPackages() error {
 		return err
 	}
 	cb := bytes.Split(body, []byte("\n\n"))
+	fmt.Println("fetched, decoding pkgs...")
 	for _, p := range cb {
 		reader := bytes.NewReader(p)
 		d, err := desc.ParseDesc(reader)
@@ -137,7 +139,9 @@ func (r *RepoDb) GetPackages() error {
 			fmt.Println("problem parsing package with info ", string(p))
 			panic(err)
 		}
-		err = r.Encode(pkgFile)
 	}
+	fmt.Println("encoding...")
+	err = r.Encode(pkgFile)
+	fmt.Println("done encoding...")
 	return err
 }
