@@ -226,11 +226,8 @@ func InstallThroughBinary(
 	if origDir == "" {
 		origDir, _ = os.Getwd()
 	}
-	fmt.Println("tbp: ", ir.Path)
-	fmt.Println("starting from dir: ", origDir)
 	ir.ExecSettings.WorkDir = tmpdir
 	finalLib := ir.InstallArgs.Library
-	fmt.Println("set lib to install: ", ir.InstallArgs.Library)
 	// since moving directories to tmp for execution,
 	// should treat everything as absolute
 	if !filepath.IsAbs(ir.Path) {
@@ -245,7 +242,6 @@ func InstallThroughBinary(
 	// this will prevent failed installs overwriting existing
 	// properly installed packages in the final lib
 	ir.InstallArgs.Library = tmpdir
-	fmt.Println("final lib to install: ", finalLib)
 	ib := InstallArgs{
 		Library: finalLib,
 	}
