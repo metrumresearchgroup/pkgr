@@ -113,7 +113,7 @@ func (r *RepoDb) GetPackages() error {
 	}
 	h := md5.New()
 	io.WriteString(h, r.Repo.URL+r.Repo.Name)
-	pkgHash := string(h.Sum(nil))
+	pkgHash := fmt.Sprintf("%x", h.Sum(nil))
 	pkgFile := filepath.Join(cdir, "r_package_caches", pkgHash)
 	if _, err := os.Stat(pkgFile); !os.IsNotExist(err) {
 		return r.Decode(pkgFile)
