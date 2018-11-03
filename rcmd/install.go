@@ -76,7 +76,7 @@ func Install(
 		rdir, _ = os.Getwd()
 		lg.WithFields(
 			logrus.Fields{"rdir": rdir},
-		).Debug("launch dir")
+		).Trace("launch dir set to working directory")
 	} else {
 		ok, err := afero.DirExists(fs, rdir)
 		if !ok || err != nil {
@@ -129,7 +129,7 @@ func Install(
 			"cmdArgs":   cmdArgs,
 			"RSettings": rs,
 			"env":       envVars,
-		}).Debug("command args")
+		}).Trace("command args")
 	lg.WithFields(
 		logrus.Fields{
 			"cmd":       "install",
@@ -266,7 +266,7 @@ func InstallThroughBinary(
 			"tbp":        ir.Path,
 			"bbp":        bbp,
 			"binaryBall": binaryBall,
-		}).Debug("binary location prior to install")
+		}).Trace("binary location prior to install")
 		ok, _ := afero.Exists(fs, binaryBall)
 		if !ok {
 			lg.WithFields(logrus.Fields{
