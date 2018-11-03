@@ -118,7 +118,11 @@ func Install(
 	cmdArgs = append(cmdArgs, args.CliArgs()...)
 	cmdArgs = append(cmdArgs, tbp)
 	envVars := os.Environ()
-
+	newEnvs := []string{}
+	for k, v := range rs.EnvVars {
+		newEnvs = append(newEnvs, fmt.Sprintf("%s=%s", k, v))
+	}
+	envVars = append(envVars, newEnvs...)
 	lg.WithFields(
 		logrus.Fields{
 			"cmd":       "install",
@@ -131,6 +135,7 @@ func Install(
 			"cmd":       "install",
 			"cmdArgs":   cmdArgs,
 			"RSettings": rs,
+			"env": newEnvs,
 		}).Info("command args")
 
 	// --vanilla is a command for R and should be specified before the CMD, eg
@@ -142,7 +147,7 @@ func Install(
 		fmt.Sprintf("%s", rs.R()),
 		cmdArgs...,
 	)
-
+	cmd.Env = envVars
 	cmd.Dir = rdir
 	var outbuf, errbuf bytes.Buffer
 	cmd.Stdout = &outbuf
@@ -337,7 +342,7 @@ func InstallPackagePlan(
 								allInstalled = false
 							}
 						}
-						if allInstalled {
+						if allInstalled && !anyFailed {
 							wg.Add(1)
 							shouldInstall <- maybeInstall
 						}
@@ -358,6 +363,23 @@ func InstallPackagePlan(
 			// wg added from updater before pushing here
 			// wg.Add(1)
 			fmt.Println("pushing package ", p)
+			if (p == "data.table") {
+				nrs := rs
+				fmt.Println("setting data.table makevar")
+				nev := make(map[string]string)
+				for k, v := range rs.EnvVars {
+					nev[k] = v
+				}
+				nev["R_MAKEVARS_USER"] = "~/.R/Makevars_data.table"
+				nrs.EnvVars = nev
+			iq.Push(InstallRequest{
+				Package:      p,
+				Path:         dl[p].Path,
+				InstallArgs:  args,
+				RSettings:    nrs,
+				ExecSettings: es,
+			})
+			} else {
 			iq.Push(InstallRequest{
 				Package:      p,
 				Path:         dl[p].Path,
@@ -365,6 +387,7 @@ func InstallPackagePlan(
 				RSettings:    rs,
 				ExecSettings: es,
 			})
+			}
 		}
 	}(shouldInstall)
 	lg.WithField("packages", strings.Join(plan.StartingPackages, ", ")).Info("starting initial install")
