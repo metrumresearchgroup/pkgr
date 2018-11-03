@@ -1,0 +1,39 @@
+# top level packages
+Packages:
+  - PKPDmisc
+  - mrgsolve
+  - rmarkdown
+  - bitops
+  - caTools
+  - GGally
+  - knitr
+  - gridExtra
+  - htmltools
+  - xtable
+  - tidyverse
+  - shiny
+  - shinydashboard
+  - data.table
+
+# any repositories, order matters
+Repos:
+  - r_validated: "https://metrumresearchgroup.github.io/r_validated"
+  - CRAN: "https://cran.rstudio.com"
+
+Library:
+  - "path/to/installation"
+
+# any libpaths desired to be set
+Libpaths:
+  - "path/to/some/prev/installed"
+  - "another/path/to/some/prev/installed"
+
+# customizations are package specific settings
+# for example, we can use a custom makevar file for data.table
+# by leveraging the R_MAKEVARS_USER to point to a separate makevar
+# each package gets installed in its own process so any env variables
+# or settings will only matter for it
+Customizations:
+  data.table:
+    env:
+      - R_MAKEVARS_USER: "~/.R/Makevars_data.table" 
