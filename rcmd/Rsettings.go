@@ -5,6 +5,13 @@ import (
 	"strings"
 )
 
+// NewRSettings initializes RSettings
+func NewRSettings() RSettings {
+	return RSettings{
+		EnvVars: make(map[string]string),
+	}
+}
+
 // R provides a cleaned path to the R executable
 func (rs RSettings) R() string {
 	rpath := rs.Rpath
