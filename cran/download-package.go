@@ -31,26 +31,32 @@ type Download struct {
 	New  bool
 }
 
+// PkgDl holds the metadata needed to download a package
+type PkgDl struct {
+	Package desc.Desc
+	Repo    RepoURL
+}
+
 // DownloadPackages downloads a set of packages concurrently
-func DownloadPackages(fs afero.Fs, ds []desc.Desc, url string, st SourceType, dir string) (map[string](Download), error) {
+func DownloadPackages(fs afero.Fs, ds []PkgDl, st SourceType, dir string) (map[string](Download), error) {
 	result := NewSyncMap()
 	sem := make(chan struct{}, 10)
 	wg := sync.WaitGroup{}
 	for _, d := range ds {
 		wg.Add(1)
-		go func(d desc.Desc, wg *sync.WaitGroup) {
+		go func(d PkgDl, wg *sync.WaitGroup) {
 			sem <- struct{}{}
 			defer func() {
 				<-sem
 				wg.Done()
 			}()
-			pkgdir := filepath.Join(dir, fmt.Sprintf("%s_%s.tar.gz", d.Package, d.Version))
-			dl, err := DownloadPackage(fs, d, url, st, pkgdir)
+			pkgdir := filepath.Join(dir, fmt.Sprintf("%s_%s.tar.gz", d.Package.Package, d.Package.Version))
+			dl, err := DownloadPackage(fs, d.Package, d.Repo.URL, st, pkgdir)
 			if err != nil {
-				fmt.Println("downloading failed for package: ", d.Package)
+				fmt.Println("downloading failed for package: ", d.Package.Package)
 				return
 			}
-			result.Put(d.Package, dl)
+			result.Put(d.Package.Package, dl)
 		}(d, &wg)
 	}
 	wg.Wait()

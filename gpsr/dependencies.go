@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/deckarep/golang-set"
-	"github.com/dpastoor/rpackagemanager/desc"
+	"github.com/dpastoor/rpackagemanager/cran"
 )
 
 type Graph map[string]*Node
@@ -102,11 +102,12 @@ func ResolveLayers(graph Graph) ([][]string, error) {
 }
 
 // ResolveInstallationReqs resolves all the installation requirements
-func ResolveInstallationReqs(pkgs []string, ddb map[string]desc.Desc) (InstallPlan, error) {
+func ResolveInstallationReqs(pkgs []string, pkgdb *cran.PkgDb) (InstallPlan, error) {
 	workingGraph := NewGraph()
 	depDb := make(map[string][]string)
 	for _, p := range pkgs {
-		appendToGraph(workingGraph, ddb[p], ddb)
+		pkg, _, _ := pkgdb.GetPackage(p)
+		appendToGraph(workingGraph, pkg, pkgdb)
 	}
 	resolved, err := ResolveLayers(workingGraph)
 	if err != nil {
@@ -120,7 +121,8 @@ func ResolveInstallationReqs(pkgs []string, ddb map[string]desc.Desc) (InstallPl
 		}
 		for _, p := range l {
 			workingGraph := NewGraph()
-			appendToGraph(workingGraph, ddb[p], ddb)
+			pkg, _, _ := pkgdb.GetPackage(p)
+			appendToGraph(workingGraph, pkg, pkgdb)
 			resolved, err := ResolveLayers(workingGraph)
 			if err != nil {
 				fmt.Println("error resolving graph")
