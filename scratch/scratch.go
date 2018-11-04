@@ -20,29 +20,41 @@ import (
 )
 
 func main() {
-	GobDB()
-	dmap := make(map[string]desc.Desc)
 	appFS := afero.NewOsFs()
 	log := logrus.New()
 	log.Level = logrus.DebugLevel
-	log.SetFormatter(&logrus.JSONFormatter{})
-	appFS.Remove("logfile.txt")
-	logf, _ := appFS.OpenFile("logfile.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	log.SetOutput(logf)
-
-	file, err := os.Open("crandb.gob")
+	// log.SetFormatter(&logrus.JSONFormatter{})
+	// appFS.Remove("logfile.txt")
+	// logf, _ := appFS.OpenFile("logfile.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	// log.SetOutput(logf)
+	startTime := time.Now()
+	repos := []cran.RepoURL{
+		cran.RepoURL{
+			Name: "CRAN",
+			URL:  "https://cran.rstudio.com",
+		},
+		cran.RepoURL{
+			Name: "gh_releases",
+			URL:  "https://metrumresearchgroup.github.io/rpkgs/gh_releases",
+		},
+	}
+	cdb, err := cran.NewPkgDb(repos)
 	if err != nil {
-		fmt.Println("problem creating crandb")
+		fmt.Println("error getting pkgdb ", err)
 		panic(err)
 	}
-	d := gob.NewDecoder(file)
-
-	// Decoding the serialized data
-	err = d.Decode(&dmap)
-	if err != nil {
-		panic(err)
+	//PrettyPrint(cdb)
+	for _, db := range cdb.Db {
+		fmt.Println(fmt.Sprintf("%v packages pulled in for %s from %s", len(db.Db), db.Repo.Name, db.Repo.URL))
 	}
 
+	p, repo, _ := cdb.GetPackage("logrrr")
+	fmt.Println(repo)
+	PrettyPrint(p)
+
+	p, repo, _ = cdb.GetPackage("PKPDmisc")
+	fmt.Println(repo)
+	PrettyPrint(p)
 	// PrettyPrint(dmap["dplyr"])
 	// PrettyPrint(dmap["PKPDmisc"])
 	//AppFs := afero.NewOsFs()
@@ -52,26 +64,24 @@ func main() {
 	// 	log.Fatalf("error opening file: %v", err)
 	// }
 	// defer f.Close()
-	// pkgs := []string{
-	// 	"PKPDmisc",
-	// 	"mrgsolve",
-	// 	"rmarkdown",
-	// 	"bitops",
-	// 	"caTools",
-	// 	"GGally",
-	// 	"knitr",
-	// 	"gridExtra",
-	// 	"htmltools",
-	// 	"xtable",
-	// 	"tidyverse",
-	// 	"shiny",
-	// 	"shinydashboard",
-	// }
 	pkgs := []string{
-		"ggplot2",
+		// "PKPDmisc",
+		// "mrgsolve",
+		// "rmarkdown",
+		// "bitops",
+		// "caTools",
+		// "GGally",
+		// "knitr",
+		// "gridExtra",
+		// "htmltools",
+		// "xtable",
+		// "tidyverse",
+		// "shiny",
+		// "shinydashboard",
+		// "data.table",
+		"logrrr",
 	}
-	startTime := time.Now()
-	ip, err := gpsr.ResolveInstallationReqs(pkgs, dmap)
+	ip, err := gpsr.ResolveInstallationReqs(pkgs, cdb)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
@@ -85,17 +95,19 @@ func main() {
 	} else {
 		log.Info("The dependency graph resolved successfully")
 	}
-	var toDl []desc.Desc
+	var toDl []cran.PkgDl
 	// starting packages
 	for _, p := range ip.StartingPackages {
-			toDl = append(toDl, dmap[p])
+		pkg, repo, _ := cdb.GetPackage(p)
+		toDl = append(toDl, cran.PkgDl{Package: pkg, Repo: repo})
 	}
 	// all other packages
 	for p := range ip.DepDb {
-			toDl = append(toDl, dmap[p])
+		pkg, repo, _ := cdb.GetPackage(p)
+		toDl = append(toDl, cran.PkgDl{Package: pkg, Repo: repo})
 	}
 	// // want to download the packages and return the full path of any downloaded package
-	dl, err := cran.DownloadPackages(appFS, toDl, "https://cran.rstudio.com", cran.Source, "dump")
+	dl, err := cran.DownloadPackages(appFS, toDl, cran.Source, "dump")
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
@@ -107,17 +119,15 @@ func main() {
 	// 	fmt.Println(pn, p)
 	// }
 	ia := rcmd.NewDefaultInstallArgs()
-	ia.Library, _ = filepath.Abs("dump/test1lib/")
+	ia.Library, _ = filepath.Abs("dump/test3lib/")
 	fmt.Println("library set to: ", ia.Library)
-	startTime = time.Now()
-	err = rcmd.InstallPackagePlan(appFS, ip, dl, ia, rcmd.RSettings{}, rcmd.ExecSettings{}, log, 6)
+	err = rcmd.InstallPackagePlan(appFS, ip, dl, ia, rcmd.NewRSettings(), rcmd.ExecSettings{}, log, 12)
 	if err != nil {
 		fmt.Println("failed package install")
 		fmt.Println(err)
 	}
 	fmt.Println("duration:", time.Since(startTime))
 	// fmt.Println("library: ", viper.GetString("library"))
-	//rcmd.InstallThroughBinary(appFS, "", ia, rcmd.RSettings{}, rcmd.ExecSettings{}, log)
 }
 func PrettyPrint(v interface{}) (err error) {
 	b, err := json.MarshalIndent(v, "", "  ")
