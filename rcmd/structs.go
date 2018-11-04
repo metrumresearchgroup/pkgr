@@ -36,3 +36,10 @@ type InstallArgs struct {
 	//set
 	Library string `rcmd:"library=%s,fmt"`
 }
+
+// PackageCache provides metadata about the package cache
+// Each repository should be a subfolder from the BaseDir
+// with separate folders for binary and source packages
+type PackageCache struct {
+	BaseDir string
+}
