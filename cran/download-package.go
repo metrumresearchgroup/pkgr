@@ -26,9 +26,10 @@ const (
 
 // Download provides information about the package download
 type Download struct {
-	Type SourceType
-	Path string
-	New  bool
+	Type     SourceType
+	Path     string
+	New      bool
+	Metadata PkgDl
 }
 
 // PkgDl holds the metadata needed to download a package
@@ -38,10 +39,23 @@ type PkgDl struct {
 }
 
 // DownloadPackages downloads a set of packages concurrently
-func DownloadPackages(fs afero.Fs, ds []PkgDl, st SourceType, dir string) (map[string](Download), error) {
+func DownloadPackages(fs afero.Fs, ds []PkgDl, st SourceType, baseDir string) (map[string](Download), error) {
 	result := NewSyncMap()
 	sem := make(chan struct{}, 10)
 	wg := sync.WaitGroup{}
+	var pkgType string
+	var typeExt string
+	switch st {
+	case Binary:
+		pkgType = "binary"
+		typeExt = "tgz"
+	case Source:
+		pkgType = "src"
+		typeExt = "tar.gz"
+	default:
+		pkgType = "src"
+		typeExt = "tar.gz"
+	}
 	for _, d := range ds {
 		wg.Add(1)
 		go func(d PkgDl, wg *sync.WaitGroup) {
@@ -50,8 +64,16 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, st SourceType, dir string) (map[s
 				<-sem
 				wg.Done()
 			}()
-			pkgdir := filepath.Join(dir, fmt.Sprintf("%s_%s.tar.gz", d.Package.Package, d.Package.Version))
-			dl, err := DownloadPackage(fs, d.Package, d.Repo.URL, st, pkgdir)
+			pkgdir := filepath.Join(baseDir, d.Repo.Name, pkgType)
+			err := fs.MkdirAll(pkgdir, 0777)
+			pkgFile := filepath.Join(pkgdir, fmt.Sprintf("%s_%s.%s", d.Package.Package, d.Package.Version, typeExt))
+			if err != nil {
+				fmt.Println("error creating package directory ", pkgdir)
+				fmt.Println("error: ", err)
+				// should this trigger something more impactful? probably since wouldn't download anything
+				return
+			}
+			dl, err := DownloadPackage(fs, d, st, pkgFile)
 			if err != nil {
 				fmt.Println("downloading failed for package: ", d.Package.Package)
 				return
@@ -66,7 +88,10 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, st SourceType, dir string) (map[s
 
 // DownloadPackage should download a package tarball if it doesn't exist and return
 // the path to the downloaded tarball
-func DownloadPackage(fs afero.Fs, d desc.Desc, url string, st SourceType, dest string) (Download, error) {
+func DownloadPackage(fs afero.Fs, d PkgDl, st SourceType, dest string) (Download, error) {
+	if st != Source {
+		panic("cannot download other than source for now")
+	}
 	if !filepath.IsAbs(dest) {
 		cwd, _ := os.Getwd()
 		// turn to absolute
@@ -77,14 +102,15 @@ func DownloadPackage(fs afero.Fs, d desc.Desc, url string, st SourceType, dest s
 		return Download{}, err
 	}
 	if exists {
-		fmt.Println("already have ", d.Package, " downloaded")
+		fmt.Println("already have ", d.Package.Package, " downloaded")
 		return Download{
-			Type: st,
-			Path: dest,
-			New:  false,
+			Type:     st,
+			Path:     dest,
+			New:      false,
+			Metadata: d,
 		}, nil
 	}
-	pkgdl := fmt.Sprintf("%s/src/contrib/%s_%s.tar.gz", strings.TrimSuffix(url, "/"), d.Package, d.Version)
+	pkgdl := fmt.Sprintf("%s/src/contrib/%s", strings.TrimSuffix(d.Repo.URL, "/"), filepath.Base(dest))
 	fmt.Println("downloading from: ", pkgdl)
 	resp, err := http.Get(pkgdl)
 	if err != nil {
@@ -105,8 +131,9 @@ func DownloadPackage(fs afero.Fs, d desc.Desc, url string, st SourceType, dest s
 	}
 
 	return Download{
-		Type: st,
-		Path: dest,
-		New:  true,
+		Type:     st,
+		Path:     dest,
+		New:      true,
+		Metadata: d,
 	}, nil
 }
