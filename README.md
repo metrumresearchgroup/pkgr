@@ -1,5 +1,15 @@
 # pkgr
 
+## Assumptions (for now)
+
+Making this tool bulletproof will take a significant effort over time. To bring confidence for use day-to-day
+we must clearly outline the assumptions we are making internally to provide guidance on the areas
+this tool may not be suitable for, or to explain unexpected behavior.
+
+* Package/versions from a given repo will not change over time
+  * if pkgx_0.1.0 is downloaded from repoY, we do not need to check each time that pkgx is consistent
+  * this allows simple caching without doing hash comparisons (for now)
+
 R package management
 
 ## Install Strategy Background
