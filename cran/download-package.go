@@ -39,8 +39,8 @@ type PkgDl struct {
 }
 
 // DownloadPackages downloads a set of packages concurrently
-func DownloadPackages(fs afero.Fs, ds []PkgDl, st SourceType, baseDir string) (map[string](Download), error) {
-	result := NewSyncMap()
+func DownloadPackages(fs afero.Fs, ds []PkgDl, st SourceType, baseDir string) (*PkgMap, error) {
+	result := NewPkgMap()
 	sem := make(chan struct{}, 10)
 	wg := sync.WaitGroup{}
 	var pkgType string
@@ -83,7 +83,7 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, st SourceType, baseDir string) (m
 	}
 	wg.Wait()
 	fmt.Println("all packages downloaded")
-	return result.Map, nil
+	return result, nil
 }
 
 // DownloadPackage should download a package tarball if it doesn't exist and return
