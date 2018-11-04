@@ -297,7 +297,7 @@ func InstallThroughBinary(
 func InstallPackagePlan(
 	fs afero.Fs,
 	plan gpsr.InstallPlan,
-	dl map[string]cran.Download,
+	dl *cran.PkgMap,
 	args InstallArgs,
 	rs RSettings,
 	es ExecSettings,
@@ -326,6 +326,9 @@ func InstallPackagePlan(
 				// then check if any of the inverse dependencies are
 				// ready to be installed, and if so, signal they should
 				// be installed
+				pkg, _ := dl.Get(iu.Package)
+
+				lg.WithFields(logrus.Fields{"binary": iu.BinaryPath, "src": pkg.Path}).Info(iu.Package)
 				installedPkgs[iu.Package] = true
 				deps, exists := iDeps[iu.Package]
 				if exists {
@@ -359,6 +362,7 @@ func InstallPackagePlan(
 			// wg added from updater before pushing here
 			// wg.Add(1)
 			fmt.Println("pushing package ", p)
+			pkg, _ := dl.Get(p)
 			if (p == "data.table") {
 				nrs := rs
 				fmt.Println("setting data.table makevar")
@@ -368,9 +372,10 @@ func InstallPackagePlan(
 				}
 				nev["R_MAKEVARS_USER"] = "~/.R/Makevars_data.table"
 				nrs.EnvVars = nev
+
 			iq.Push(InstallRequest{
 				Package:      p,
-				Path:         dl[p].Path,
+				Path:         pkg.Path,
 				InstallArgs:  args,
 				RSettings:    nrs,
 				ExecSettings: es,
@@ -378,7 +383,7 @@ func InstallPackagePlan(
 			} else {
 			iq.Push(InstallRequest{
 				Package:      p,
-				Path:         dl[p].Path,
+				Path:         pkg.Path,
 				InstallArgs:  args,
 				RSettings:    rs,
 				ExecSettings: es,
