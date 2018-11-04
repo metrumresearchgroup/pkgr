@@ -7,43 +7,6 @@ import (
 	"github.com/spf13/afero"
 )
 
-// InstallRequest provides information about the installation request
-type InstallRequest struct {
-	Package      string
-	Path         string
-	InstallArgs  InstallArgs
-	ExecSettings ExecSettings
-	RSettings    RSettings
-}
-
-// InstallUpdate provides information about the Job in the queue
-type InstallUpdate struct {
-	Result       CmdResult
-	Package      string
-	BinaryPath   string
-	Msg          string
-	Err          error
-	ShouldUpdate bool
-}
-
-// Worker does work
-type Worker struct {
-	ID          int
-	WorkQueue   <-chan InstallRequest
-	UpdateQueue chan<- InstallUpdate
-	Quit        chan bool
-	InstallFunc func(fs afero.Fs,
-		ir InstallRequest,
-		lg *logrus.Logger) (CmdResult, string, error)
-}
-
-// InstallQueue represents a new install queue
-type InstallQueue struct {
-	WorkQueue   chan InstallRequest
-	UpdateQueue chan InstallUpdate
-	Workers     []Worker
-}
-
 // Start starts a worker
 func (w *Worker) Start(lg *logrus.Logger) {
 	lg.Infof("starting worker %v \n", w.ID)
@@ -58,7 +21,7 @@ func (w *Worker) Start(lg *logrus.Logger) {
 					"WID":     w.ID,
 					"package": ir.Package,
 				}).Info("package install request received")
-				res, bPath, err := w.InstallFunc(appFS, ir, lg)
+				res, bPath, err := w.InstallFunc(appFS, ir, ir.Cache, lg)
 				w.UpdateQueue <- InstallUpdate{
 					Result:       res,
 					Package:      ir.Package,
@@ -95,6 +58,7 @@ func (w *Worker) Stop() {
 func NewInstallQueue(n int,
 	installFunc func(fs afero.Fs,
 		ir InstallRequest,
+		pc PackageCache,
 		lg *logrus.Logger) (CmdResult, string, error),
 	updateFunc func(InstallUpdate), lg *logrus.Logger) *InstallQueue {
 	wq := make(chan InstallRequest, 2000)
@@ -123,6 +87,7 @@ func (i *InstallQueue) HandleUpdates(fn func(InstallUpdate)) {
 // RegisterNewWorker registers new workers
 func (i *InstallQueue) RegisterNewWorker(id int, fn func(fs afero.Fs,
 	ir InstallRequest,
+	pc PackageCache,
 	lg *logrus.Logger) (CmdResult, string, error), lg *logrus.Logger) {
 	// Create, and return the worker.
 	worker := Worker{

@@ -1,5 +1,11 @@
 package rcmd
 
+import (
+	"github.com/dpastoor/rpackagemanager/cran"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/afero"
+)
+
 // CmdResult stores information about the executed cmd
 type CmdResult struct {
 	Stdout   string `json:"stdout,omitempty"`
@@ -43,4 +49,43 @@ type InstallArgs struct {
 // with separate folders for binary and source packages
 type PackageCache struct {
 	BaseDir string
+}
+
+// InstallRequest provides information about the installation request
+type InstallRequest struct {
+	Package      string
+	Metadata     cran.Download
+	Cache        PackageCache
+	InstallArgs  InstallArgs
+	ExecSettings ExecSettings
+	RSettings    RSettings
+}
+
+// InstallUpdate provides information about the Job in the queue
+type InstallUpdate struct {
+	Result       CmdResult
+	Package      string
+	BinaryPath   string
+	Msg          string
+	Err          error
+	ShouldUpdate bool
+}
+
+// Worker does work
+type Worker struct {
+	ID          int
+	WorkQueue   <-chan InstallRequest
+	UpdateQueue chan<- InstallUpdate
+	Quit        chan bool
+	InstallFunc func(fs afero.Fs,
+		ir InstallRequest,
+		pc PackageCache,
+		lg *logrus.Logger) (CmdResult, string, error)
+}
+
+// InstallQueue represents a new install queue
+type InstallQueue struct {
+	WorkQueue   chan InstallRequest
+	UpdateQueue chan InstallUpdate
+	Workers     []Worker
 }

@@ -10,7 +10,6 @@ import (
 	"sync"
 
 	"github.com/dpastoor/goutils"
-	"github.com/dpastoor/rpackagemanager/desc"
 	"github.com/spf13/afero"
 )
 
@@ -23,20 +22,6 @@ const (
 	Source SourceType = iota
 	Binary
 )
-
-// Download provides information about the package download
-type Download struct {
-	Type     SourceType
-	Path     string
-	New      bool
-	Metadata PkgDl
-}
-
-// PkgDl holds the metadata needed to download a package
-type PkgDl struct {
-	Package desc.Desc
-	Repo    RepoURL
-}
 
 // DownloadPackages downloads a set of packages concurrently
 func DownloadPackages(fs afero.Fs, ds []PkgDl, st SourceType, baseDir string) (*PkgMap, error) {

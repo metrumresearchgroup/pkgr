@@ -26,3 +26,17 @@ type RepoDb struct {
 type PkgDb struct {
 	Db []*RepoDb
 }
+
+// Download provides information about the package download
+type Download struct {
+	Type     SourceType
+	Path     string
+	New      bool
+	Metadata PkgDl
+}
+
+// PkgDl holds the metadata needed to download a package
+type PkgDl struct {
+	Package desc.Desc
+	Repo    RepoURL
+}

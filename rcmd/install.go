@@ -135,7 +135,7 @@ func Install(
 			"cmd":       "install",
 			"cmdArgs":   cmdArgs,
 			"RSettings": rs,
-			"env": newEnvs,
+			"env":       newEnvs,
 		}).Info("command args")
 
 	// --vanilla is a command for R and should be specified before the CMD, eg
@@ -201,6 +201,28 @@ func Install(
 	return cmdResult, err
 }
 
+// IsInCache notes if package binary already available in cache
+// and returns a new installrequest based on the binary path if available
+func isInCache(
+	fs afero.Fs,
+	ir InstallRequest,
+	pc PackageCache,
+	lg *logrus.Logger,
+) (bool, InstallRequest) {
+	// if not in cache just pass back
+	meta := ir.Metadata
+	pkg := ir.Metadata.Metadata.Package
+	bpath := filepath.Join(pc.BaseDir, meta.Metadata.Repo.Name, "binary", binaryName(pkg.Package, pkg.Version))
+	lg.WithField("path", bpath).Trace("checking in cache")
+	exists, err := goutils.Exists(fs, bpath)
+	if !exists || err != nil {
+		return false, ir
+	}
+	ir.Metadata.Path = bpath
+	ir.Metadata.Type = cran.Binary
+	return true, ir
+}
+
 // InstallThroughBinary installs in a two pass fashion
 // by first installing and generating a binary in
 // a tmp dir, then installs the binary to the desired
@@ -211,6 +233,7 @@ func Install(
 func InstallThroughBinary(
 	fs afero.Fs,
 	ir InstallRequest,
+	pc PackageCache,
 	lg *logrus.Logger,
 ) (CmdResult, string, error) {
 	exists, _ := goutils.DirExists(fs, filepath.Join(ir.InstallArgs.Library, ir.Package))
@@ -221,6 +244,22 @@ func InstallThroughBinary(
 			Stderr:   fmt.Sprintf("already installed: %s", ir.Package),
 		}, "", nil
 	}
+
+	inCache, ir := isInCache(fs, ir, pc, lg)
+	if inCache {
+		lg.WithField("package", ir.Package).Debug("package detected in cache")
+		// don't need to build since already a binary
+		ir.InstallArgs.Build = false
+		res, err := Install(fs,
+			ir.Metadata.Path,
+			ir.InstallArgs,
+			ir.RSettings,
+			ir.ExecSettings,
+			lg)
+		// don't pass binaryball path back since already in cache
+		return res, "", err
+	}
+
 	tmpdir := os.TempDir()
 	origDir := ir.ExecSettings.WorkDir
 	if origDir == "" {
@@ -230,8 +269,8 @@ func InstallThroughBinary(
 	finalLib := ir.InstallArgs.Library
 	// since moving directories to tmp for execution,
 	// should treat everything as absolute
-	if !filepath.IsAbs(ir.Path) {
-		ir.Path = filepath.Clean(filepath.Join(origDir, ir.Path))
+	if !filepath.IsAbs(ir.Metadata.Path) {
+		ir.Metadata.Path = filepath.Clean(filepath.Join(origDir, ir.Metadata.Path))
 	}
 	if !filepath.IsAbs(finalLib) {
 		finalLib = filepath.Clean(filepath.Join(origDir, finalLib))
@@ -250,20 +289,20 @@ func InstallThroughBinary(
 	// but otherwise have the same name from empirical testing
 	// pkg_0.0.1.tar.gz --> pkg_0.0.1.tgz
 	lg.WithFields(logrus.Fields{
-		"tbp":  ir.Path,
+		"tbp":  ir.Metadata.Path,
 		"args": ir.InstallArgs,
 	}).Debug("installing tarball")
 	res, err := Install(fs,
-		ir.Path,
+		ir.Metadata.Path,
 		ir.InstallArgs,
 		ir.RSettings,
 		ir.ExecSettings,
 		lg)
 	if err == nil && res.ExitCode == 0 {
-		bbp := strings.Replace(filepath.Base(ir.Path), "tar.gz", "tgz", 1)
+		bbp := strings.Replace(filepath.Base(ir.Metadata.Path), "tar.gz", "tgz", 1)
 		binaryBall := filepath.Join(tmpdir, bbp)
 		lg.WithFields(logrus.Fields{
-			"tbp":        ir.Path,
+			"tbp":        ir.Metadata.Path,
 			"bbp":        bbp,
 			"binaryBall": binaryBall,
 		}).Trace("binary location prior to install")
@@ -298,6 +337,7 @@ func InstallPackagePlan(
 	fs afero.Fs,
 	plan gpsr.InstallPlan,
 	dl *cran.PkgMap,
+	pc PackageCache,
 	args InstallArgs,
 	rs RSettings,
 	es ExecSettings,
@@ -358,7 +398,7 @@ func InstallPackagePlan(
 						filepath.Base(iu.BinaryPath),
 					)
 					_, err := goutils.Copy(iu.BinaryPath, bpath)
-						lg.WithFields(logrus.Fields{"from": iu.BinaryPath, "to": bpath}).Trace("copied binary")
+					lg.WithFields(logrus.Fields{"from": iu.BinaryPath, "to": bpath}).Trace("copied binary")
 					if err != nil {
 						lg.WithFields(logrus.Fields{"from": iu.BinaryPath, "to": bpath}).Error("error copying binary")
 					}
@@ -374,12 +414,12 @@ func InstallPackagePlan(
 				// stop trying to install any more
 				continue
 			}
-			
+
 			// wg added from updater before pushing here
 			// wg.Add(1)
 			fmt.Println("pushing package ", p)
 			pkg, _ := dl.Get(p)
-			if (p == "data.table") {
+			if p == "data.table" {
 				nrs := rs
 				fmt.Println("setting data.table makevar")
 				nev := make(map[string]string)
@@ -389,21 +429,23 @@ func InstallPackagePlan(
 				nev["R_MAKEVARS_USER"] = "~/.R/Makevars_data.table"
 				nrs.EnvVars = nev
 
-			iq.Push(InstallRequest{
-				Package:      p,
-				Path:         pkg.Path,
-				InstallArgs:  args,
-				RSettings:    nrs,
-				ExecSettings: es,
-			})
+				iq.Push(InstallRequest{
+					Package:      p,
+					Metadata:     pkg,
+					Cache:        pc,
+					InstallArgs:  args,
+					RSettings:    nrs,
+					ExecSettings: es,
+				})
 			} else {
-			iq.Push(InstallRequest{
-				Package:      p,
-				Path:         pkg.Path,
-				InstallArgs:  args,
-				RSettings:    rs,
-				ExecSettings: es,
-			})
+				iq.Push(InstallRequest{
+					Package:      p,
+					Metadata:     pkg,
+					Cache:        pc,
+					InstallArgs:  args,
+					RSettings:    rs,
+					ExecSettings: es,
+				})
 			}
 		}
 	}(shouldInstall)
@@ -413,7 +455,7 @@ func InstallPackagePlan(
 		shouldInstall <- p
 	}
 	wg.Wait()
-	lg.WithField("duration", time.Since(startTime)).Info("layer install time")
+	lg.WithField("duration", time.Since(startTime)).Info("install time")
 	if anyFailed {
 		return fmt.Errorf("installation failed for packages: %s", strings.Join(failedPkgs, ", "))
 	}
