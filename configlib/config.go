@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"runtime"
 
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
 
@@ -36,7 +36,7 @@ func LoadGlobalConfig(configFilename string) error {
 func LoadConfigFromPath(configFilename string) error {
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("pkgr")
-	configFilename = expand(filepath.Clean(configFilename))
+	configFilename, _ = homedir.Expand(filepath.Clean(configFilename))
 	viper.SetConfigFile(configFilename)
 	err := viper.ReadInConfig()
 	if err != nil {
@@ -69,12 +69,4 @@ func loadDefaultSettings() {
 	viper.SetDefault("pr_lockfile", "")
 	viper.SetDefault("pr_dir", "")
 
-}
-
-func expand(s string) string {
-	if strings.HasPrefix(s, "~/") {
-		return filepath.Join(os.Getenv("HOME"), s[1:])
-	}
-
-	return s
 }

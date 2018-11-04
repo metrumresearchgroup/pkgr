@@ -17,8 +17,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
@@ -118,12 +116,4 @@ func initConfig() {
 	if viper.GetBool("debug") {
 		viper.Debug()
 	}
-}
-
-func expand(s string) string {
-	if strings.HasPrefix(s, "~/") {
-		return filepath.Join(os.Getenv("HOME"), s[1:])
-	}
-
-	return s
 }
