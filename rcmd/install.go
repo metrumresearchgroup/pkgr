@@ -347,6 +347,22 @@ func InstallPackagePlan(
 						}
 					}
 				}
+				if iu.BinaryPath != "" {
+					bdir := filepath.Join(
+						filepath.Dir(filepath.Dir(pkg.Path)),
+						"binary",
+					)
+					os.Mkdir(bdir, 0777)
+					bpath := filepath.Join(
+						bdir,
+						filepath.Base(iu.BinaryPath),
+					)
+					_, err := goutils.Copy(iu.BinaryPath, bpath)
+						lg.WithFields(logrus.Fields{"from": iu.BinaryPath, "to": bpath}).Trace("copied binary")
+					if err != nil {
+						lg.WithFields(logrus.Fields{"from": iu.BinaryPath, "to": bpath}).Error("error copying binary")
+					}
+				}
 			}
 			wg.Done()
 			fmt.Println("installed with message: ", iu.Result.Stderr)
