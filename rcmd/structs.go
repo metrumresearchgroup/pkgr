@@ -19,6 +19,7 @@ type RSettings struct {
 	EnvVars  map[string]string `json:"env_vars,omitempty"`
 }
 
+// InstallArgs represents the installation arguments R CMD INSTALL can consume
 type InstallArgs struct {
 	Clean          bool `rcmd:"clean"`
 	Preclean       bool `rcmd:"preclean"`

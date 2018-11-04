@@ -11,19 +11,19 @@ func TestInstallArgs(t *testing.T) {
 	assert := assert.New(t)
 
 	var installArgsTests = []struct {
-		in       *InstallArgs
+		in       InstallArgs
 		expected []string
 	}{
 		{
-			&InstallArgs{},
+			InstallArgs{},
 			[]string{},
 		},
 		{
-			&InstallArgs{Clean: true},
+			InstallArgs{Clean: true},
 			[]string{"--clean"},
 		},
 		{
-			&InstallArgs{Library: "path/to/lib"},
+			InstallArgs{Library: "path/to/lib"},
 			[]string{"--library=path/to/lib"},
 		},
 		{
