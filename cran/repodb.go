@@ -65,10 +65,18 @@ func (r *RepoDb) GetPackages() error {
 	}
 	h := md5.New()
 	io.WriteString(h, r.Repo.URL+r.Repo.Name)
-	pkgHash := fmt.Sprintf("%x", h.Sum(nil))
-	pkgFile := filepath.Join(cdir, "r_package_caches", pkgHash)
-	if _, err := os.Stat(pkgFile); !os.IsNotExist(err) {
-		return r.Decode(pkgFile)
+	pkgdbHash := fmt.Sprintf("%x", h.Sum(nil))
+	pkgdbFile := filepath.Join(cdir, "r_packagedb_caches", pkgdbHash)
+	if fi, err := os.Stat(pkgdbFile); !os.IsNotExist(err) {
+		if fi.ModTime().Add(1*time.Hour).Unix() > time.Now().Unix() {
+			// only read if was cached in the last hour
+			return r.Decode(pkgdbFile)
+		} else {
+			err := os.Remove(pkgdbFile)
+			if err != nil {
+				fmt.Println("error removing cache ", pkgdbFile, err)
+			}
+		}
 	}
 
 	res, err := http.Get(pkgURL)
@@ -92,7 +100,7 @@ func (r *RepoDb) GetPackages() error {
 		}
 	}
 	fmt.Println("encoding...")
-	err = r.Encode(pkgFile)
+	err = r.Encode(pkgdbFile)
 	fmt.Println("done encoding...")
 	return err
 }
