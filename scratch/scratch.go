@@ -1,18 +1,15 @@
 package main
 
 import (
-	"bytes"
-	"encoding/gob"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/sajari/fuzzy"
+
 	"github.com/dpastoor/rpackagemanager/cran"
-	"github.com/dpastoor/rpackagemanager/desc"
 	"github.com/dpastoor/rpackagemanager/gpsr"
 	"github.com/dpastoor/rpackagemanager/rcmd"
 	"github.com/sirupsen/logrus"
@@ -65,21 +62,46 @@ func main() {
 	// }
 	// defer f.Close()
 	pkgs := []string{
-		// "PKPDmisc",
-		// "mrgsolve",
-		// "rmarkdown",
-		// "bitops",
-		// "caTools",
-		// "GGally",
-		// "knitr",
-		// "gridExtra",
-		// "htmltools",
-		// "xtable",
-		// "tidyverse",
-		// "shiny",
-		// "shinydashboard",
-		// "data.table",
+		"PKPDmisc",
+		"mrgsolve",
+		"rmarkdown",
+		"bitops",
+		"caTools",
+		"GGally",
+		"knitr",
+		"gridExtra",
+		"htmltools",
+		"xtable",
+		"ggplot2",
+		"dplyr",
+		"shiny",
+		"shinydashboard",
+		"data.table",
 		"logrrr",
+		"crayon",
+		"glue",
+		"rcpp",
+
+		// should cover misspelled packages!!
+		//"tidyVerse",
+	}
+	ap := cdb.GetPackages(pkgs)
+	if len(ap.Missing) > 0 {
+		fmt.Println("missing packages: ", ap.Missing)
+		model := fuzzy.NewModel()
+
+		// For testing only, this is not advisable on production
+		model.SetThreshold(1)
+
+		// This expands the distance searched, but costs more resources (memory and time).
+		// For spell checking, "2" is typically enough, for query suggestions this can be higher
+		model.SetDepth(1)
+		pkgs := cdb.GetAllPkgsByName()
+		model.Train(pkgs)
+		for _, mp := range ap.Missing {
+			fmt.Println("did you mean one of: ", model.Suggestions(mp, false))
+		}
+		os.Exit(1)
 	}
 	ip, err := gpsr.ResolveInstallationReqs(pkgs, cdb)
 	if err != nil {
@@ -107,21 +129,16 @@ func main() {
 		toDl = append(toDl, cran.PkgDl{Package: pkg, Repo: repo})
 	}
 	// // want to download the packages and return the full path of any downloaded package
-	dl, err := cran.DownloadPackages(appFS, toDl, cran.Source, "dump")
+	dl, err := cran.DownloadPackages(appFS, toDl, cran.Source, "dump/cache")
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
 	}
 
-	// // ia := rcmd.NewDefaultInstallArgs()
-	// // ia.Library = "../integration_tests/lib"
-	// for pn, p := range dl {
-	// 	fmt.Println(pn, p)
-	// }
 	ia := rcmd.NewDefaultInstallArgs()
-	ia.Library, _ = filepath.Abs("dump/test3lib/")
+	ia.Library, _ = filepath.Abs("dump/test5lib/")
 	fmt.Println("library set to: ", ia.Library)
-	err = rcmd.InstallPackagePlan(appFS, ip, dl, ia, rcmd.NewRSettings(), rcmd.ExecSettings{}, log, 12)
+	err = rcmd.InstallPackagePlan(appFS, ip, dl, rcmd.NewPackageCache("dump/cache", false), ia, rcmd.NewRSettings(), rcmd.ExecSettings{}, log, 12)
 	if err != nil {
 		fmt.Println("failed package install")
 		fmt.Println(err)
@@ -135,46 +152,4 @@ func PrettyPrint(v interface{}) (err error) {
 		fmt.Println(string(b))
 	}
 	return
-}
-
-func GobDB() {
-	appFS := afero.NewOsFs()
-	ok, _ := afero.Exists(appFS, "crandb.gob")
-	if !ok {
-		startTime := time.Now()
-		res, err := http.Get("https://cran.rstudio.com/src/contrib/PACKAGES")
-		if err != nil {
-			fmt.Println("problem getting packages")
-			panic(err)
-		}
-		file, err := os.Create("crandb.gob")
-		if err != nil {
-			fmt.Println("problem creating crandb")
-			panic(err)
-		}
-		dmap := make(map[string]desc.Desc)
-		defer res.Body.Close()
-		body, err := ioutil.ReadAll(res.Body)
-		cb := bytes.Split(body, []byte("\n\n"))
-		for _, p := range cb {
-			reader := bytes.NewReader(p)
-			d, err := desc.ParseDesc(reader)
-			dmap[d.Package] = d
-			if err != nil {
-				fmt.Println("problem parsing")
-				panic(err)
-			}
-			//PrettyPrint(d)
-		}
-		fmt.Println("duration:", time.Since(startTime))
-		fmt.Println("length: ", len(dmap))
-
-		e := gob.NewEncoder(file)
-
-		// Encoding the map
-		err = e.Encode(dmap)
-		if err != nil {
-			panic(err)
-		}
-	}
 }
