@@ -40,3 +40,10 @@ type PkgDl struct {
 	Package desc.Desc
 	Repo    RepoURL
 }
+
+// AvailablePkgs provides information about the packages available in
+// the package database from a set of requested packages
+type AvailablePkgs struct {
+	Packages []PkgDl
+	Missing  []string
+}
