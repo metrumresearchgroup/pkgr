@@ -461,25 +461,3 @@ func InstallPackagePlan(
 	}
 	return nil
 }
-
-// // InstallLayer will install a Layer
-// func InstallLayer(
-// 	fs afero.Fs,
-// 	tbps []string, // tarball path
-// 	args *InstallArgs,
-// 	rs RSettings,
-// 	es ExecSettings,
-// 	lg *logrus.Logger,
-// 	fn func(fs afero.Fs,
-// 		tbp string, // tarball path
-// 		args *InstallArgs,
-// 		rs RSettings,
-// 		es ExecSettings,
-// 		lg *logrus.Logger) (CmdResult, string, error),
-// 	ncpu int,
-// ) error {
-// 	for _, tbp := range tbps {
-// 		fn(fs, tbp, args, rs, es, lg)
-// 	}
-// 	return nil
-// }
