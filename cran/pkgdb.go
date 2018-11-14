@@ -37,6 +37,19 @@ func (p *PkgDb) GetPackage(pkg string) (desc.Desc, RepoURL, bool) {
 	return desc.Desc{}, RepoURL{}, false
 }
 
+// GetPackageFromRepo gets a package from a repo in the package database
+func (p *PkgDb) GetPackageFromRepo(pkg string, repo string) (desc.Desc, RepoURL, bool) {
+	for _, db := range p.Db {
+		if db.Repo.Name != repo {
+			continue
+		}
+		if pkgExists(pkg, db.Db) {
+			return db.Db[pkg], db.Repo, true
+		}
+	}
+	return desc.Desc{}, RepoURL{}, false
+}
+
 // GetPackages returns all packages and the repo that they
 // will be acquired from, as well as any missing packages
 func (p *PkgDb) GetPackages(pkgs []string) AvailablePkgs {
