@@ -19,7 +19,7 @@ import (
 // NewRepoDb returns a new Repo database
 func NewRepoDb(url RepoURL) (*RepoDb, error) {
 	ddb := &RepoDb{Db: make(map[string]desc.Desc), Time: time.Now(), Repo: url}
-	return ddb, ddb.GetPackages()
+	return ddb, ddb.FetchPackages()
 }
 
 // Decode decodes the package database
@@ -53,9 +53,9 @@ func (r *RepoDb) Encode(file string) error {
 	return nil
 }
 
-// GetPackages gets the packages for  RepoDb
+// FetchPackages gets the packages for  RepoDb
 // R_AVAILABLE_PACKAGES_CACHE_CONTROL_MAX_AGE controls the timing to requery the cache in R
-func (r *RepoDb) GetPackages() error {
+func (r *RepoDb) FetchPackages() error {
 	// just get src versions for now
 	pkgURL := strings.TrimSuffix(r.Repo.URL, "/") + "/src/contrib/PACKAGES"
 	cdir, err := os.UserCacheDir()
@@ -99,8 +99,5 @@ func (r *RepoDb) GetPackages() error {
 			panic(err)
 		}
 	}
-	fmt.Println("encoding...")
-	err = r.Encode(pkgdbFile)
-	fmt.Println("done encoding...")
-	return err
+	return r.Encode(pkgdbFile)
 }
