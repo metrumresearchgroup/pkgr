@@ -7,12 +7,12 @@ import (
 )
 
 // ResolveInstallationReqs resolves all the installation requirements
-func ResolveInstallationReqs(pkgs []string, pkgdb *cran.PkgDb) (InstallPlan, error) {
+func ResolveInstallationReqs(pkgs []string, ids map[string]InstallDeps, pkgdb *cran.PkgDb) (InstallPlan, error) {
 	workingGraph := NewGraph()
 	depDb := make(map[string][]string)
 	for _, p := range pkgs {
 		pkg, _, _ := pkgdb.GetPackage(p)
-		appendToGraph(workingGraph, pkg, pkgdb)
+		appendToGraph(workingGraph, pkg, ids, pkgdb)
 	}
 	resolved, err := ResolveLayers(workingGraph)
 	if err != nil {
@@ -27,7 +27,7 @@ func ResolveInstallationReqs(pkgs []string, pkgdb *cran.PkgDb) (InstallPlan, err
 		for _, p := range l {
 			workingGraph := NewGraph()
 			pkg, _, _ := pkgdb.GetPackage(p)
-			appendToGraph(workingGraph, pkg, pkgdb)
+			appendToGraph(workingGraph, pkg, ids, pkgdb)
 			resolved, err := ResolveLayers(workingGraph)
 			if err != nil {
 				fmt.Println("error resolving graph")

@@ -10,24 +10,42 @@ func isDefaultPackage(pkg string) bool {
 	return exists
 }
 
-func appendToGraph(m Graph, d desc.Desc, pkgdb *cran.PkgDb) {
+func appendToGraph(m Graph, d desc.Desc, ids map[string]InstallDeps, pkgdb *cran.PkgDb) {
 	var reqs []string
-	for r := range d.Imports {
-		_, _, ok := pkgdb.GetPackage(r)
-		if ok && !isDefaultPackage(r) {
-			reqs = append(reqs, r)
+	id, exists := ids[d.Package]
+	if !exists {
+		id = NewDefaultInstallDeps()
+	}
+	if id.Depends {
+		for r := range d.Depends {
+			_, _, ok := pkgdb.GetPackage(r)
+			if ok && !isDefaultPackage(r) {
+				reqs = append(reqs, r)
+			}
 		}
 	}
-	for r := range d.Depends {
-		_, _, ok := pkgdb.GetPackage(r)
-		if ok && !isDefaultPackage(r) {
-			reqs = append(reqs, r)
+	if id.Imports {
+		for r := range d.Imports {
+			_, _, ok := pkgdb.GetPackage(r)
+			if ok && !isDefaultPackage(r) {
+				reqs = append(reqs, r)
+			}
 		}
 	}
-	for r := range d.LinkingTo {
-		_, _, ok := pkgdb.GetPackage(r)
-		if ok && !isDefaultPackage(r) {
-			reqs = append(reqs, r)
+	if id.LinkingTo {
+		for r := range d.LinkingTo {
+			_, _, ok := pkgdb.GetPackage(r)
+			if ok && !isDefaultPackage(r) {
+				reqs = append(reqs, r)
+			}
+		}
+	}
+	if id.Suggests {
+		for r := range d.Suggests {
+			_, _, ok := pkgdb.GetPackage(r)
+			if ok && !isDefaultPackage(r) {
+				reqs = append(reqs, r)
+			}
 		}
 	}
 	m[d.Package] = NewNode(d.Package, reqs)
@@ -36,7 +54,7 @@ func appendToGraph(m Graph, d desc.Desc, pkgdb *cran.PkgDb) {
 			_, ok := m[pn]
 			if pn != "R" && !ok {
 				pkg, _, _ := pkgdb.GetPackage(pn)
-				appendToGraph(m, pkg, pkgdb)
+				appendToGraph(m, pkg, ids, pkgdb)
 			}
 		}
 	}
