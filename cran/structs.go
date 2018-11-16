@@ -24,7 +24,8 @@ type RepoDb struct {
 
 // PkgDb represents a package database
 type PkgDb struct {
-	Db []*RepoDb
+	Db     []*RepoDb
+	Config map[string]RepoURL
 }
 
 // Download provides information about the package download

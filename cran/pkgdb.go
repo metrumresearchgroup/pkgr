@@ -2,24 +2,37 @@ package cran
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/dpastoor/rpackagemanager/desc"
 )
 
 // NewPkgDb returns a new package database
 func NewPkgDb(urls []RepoURL) (*PkgDb, error) {
-	db := &PkgDb{}
+	db := PkgDb{Config: make(map[string]RepoURL)}
 	if len(urls) == 0 {
-		return db, errors.New("Package database must contain at least one RepoUrl")
+		return &db, errors.New("Package database must contain at least one RepoUrl")
 	}
 	for _, url := range urls {
 		rdb, err := NewRepoDb(url)
 		if err != nil {
-			return db, err
+			return &db, err
 		}
 		db.Db = append(db.Db, rdb)
 	}
-	return db, nil
+	return &db, nil
+}
+
+// SetPackageRepo sets a package repository so querying the package will
+// pull from that repo
+func (p *PkgDb) SetPackageRepo(pkg string, repo string) error {
+	for _, r := range p.Db {
+		if r.Repo.Name == repo {
+			p.Config[pkg] = r.Repo
+			return nil
+		}
+	}
+	return fmt.Errorf("no repo: %s, detected containing package: %s", repo, pkg)
 }
 
 func pkgExists(pkg string, db map[string]desc.Desc) bool {
@@ -27,10 +40,22 @@ func pkgExists(pkg string, db map[string]desc.Desc) bool {
 	return exists
 }
 
+func isCorrectRepo(pkg string, r RepoURL, cfg map[string]RepoURL) bool {
+	repo, exists := cfg[pkg]
+	if exists {
+		if repo.Name == r.Name {
+			return true
+		} else {
+			return false
+		}
+	}
+	return true
+}
+
 // GetPackage gets a package from the package database, returning the first match
 func (p *PkgDb) GetPackage(pkg string) (desc.Desc, RepoURL, bool) {
 	for _, db := range p.Db {
-		if pkgExists(pkg, db.Db) {
+		if pkgExists(pkg, db.Db) && isCorrectRepo(pkg, db.Repo, p.Config) {
 			return db.Db[pkg], db.Repo, true
 		}
 	}
@@ -40,7 +65,7 @@ func (p *PkgDb) GetPackage(pkg string) (desc.Desc, RepoURL, bool) {
 // GetPackageFromRepo gets a package from a repo in the package database
 func (p *PkgDb) GetPackageFromRepo(pkg string, repo string) (desc.Desc, RepoURL, bool) {
 	for _, db := range p.Db {
-		if db.Repo.Name != repo {
+		if repo != "" && db.Repo.Name != repo {
 			continue
 		}
 		if pkgExists(pkg, db.Db) {
@@ -55,17 +80,11 @@ func (p *PkgDb) GetPackageFromRepo(pkg string, repo string) (desc.Desc, RepoURL,
 func (p *PkgDb) GetPackages(pkgs []string) AvailablePkgs {
 	ap := AvailablePkgs{}
 	for _, pkg := range pkgs {
-		found := false
-		for _, db := range p.Db {
-			if pkgExists(pkg, db.Db) {
-				ap.Packages = append(ap.Packages, PkgDl{
-					Package: db.Db[pkg],
-					Repo:    db.Repo,
-				})
-				found = true
-				break
-			}
-		}
+		pd, repo, found := p.GetPackage(pkg)
+		ap.Packages = append(ap.Packages, PkgDl{
+			Package: pd,
+			Repo:    repo,
+		})
 		if !found {
 			ap.Missing = append(ap.Missing, pkg)
 		}
