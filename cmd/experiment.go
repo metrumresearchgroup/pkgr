@@ -17,6 +17,8 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/viper"
 
@@ -44,6 +46,11 @@ func rExperiment(cmd *cobra.Command, args []string) error {
 	// defer f.Close()
 	prettyPrint(viper.AllSettings())
 	prettyPrint(cfg)
+	configDir, _ := filepath.Abs(viper.ConfigFileUsed())
+	fmt.Println(os.Getwd())
+	os.Chdir(filepath.Dir(configDir))
+	fmt.Println(configDir)
+	fmt.Println(os.Getwd())
 	return nil
 }
 
