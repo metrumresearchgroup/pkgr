@@ -102,7 +102,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 		}
 		os.Exit(1)
 	}
-	ip, err := gpsr.ResolveInstallationReqs(pkgs, cdb)
+	ip, err := gpsr.ResolveInstallationReqs(pkgs, make(map[string]gpsr.InstallDeps), cdb)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)

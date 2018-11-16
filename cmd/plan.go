@@ -15,10 +15,6 @@
 package cmd
 
 import (
-	"github.com/dpastoor/rpackagemanager/gpsr"
-	"github.com/dpastoor/rpackagemanager/packrat"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -35,43 +31,6 @@ var planCmd = &cobra.Command{
 
 func plan(cmd *cobra.Command, args []string) error {
 
-	//AppFs := afero.NewOsFs()
-	// can use this to redirect log output
-	// f, err := os.OpenFile("testlogfile", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	// if err != nil {
-	// 	log.Fatalf("error opening file: %v", err)
-	// }
-	// defer f.Close()
-	appFS := afero.NewOsFs()
-	lf, _ := afero.ReadFile(appFS, viper.GetString("pr_lockfile"))
-	pm := packrat.ChunkLockfile(lf)
-	workingGraph := gpsr.NewGraph()
-	for _, p := range pm.CRANlike {
-		workingGraph[p.Package] = gpsr.NewNode(p.Package, p.Requires)
-	}
-	for _, p := range pm.Github {
-		workingGraph[p.Reqs.Package] = gpsr.NewNode(p.Reqs.Package, p.Reqs.Requires)
-	}
-
-	if viper.GetBool("preview") {
-		gpsr.DisplayGraph(workingGraph)
-	}
-
-	resolved, err := gpsr.ResolveGraph(workingGraph)
-	if err != nil {
-		log.Fatalf("Failed to resolve dependency graph: %s\n", err)
-	} else {
-		log.Info("The dependency graph resolved successfully")
-	}
-
-	for i, pkglayer := range resolved {
-		log.WithFields(
-			logrus.Fields{
-				"layer": i + 1,
-				"npkgs": len(pkglayer),
-			},
-		).Info(pkglayer)
-	}
 	return nil
 }
 
