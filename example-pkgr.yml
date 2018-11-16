@@ -1,3 +1,4 @@
+Version: 1
 # top level packages
 Packages:
   - PKPDmisc
@@ -16,17 +17,14 @@ Packages:
   - data.table
   - internal
 
-Installation:
-  Dependencies:
-    Suggests: true
+Suggests: true
 
 # any repositories, order matters
 Repos:
   - r_validated: "https://metrumresearchgroup.github.io/r_validated"
   - CRAN: "https://cran.rstudio.com"
 
-Library:
-  - "path/to/installation"
+Library: "path/to/installation"
 
 # any libpaths desired to be set
 Libpaths:
@@ -39,10 +37,10 @@ Libpaths:
 # each package gets installed in its own process so any env variables
 # or settings will only matter for it
 Customizations:
-  PKPDmisc:
-    Suggests: true
-  data.table:
-    env:
-      - R_MAKEVARS_USER: "~/.R/Makevars_data.table"
-  internal:
-    repo: local
+  - PKPDmisc:
+      Suggests: true
+  - data.table:
+     Env:
+       - R_MAKEVARS_USER: "~/.R/Makevars_data.table"
+  - internal:
+      Repo: local
