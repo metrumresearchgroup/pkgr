@@ -17,6 +17,8 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
@@ -43,6 +45,7 @@ var RootCmd = &cobra.Command{
 // Execute adds all child commands to the root command sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
@@ -50,7 +53,7 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig, setGlobals)
+	cobra.OnInitialize(initConfig)
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports Persistent Flags, which, if defined here,
@@ -72,6 +75,8 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	// globals
+	RootCmd.PersistentFlags().String("library", "", "library to install packages")
+	viper.BindPFlag("library", RootCmd.PersistentFlags().Lookup("library"))
 
 	// packrat related
 	// RootCmd.PersistentFlags().String("pr_lockfile", "", "packrat lockfile")
@@ -86,7 +91,9 @@ func setGlobals() {
 
 	log = logrus.New()
 
-	switch logLevel := viper.GetString("loglevel"); logLevel {
+	switch logLevel := strings.ToLower(viper.GetString("loglevel")); logLevel {
+	case "trace":
+		log.Level = logrus.TraceLevel
 	case "debug":
 		log.Level = logrus.DebugLevel
 	case "info":
@@ -114,8 +121,17 @@ func initConfig() {
 	} else {
 		_ = configlib.LoadConfigFromPath(viper.GetString("config"))
 	}
+
+	setGlobals()
 	if viper.GetBool("debug") {
 		viper.Debug()
 	}
 	viper.Unmarshal(&cfg)
+	configDir, _ := filepath.Abs(viper.ConfigFileUsed())
+	cwd, _ := os.Getwd()
+	log.WithFields(logrus.Fields{
+		"cwd": cwd,
+		"nwd": filepath.Dir(configDir),
+	}).Trace("setting directory to configuration file")
+	os.Chdir(filepath.Dir(configDir))
 }
