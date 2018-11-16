@@ -15,7 +15,10 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+
+	"github.com/spf13/viper"
 
 	"github.com/spf13/cobra"
 )
@@ -39,11 +42,19 @@ func rExperiment(cmd *cobra.Command, args []string) error {
 	// 	log.Fatalf("error opening file: %v", err)
 	// }
 	// defer f.Close()
-
-	fmt.Println("hello")
+	prettyPrint(viper.AllSettings())
+	prettyPrint(cfg)
 	return nil
 }
 
 func init() {
 	RootCmd.AddCommand(experimentCmd)
+}
+
+func prettyPrint(v interface{}) (err error) {
+	b, err := json.MarshalIndent(v, "", "  ")
+	if err == nil {
+		fmt.Println(string(b))
+	}
+	return
 }
