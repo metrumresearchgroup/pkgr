@@ -82,7 +82,15 @@ func plan(cmd *cobra.Command, args []string) error {
 		os.Exit(1)
 	}
 	// TODO: replace inplace map with InstallDeps
-	ip, err := gpsr.ResolveInstallationReqs(cfg.Packages, make(map[string]gpsr.InstallDeps), cdb)
+	ids := gpsr.NewDefaultInstallDeps()
+	for k, v := range cfg.Customizations {
+		fmt.Println(k)
+		prettyPrint(v)
+		if v.Suggests {
+			ids.Deps[k] = gpsr.AllPkgDeps()
+		}
+	}
+	ip, err := gpsr.ResolveInstallationReqs(cfg.Packages, ids, cdb)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
