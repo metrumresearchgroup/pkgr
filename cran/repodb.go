@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/dpastoor/rpackagemanager/desc"
+	"github.com/mitchellh/go-homedir"
 )
 
 // NewRepoDb returns a new Repo database
@@ -79,14 +80,26 @@ func (r *RepoDb) FetchPackages() error {
 		}
 	}
 
-	res, err := http.Get(pkgURL)
-	if err != nil {
-		return fmt.Errorf("problem getting packages from url %s", pkgURL)
-	}
-	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return err
+	var body []byte
+	if strings.HasPrefix(pkgURL, "http") {
+		res, err := http.Get(pkgURL)
+		if err != nil {
+			return fmt.Errorf("problem getting packages from url %s", pkgURL)
+		}
+		defer res.Body.Close()
+		body, err = ioutil.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
+	} else {
+		pkgdir, _ := homedir.Expand(pkgURL)
+		pkgdir, _ = filepath.Abs(pkgdir)
+		if fi, err := os.Open(pkgdir); !os.IsNotExist(err) {
+			body, err = ioutil.ReadAll(fi)
+		} else {
+			fmt.Println("no package file found at: ", pkgdir)
+			return err
+		}
 	}
 	cb := bytes.Split(body, []byte("\n\n"))
 	fmt.Println("fetched, decoding pkgs...")
