@@ -10,11 +10,11 @@ func isDefaultPackage(pkg string) bool {
 	return exists
 }
 
-func appendToGraph(m Graph, d desc.Desc, ids map[string]InstallDeps, pkgdb *cran.PkgDb) {
+func appendToGraph(m Graph, d desc.Desc, ids InstallDeps, pkgdb *cran.PkgDb) {
 	var reqs []string
-	id, exists := ids[d.Package]
+	id, exists := ids.Deps[d.Package]
 	if !exists {
-		id = NewDefaultInstallDeps()
+		id = ids.Default
 	}
 	if id.Depends {
 		for r := range d.Depends {
@@ -41,10 +41,15 @@ func appendToGraph(m Graph, d desc.Desc, ids map[string]InstallDeps, pkgdb *cran
 		}
 	}
 	if id.Suggests {
+		// suggests can't be requirements, as otherwise will end up getting
+		// many circular dependencies, hence instead, we just
+		// want to add these to the dependency graph without tying them
+		// to the package specifically as requirements
 		for r := range d.Suggests {
-			_, _, ok := pkgdb.GetPackage(r)
-			if ok && !isDefaultPackage(r) {
-				reqs = append(reqs, r)
+			_, ok := m[r]
+			if r != "R" && !ok {
+				pkg, _, _ := pkgdb.GetPackage(r)
+				appendToGraph(m, pkg, ids, pkgdb)
 			}
 		}
 	}

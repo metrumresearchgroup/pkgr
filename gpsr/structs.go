@@ -6,10 +6,17 @@ type InstallPlan struct {
 	DepDb            map[string][]string
 }
 
-// InstallDeps contains which dependencies should be installed
-type InstallDeps struct {
+// PkgDeps contains which dependencies should be installed
+// for a particular package
+type PkgDeps struct {
 	Depends   bool
 	Imports   bool
 	Suggests  bool
 	LinkingTo bool
+}
+
+// InstallDeps contains the information about dependencies to be installed
+type InstallDeps struct {
+	Deps    map[string]PkgDeps
+	Default PkgDeps
 }

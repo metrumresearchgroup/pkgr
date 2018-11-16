@@ -7,7 +7,7 @@ import (
 )
 
 // ResolveInstallationReqs resolves all the installation requirements
-func ResolveInstallationReqs(pkgs []string, ids map[string]InstallDeps, pkgdb *cran.PkgDb) (InstallPlan, error) {
+func ResolveInstallationReqs(pkgs []string, ids InstallDeps, pkgdb *cran.PkgDb) (InstallPlan, error) {
 	workingGraph := NewGraph()
 	depDb := make(map[string][]string)
 	for _, p := range pkgs {
