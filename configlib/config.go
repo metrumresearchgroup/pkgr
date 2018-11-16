@@ -55,8 +55,6 @@ func LoadConfigFromPath(configFilename string) error {
 }
 
 func loadDefaultSettings() {
-	// the lib paths to use, colon separated list of paths
-	viper.SetDefault("library", "")
 	viper.SetDefault("debug", false)
 	viper.SetDefault("preview", false)
 	// should be one of Debug,Info,Warn,Error,Fatal,Panic
@@ -64,9 +62,4 @@ func loadDefaultSettings() {
 	// path to R on system, defaults to R in path
 	viper.SetDefault("rpath", "R")
 	viper.SetDefault("threads", runtime.NumCPU())
-
-	// packrat related
-	viper.SetDefault("pr_lockfile", "")
-	viper.SetDefault("pr_dir", "")
-
 }
