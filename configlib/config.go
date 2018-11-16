@@ -18,14 +18,19 @@ func LoadGlobalConfig(configFilename string) error {
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("pkgr")
 	viper.AddConfigPath(".")
-	viper.AddConfigPath("$HOME")
 	err := viper.ReadInConfig()
 	if err != nil {
 		if _, ok := err.(viper.ConfigParseError); ok {
 			// found config file but couldn't parse it, should error
 			panic(fmt.Errorf("unable to parse config file with error (%s)", err))
 		}
-		fmt.Println("no config file detected, using default settings")
+		if _, ok := err.(*os.PathError); ok {
+			panic(fmt.Errorf("could not find a config file at path: %s", configFilename))
+		}
+		// maybe could be more loose on this later, but for now will require a config file
+		fmt.Println("Error with pkgr config file:")
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	loadDefaultSettings()
@@ -48,6 +53,10 @@ func LoadConfigFromPath(configFilename string) error {
 			// found config file but couldn't parse it, should error
 			panic(fmt.Errorf("unable to parse config file with error (%s)", err))
 		}
+		// maybe could be more loose on this later, but for now will require a config file
+		fmt.Println("Error with pkgr config file:")
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	loadDefaultSettings()
