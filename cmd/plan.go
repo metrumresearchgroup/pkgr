@@ -22,7 +22,9 @@ import (
 	"github.com/dpastoor/rpackagemanager/cran"
 	"github.com/dpastoor/rpackagemanager/gpsr"
 	"github.com/sajari/fuzzy"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // planCmd shows the install plan
@@ -43,16 +45,7 @@ func plan(cmd *cobra.Command, args []string) error {
 			repos = append(repos, cran.RepoURL{Name: nm, URL: url})
 		}
 	}
-	// repos := []cran.RepoURL{
-	// 	cran.RepoURL{
-	// 		Name: "CRAN",
-	// 		URL:  "https://cran.rstudio.com",
-	// 	},
-	// 	cran.RepoURL{
-	// 		Name: "gh_releases",
-	// 		URL:  "https://metrumresearchgroup.github.io/rpkgs/gh_releases",
-	// 	},
-	// }
+
 	cdb, err := cran.NewPkgDb(repos)
 	if err != nil {
 		fmt.Println("error getting pkgdb ", err)
@@ -61,6 +54,24 @@ func plan(cmd *cobra.Command, args []string) error {
 	//PrettyPrint(cdb)
 	for _, db := range cdb.Db {
 		fmt.Println(fmt.Sprintf("%v packages available in for %s from %s", len(db.Db), db.Repo.Name, db.Repo.URL))
+	}
+	ids := gpsr.NewDefaultInstallDeps()
+	as := viper.AllSettings()
+	for pkg, v := range cfg.Customizations {
+		if IsSet("Suggests", as, pkg) {
+			dp := ids.Default
+			dp.Suggests = v.Suggests
+			ids.Deps[pkg] = dp
+		}
+		if IsSet("Repo", as, pkg) {
+			err := cdb.SetPackageRepo(pkg, v.Repo)
+			if err != nil {
+				log.WithFields(logrus.Fields{
+					"pkg":  pkg,
+					"repo": v.Repo,
+				}).Fatal("error finding custom repo to set")
+			}
+		}
 	}
 
 	ap := cdb.GetPackages(cfg.Packages)
@@ -81,19 +92,21 @@ func plan(cmd *cobra.Command, args []string) error {
 		}
 		os.Exit(1)
 	}
-	// TODO: replace inplace map with InstallDeps
-	ids := gpsr.NewDefaultInstallDeps()
-	for k, v := range cfg.Customizations {
-		fmt.Println(k)
-		prettyPrint(v)
-		if v.Suggests {
-			ids.Deps[k] = gpsr.AllPkgDeps()
-		}
+	for _, pkg := range ap.Packages {
+		log.WithFields(logrus.Fields{
+			"pkg":  pkg.Package.Package,
+			"repo": pkg.Repo.Name,
+		}).Trace("package repository set")
 	}
+
 	ip, err := gpsr.ResolveInstallationReqs(cfg.Packages, ids, cdb)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
+	}
+	pkgs := ip.StartingPackages
+	for pkg := range ip.DepDb {
+		pkgs = append(pkgs, pkg)
 	}
 	fmt.Println("total packages required:", len(ip.StartingPackages)+len(ip.DepDb))
 	fmt.Println(time.Since(startTime))
@@ -102,4 +115,19 @@ func plan(cmd *cobra.Command, args []string) error {
 
 func init() {
 	RootCmd.AddCommand(planCmd)
+}
+
+func IsSet(key string, as map[string]interface{}, pkg string) bool {
+	for _, v := range as["customizations"].([]interface{}) {
+		for k, iv := range v.(map[interface{}]interface{}) {
+			if k == pkg {
+				for k2 := range iv.(map[interface{}]interface{}) {
+					if k2 == key {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
 }
