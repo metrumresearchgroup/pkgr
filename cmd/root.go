@@ -31,6 +31,7 @@ const VERSION string = "0.0.1-alpha.1"
 
 var log *logrus.Logger
 var fs afero.Fs
+var cfg configlib.PkgrConfig
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -54,7 +55,7 @@ func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports Persistent Flags, which, if defined here,
 	// will be global for your application.
-	RootCmd.PersistentFlags().String("config", "", "config file (default is $HOME/pkgr.yml)")
+	RootCmd.PersistentFlags().String("config", "", "config file (default is pkgr.yml)")
 	viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
 
 	RootCmd.PersistentFlags().String("loglevel", "", "level for logging")
@@ -73,10 +74,10 @@ func init() {
 	// globals
 
 	// packrat related
-	RootCmd.PersistentFlags().String("pr_lockfile", "", "packrat lockfile")
-	viper.BindPFlag("pr_lockfile", RootCmd.PersistentFlags().Lookup("pr_lockfile"))
-	RootCmd.PersistentFlags().String("pr_dir", "", "packrat dir")
-	viper.BindPFlag("pr_dir", RootCmd.PersistentFlags().Lookup("pr_dir"))
+	// RootCmd.PersistentFlags().String("pr_lockfile", "", "packrat lockfile")
+	// viper.BindPFlag("pr_lockfile", RootCmd.PersistentFlags().Lookup("pr_lockfile"))
+	// RootCmd.PersistentFlags().String("pr_dir", "", "packrat dir")
+	// viper.BindPFlag("pr_dir", RootCmd.PersistentFlags().Lookup("pr_dir"))
 }
 
 func setGlobals() {
@@ -116,4 +117,5 @@ func initConfig() {
 	if viper.GetBool("debug") {
 		viper.Debug()
 	}
+	viper.Unmarshal(&cfg)
 }
