@@ -40,6 +40,7 @@ func appendToGraph(m Graph, d desc.Desc, ids InstallDeps, pkgdb *cran.PkgDb) {
 			}
 		}
 	}
+	m[d.Package] = NewNode(d.Package, reqs)
 	if id.Suggests {
 		// suggests can't be requirements, as otherwise will end up getting
 		// many circular dependencies, hence instead, we just
@@ -48,18 +49,22 @@ func appendToGraph(m Graph, d desc.Desc, ids InstallDeps, pkgdb *cran.PkgDb) {
 		for r := range d.Suggests {
 			_, ok := m[r]
 			if r != "R" && !ok {
-				pkg, _, _ := pkgdb.GetPackage(r)
-				appendToGraph(m, pkg, ids, pkgdb)
+				//fmt.Println(d.Package, "-->", r)
+				pkg, _, exists := pkgdb.GetPackage(r)
+				if exists {
+					appendToGraph(m, pkg, ids, pkgdb)
+				}
 			}
 		}
 	}
-	m[d.Package] = NewNode(d.Package, reqs)
 	if len(reqs) > 0 {
 		for _, pn := range reqs {
 			_, ok := m[pn]
 			if pn != "R" && !ok {
-				pkg, _, _ := pkgdb.GetPackage(pn)
-				appendToGraph(m, pkg, ids, pkgdb)
+				pkg, _, exists := pkgdb.GetPackage(pn)
+				if exists {
+					appendToGraph(m, pkg, ids, pkgdb)
+				}
 			}
 		}
 	}
