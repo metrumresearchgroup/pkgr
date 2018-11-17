@@ -56,6 +56,14 @@ func plan(cmd *cobra.Command, args []string) error {
 		fmt.Println(fmt.Sprintf("%v packages available in for %s from %s", len(db.Db), db.Repo.Name, db.Repo.URL))
 	}
 	ids := gpsr.NewDefaultInstallDeps()
+	if cfg.Suggests {
+		for _, pkg := range cfg.Packages {
+			// set all top level packages to install suggests
+			dp := ids.Default
+			dp.Suggests = true
+			ids.Deps[pkg] = dp
+		}
+	}
 	as := viper.AllSettings()
 	for pkg, v := range cfg.Customizations {
 		if IsSet("Suggests", as, pkg) {
