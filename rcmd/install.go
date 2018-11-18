@@ -113,7 +113,7 @@ func Install(
 
 	cmdArgs := []string{
 		"CMD",
-		"install",
+		"INSTALL",
 	}
 	cmdArgs = append(cmdArgs, args.CliArgs()...)
 	cmdArgs = append(cmdArgs, tbp)
@@ -299,7 +299,7 @@ func InstallThroughBinary(
 		ir.ExecSettings,
 		lg)
 	if err == nil && res.ExitCode == 0 {
-		bbp := strings.Replace(filepath.Base(ir.Metadata.Path), "tar.gz", "tgz", 1)
+		bbp := binaryExt(ir.Metadata.Path)
 		binaryBall := filepath.Join(tmpdir, bbp)
 		lg.WithFields(logrus.Fields{
 			"tbp":        ir.Metadata.Path,
