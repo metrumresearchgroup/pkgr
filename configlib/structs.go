@@ -18,4 +18,5 @@ type PkgrConfig struct {
 	Customizations map[string]PkgSettings
 	Threads        int
 	RPath          string
+	Cache          string
 }
