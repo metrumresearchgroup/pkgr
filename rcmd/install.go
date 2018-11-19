@@ -12,7 +12,6 @@ import (
 	"sync"
 	"syscall"
 	"time"
-
 	"github.com/dpastoor/goutils"
 	"github.com/dpastoor/rpackagemanager/cran"
 	"github.com/dpastoor/rpackagemanager/gpsr"
@@ -123,6 +122,10 @@ func Install(
 		newEnvs = append(newEnvs, fmt.Sprintf("%s=%s", k, v))
 	}
 	envVars = append(envVars, newEnvs...)
+	ok, lp := rs.LibPathsEnv()
+	if ok {
+		envVars = append(envVars, lp)
+	}
 	lg.WithFields(
 		logrus.Fields{
 			"cmd":       "install",
@@ -130,13 +133,6 @@ func Install(
 			"RSettings": rs,
 			"env":       envVars,
 		}).Trace("command args")
-	lg.WithFields(
-		logrus.Fields{
-			"cmd":       "install",
-			"cmdArgs":   cmdArgs,
-			"RSettings": rs,
-			"env":       newEnvs,
-		}).Info("command args")
 
 	// --vanilla is a command for R and should be specified before the CMD, eg
 	// R --vanilla CMD check
@@ -196,12 +192,12 @@ func Install(
 				"stdout":   stdout,
 				"stderr":   stderr,
 				"exitCode": exitCode,
-			}).Info("cmd output")
+			}).Debug("cmd output")
 	}
 	return cmdResult, err
 }
 
-// IsInCache notes if package binary already available in cache
+// isInCache notes if package binary already available in cache
 // and returns a new installrequest based on the binary path if available
 func isInCache(
 	fs afero.Fs,
@@ -213,11 +209,16 @@ func isInCache(
 	meta := ir.Metadata
 	pkg := ir.Metadata.Metadata.Package
 	bpath := filepath.Join(pc.BaseDir, meta.Metadata.Repo.Name, "binary", binaryName(pkg.Package, pkg.Version))
-	lg.WithField("path", bpath).Trace("checking in cache")
+	lg.WithFields(logrus.Fields{
+		"path": bpath,
+		"package": pkg.Package,
+		}).Trace("checking in cache")
 	exists, err := goutils.Exists(fs, bpath)
 	if !exists || err != nil {
+	lg.WithField("package", pkg.Package).Trace("not found in cache")
 		return false, ir
 	}
+	lg.WithField("package", pkg.Package).Trace("found in cache")
 	ir.Metadata.Path = bpath
 	ir.Metadata.Type = cran.Binary
 	return true, ir
@@ -280,7 +281,12 @@ func InstallThroughBinary(
 	// generated binary to the proper location
 	// this will prevent failed installs overwriting existing
 	// properly installed packages in the final lib
+	// we also need to point to the requested library as a libpath such that
+	// when installing to the tmp dir will still have the proper packages
+	ir.RSettings.LibPaths = append(ir.RSettings.LibPaths, ir.InstallArgs.Library)
 	ir.InstallArgs.Library = tmpdir
+	// TODO: check if installing the binary still has relevant installation args that should be
+	// propogated, or if simply pointing to the final lib is sufficient
 	ib := InstallArgs{
 		Library: finalLib,
 	}
@@ -298,6 +304,17 @@ func InstallThroughBinary(
 		ir.RSettings,
 		ir.ExecSettings,
 		lg)
+	installPath := filepath.Join(tmpdir, ir.Package)
+	de, _ := afero.DirExists(fs, installPath)
+	if de {
+		err := fs.RemoveAll(installPath)
+		if err != nil {
+			lg.WithFields(logrus.Fields{
+				"err": err,
+				"path": installPath,
+			}).Error("error removing installed package in tmp dir")
+		}
+	}
 	if err == nil && res.ExitCode == 0 {
 		bbp := binaryExt(ir.Metadata.Path)
 		binaryBall := filepath.Join(tmpdir, bbp)
@@ -332,6 +349,14 @@ func InstallThroughBinary(
 	return res, "", err
 }
 
+
+func prettyPrint(v interface{}) (err error) {
+	b, err := json.MarshalIndent(v, "", "  ")
+	if err == nil {
+		fmt.Println(string(b))
+	}
+	return
+}
 // InstallPackagePlan installs a set of packages by layer
 func InstallPackagePlan(
 	fs afero.Fs,
@@ -358,7 +383,7 @@ func InstallPackagePlan(
 		InstallThroughBinary,
 		func(iu InstallUpdate) {
 			if iu.Err != nil {
-				fmt.Println("error installing", iu.Err)
+				lg.WithField("err", iu.Err).Warn("error installing")
 				anyFailed = true
 				failedPkgs = append(failedPkgs, iu.Package)
 			} else {
@@ -368,7 +393,8 @@ func InstallPackagePlan(
 				// be installed
 				pkg, _ := dl.Get(iu.Package)
 
-				lg.WithFields(logrus.Fields{"binary": iu.BinaryPath, "src": pkg.Path}).Info(iu.Package)
+				lg.WithFields(logrus.Fields{"binary": iu.BinaryPath, "src": pkg.Path}).Debug(iu.Package)
+				lg.WithField("package", iu.Package).Info("Successfully Installed")
 				installedPkgs[iu.Package] = true
 				deps, exists := iDeps[iu.Package]
 				if exists {
@@ -383,6 +409,10 @@ func InstallPackagePlan(
 						}
 						if allInstalled && !anyFailed {
 							wg.Add(1)
+							lg.WithFields(logrus.Fields{
+								"from": iu.Package,
+								"suggested": maybeInstall,
+								}).Trace("suggesting installation")
 							shouldInstall <- maybeInstall
 						}
 					}
@@ -409,6 +439,7 @@ func InstallPackagePlan(
 		}, lg,
 	)
 	go func(c chan string) {
+		requestedPkgs := make(map[string]bool)
 		for p := range c {
 			if anyFailed {
 				// stop trying to install any more
@@ -417,7 +448,13 @@ func InstallPackagePlan(
 
 			// wg added from updater before pushing here
 			// wg.Add(1)
-			fmt.Println("pushing package ", p)
+			 _, seen := requestedPkgs[p] 
+			if seen {
+				// should only need to request a package once to install
+				continue	
+			} else {
+				requestedPkgs[p] = true
+			}
 			pkg, _ := dl.Get(p)
 			if p == "data.table" {
 				nrs := rs
@@ -438,6 +475,7 @@ func InstallPackagePlan(
 					ExecSettings: es,
 				})
 			} else {
+				lg.WithField("package", p).Trace("pushing installation to queue")
 				iq.Push(InstallRequest{
 					Package:      p,
 					Metadata:     pkg,
@@ -449,15 +487,25 @@ func InstallPackagePlan(
 			}
 		}
 	}(shouldInstall)
+
 	lg.WithField("packages", strings.Join(plan.StartingPackages, ", ")).Info("starting initial install")
+
 	for _, p := range plan.StartingPackages {
 		wg.Add(1)
 		shouldInstall <- p
 	}
 	wg.Wait()
-	lg.WithField("duration", time.Since(startTime)).Info("install time")
+
+	lg.WithField("duration", time.Since(startTime)).Info("total install time")
+	for pkg := range plan.DepDb {
+		_, exists := installedPkgs[pkg]	
+		if !exists {
+			lg.Errorf("did not install %s", pkg)
+		}
+	}
 	if anyFailed {
-		return fmt.Errorf("installation failed for packages: %s", strings.Join(failedPkgs, ", "))
+		lg.Errorf("installation failed for packages: %s", strings.Join(failedPkgs, ", "))
+		return fmt.Errorf("failed installation for packages: %s", strings.Join(failedPkgs, ", "))
 	}
 	return nil
 }
