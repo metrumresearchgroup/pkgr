@@ -9,6 +9,7 @@ import (
 // ResolveInstallationReqs resolves all the installation requirements
 func ResolveInstallationReqs(pkgs []string, ids InstallDeps, pkgdb *cran.PkgDb) (InstallPlan, error) {
 	workingGraph := NewGraph()
+	defaultids := NewDefaultInstallDeps()
 	depDb := make(map[string][]string)
 	for _, p := range pkgs {
 		pkg, _, _ := pkgdb.GetPackage(p)
@@ -27,7 +28,11 @@ func ResolveInstallationReqs(pkgs []string, ids InstallDeps, pkgdb *cran.PkgDb) 
 		for _, p := range l {
 			workingGraph := NewGraph()
 			pkg, _, _ := pkgdb.GetPackage(p)
-			appendToGraph(workingGraph, pkg, ids, pkgdb)
+			// for dependencies don't want to propogate custom config such as suggests TRUE/FALSE
+			// as this should just be about what packages that need to be present
+			// to kick off installation - aka Dep/Import/LinkingTo thus we can use
+			// the default
+			appendToGraph(workingGraph, pkg, defaultids, pkgdb)
 			resolved, err := ResolveLayers(workingGraph)
 			if err != nil {
 				fmt.Println("error resolving graph")
