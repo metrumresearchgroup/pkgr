@@ -3,6 +3,7 @@ package cran
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -29,17 +30,13 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, st SourceType, baseDir string) (*
 	sem := make(chan struct{}, 10)
 	wg := sync.WaitGroup{}
 	var pkgType string
-	var typeExt string
 	switch st {
 	case Binary:
 		pkgType = "binary"
-		typeExt = "tgz"
 	case Source:
 		pkgType = "src"
-		typeExt = "tar.gz"
 	default:
 		pkgType = "src"
-		typeExt = "tar.gz"
 	}
 	for _, d := range ds {
 		wg.Add(1)
@@ -51,7 +48,12 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, st SourceType, baseDir string) (*
 			}()
 			pkgdir := filepath.Join(baseDir, d.Repo.Name, pkgType)
 			err := fs.MkdirAll(pkgdir, 0777)
-			pkgFile := filepath.Join(pkgdir, fmt.Sprintf("%s_%s.%s", d.Package.Package, d.Package.Version, typeExt))
+			var pkgFile string
+			if st == Binary {
+				pkgFile = filepath.Join(pkgdir, binaryName(d.Package.Package, d.Package.Version))
+			} else {
+				pkgFile = filepath.Join(pkgdir, fmt.Sprintf("%s_%s.tar.gz", d.Package.Package, d.Package.Version))
+			}
 			if err != nil {
 				fmt.Println("error creating package directory ", pkgdir)
 				fmt.Println("error: ", err)
@@ -60,6 +62,8 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, st SourceType, baseDir string) (*
 			}
 			dl, err := DownloadPackage(fs, d, st, pkgFile)
 			if err != nil {
+				// TODO: this should cause a failure downstream rather than just printing
+				// as right now it keeps running and just doesn't install that package
 				fmt.Println("downloading failed for package: ", d.Package.Package)
 				return
 			}
@@ -74,9 +78,6 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, st SourceType, baseDir string) (*
 // DownloadPackage should download a package tarball if it doesn't exist and return
 // the path to the downloaded tarball
 func DownloadPackage(fs afero.Fs, d PkgDl, st SourceType, dest string) (Download, error) {
-	if st != Source {
-		panic("cannot download other than source for now")
-	}
 	if !filepath.IsAbs(dest) {
 		cwd, _ := os.Getwd()
 		// turn to absolute
@@ -95,9 +96,24 @@ func DownloadPackage(fs afero.Fs, d PkgDl, st SourceType, dest string) (Download
 			Metadata: d,
 		}, nil
 	}
-	pkgdl := fmt.Sprintf("%s/src/contrib/%s", strings.TrimSuffix(d.Repo.URL, "/"), filepath.Base(dest))
-	fmt.Println("downloading from: ", pkgdl)
+	var pkgdl string
+	if st == Source || !supportsCranBinary() {
+		st = Source // in case was originally set to binary
+		pkgdl = fmt.Sprintf("%s/src/contrib/%s", strings.TrimSuffix(d.Repo.URL, "/"), filepath.Base(dest))
+	} else {
+		// TODO: fix so isn't hard coded to 3.5 binaries
+		pkgdl = fmt.Sprintf("%s/bin/%s/contrib/%s/%s", strings.TrimSuffix(d.Repo.URL, "/"), cranBinaryURL(), "3.5", filepath.Base(dest))
+	}
 	resp, err := http.Get(pkgdl)
+	if resp.StatusCode != 200 {
+		fmt.Println("error downloading package", d.Package.Package)
+		fmt.Println("status: ", resp.Status)
+		fmt.Println("status code: ", resp.StatusCode)
+		b, _ := ioutil.ReadAll(resp.Body)
+		fmt.Println("body: ", string(b))
+		return Download{}, err
+	}
+	// TODO: the response will often be valid, but return like a server 404 or other error
 	if err != nil {
 		fmt.Println("error downloading package", d.Package)
 		return Download{}, err
