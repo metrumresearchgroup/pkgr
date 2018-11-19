@@ -7,6 +7,12 @@ type PkgSettings struct {
 	Repo     string
 }
 
+// LogConfig stores information for logging purposes
+type LogConfig struct {
+	File  string
+	Level string
+}
+
 // PkgrConfig provides a struct for all pkgr related configuration
 type PkgrConfig struct {
 	Version        int
@@ -19,4 +25,5 @@ type PkgrConfig struct {
 	Threads        int
 	RPath          string
 	Cache          string
+	Logging        LogConfig
 }
