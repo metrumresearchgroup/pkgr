@@ -20,7 +20,7 @@ func (w *Worker) Start(lg *logrus.Logger) {
 				lg.WithFields(logrus.Fields{
 					"WID":     w.ID,
 					"package": ir.Package,
-				}).Info("package install request received")
+				}).Trace("package install request received")
 				res, bPath, err := w.InstallFunc(appFS, ir, ir.Cache, lg)
 				w.UpdateQueue <- InstallUpdate{
 					Result:       res,
