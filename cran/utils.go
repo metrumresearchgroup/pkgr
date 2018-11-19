@@ -36,7 +36,9 @@ func binaryExt(p string) string {
 	}
 }
 
-func supportsCranBinary() bool {
+// SupportsCranBinary tells if a platform supports binaries
+// namely, windows/mac to, but linux does not
+func SupportsCranBinary() bool {
 	switch runtime.GOOS {
 	case "darwin":
 		return true

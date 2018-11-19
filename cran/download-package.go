@@ -97,7 +97,7 @@ func DownloadPackage(fs afero.Fs, d PkgDl, st SourceType, dest string) (Download
 		}, nil
 	}
 	var pkgdl string
-	if st == Source || !supportsCranBinary() {
+	if st == Source || !SupportsCranBinary() {
 		st = Source // in case was originally set to binary
 		pkgdl = fmt.Sprintf("%s/src/contrib/%s", strings.TrimSuffix(d.Repo.URL, "/"), filepath.Base(dest))
 	} else {
