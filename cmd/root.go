@@ -25,6 +25,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/dpastoor/rpackagemanager/configlib"
+	"github.com/dpastoor/rpackagemanager/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -89,8 +90,12 @@ func setGlobals() {
 
 	fs = afero.NewOsFs()
 
-	log = logrus.New()
-
+	log = &logrus.Logger{
+		Out:       os.Stdout,
+		Formatter: &logrus.TextFormatter{ForceColors: true},
+		Hooks:     make(logrus.LevelHooks),
+		// Minimum level to log at (5 is most verbose (debug), 0 is panic)
+	}
 	switch logLevel := strings.ToLower(viper.GetString("loglevel")); logLevel {
 	case "trace":
 		log.Level = logrus.TraceLevel
@@ -134,4 +139,11 @@ func initConfig() {
 		"nwd": filepath.Dir(configDir),
 	}).Trace("setting directory to configuration file")
 	os.Chdir(filepath.Dir(configDir))
+
+	if cfg.Logging.File != "" {
+		fileHook, err := logger.NewLogrusFileHook(cfg.Logging.File, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+		if err == nil {
+			log.Hooks.Add(fileHook)
+		}
+	}
 }
