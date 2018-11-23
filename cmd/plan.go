@@ -19,6 +19,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/dpastoor/rpackagemanager/configlib"
 	"github.com/dpastoor/rpackagemanager/cran"
 	"github.com/dpastoor/rpackagemanager/gpsr"
 	"github.com/sajari/fuzzy"
@@ -66,12 +67,12 @@ func plan(cmd *cobra.Command, args []string) error {
 	}
 	as := viper.AllSettings()
 	for pkg, v := range cfg.Customizations {
-		if IsSet("Suggests", as, pkg) {
+		if configlib.IsCustomizationSet("Suggests", as, pkg) {
 			dp := ids.Default
 			dp.Suggests = v.Suggests
 			ids.Deps[pkg] = dp
 		}
-		if IsSet("Repo", as, pkg) {
+		if configlib.IsCustomizationSet("Repo", as, pkg) {
 			err := cdb.SetPackageRepo(pkg, v.Repo)
 			if err != nil {
 				log.WithFields(logrus.Fields{
@@ -123,19 +124,4 @@ func plan(cmd *cobra.Command, args []string) error {
 
 func init() {
 	RootCmd.AddCommand(planCmd)
-}
-
-func IsSet(key string, as map[string]interface{}, pkg string) bool {
-	for _, v := range as["customizations"].([]interface{}) {
-		for k, iv := range v.(map[interface{}]interface{}) {
-			if k == pkg {
-				for k2 := range iv.(map[interface{}]interface{}) {
-					if k2 == key {
-						return true
-					}
-				}
-			}
-		}
-	}
-	return false
 }
