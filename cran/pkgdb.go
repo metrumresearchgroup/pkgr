@@ -8,13 +8,16 @@ import (
 )
 
 // NewPkgDb returns a new package database
-func NewPkgDb(urls []RepoURL) (*PkgDb, error) {
-	db := PkgDb{Config: make(map[string]RepoURL)}
+func NewPkgDb(urls []RepoURL, dst SourceType, cfgdb map[string]PkgConfig) (*PkgDb, error) {
+	db := PkgDb{
+		Config:            cfgdb,
+		DefaultSourceType: dst,
+	}
 	if len(urls) == 0 {
 		return &db, errors.New("Package database must contain at least one RepoUrl")
 	}
 	for _, url := range urls {
-		rdb, err := NewRepoDb(url)
+		rdb, err := NewRepoDb(url, dst)
 		if err != nil {
 			return &db, err
 		}
@@ -28,7 +31,9 @@ func NewPkgDb(urls []RepoURL) (*PkgDb, error) {
 func (p *PkgDb) SetPackageRepo(pkg string, repo string) error {
 	for _, r := range p.Db {
 		if r.Repo.Name == repo {
-			p.Config[pkg] = r.Repo
+			cfg := p.Config[pkg]
+			cfg.Repo = r.Repo
+			p.Config[pkg] = cfg
 			return nil
 		}
 	}
@@ -39,11 +44,21 @@ func pkgExists(pkg string, db map[string]desc.Desc) bool {
 	_, exists := db[pkg]
 	return exists
 }
+func pkgExistsInRepo(pkg string, dbs map[SourceType]map[string]desc.Desc) bool {
+	exists := false
+	for _, db := range dbs {
+		_, exists = db[pkg]
+		if exists {
+			return exists
+		}
+	}
+	return exists
+}
 
-func isCorrectRepo(pkg string, r RepoURL, cfg map[string]RepoURL) bool {
-	repo, exists := cfg[pkg]
+func isCorrectRepo(pkg string, r RepoURL, cfg map[string]PkgConfig) bool {
+	pkgcfg, exists := cfg[pkg]
 	if exists {
-		if repo.Name == r.Name {
+		if pkgcfg.Repo.Name == r.Name {
 			return true
 		} else {
 			return false
@@ -53,26 +68,32 @@ func isCorrectRepo(pkg string, r RepoURL, cfg map[string]RepoURL) bool {
 }
 
 // GetPackage gets a package from the package database, returning the first match
-func (p *PkgDb) GetPackage(pkg string) (desc.Desc, RepoURL, bool) {
+func (p *PkgDb) GetPackage(pkg string) (desc.Desc, PkgConfig, bool) {
+	st := p.Config[pkg].Type
 	for _, db := range p.Db {
-		if pkgExists(pkg, db.Db) && isCorrectRepo(pkg, db.Repo, p.Config) {
-			return db.Db[pkg], db.Repo, true
+		// For now package existence is checked exactly as the package is specified
+		// in the config. Eg, if specifies binary, will only check binary version
+		// the checking if also exists as source or otherwise should occur upstream
+		// then be set as part of the explicit configuration.
+		if pkgExists(pkg, db.Dbs[st]) && isCorrectRepo(pkg, db.Repo, p.Config) {
+			return db.Dbs[st][pkg], PkgConfig{Repo: db.Repo, Type: st}, true
 		}
 	}
-	return desc.Desc{}, RepoURL{}, false
+	return desc.Desc{}, PkgConfig{}, false
 }
 
 // GetPackageFromRepo gets a package from a repo in the package database
-func (p *PkgDb) GetPackageFromRepo(pkg string, repo string) (desc.Desc, RepoURL, bool) {
+func (p *PkgDb) GetPackageFromRepo(pkg string, repo string) (desc.Desc, PkgConfig, bool) {
+	st := p.Config[pkg].Type
 	for _, db := range p.Db {
 		if repo != "" && db.Repo.Name != repo {
 			continue
 		}
-		if pkgExists(pkg, db.Db) {
-			return db.Db[pkg], db.Repo, true
+		if pkgExists(pkg, db.Dbs[st]) {
+			return db.Dbs[st][pkg], PkgConfig{Repo: db.Repo, Type: st}, true
 		}
 	}
-	return desc.Desc{}, RepoURL{}, false
+	return desc.Desc{}, PkgConfig{}, false
 }
 
 // GetPackages returns all packages and the repo that they
@@ -80,10 +101,10 @@ func (p *PkgDb) GetPackageFromRepo(pkg string, repo string) (desc.Desc, RepoURL,
 func (p *PkgDb) GetPackages(pkgs []string) AvailablePkgs {
 	ap := AvailablePkgs{}
 	for _, pkg := range pkgs {
-		pd, repo, found := p.GetPackage(pkg)
+		pd, cfg, found := p.GetPackage(pkg)
 		ap.Packages = append(ap.Packages, PkgDl{
 			Package: pd,
-			Repo:    repo,
+			Config:  cfg,
 		})
 		if !found {
 			ap.Missing = append(ap.Missing, pkg)
@@ -108,8 +129,10 @@ func (p *PkgDb) GetAllPkgsByName() []string {
 	// use map so will remove duplicate packages
 	pkgMap := make(map[string]bool)
 	for _, db := range p.Db {
-		for pkg := range db.Db {
-			pkgMap[pkg] = true
+		for st := range db.Dbs {
+			for pkg := range db.Dbs[st] {
+				pkgMap[pkg] = true
+			}
 		}
 	}
 	pkgs := []string{}
