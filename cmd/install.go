@@ -20,10 +20,12 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/dpastoor/rpackagemanager/configlib"
 	"github.com/dpastoor/rpackagemanager/cran"
 	"github.com/dpastoor/rpackagemanager/gpsr"
 	"github.com/dpastoor/rpackagemanager/rcmd"
 	"github.com/sajari/fuzzy"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -40,51 +42,49 @@ var installCmd = &cobra.Command{
 
 func rInstall(cmd *cobra.Command, args []string) error {
 	startTime := time.Now()
-	repos := []cran.RepoURL{
-		cran.RepoURL{
-			Name: "CRAN",
-			URL:  "https://cran.rstudio.com",
-		},
-		cran.RepoURL{
-			Name: "gh_releases",
-			URL:  "https://metrumresearchgroup.github.io/rpkgs/gh_releases",
-		},
+	var repos []cran.RepoURL
+	for _, r := range cfg.Repos {
+		for nm, url := range r {
+			repos = append(repos, cran.RepoURL{Name: nm, URL: url})
+		}
 	}
+
 	cdb, err := cran.NewPkgDb(repos)
 	if err != nil {
-		fmt.Println("error getting pkgdb ", err)
-		panic(err)
+		log.WithField("err", err).Fatal("error getting pkgdb")
 	}
 	//PrettyPrint(cdb)
 	for _, db := range cdb.Db {
-		fmt.Println(fmt.Sprintf("%v packages available in for %s from %s", len(db.Db), db.Repo.Name, db.Repo.URL))
+		log.Info(fmt.Sprintf("%v packages available in for %s from %s", len(db.Db), db.Repo.Name, db.Repo.URL))
+	}
+	ids := gpsr.NewDefaultInstallDeps()
+	if cfg.Suggests {
+		for _, pkg := range cfg.Packages {
+			// set all top level packages to install suggests
+			dp := ids.Default
+			dp.Suggests = true
+			ids.Deps[pkg] = dp
+		}
+	}
+	as := viper.AllSettings()
+	for pkg, v := range cfg.Customizations {
+		if configlib.IsCustomizationSet("Suggests", as, pkg) {
+			dp := ids.Default
+			dp.Suggests = v.Suggests
+			ids.Deps[pkg] = dp
+		}
+		if configlib.IsCustomizationSet("Repo", as, pkg) {
+			err := cdb.SetPackageRepo(pkg, v.Repo)
+			if err != nil {
+				log.WithFields(logrus.Fields{
+					"pkg":  pkg,
+					"repo": v.Repo,
+				}).Fatal("error finding custom repo to set")
+			}
+		}
 	}
 
-	pkgs := []string{
-		// "PKPDmisc",
-		// "mrgsolve",
-		// "rmarkdown",
-		// "bitops",
-		// "caTools",
-		// "GGally",
-		// "knitr",
-		// "gridExtra",
-		// "htmltools",
-		// "xtable",
-		// "ggplot2",
-		//"dplyr",
-		// "shiny",
-		// "shinydashboard",
-		// "data.table",
-		// "logrr",
-		// "crayon",
-		// "glue",
-		// "rcpp",
-
-		// should cover misspelled packages!!
-		//"tidyVerse",
-	}
-	ap := cdb.GetPackages(pkgs)
+	ap := cdb.GetPackages(cfg.Packages)
 	if len(ap.Missing) > 0 {
 		fmt.Println("missing packages: ", ap.Missing)
 		model := fuzzy.NewModel()
@@ -102,17 +102,26 @@ func rInstall(cmd *cobra.Command, args []string) error {
 		}
 		os.Exit(1)
 	}
-	ip, err := gpsr.ResolveInstallationReqs(pkgs, make(map[string]gpsr.InstallDeps), cdb)
+	for _, pkg := range ap.Packages {
+		log.WithFields(logrus.Fields{
+			"pkg":  pkg.Package.Package,
+			"repo": pkg.Repo.Name,
+		}).Trace("package repository set")
+	}
+
+	ip, err := gpsr.ResolveInstallationReqs(cfg.Packages, ids, cdb)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
 	}
-	fmt.Println(time.Since(startTime))
-	if err != nil {
-		log.Fatalf("Failed to resolve dependency graph: %s\n", err)
-	} else {
-		log.Info("The dependency graph resolved successfully")
+	pkgs := ip.StartingPackages
+	for pkg := range ip.DepDb {
+		pkgs = append(pkgs, pkg)
 	}
+	fmt.Println("total packages required:", len(ip.StartingPackages)+len(ip.DepDb))
+	fmt.Println(time.Since(startTime))
+
+	
 	var toDl []cran.PkgDl
 	// starting packages
 	for _, p := range ip.StartingPackages {
@@ -125,15 +134,19 @@ func rInstall(cmd *cobra.Command, args []string) error {
 		toDl = append(toDl, cran.PkgDl{Package: pkg, Repo: repo})
 	}
 	// // want to download the packages and return the full path of any downloaded package
-	dl, err := cran.DownloadPackages(fs, toDl, cran.Source, "dump/cache")
+	pc := rcmd.NewPackageCache(userCache(cfg.Cache), false)
+	pkgType := cran.Source
+	if cran.SupportsCranBinary() {
+		pkgType = cran.Binary	
+	}	
+	dl, err := cran.DownloadPackages(fs, toDl, pkgType, pc.BaseDir)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
 	}
-
 	ia := rcmd.NewDefaultInstallArgs()
-	ia.Library, _ = filepath.Abs("/Users/devinp/repos/queue-cancellation/packrat/lib/x86_64-apple-darwin15.6.0/3.5.1")
-	err = rcmd.InstallPackagePlan(fs, ip, dl, rcmd.NewPackageCache("dump/cache", false), ia, rcmd.NewRSettings(), rcmd.ExecSettings{}, log, 12)
+	ia.Library, _ = filepath.Abs(cfg.Library)
+	err = rcmd.InstallPackagePlan(fs, ip, dl, pc, ia, rcmd.NewRSettings(), rcmd.ExecSettings{}, log, 12)
 	if err != nil {
 		fmt.Println("failed package install")
 		fmt.Println(err)
