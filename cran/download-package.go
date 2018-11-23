@@ -107,6 +107,7 @@ func DownloadPackage(fs afero.Fs, d PkgDl, st SourceType, dest string) (Download
 	resp, err := http.Get(pkgdl)
 	if resp.StatusCode != 200 {
 		fmt.Println("error downloading package", d.Package.Package)
+		fmt.Println("from URL:", pkgdl)
 		fmt.Println("status: ", resp.Status)
 		fmt.Println("status code: ", resp.StatusCode)
 		b, _ := ioutil.ReadAll(resp.Body)
