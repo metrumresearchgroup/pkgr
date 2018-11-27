@@ -36,6 +36,19 @@ func binaryExt(p string) string {
 	}
 }
 
+// DefaultType provides the default type for the given platform
+// runtime
+func DefaultType() SourceType {
+	switch runtime.GOOS {
+	case "darwin":
+		return Binary
+	case "windows":
+		return Binary
+	default:
+		return Source
+	}
+}
+
 // SupportsCranBinary tells if a platform supports binaries
 // namely, windows/mac to, but linux does not
 func SupportsCranBinary() bool {
