@@ -3,6 +3,7 @@ package cran
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/dpastoor/rpackagemanager/desc"
 )
@@ -38,6 +39,20 @@ func (p *PkgDb) SetPackageRepo(pkg string, repo string) error {
 		}
 	}
 	return fmt.Errorf("no repo: %s, detected containing package: %s", repo, pkg)
+}
+
+// SetPackageType sets the package type (source/binary) for installation
+func (p *PkgDb) SetPackageType(pkg string, t string) error {
+	cfg := p.Config[pkg]
+	if strings.EqualFold(t, "source") {
+		cfg.Type = Source
+	} else if strings.EqualFold(t, "binary") {
+		cfg.Type = Binary
+	} else {
+		return fmt.Errorf("invalid source type: %s for pkg: %s", t, pkg)
+	}
+	p.Config[pkg] = cfg
+	return nil
 }
 
 func pkgExists(pkg string, db map[string]desc.Desc) bool {
