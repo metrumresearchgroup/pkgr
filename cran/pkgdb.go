@@ -72,7 +72,7 @@ func pkgExistsInRepo(pkg string, dbs map[SourceType]map[string]desc.Desc) bool {
 
 func isCorrectRepo(pkg string, r RepoURL, cfg map[string]PkgConfig) bool {
 	pkgcfg, exists := cfg[pkg]
-	if exists {
+	if exists && pkgcfg.Repo.Name != "" {
 		if pkgcfg.Repo.Name == r.Name {
 			return true
 		} else {
@@ -84,7 +84,11 @@ func isCorrectRepo(pkg string, r RepoURL, cfg map[string]PkgConfig) bool {
 
 // GetPackage gets a package from the package database, returning the first match
 func (p *PkgDb) GetPackage(pkg string) (desc.Desc, PkgConfig, bool) {
-	st := p.Config[pkg].Type
+	cfg, exists := p.Config[pkg]
+	st := p.DefaultSourceType
+	if exists && cfg.Type != Default {
+		st = cfg.Type
+	}
 	for _, db := range p.Db {
 		// For now package existence is checked exactly as the package is specified
 		// in the config. Eg, if specifies binary, will only check binary version
