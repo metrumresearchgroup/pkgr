@@ -124,7 +124,7 @@ func planInstall() (*cran.PkgDb, gpsr.InstallPlan) {
 			"repo": pkg.Config.Repo.Name,
 			"type": pkg.Config.Type,
 			"version": pkg.Package.Version,
-		}).Trace("package repository set")
+		}).Info("package repository set")
 	}
 
 	ip, err := gpsr.ResolveInstallationReqs(cfg.Packages, ids, cdb)
