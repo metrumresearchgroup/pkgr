@@ -13,5 +13,17 @@ Packages:
 Repos:
   - CRAN: "https://cran.rstudio.com"
 
-Library: "path/to/installation"
+Library: "testsets/tidyverse"
 
+Cache: "testsets/pkgcache2"
+
+# Suggests: true
+
+Logging:
+  File: tidyverse.log
+
+Customizations:
+  - tidyverse:
+      Suggests: false
+  - devtools:
+      Type: source

@@ -1,0 +1,22 @@
+Version: 1
+# top level packages
+Packages:
+  - rmarkdown
+  - shiny
+  - devtools
+
+# any repositories, order matters
+Repos:
+  # - CRAN: "https://cran.microsoft.com/snapshot/2018-11-18"
+   - CRAN: "https://cran.rstudio.com"
+
+Library: "testsets/mixed-source"
+
+Cache: "testsets/pkgcache"
+
+Logging:
+  File: mixed-source.log
+
+Customizations:
+  - devtools:
+      Type: source
