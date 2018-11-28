@@ -350,13 +350,6 @@ func InstallThroughBinary(
 }
 
 
-func prettyPrint(v interface{}) (err error) {
-	b, err := json.MarshalIndent(v, "", "  ")
-	if err == nil {
-		fmt.Println(string(b))
-	}
-	return
-}
 // InstallPackagePlan installs a set of packages by layer
 func InstallPackagePlan(
 	fs afero.Fs,
