@@ -117,15 +117,38 @@ func Install(
 	cmdArgs = append(cmdArgs, args.CliArgs()...)
 	cmdArgs = append(cmdArgs, tbp)
 	envVars := os.Environ()
-	newEnvs := []string{}
-	for k, v := range rs.EnvVars {
-		newEnvs = append(newEnvs, fmt.Sprintf("%s=%s", k, v))
+	envMap := make(map[string]string)
+	for _, ev := range envVars {
+		evs := strings.SplitN(ev, "=", 1)
+		if len(evs) > 1 && evs[1] != "" {
+			envMap[evs[0]] = evs[1] 
+		}
 	}
-	envVars = append(envVars, newEnvs...)
+	 rlu, exists := envMap["R_LIBS_USER"]
+	 if exists {
+		 // R_LIBS_USER takes precidence over R_LIBS_SITE
+		 // so will cause the loading characteristics to
+		 // not be representative of the hierarchy specified
+		 // in Library/Libpaths in the pkgr configuration
+		delete(envMap, "R_LIBS_USER")
+		lg.WithField("path", rlu).Debug("deleting set R_LIBS_USER")
+	 }
+	envVars = []string{}
+	for k, v := range rs.EnvVars {
+		envMap[k] = v
+	}
+
 	ok, lp := rs.LibPathsEnv()
 	if ok {
+	// if LibPaths set, lets drop R_LIBS_SITE set as an ENV and instead
+	// add the generated R_LIBS_SITE from LibPathsEnv
+		delete(envMap, "R_LIBS_SITE")
 		envVars = append(envVars, lp)
 	}
+	for k, v := range envMap {
+		envVars = append(envVars, fmt.Sprintf("%s=%s", k, v))
+	}
+
 	lg.WithFields(
 		logrus.Fields{
 			"cmd":       "install",
