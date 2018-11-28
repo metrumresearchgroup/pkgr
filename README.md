@@ -1,5 +1,7 @@
 # pkgr
 
+# THIS IS CURRENTLY A WIP, however is getting close for user testing. Check back soon for more comprehensive user docs
+
 ## API options
 
 package declaration can become nuanced as the user desires to customize
