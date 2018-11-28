@@ -39,6 +39,15 @@ var planCmd = &cobra.Command{
 }
 
 func plan(cmd *cobra.Command, args []string) error {
+	planInstall()
+	return nil
+}
+
+func init() {
+	RootCmd.AddCommand(planCmd)
+}
+
+func planInstall() gpsr.InstallPlan {
 	startTime := time.Now()
 	var repos []cran.RepoURL
 	for _, r := range cfg.Repos {
@@ -46,15 +55,15 @@ func plan(cmd *cobra.Command, args []string) error {
 			repos = append(repos, cran.RepoURL{Name: nm, URL: url})
 		}
 	}
-
-	cdb, err := cran.NewPkgDb(repos)
+	st := cran.DefaultType()
+	cdb, err := cran.NewPkgDb(repos, st, cran.NewPkgConfigDB())
 	if err != nil {
 		fmt.Println("error getting pkgdb ", err)
 		panic(err)
 	}
 	//PrettyPrint(cdb)
 	for _, db := range cdb.Db {
-		fmt.Println(fmt.Sprintf("%v packages available in for %s from %s", len(db.Db), db.Repo.Name, db.Repo.URL))
+		fmt.Println(fmt.Sprintf("%v packages available in for %s from %s", len(db.Dbs[st]), db.Repo.Name, db.Repo.URL))
 	}
 	ids := gpsr.NewDefaultInstallDeps()
 	if cfg.Suggests {
@@ -81,11 +90,19 @@ func plan(cmd *cobra.Command, args []string) error {
 				}).Fatal("error finding custom repo to set")
 			}
 		}
+		if configlib.IsCustomizationSet("Type", as, pkg) {
+			err := cdb.SetPackageType(pkg, v.Type)
+			if err != nil {
+				log.WithFields(logrus.Fields{
+					"pkg":  pkg,
+					"repo": v.Repo,
+				}).Fatal("error finding custom repo to set")
+			}
+		}
 	}
-
 	ap := cdb.GetPackages(cfg.Packages)
 	if len(ap.Missing) > 0 {
-		fmt.Println("missing packages: ", ap.Missing)
+		log.Error("missing packages: ", ap.Missing)
 		model := fuzzy.NewModel()
 
 		// For testing only, this is not advisable on production
@@ -104,7 +121,9 @@ func plan(cmd *cobra.Command, args []string) error {
 	for _, pkg := range ap.Packages {
 		log.WithFields(logrus.Fields{
 			"pkg":  pkg.Package.Package,
-			"repo": pkg.Repo.Name,
+			"repo": pkg.Config.Repo.Name,
+			"type": pkg.Config.Type,
+			"version": pkg.Package.Version,
 		}).Trace("package repository set")
 	}
 
@@ -119,9 +138,5 @@ func plan(cmd *cobra.Command, args []string) error {
 	}
 	fmt.Println("total packages required:", len(ip.StartingPackages)+len(ip.DepDb))
 	fmt.Println(time.Since(startTime))
-	return nil
-}
-
-func init() {
-	RootCmd.AddCommand(planCmd)
+	return ip
 }
