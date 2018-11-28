@@ -208,7 +208,7 @@ func isInCache(
 	// if not in cache just pass back
 	meta := ir.Metadata
 	pkg := ir.Metadata.Metadata.Package
-	bpath := filepath.Join(pc.BaseDir, meta.Metadata.Repo.Name, "binary", binaryName(pkg.Package, pkg.Version))
+	bpath := filepath.Join(pc.BaseDir, meta.Metadata.Config.Repo.Name, "binary", binaryName(pkg.Package, pkg.Version))
 	lg.WithFields(logrus.Fields{
 		"path": bpath,
 		"package": pkg.Package,
@@ -220,7 +220,7 @@ func isInCache(
 	}
 	lg.WithField("package", pkg.Package).Trace("found in cache")
 	ir.Metadata.Path = bpath
-	ir.Metadata.Type = cran.Binary
+	ir.Metadata.Metadata.Config.Type = cran.Binary
 	return true, ir
 }
 

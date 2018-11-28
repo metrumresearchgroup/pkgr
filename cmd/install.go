@@ -16,16 +16,11 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/dpastoor/rpackagemanager/configlib"
 	"github.com/dpastoor/rpackagemanager/cran"
-	"github.com/dpastoor/rpackagemanager/gpsr"
 	"github.com/dpastoor/rpackagemanager/rcmd"
-	"github.com/sajari/fuzzy"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -41,26 +36,23 @@ var installCmd = &cobra.Command{
 }
 
 func rInstall(cmd *cobra.Command, args []string) error {
-	ip := planInstall()	
+	startTime := time.Now()
+	cdb, ip := planInstall()
 
 	var toDl []cran.PkgDl
 	// starting packages
 	for _, p := range ip.StartingPackages {
-		pkg, repo, _ := cdb.GetPackage(p)
-		toDl = append(toDl, cran.PkgDl{Package: pkg, Repo: repo})
+		pkg, cfg, _ := cdb.GetPackage(p)
+		toDl = append(toDl, cran.PkgDl{Package: pkg, Config: cfg})
 	}
 	// all other packages
 	for p := range ip.DepDb {
-		pkg, repo, _ := cdb.GetPackage(p)
-		toDl = append(toDl, cran.PkgDl{Package: pkg, Repo: repo})
+		pkg, cfg, _ := cdb.GetPackage(p)
+		toDl = append(toDl, cran.PkgDl{Package: pkg, Config: cfg})
 	}
 	// // want to download the packages and return the full path of any downloaded package
 	pc := rcmd.NewPackageCache(userCache(cfg.Cache), false)
-	pkgType := cran.Source
-	if cran.SupportsCranBinary() {
-		pkgType = cran.Binary
-	}
-	dl, err := cran.DownloadPackages(fs, toDl, pkgType, pc.BaseDir)
+	dl, err := cran.DownloadPackages(fs, toDl, pc.BaseDir)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)

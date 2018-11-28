@@ -47,7 +47,7 @@ func init() {
 	RootCmd.AddCommand(planCmd)
 }
 
-func planInstall() gpsr.InstallPlan {
+func planInstall() (*cran.PkgDb, gpsr.InstallPlan) {
 	startTime := time.Now()
 	var repos []cran.RepoURL
 	for _, r := range cfg.Repos {
@@ -138,5 +138,5 @@ func planInstall() gpsr.InstallPlan {
 	}
 	fmt.Println("total packages required:", len(ip.StartingPackages)+len(ip.DepDb))
 	fmt.Println(time.Since(startTime))
-	return ip
+	return cdb, ip
 }
