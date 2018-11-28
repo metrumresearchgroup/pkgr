@@ -126,11 +126,18 @@ func (r *RepoDb) FetchPackages() error {
 		}
 		cb := bytes.Split(body, []byte("\n\n"))
 		for _, p := range cb {
+			if len(p) == 0 {
+				// end of file might have double spaces
+				// and thus will be one split, so want
+				// to skip that
+				continue
+			}
 			reader := bytes.NewReader(p)
 			d, err := desc.ParseDesc(reader)
 			r.Dbs[st][d.Package] = d
 			if err != nil {
 				fmt.Println("problem parsing package with info ", string(p))
+				fmt.Println(err)
 				panic(err)
 			}
 		}
