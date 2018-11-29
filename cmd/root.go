@@ -24,8 +24,8 @@ import (
 	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 
-	"github.com/dpastoor/rpackagemanager/configlib"
-	"github.com/dpastoor/rpackagemanager/logger"
+	"github.com/metrumresearchgroup/pkgr/configlib"
+	"github.com/metrumresearchgroup/pkgr/logger"
 	"github.com/spf13/cobra"
 )
 

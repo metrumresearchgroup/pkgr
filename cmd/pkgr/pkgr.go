@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/dpastoor/rpackagemanager/cmd"
+	"github.com/metrumresearchgroup/pkgr/cmd"
 )
 
 // if want to generate docs

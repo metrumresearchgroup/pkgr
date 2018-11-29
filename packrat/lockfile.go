@@ -1,6 +1,6 @@
 package packrat
 
-import "github.com/dpastoor/rpackagemanager/gpsr"
+import "github.com/metrumresearchgroup/pkgr/gpsr"
 
 // NewLockFileDb initializes a new lockfile
 func NewLockFileDb() *LockFileDb {

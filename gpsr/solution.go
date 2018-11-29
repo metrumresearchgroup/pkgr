@@ -3,7 +3,7 @@ package gpsr
 import (
 	"fmt"
 
-	"github.com/dpastoor/rpackagemanager/cran"
+	"github.com/metrumresearchgroup/pkgr/cran"
 )
 
 // ResolveInstallationReqs resolves all the installation requirements

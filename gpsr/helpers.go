@@ -1,8 +1,8 @@
 package gpsr
 
 import (
-	"github.com/dpastoor/rpackagemanager/cran"
-	"github.com/dpastoor/rpackagemanager/desc"
+	"github.com/metrumresearchgroup/pkgr/cran"
+	"github.com/metrumresearchgroup/pkgr/desc"
 )
 
 func isDefaultPackage(pkg string) bool {

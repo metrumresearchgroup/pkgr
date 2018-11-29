@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dpastoor/rpackagemanager/desc"
+	"github.com/metrumresearchgroup/pkgr/desc"
 	"github.com/mitchellh/go-homedir"
 )
 

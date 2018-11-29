@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/dpastoor/rpackagemanager/gpsr"
-	"github.com/dpastoor/rpackagemanager/packrat"
+	"github.com/metrumresearchgroup/pkgr/gpsr"
+	"github.com/metrumresearchgroup/pkgr/packrat"
 	"github.com/spf13/afero"
 )
 

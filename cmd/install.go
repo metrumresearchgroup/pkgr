@@ -19,8 +19,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/dpastoor/rpackagemanager/cran"
-	"github.com/dpastoor/rpackagemanager/rcmd"
+	"github.com/metrumresearchgroup/pkgr/cran"
+	"github.com/metrumresearchgroup/pkgr/rcmd"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
