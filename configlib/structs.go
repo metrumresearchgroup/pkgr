@@ -5,6 +5,7 @@ type PkgSettings struct {
 	Suggests bool
 	Env      []map[string]string
 	Repo     string
+	Type     string
 }
 
 // LogConfig stores information for logging purposes

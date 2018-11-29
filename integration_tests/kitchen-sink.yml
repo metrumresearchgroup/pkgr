@@ -1,0 +1,39 @@
+Version: 1
+# top level packages
+Packages:
+# analysis
+  - PKPDmisc
+  - mrgsolve
+  - tidyverse
+# shiny
+  - shiny
+  - shinyjs
+  - shinydashboard
+  - htmltools
+# utilities
+  - usethis
+  - devtools
+  - sessioninfo
+  - rmarkdown
+  - bitops
+  - caTools
+  - knitr
+  - logrrr
+  - pkgpub
+
+Suggests: true
+# any repositories, order matters
+Repos:
+   - gh_dev: "https://metrumresearchgroup.github.io/rpkgs/gh_dev"
+   - CRAN: "https://cran.microsoft.com/snapshot/2018-11-28"
+
+Library: "testsets/mixed-source"
+
+Cache: "testsets/pkgcache"
+
+Logging:
+  File: kitchen-sink.log
+
+Customizations:
+  - devtools:
+      Type: source

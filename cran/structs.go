@@ -17,20 +17,26 @@ type RepoURL struct {
 
 // RepoDb represents a Db
 type RepoDb struct {
-	Db   map[string]desc.Desc
+	Dbs  map[SourceType]map[string]desc.Desc
 	Time time.Time
 	Repo RepoURL
 }
 
+//PkgConfig stores configuration information about a given package
+type PkgConfig struct {
+	Repo RepoURL
+	Type SourceType
+}
+
 // PkgDb represents a package database
 type PkgDb struct {
-	Db     []*RepoDb
-	Config map[string]RepoURL
+	Db                []*RepoDb
+	Config            map[string]PkgConfig
+	DefaultSourceType SourceType
 }
 
 // Download provides information about the package download
 type Download struct {
-	Type     SourceType
 	Path     string
 	New      bool
 	Metadata PkgDl
@@ -38,8 +44,8 @@ type Download struct {
 
 // PkgDl holds the metadata needed to download a package
 type PkgDl struct {
+	Config  PkgConfig
 	Package desc.Desc
-	Repo    RepoURL
 }
 
 // AvailablePkgs provides information about the packages available in

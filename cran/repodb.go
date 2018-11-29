@@ -18,8 +18,18 @@ import (
 )
 
 // NewRepoDb returns a new Repo database
-func NewRepoDb(url RepoURL) (*RepoDb, error) {
-	ddb := &RepoDb{Db: make(map[string]desc.Desc), Time: time.Now(), Repo: url}
+func NewRepoDb(url RepoURL, st SourceType) (*RepoDb, error) {
+	ddb := &RepoDb{
+		Dbs:  make(map[SourceType]map[string]desc.Desc),
+		Time: time.Now(),
+		Repo: url,
+	}
+
+	if st == Binary {
+		ddb.Dbs[Binary] = make(map[string]desc.Desc)
+	}
+	ddb.Dbs[Source] = make(map[string]desc.Desc)
+
 	return ddb, ddb.FetchPackages()
 }
 
@@ -31,7 +41,7 @@ func (r *RepoDb) Decode(file string) error {
 		return err
 	}
 	d := gob.NewDecoder(f)
-	return d.Decode(&r.Db)
+	return d.Decode(&r.Dbs)
 }
 
 // Encode encodes the PackageDatabase
@@ -47,7 +57,7 @@ func (r *RepoDb) Encode(file string) error {
 	e := gob.NewEncoder(f)
 
 	// Encoding the map
-	err = e.Encode(r.Db)
+	err = e.Encode(r.Dbs)
 	if err != nil {
 		return err
 	}
@@ -58,14 +68,20 @@ func (r *RepoDb) Encode(file string) error {
 // R_AVAILABLE_PACKAGES_CACHE_CONTROL_MAX_AGE controls the timing to requery the cache in R
 func (r *RepoDb) FetchPackages() error {
 	// just get src versions for now
-	pkgURL := strings.TrimSuffix(r.Repo.URL, "/") + "/src/contrib/PACKAGES"
 	cdir, err := os.UserCacheDir()
 	if err != nil {
 		fmt.Println("could not use user cache dir, using temp dir")
 		cdir = os.TempDir()
 	}
 	h := md5.New()
-	io.WriteString(h, r.Repo.URL+r.Repo.Name)
+	// want to get the unique elements in the Dbs so the cache
+	// will be representative of the config. Eg if set to only source
+	// vs Source/Binary
+	stsum := Source
+	for st := range r.Dbs {
+		stsum += st
+	}
+	io.WriteString(h, r.Repo.Name+r.Repo.URL+string(stsum))
 	pkgdbHash := fmt.Sprintf("%x", h.Sum(nil))
 	pkgdbFile := filepath.Join(cdir, "r_packagedb_caches", pkgdbHash)
 	if fi, err := os.Stat(pkgdbFile); !os.IsNotExist(err) {
@@ -79,38 +95,53 @@ func (r *RepoDb) FetchPackages() error {
 			}
 		}
 	}
-
-	var body []byte
-	if strings.HasPrefix(pkgURL, "http") {
-		res, err := http.Get(pkgURL)
-		if err != nil {
-			return fmt.Errorf("problem getting packages from url %s", pkgURL)
-		}
-		defer res.Body.Close()
-		body, err = ioutil.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-	} else {
-		pkgdir, _ := homedir.Expand(pkgURL)
-		pkgdir, _ = filepath.Abs(pkgdir)
-		if fi, err := os.Open(pkgdir); !os.IsNotExist(err) {
-			body, err = ioutil.ReadAll(fi)
+	for st := range r.Dbs {
+		var pkgURL string
+		if st == Source {
+			pkgURL = fmt.Sprintf("%s/src/contrib/PACKAGES", strings.TrimSuffix(r.Repo.URL, "/"))
 		} else {
-			fmt.Println("no package file found at: ", pkgdir)
-			return err
+			// TODO: fix so isn't hard coded to 3.5 binaries
+			pkgURL = fmt.Sprintf("%s/bin/%s/contrib/%s/PACKAGES", strings.TrimSuffix(r.Repo.URL, "/"), cranBinaryURL(), "3.5")
 		}
-	}
-	cb := bytes.Split(body, []byte("\n\n"))
-	fmt.Println("fetched, decoding pkgs...")
-	for _, p := range cb {
-		reader := bytes.NewReader(p)
-		d, err := desc.ParseDesc(reader)
-		r.Db[d.Package] = d
-		if err != nil {
-			fmt.Println("problem parsing package with info ", string(p))
-			panic(err)
+		var body []byte
+		if strings.HasPrefix(pkgURL, "http") {
+			res, err := http.Get(pkgURL)
+			if err != nil {
+				return fmt.Errorf("problem getting packages from url %s", pkgURL)
+			}
+			defer res.Body.Close()
+			body, err = ioutil.ReadAll(res.Body)
+			if err != nil {
+				return err
+			}
+		} else {
+			pkgdir, _ := homedir.Expand(pkgURL)
+			pkgdir, _ = filepath.Abs(pkgdir)
+			if fi, err := os.Open(pkgdir); !os.IsNotExist(err) {
+				body, err = ioutil.ReadAll(fi)
+			} else {
+				fmt.Println("no package file found at: ", pkgdir)
+				return err
+			}
 		}
+		cb := bytes.Split(body, []byte("\n\n"))
+		for _, p := range cb {
+			if len(p) == 0 {
+				// end of file might have double spaces
+				// and thus will be one split, so want
+				// to skip that
+				continue
+			}
+			reader := bytes.NewReader(p)
+			d, err := desc.ParseDesc(reader)
+			r.Dbs[st][d.Package] = d
+			if err != nil {
+				fmt.Println("problem parsing package with info ", string(p))
+				fmt.Println(err)
+				panic(err)
+			}
+		}
+
 	}
 	return r.Encode(pkgdbFile)
 }

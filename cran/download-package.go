@@ -20,36 +20,40 @@ type SourceType int
 // Constraints on package deps
 // Least to most constraining
 const (
-	Source SourceType = iota
+	// Use Default so can actually control default behavior in different
+	// contexts rather than defaulting to Source as the 0 type
+	// for example on Windows/Mac if Default then should use Binary
+	Default SourceType = iota
+	Source
 	Binary
 )
 
 // DownloadPackages downloads a set of packages concurrently
-func DownloadPackages(fs afero.Fs, ds []PkgDl, st SourceType, baseDir string) (*PkgMap, error) {
+func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string) (*PkgMap, error) {
 	result := NewPkgMap()
 	sem := make(chan struct{}, 10)
 	wg := sync.WaitGroup{}
-	var pkgType string
-	switch st {
-	case Binary:
-		pkgType = "binary"
-	case Source:
-		pkgType = "src"
-	default:
-		pkgType = "src"
-	}
 	for _, d := range ds {
 		wg.Add(1)
 		go func(d PkgDl, wg *sync.WaitGroup) {
+			var pkgType string
+			switch d.Config.Type {
+			case Binary:
+				pkgType = "binary"
+			case Source:
+				pkgType = "src"
+			default:
+				pkgType = "src"
+			}
 			sem <- struct{}{}
 			defer func() {
 				<-sem
 				wg.Done()
 			}()
-			pkgdir := filepath.Join(baseDir, d.Repo.Name, pkgType)
+			pkgdir := filepath.Join(baseDir, d.Config.Repo.Name, pkgType)
 			err := fs.MkdirAll(pkgdir, 0777)
 			var pkgFile string
-			if st == Binary {
+			if d.Config.Type == Binary {
 				pkgFile = filepath.Join(pkgdir, binaryName(d.Package.Package, d.Package.Version))
 			} else {
 				pkgFile = filepath.Join(pkgdir, fmt.Sprintf("%s_%s.tar.gz", d.Package.Package, d.Package.Version))
@@ -60,7 +64,7 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, st SourceType, baseDir string) (*
 				// should this trigger something more impactful? probably since wouldn't download anything
 				return
 			}
-			dl, err := DownloadPackage(fs, d, st, pkgFile)
+			dl, err := DownloadPackage(fs, d, pkgFile)
 			if err != nil {
 				// TODO: this should cause a failure downstream rather than just printing
 				// as right now it keeps running and just doesn't install that package
@@ -77,7 +81,7 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, st SourceType, baseDir string) (*
 
 // DownloadPackage should download a package tarball if it doesn't exist and return
 // the path to the downloaded tarball
-func DownloadPackage(fs afero.Fs, d PkgDl, st SourceType, dest string) (Download, error) {
+func DownloadPackage(fs afero.Fs, d PkgDl, dest string) (Download, error) {
 	if !filepath.IsAbs(dest) {
 		cwd, _ := os.Getwd()
 		// turn to absolute
@@ -90,19 +94,18 @@ func DownloadPackage(fs afero.Fs, d PkgDl, st SourceType, dest string) (Download
 	if exists {
 		fmt.Println("already have ", d.Package.Package, " downloaded")
 		return Download{
-			Type:     st,
 			Path:     dest,
 			New:      false,
 			Metadata: d,
 		}, nil
 	}
 	var pkgdl string
-	if st == Source || !SupportsCranBinary() {
-		st = Source // in case was originally set to binary
-		pkgdl = fmt.Sprintf("%s/src/contrib/%s", strings.TrimSuffix(d.Repo.URL, "/"), filepath.Base(dest))
+	if d.Config.Type == Source || !SupportsCranBinary() {
+		d.Config.Type = Source // in case was originally set to binary
+		pkgdl = fmt.Sprintf("%s/src/contrib/%s", strings.TrimSuffix(d.Config.Repo.URL, "/"), filepath.Base(dest))
 	} else {
 		// TODO: fix so isn't hard coded to 3.5 binaries
-		pkgdl = fmt.Sprintf("%s/bin/%s/contrib/%s/%s", strings.TrimSuffix(d.Repo.URL, "/"), cranBinaryURL(), "3.5", filepath.Base(dest))
+		pkgdl = fmt.Sprintf("%s/bin/%s/contrib/%s/%s", strings.TrimSuffix(d.Config.Repo.URL, "/"), cranBinaryURL(), "3.5", filepath.Base(dest))
 	}
 	resp, err := http.Get(pkgdl)
 	if resp.StatusCode != 200 {
@@ -133,7 +136,6 @@ func DownloadPackage(fs afero.Fs, d PkgDl, st SourceType, dest string) (Download
 	}
 
 	return Download{
-		Type:     st,
 		Path:     dest,
 		New:      true,
 		Metadata: d,

@@ -19,23 +19,18 @@ func RunR(
 	lg *logrus.Logger,
 ) error {
 
+	envVars := configureEnv(rs, lg)
 	cmdArgs := []string{
 		"--no-save",
 		"--no-restore-data",
-	}
-
-	envVars := os.Environ()
-	ok, rLibsSite := rs.LibPathsEnv()
-	if ok {
-		envVars = append(envVars, rLibsSite, "R_LIBS=''")
 	}
 
 	lg.WithFields(
 		logrus.Fields{
 			"cmdArgs":   cmdArgs,
 			"RSettings": rs,
-			"env":       rLibsSite,
-		}).Debug("command args")
+			"env":       envVars,
+		}).Trace("command args")
 
 	// --vanilla is a command for R and should be specified before the CMD, eg
 	// R --vanilla CMD check
