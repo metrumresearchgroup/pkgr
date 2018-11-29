@@ -60,6 +60,48 @@ func (i InstallArgs) CliArgs() []string {
 	return args
 }
 
+func configureEnv(
+	rs RSettings,
+	lg *logrus.Logger,
+) ([]string){
+	envVars := os.Environ()
+	envMap := make(map[string]string)
+	for _, ev := range envVars {
+		evs := strings.SplitN(ev, "=", 1)
+		if len(evs) > 1 && evs[1] != "" {
+			envMap[evs[0]] = evs[1] 
+		}
+	}
+	 rlu, exists := envMap["R_LIBS_USER"]
+	 if exists {
+		 // R_LIBS_USER takes precidence over R_LIBS_SITE
+		 // so will cause the loading characteristics to
+		 // not be representative of the hierarchy specified
+		 // in Library/Libpaths in the pkgr configuration
+		delete(envMap, "R_LIBS_USER")
+		lg.WithField("path", rlu).Debug("deleting set R_LIBS_USER")
+	 }
+	envVars = []string{}
+	for k, v := range rs.EnvVars {
+		envMap[k] = v
+	}
+
+	ok, lp := rs.LibPathsEnv()
+	if ok {
+	// if LibPaths set, lets drop R_LIBS_SITE set as an ENV and instead
+	// add the generated R_LIBS_SITE from LibPathsEnv
+		delete(envMap, "R_LIBS_SITE")
+		envVars = append(envVars, lp)
+	}
+	for k, v := range envMap {
+		envVars = append(envVars, fmt.Sprintf("%s=%s", k, v))
+	}
+	// double down on overwriting any specification of user customization
+	// and set R_LIBS_SITE to the same as the user
+	envVars = append(envVars, strings.Replace(lp, "R_LIBS_SITE", "R_LIBS_USER", 1))
+
+	return envVars
+}
 // Install installs a given tarball
 // exit code 0 - success, 1 - error
 func Install(
@@ -110,45 +152,14 @@ func Install(
 		}, err
 	}
 
+	envVars := configureEnv(rs, lg) 
+
 	cmdArgs := []string{
 		"CMD",
 		"INSTALL",
 	}
 	cmdArgs = append(cmdArgs, args.CliArgs()...)
 	cmdArgs = append(cmdArgs, tbp)
-	envVars := os.Environ()
-	envMap := make(map[string]string)
-	for _, ev := range envVars {
-		evs := strings.SplitN(ev, "=", 1)
-		if len(evs) > 1 && evs[1] != "" {
-			envMap[evs[0]] = evs[1] 
-		}
-	}
-	 rlu, exists := envMap["R_LIBS_USER"]
-	 if exists {
-		 // R_LIBS_USER takes precidence over R_LIBS_SITE
-		 // so will cause the loading characteristics to
-		 // not be representative of the hierarchy specified
-		 // in Library/Libpaths in the pkgr configuration
-		delete(envMap, "R_LIBS_USER")
-		lg.WithField("path", rlu).Debug("deleting set R_LIBS_USER")
-	 }
-	envVars = []string{}
-	for k, v := range rs.EnvVars {
-		envMap[k] = v
-	}
-
-	ok, lp := rs.LibPathsEnv()
-	if ok {
-	// if LibPaths set, lets drop R_LIBS_SITE set as an ENV and instead
-	// add the generated R_LIBS_SITE from LibPathsEnv
-		delete(envMap, "R_LIBS_SITE")
-		envVars = append(envVars, lp)
-	}
-	for k, v := range envMap {
-		envVars = append(envVars, fmt.Sprintf("%s=%s", k, v))
-	}
-
 	lg.WithFields(
 		logrus.Fields{
 			"cmd":       "install",
