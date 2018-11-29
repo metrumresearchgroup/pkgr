@@ -39,11 +39,19 @@ var planCmd = &cobra.Command{
 }
 
 func plan(cmd *cobra.Command, args []string) error {
-	planInstall()
+	_, ip := planInstall()
+	if viper.GetBool("show-deps") {
+	for pkg, deps := range ip.DepDb {
+		fmt.Println("-----------  ", pkg, "   ------------")
+		fmt.Println(deps)
+	}
+	}
 	return nil
 }
 
 func init() {
+	planCmd.PersistentFlags().Bool("show-deps", false, "show the (required) dependencies for each package")
+	viper.BindPFlag("show-deps", planCmd.PersistentFlags().Lookup("show-deps"))
 	RootCmd.AddCommand(planCmd)
 }
 
@@ -126,7 +134,6 @@ func planInstall() (*cran.PkgDb, gpsr.InstallPlan) {
 			"version": pkg.Package.Version,
 		}).Info("package repository set")
 	}
-
 	ip, err := gpsr.ResolveInstallationReqs(cfg.Packages, ids, cdb)
 	if err != nil {
 		fmt.Println(err)
