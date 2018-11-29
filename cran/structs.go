@@ -3,7 +3,7 @@ package cran
 import (
 	"time"
 
-	"github.com/dpastoor/rpackagemanager/desc"
+	"github.com/metrumresearchgroup/pkgr/desc"
 )
 
 // RepoURL represents the URL and name for a repo

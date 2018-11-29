@@ -1,4 +1,4 @@
-module github.com/dpastoor/rpackagemanager
+module github.com/metrumresearchgroup/pkgr
 
 require (
 	github.com/deckarep/golang-set v1.7.1
