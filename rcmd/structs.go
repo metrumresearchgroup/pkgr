@@ -1,7 +1,7 @@
 package rcmd
 
 import (
-	"github.com/dpastoor/rpackagemanager/cran"
+	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )

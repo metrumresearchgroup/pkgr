@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/dpastoor/rpackagemanager/desc"
+	"github.com/metrumresearchgroup/pkgr/desc"
 )
 
 // NewPkgDb returns a new package database

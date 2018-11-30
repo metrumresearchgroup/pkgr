@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/dpastoor/rpackagemanager/desc"
+	"github.com/metrumresearchgroup/pkgr/desc"
 )
 
 // ParsePACKAGES parses a PACKAGES file from a cran-like repo

@@ -15,7 +15,7 @@
 package cmd
 
 import (
-	"github.com/dpastoor/rpackagemanager/rcmd"
+	"github.com/metrumresearchgroup/pkgr/rcmd"
 
 	"github.com/spf13/cobra"
 )

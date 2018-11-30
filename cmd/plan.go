@@ -19,9 +19,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/dpastoor/rpackagemanager/configlib"
-	"github.com/dpastoor/rpackagemanager/cran"
-	"github.com/dpastoor/rpackagemanager/gpsr"
+	"github.com/metrumresearchgroup/pkgr/configlib"
+	"github.com/metrumresearchgroup/pkgr/cran"
+	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/sajari/fuzzy"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
