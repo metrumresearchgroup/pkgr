@@ -2,6 +2,112 @@
 
 # THIS IS CURRENTLY A WIP, however is getting close for user testing. Check back soon for more comprehensive user docs
 
+# What is pkgr?
+
+`pkgr` is a rethinking of the way packages are managed in R. Namely, it embraces
+the declarative philosophy of defining _ideal state_ of the entire system, and working
+towards achieving that objective. Furthermore, `pkgr` is built with a focus on reproducibility
+and auditability of what is going on, a vital component for the pharmaceutical sciences + enterprises.
+
+# why pkgr?
+
+`install.packages` and friends such as `remotes::install_github` have a subtle weakness of 
+not being able to well control desired global state. There are some knobs that 
+can be tuned, but overall the API is generally not what the user _actually_ needs, rather,
+are the mechanism by which the user can strive towards their needs, in a forceably iterative fashion.
+
+For example, with `install.packages`, how do you control things like:
+- install a number of packages, but only if they don't exist.
+- _see_ what would be changed before performing an action, while not actually performing said action.
+- install `Suggested` packages, but only for a subset of all packages you'd like to install.
+- customize the installation behavior of a single package in a documentable and reproducible way
+  - set custom makevars for a package that persist across system installations
+  - install source versions of some packages but binaries for others
+
+Today, packages are highly interwoven. Best practices have pushed towards small, well scoped packages that
+do behaviors well. For example, rather than just having plyr, we now use dplyr+purrr to achieve 
+the same set of responsibilities (dealing with dataframes + dealing with other list/vector objects in an iterative way).
+As such, it is becoming increasingly difficult to manage the _set_ of packages in a transparent and robust
+way.
+
+# How it works
+
+`pkgr` is a command line utility that has a couple top level commands
+
+```bash
+pkgr plan # show what would happen if install is run
+pkgr install
+```
+
+The actions are controlled by a configuration file that specifies the desired global state, namely, 
+by defining the top level packages a user cares about, as well as specific configuration customizations.
+
+An example pkgr configuration file might look like:
+
+```yaml
+Version: 1
+# top level packages
+Packages:
+  - rmarkdown
+  - bitops
+  - caTools
+  - knitr
+  - tidyverse
+  - shiny
+
+# any repositories, order matters
+Repos:
+  - CRAN: "https://cran.microsoft.com/snapshot/2018-11-18"
+
+# path to install packages to
+Library: "path/to/install/library"
+
+# package specific customizations
+Customizations:
+  - tidyverse:
+      Suggests: true
+```
+
+Another such example, is on CRAN, for OSX, the new devtools (v2.x) is currently available as source,
+however the binary is still v1.13. To control and say we would prefer the source version of devtools,
+while relying on the platform default (binaries) for all other packages, a customization can be set
+for devtools as `Type: source`
+
+```yaml
+Version: 1
+# top level packages
+Packages:
+  - rmarkdown
+  - shiny
+  - devtools
+
+# any repositories, order matters
+Repos:
+   - CRAN: "https://cran.microsoft.com/snapshot/2018-11-18"
+
+Library: "path/to/install/library"
+
+# can cache both the source and installed binary versions of packages
+Cache: "path/to/global/cache"
+
+# can log the actions and outcomes to a file for debugging and auditing
+Logging:
+  File: pkgr-install.log
+
+Customizations:
+  - devtools:
+      Type: source
+```
+
+
+TODO:
+
+- how integrates with packrat
+- how integrates with rstudio package manager
+- performance characteristics (so much faster than install.packages)
+- caveats
+
+
 ## API options
 
 package declaration can become nuanced as the user desires to customize
