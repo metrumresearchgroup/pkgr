@@ -155,6 +155,7 @@ func Install(
 	envVars := configureEnv(rs, lg) 
 
 	cmdArgs := []string{
+		"--vanilla",
 		"CMD",
 		"INSTALL",
 	}
