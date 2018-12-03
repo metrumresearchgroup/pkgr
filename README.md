@@ -54,9 +54,11 @@ Packages:
   - knitr
   - tidyverse
   - shiny
+  - logrrr
 
 # any repositories, order matters
 Repos:
+  - gh_dev: "https://metrumresearchgroup.github.io/rpkgs/gh_dev"
   - CRAN: "https://cran.microsoft.com/snapshot/2018-11-18"
 
 # path to install packages to
