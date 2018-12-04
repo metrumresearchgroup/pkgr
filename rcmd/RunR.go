@@ -21,8 +21,7 @@ func RunR(
 
 	envVars := configureEnv(rs, lg)
 	cmdArgs := []string{
-		"--no-save",
-		"--no-restore-data",
+		"--vanilla",
 	}
 
 	lg.WithFields(
