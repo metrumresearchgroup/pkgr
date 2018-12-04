@@ -101,6 +101,42 @@ Customizations:
       Type: source
 ```
 
+A configuration that also pulls from bioconductor:
+
+```
+Version: 1
+# top level packages
+Packages:
+  - magrittr
+  - rlang
+  - ggplot2
+  - dplyr
+  - tidyr
+  - plotly
+  - VennDiagram
+  - aws.s3
+  - data.table
+  - forcats
+  - preprocessCore
+  - loomR
+  - ggthemes
+  - reshape
+
+# any repositories, order matters
+Repos:
+  - CRAN: "https://cran.microsoft.com/snapshot/2018-11-18"
+  - BioCsoft: "https://bioconductor.org/packages/3.8/bioc"
+  - BioCann: "https://bioconductor.org/packages/3.8/data/annotation"
+  - BioCexp: "https://bioconductor.org/packages/3.8/data/experiment"
+  - BioCworkflows: "https://bioconductor.org/packages/3.8/workflows"
+
+# path to install packages to
+Library: pkgs
+
+Cache: pkgcache
+Logging:
+  File: pkgr-install.log
+```
 
 TODO:
 
