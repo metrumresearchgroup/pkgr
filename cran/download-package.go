@@ -1,6 +1,7 @@
 package cran
 
 import (
+	"crypto/md5"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -50,7 +51,14 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string) (*PkgMap, error) 
 				<-sem
 				wg.Done()
 			}()
-			pkgdir := filepath.Join(baseDir, d.Config.Repo.Name, pkgType)
+			h := md5.New()
+			// don't hash everything as still want a reasonable identifier
+			io.WriteString(h, d.Config.Repo.URL)
+			urlhash := fmt.Sprintf("%x", h.Sum(nil))
+			// TODO: should potentially provide a lookup mapping
+			// but would want to do this outside the goroutine that downloads\
+			// the package so didn't get invoked multiple times
+			pkgdir := filepath.Join(baseDir, d.Config.Repo.Name+"-"+urlhash, pkgType)
 			err := fs.MkdirAll(pkgdir, 0777)
 			var pkgFile string
 			if d.Config.Type == Binary {
