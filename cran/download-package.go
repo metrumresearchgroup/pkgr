@@ -38,6 +38,9 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string) (*PkgMap, error) 
 		wg.Add(1)
 		go func(d PkgDl, wg *sync.WaitGroup) {
 			var pkgType string
+			if d.Config.Type == Default {
+				d.Config.Type = DefaultType()
+			}
 			switch d.Config.Type {
 			case Binary:
 				pkgType = "binary"

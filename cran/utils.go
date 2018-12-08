@@ -1,7 +1,9 @@
 package cran
 
 import (
+	"crypto/md5"
 	"fmt"
+	"io"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -71,4 +73,14 @@ func cranBinaryURL() string {
 		fmt.Println("platform not supported for binary detection")
 		return ""
 	}
+}
+
+// RepoURLHash provides a hash of the repoURL
+// given the structure Name-<urlhash>
+func RepoURLHash(r RepoURL) string {
+	h := md5.New()
+	// don't hash everything as still want a reasonable identifier
+	io.WriteString(h, r.URL)
+	urlHash := fmt.Sprintf("%x", h.Sum(nil))
+	return r.Name + "-" + urlHash[:12]
 }
