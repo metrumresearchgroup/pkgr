@@ -59,13 +59,16 @@ func StartR(
 func RunR(
 	fs afero.Fs,
 	rs RSettings,
+	script string,
 	rdir string, // this should be put into RSettings
 	lg *logrus.Logger,
-) error {
+) ([]byte, error) {
 
 	envVars := configureEnv(rs, lg)
 	cmdArgs := []string{
 		"--vanilla",
+		"-e",
+		script,
 	}
 
 	lg.WithFields(
@@ -81,7 +84,7 @@ func RunR(
 	// 	cmdArgs = append([]string{"--vanilla"}, cmdArgs...)
 	// }
 	cmd := exec.Command(
-		rs.R(),
+		rs.R()+"script",
 		cmdArgs...,
 	)
 
@@ -93,8 +96,8 @@ func RunR(
 	}
 	cmd.Dir = rdir
 	cmd.Env = envVars
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-	return cmd.Run()
+	// cmd.Stdout = os.Stdout
+	// cmd.Stderr = os.Stderr
+
+	return cmd.Output()
 }
