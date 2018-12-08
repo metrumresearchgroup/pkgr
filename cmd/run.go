@@ -37,7 +37,7 @@ func rRun(cmd *cobra.Command, args []string) error {
 	// at least for experimentation for now. If necessary can refactor out the
 	// specifics so could be run here exactly.
 	rs.LibPaths = append(rs.LibPaths, cfg.Library)
-	rcmd.RunR(fs, rs, "", log)
+	rcmd.StartR(fs, rs, "", log)
 	return nil
 }
 
