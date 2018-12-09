@@ -94,53 +94,79 @@ func (r *RepoDb) FetchPackages() error {
 			fmt.Println("error removing cache ", pkgdbFile, err)
 		}
 	}
+	type dldb struct {
+		St   SourceType
+		Stdb map[string]desc.Desc
+		Err  error
+	}
+	dlchan := make(chan dldb, len(r.Dbs))
+	defer close(dlchan)
 	for st := range r.Dbs {
-		var pkgURL string
-		if st == Source {
-			pkgURL = fmt.Sprintf("%s/src/contrib/PACKAGES", strings.TrimSuffix(r.Repo.URL, "/"))
-		} else {
-			// TODO: fix so isn't hard coded to 3.5 binaries
-			pkgURL = fmt.Sprintf("%s/bin/%s/contrib/%s/PACKAGES", strings.TrimSuffix(r.Repo.URL, "/"), cranBinaryURL(), "3.5")
-		}
-		var body []byte
-		if strings.HasPrefix(pkgURL, "http") {
-			res, err := http.Get(pkgURL)
-			if err != nil {
-				return fmt.Errorf("problem getting packages from url %s", pkgURL)
-			}
-			defer res.Body.Close()
-			body, err = ioutil.ReadAll(res.Body)
-			if err != nil {
-				return err
-			}
-		} else {
-			pkgdir, _ := homedir.Expand(pkgURL)
-			pkgdir, _ = filepath.Abs(pkgdir)
-			if fi, err := os.Open(pkgdir); !os.IsNotExist(err) {
-				body, err = ioutil.ReadAll(fi)
+		go func(st SourceType) {
+			var pkgURL string
+			ddb := make(map[string]desc.Desc)
+			if st == Source {
+				pkgURL = fmt.Sprintf("%s/src/contrib/PACKAGES", strings.TrimSuffix(r.Repo.URL, "/"))
 			} else {
-				fmt.Println("no package file found at: ", pkgdir)
-				return err
+				// TODO: fix so isn't hard coded to 3.5 binaries
+				pkgURL = fmt.Sprintf("%s/bin/%s/contrib/%s/PACKAGES", strings.TrimSuffix(r.Repo.URL, "/"), cranBinaryURL(), "3.5")
 			}
-		}
-		cb := bytes.Split(body, []byte("\n\n"))
-		for _, p := range cb {
-			if len(p) == 0 {
-				// end of file might have double spaces
-				// and thus will be one split, so want
-				// to skip that
-				continue
+			var body []byte
+			if strings.HasPrefix(pkgURL, "http") {
+				res, err := http.Get(pkgURL)
+				if err != nil {
+					err = fmt.Errorf("problem getting packages from url %s: %s", pkgURL, err)
+					dlchan <- dldb{St: st, Stdb: ddb, Err: err}
+					return
+				}
+				defer res.Body.Close()
+				body, err = ioutil.ReadAll(res.Body)
+				if err != nil {
+					err = fmt.Errorf("error reading body: %s", err)
+					dlchan <- dldb{St: st, Stdb: ddb, Err: err}
+					return
+				}
+			} else {
+				pkgdir, _ := homedir.Expand(pkgURL)
+				pkgdir, _ = filepath.Abs(pkgdir)
+				if fi, err := os.Open(pkgdir); !os.IsNotExist(err) {
+					body, err = ioutil.ReadAll(fi)
+				} else {
+					err = fmt.Errorf("no package file found at: %s", pkgdir)
+					dlchan <- dldb{St: st, Stdb: ddb, Err: err}
+					return
+				}
 			}
-			reader := bytes.NewReader(p)
-			d, err := desc.ParseDesc(reader)
-			r.Dbs[st][d.Package] = d
-			if err != nil {
-				fmt.Println("problem parsing package with info ", string(p))
-				fmt.Println(err)
-				panic(err)
+			cb := bytes.Split(body, []byte("\n\n"))
+			for _, p := range cb {
+				if len(p) == 0 {
+					// end of file might have double spaces
+					// and thus will be one split, so want
+					// to skip that
+					continue
+				}
+				reader := bytes.NewReader(p)
+				d, err := desc.ParseDesc(reader)
+				ddb[d.Package] = d
+				if err != nil {
+					fmt.Println("problem parsing package with info ", string(p))
+					fmt.Println(err)
+					panic(err)
+				}
 			}
-		}
+			dlchan <- dldb{St: st, Stdb: ddb, Err: err}
+		}(st)
 
+	}
+	for i := 0; i < len(r.Dbs); i++ {
+		result := <-dlchan
+		if result.Err != nil {
+			fmt.Printf("error downloading repo information: %s", result.Err)
+			// if one repo fails should return the error and not continue
+			// as don't want a partial repodb as it might cause improperly pulled packages
+			return err
+		}
+		r.Dbs[result.St] = result.Stdb
 	}
 	return r.Encode(pkgdbFile)
 }
