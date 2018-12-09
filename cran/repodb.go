@@ -88,11 +88,10 @@ func (r *RepoDb) FetchPackages() error {
 		if fi.ModTime().Add(1*time.Hour).Unix() > time.Now().Unix() {
 			// only read if was cached in the last hour
 			return r.Decode(pkgdbFile)
-		} else {
-			err := os.Remove(pkgdbFile)
-			if err != nil {
-				fmt.Println("error removing cache ", pkgdbFile, err)
-			}
+		}
+		err := os.Remove(pkgdbFile)
+		if err != nil {
+			fmt.Println("error removing cache ", pkgdbFile, err)
 		}
 	}
 	for st := range r.Dbs {

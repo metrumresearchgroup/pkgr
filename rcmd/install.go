@@ -67,7 +67,7 @@ func configureEnv(
 	envVars := os.Environ()
 	envMap := make(map[string]string)
 	for _, ev := range envVars {
-		evs := strings.SplitN(ev, "=", 1)
+		evs := strings.SplitN(ev, "=", 2)
 		if len(evs) > 1 && evs[1] != "" {
 			envMap[evs[0]] = evs[1] 
 		}
@@ -155,6 +155,7 @@ func Install(
 	envVars := configureEnv(rs, lg) 
 
 	cmdArgs := []string{
+		"--vanilla",
 		"CMD",
 		"INSTALL",
 	}

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/dpastoor/goutils"
 	"github.com/spf13/afero"
@@ -28,15 +29,40 @@ const (
 	Binary
 )
 
+func getRepos(ds []PkgDl) map[string]RepoURL {
+	rpm := make(map[string]RepoURL)
+	for _, d := range ds {
+		rpm[d.Config.Repo.Name] = d.Config.Repo
+	}
+	return rpm
+}
+
 // DownloadPackages downloads a set of packages concurrently
 func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string) (*PkgMap, error) {
+	startTime := time.Now()
 	result := NewPkgMap()
 	sem := make(chan struct{}, 10)
 	wg := sync.WaitGroup{}
+	rpm := getRepos(ds)
+	for _, r := range rpm {
+		urlHash := RepoURLHash(r)
+		for _, pt := range []string{"src", "binary"} {
+			pkgdir := filepath.Join(baseDir, urlHash, pt)
+			err := fs.MkdirAll(pkgdir, 0777)
+			if err != nil {
+				fmt.Println("error creating package directory ", pkgdir)
+				fmt.Println("error: ", err)
+				return result, err
+			}
+		}
+	}
 	for _, d := range ds {
 		wg.Add(1)
 		go func(d PkgDl, wg *sync.WaitGroup) {
 			var pkgType string
+			if d.Config.Type == Default {
+				d.Config.Type = DefaultType()
+			}
 			switch d.Config.Type {
 			case Binary:
 				pkgType = "binary"
@@ -50,19 +76,16 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string) (*PkgMap, error) 
 				<-sem
 				wg.Done()
 			}()
-			pkgdir := filepath.Join(baseDir, d.Config.Repo.Name, pkgType)
-			err := fs.MkdirAll(pkgdir, 0777)
+			// TODO: should potentially provide a lookup mapping
+			// but would want to do this outside the goroutine that downloads\
+			// the package so didn't get invoked multiple times
+			urlHash := RepoURLHash(d.Config.Repo)
+			pkgdir := filepath.Join(baseDir, urlHash, pkgType)
 			var pkgFile string
 			if d.Config.Type == Binary {
 				pkgFile = filepath.Join(pkgdir, binaryName(d.Package.Package, d.Package.Version))
 			} else {
 				pkgFile = filepath.Join(pkgdir, fmt.Sprintf("%s_%s.tar.gz", d.Package.Package, d.Package.Version))
-			}
-			if err != nil {
-				fmt.Println("error creating package directory ", pkgdir)
-				fmt.Println("error: ", err)
-				// should this trigger something more impactful? probably since wouldn't download anything
-				return
 			}
 			dl, err := DownloadPackage(fs, d, pkgFile)
 			if err != nil {
@@ -75,7 +98,7 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string) (*PkgMap, error) 
 		}(d, &wg)
 	}
 	wg.Wait()
-	fmt.Println("all packages downloaded")
+	fmt.Printf("all packages downloaded in %s\n\n", time.Since(startTime))
 	return result, nil
 }
 
