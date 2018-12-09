@@ -1,0 +1,11 @@
+Version: 1
+# top level packages
+Packages:
+  - R6
+  - pillar 
+  
+# any repositories, order matters
+Repos:
+  - CRAN: "https://cran.rstudio.com"
+
+Library: "testsets/simple"
