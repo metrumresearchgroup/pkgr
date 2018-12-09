@@ -17,11 +17,10 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
+	"time"
 
-	"github.com/spf13/viper"
-
+	"github.com/metrumresearchgroup/pkgr/rcmd"
+	"github.com/metrumresearchgroup/pkgr/rcmd/rp"
 	"github.com/spf13/cobra"
 )
 
@@ -44,13 +43,22 @@ func rExperiment(cmd *cobra.Command, args []string) error {
 	// 	log.Fatalf("error opening file: %v", err)
 	// }
 	// defer f.Close()
-	prettyPrint(viper.AllSettings())
-	prettyPrint(cfg)
-	configDir, _ := filepath.Abs(viper.ConfigFileUsed())
-	fmt.Println(os.Getwd())
-	os.Chdir(filepath.Dir(configDir))
-	fmt.Println(configDir)
-	fmt.Println(os.Getwd())
+	rs := rcmd.NewRSettings()
+	// installation through binary doesn't do this exactly, but its pretty close
+	// at least for experimentation for now. If necessary can refactor out the
+	// specifics so could be run here exactly.
+	rs.LibPaths = append(rs.LibPaths, cfg.Library)
+	res, _ := rcmd.RunR(fs, rs, ".libPaths()", "", log)
+	fmt.Println(rp.ScanLines(res))
+	startTime := time.Now()
+	res, _ = rcmd.RunR(fs, rs, "paste0(R.Version()$major,'.',R.Version()$minor)", "", log)
+	fmt.Println(rp.ScanLines(res)[0])
+	fmt.Println(time.Since(startTime))
+	res, err := rcmd.RunR(fs, rs, "stop('bad')", "", log)
+	fmt.Println(res)
+	fmt.Println("err: ", err)
+	fmt.Println(rp.ScanLines(res))
+	fmt.Println(time.Since(startTime))
 	return nil
 }
 
