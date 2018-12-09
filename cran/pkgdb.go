@@ -17,14 +17,32 @@ func NewPkgDb(urls []RepoURL, dst SourceType, cfgdb map[string]PkgConfig) (*PkgD
 	if len(urls) == 0 {
 		return &db, errors.New("Package database must contain at least one RepoUrl")
 	}
-	for _, url := range urls {
-		rdb, err := NewRepoDb(url, dst)
-		if err != nil {
-			return &db, err
-		}
-		db.Db = append(db.Db, rdb)
+	type rd struct {
+		Url RepoURL
+		Rdb *RepoDb
+		Err error
 	}
-	return &db, nil
+	rdbc := make(chan rd, len(urls))
+	defer close(rdbc)
+	for _, url := range urls {
+		go func(url RepoURL, dst SourceType) {
+			rdb, err := NewRepoDb(url, dst)
+			rdbc <- rd{url, rdb, err}
+		}(url, dst)
+	}
+	var err error
+	err = nil
+	for i := 0; i < len(urls); i++ {
+		result := <-rdbc
+		if result.Err != nil {
+			//
+			fmt.Printf("error downloading repo information from: %s:%s\n", result.Url.Name, result.Url.URL)
+			err = result.Err
+		} else {
+			db.Db = append(db.Db, result.Rdb)
+		}
+	}
+	return &db, err
 }
 
 // SetPackageRepo sets a package repository so querying the package will
