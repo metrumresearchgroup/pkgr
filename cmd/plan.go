@@ -70,8 +70,9 @@ func planInstall() (*cran.PkgDb, gpsr.InstallPlan) {
 		panic(err)
 	}
 	//PrettyPrint(cdb)
+	fmt.Println("Default package type: ", st.String())
 	for _, db := range cdb.Db {
-		fmt.Println(fmt.Sprintf("%v packages available in for %s from %s", len(db.Dbs[st]), db.Repo.Name, db.Repo.URL))
+		fmt.Println(fmt.Sprintf("%v:%v (binary:source) packages available in for %s from %s", len(db.Dbs[st]), len(db.Dbs[cran.Source]), db.Repo.Name, db.Repo.URL))
 	}
 	ids := gpsr.NewDefaultInstallDeps()
 	if cfg.Suggests {

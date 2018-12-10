@@ -18,6 +18,16 @@ import (
 // SourceType represents the type of package to download
 type SourceType int
 
+func (s SourceType) String() string {
+	if s == Default {
+		s = DefaultType()
+	}
+	if s == Binary {
+		return "binary"
+	}
+	return "source"
+}
+
 // Constraints on package deps
 // Least to most constraining
 const (
