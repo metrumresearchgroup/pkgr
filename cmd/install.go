@@ -17,6 +17,7 @@ package cmd
 import (
 	"fmt"
 	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/metrumresearchgroup/pkgr/cran"
@@ -59,7 +60,14 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	}
 	ia := rcmd.NewDefaultInstallArgs()
 	ia.Library, _ = filepath.Abs(cfg.Library)
-	err = rcmd.InstallPackagePlan(fs, ip, dl, pc, ia, rcmd.NewRSettings(), rcmd.ExecSettings{}, log, 12)
+	nworkers := runtime.NumCPU()
+	// leave at least 1 thread open for coordination, given more than 2 threads available.
+	// if only 2 available, will let the OS hypervisor coordinate some else would drop the
+	// install time too much for the little bit of additional coordination going on.
+	if nworkers > 2 {
+		nworkers = nworkers - 1
+	}
+	err = rcmd.InstallPackagePlan(fs, ip, dl, pc, ia, rcmd.NewRSettings(), rcmd.ExecSettings{}, log, nworkers)
 	if err != nil {
 		fmt.Println("failed package install")
 		fmt.Println(err)
