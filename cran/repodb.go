@@ -114,6 +114,12 @@ func (r *RepoDb) FetchPackages() error {
 			var body []byte
 			if strings.HasPrefix(pkgURL, "http") {
 				res, err := http.Get(pkgURL)
+				if res.StatusCode != 200 {
+					dlchan <- dldb{St: st,
+						Stdb: ddb,
+						Err:  fmt.Errorf("failed fetching PACKAGES file from %s, with status %s", pkgURL, res.Status)}
+					return
+				}
 				if err != nil {
 					err = fmt.Errorf("problem getting packages from url %s: %s", pkgURL, err)
 					dlchan <- dldb{St: st, Stdb: ddb, Err: err}
@@ -151,22 +157,31 @@ func (r *RepoDb) FetchPackages() error {
 				if err != nil {
 					fmt.Println("problem parsing package with info ", string(p))
 					fmt.Println(err)
-					panic(err)
+					dlchan <- dldb{St: st, Stdb: ddb, Err: err}
+					return
 				}
 			}
 			dlchan <- dldb{St: st, Stdb: ddb, Err: err}
 		}(st)
 
 	}
+	nerr := 0
+	var lasterr error
 	for i := 0; i < len(r.Dbs); i++ {
 		result := <-dlchan
 		if result.Err != nil {
-			fmt.Printf("error downloading repo information: %s", result.Err)
+			fmt.Printf("error downloading repo %s, type: %s, with information: %s\n", r.Repo.Name, result.St, result.Err)
+			nerr++
+			lasterr = result.Err
 			// if one repo fails should return the error and not continue
 			// as don't want a partial repodb as it might cause improperly pulled packages
-			return err
+		} else {
+			r.Dbs[result.St] = result.Stdb
 		}
-		r.Dbs[result.St] = result.Stdb
+	}
+	// if only one source fails, this could be because it isn't present - eg if have binary/source but only source available
+	if len(r.Dbs) > 1 && nerr == len(r.Dbs) {
+		return lasterr
 	}
 	return r.Encode(pkgdbFile)
 }
