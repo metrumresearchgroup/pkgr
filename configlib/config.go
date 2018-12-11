@@ -73,10 +73,10 @@ func loadDefaultSettings() {
 	viper.SetDefault("threads", runtime.NumCPU())
 }
 
-func IsCustomizationSet(key string, as map[string]interface{}, pkg string) bool {
-	for _, v := range as["customizations"].([]interface{}) {
+func IsCustomizationSet(key string, elems []interface{}, elem string) bool {
+	for _, v := range elems {
 		for k, iv := range v.(map[interface{}]interface{}) {
-			if k == pkg {
+			if k == elem {
 				for k2 := range iv.(map[interface{}]interface{}) {
 					if k2 == key {
 						return true
