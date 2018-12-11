@@ -18,16 +18,22 @@ import (
 )
 
 // NewRepoDb returns a new Repo database
-func NewRepoDb(url RepoURL, st SourceType) (*RepoDb, error) {
+func NewRepoDb(url RepoURL, dst SourceType, rc RepoConfig) (*RepoDb, error) {
 	ddb := &RepoDb{
 		Dbs:  make(map[SourceType]map[string]desc.Desc),
 		Time: time.Now(),
 		Repo: url,
 	}
+	if rc.DefaultSourceType == Default {
+		ddb.DefaultSourceType = dst
+	} else {
+		ddb.DefaultSourceType = rc.DefaultSourceType
+	}
 
-	if st == Binary {
+	if SupportsCranBinary() {
 		ddb.Dbs[Binary] = make(map[string]desc.Desc)
 	}
+
 	ddb.Dbs[Source] = make(map[string]desc.Desc)
 
 	return ddb, ddb.FetchPackages()
