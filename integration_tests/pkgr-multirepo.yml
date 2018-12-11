@@ -35,10 +35,13 @@ Logging:
 # each package gets installed in its own process so any env variables
 # or settings will only matter for it
 Customizations:
-  - data.table:
-     Env:
-       - R_MAKEVARS_USER: "~/.R/Makevars_data.table"
-  - mrgsolve:
-     Repo: CRAN
-     Type: source
-     Version: "2.0.0"
+  Packages:
+    - data.table:
+        Env:
+          - R_MAKEVARS_USER: "~/.R/Makevars_data.table"
+    - mrgsolve:
+       Repo: CRAN
+       Type: source
+  Repos:
+    - r_validated:
+        Type: source  

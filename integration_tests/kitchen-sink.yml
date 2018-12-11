@@ -35,5 +35,6 @@ Logging:
   File: kitchen-sink.log
 
 Customizations:
-  - devtools:
-      Type: source
+    Packages:
+        - devtools:
+            Type: source

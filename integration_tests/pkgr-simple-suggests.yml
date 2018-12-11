@@ -11,3 +11,13 @@ Repos:
   - CRAN: "https://cran.rstudio.com"
 
 Library: "testsets/simple-suggests"
+
+Cache: "pkgcache"
+
+Customizations:
+  Packages:
+    - R6:
+        Type: source
+  Repos:
+    - CRAN:
+        Type: source
