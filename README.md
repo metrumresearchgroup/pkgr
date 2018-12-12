@@ -17,10 +17,10 @@ can be tuned, but overall the API is generally not what the user _actually_ need
 are the mechanism by which the user can strive towards their needs, in a forceably iterative fashion.
 
 For example, with `install.packages`, how do you control things like:
-- install a number of packages, but only if they don't exist.
+- install a number of packages from various repositories, where specific packages can be pulled from a particular repository, rather than just the first repo is is found in.
 - _see_ what would be changed before performing an action, while not actually performing said action.
 - install `Suggested` packages, but only for a subset of all packages you'd like to install.
-- customize the installation behavior of a single package in a documentable and reproducible way
+- customize the installation behavior of a single package in a documentable and reproducible way without resorting to installing individual packages iteratively
   - set custom makevars for a package that persist across system installations
   - install source versions of some packages but binaries for others
 
