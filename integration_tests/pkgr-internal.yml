@@ -22,6 +22,7 @@ Suggests: true
 Repos:
   - r_validated: "https://metrumresearchgroup.github.io/r_validated"
   - CRAN: "https://cran.rstudio.com"
+  - local: "path/on/filesystem"
 
 Library: "path/to/installation"
 
@@ -36,10 +37,11 @@ Libpaths:
 # each package gets installed in its own process so any env variables
 # or settings will only matter for it
 Customizations:
-  - PKPDmisc:
-      Suggests: true
-  - data.table:
-     Env:
-       - R_MAKEVARS_USER: "~/.R/Makevars_data.table"
-  - internal:
-      Repo: local
+    Packages:
+        - PKPDmisc:
+            Suggests: true
+        - data.table:
+           Env:
+             - R_MAKEVARS_USER: "~/.R/Makevars_data.table"
+        - internal:
+            Repo: local

@@ -17,9 +17,21 @@ type RepoURL struct {
 
 // RepoDb represents a Db
 type RepoDb struct {
-	Dbs  map[SourceType]map[string]desc.Desc
-	Time time.Time
-	Repo RepoURL
+	Dbs               map[SourceType]map[string]desc.Desc
+	Time              time.Time
+	Repo              RepoURL
+	DefaultSourceType SourceType
+}
+
+// InstallConfig contains custom settings for a full install
+type InstallConfig struct {
+	Packages map[string]PkgConfig
+	Repos    map[string]RepoConfig
+}
+
+// RepoConfig contains settings for a repo
+type RepoConfig struct {
+	DefaultSourceType SourceType
 }
 
 //PkgConfig stores configuration information about a given package
@@ -31,7 +43,7 @@ type PkgConfig struct {
 // PkgDb represents a package database
 type PkgDb struct {
 	Db                []*RepoDb
-	Config            map[string]PkgConfig
+	Config            *InstallConfig
 	DefaultSourceType SourceType
 }
 

@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"strings"
 	"fmt"
 	"os"
 	"time"
@@ -64,7 +65,16 @@ func planInstall() (*cran.PkgDb, gpsr.InstallPlan) {
 		}
 	}
 	st := cran.DefaultType()
-	cdb, err := cran.NewPkgDb(repos, st, cran.NewPkgConfigDB())
+	cic := cran.NewInstallConfig()
+	for rn, val := range cfg.Customizations.Repos {
+		if strings.EqualFold(val.Type, "binary") {
+			cic.Repos[rn] = cran.RepoConfig{DefaultSourceType: cran.Binary}
+		}
+		if strings.EqualFold(val.Type, "source") {
+			cic.Repos[rn] = cran.RepoConfig{DefaultSourceType: cran.Source}
+		}
+	}
+	cdb, err := cran.NewPkgDb(repos, st, cic)
 	if err != nil {
 		fmt.Println("error getting pkgdb ", err)
 		panic(err)
@@ -83,14 +93,16 @@ func planInstall() (*cran.PkgDb, gpsr.InstallPlan) {
 			ids.Deps[pkg] = dp
 		}
 	}
-	as := viper.AllSettings()
-	for pkg, v := range cfg.Customizations {
-		if configlib.IsCustomizationSet("Suggests", as, pkg) {
+	if viper.Sub("Customizations") != nil && viper.Sub("Customizations").AllSettings()["packages"] != nil {
+	pkgSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{}) 
+	//repoSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{}) 
+	for pkg, v := range cfg.Customizations.Packages {
+		if configlib.IsCustomizationSet("Suggests", pkgSettings, pkg) {
 			dp := ids.Default
 			dp.Suggests = v.Suggests
 			ids.Deps[pkg] = dp
 		}
-		if configlib.IsCustomizationSet("Repo", as, pkg) {
+		if configlib.IsCustomizationSet("Repo", pkgSettings, pkg) {
 			err := cdb.SetPackageRepo(pkg, v.Repo)
 			if err != nil {
 				log.WithFields(logrus.Fields{
@@ -99,7 +111,7 @@ func planInstall() (*cran.PkgDb, gpsr.InstallPlan) {
 				}).Fatal("error finding custom repo to set")
 			}
 		}
-		if configlib.IsCustomizationSet("Type", as, pkg) {
+		if configlib.IsCustomizationSet("Type", pkgSettings, pkg) {
 			err := cdb.SetPackageType(pkg, v.Type)
 			if err != nil {
 				log.WithFields(logrus.Fields{
@@ -108,6 +120,7 @@ func planInstall() (*cran.PkgDb, gpsr.InstallPlan) {
 				}).Fatal("error finding custom repo to set")
 			}
 		}
+	}
 	}
 	ap := cdb.GetPackages(cfg.Packages)
 	if len(ap.Missing) > 0 {
