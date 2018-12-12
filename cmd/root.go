@@ -121,11 +121,7 @@ func initConfig() {
 	// if cfgFile != "" { // enable ability to specify config file via flag
 	// 	viper.SetConfigFile(cfgFile)
 	// }
-	if viper.GetString("config") == "" {
-		_ = configlib.LoadGlobalConfig("pkgr")
-	} else {
-		_ = configlib.LoadConfigFromPath(viper.GetString("config"))
-	}
+	configlib.LoadConfigFromPath(viper.GetString("config"))
 
 	setGlobals()
 	if viper.GetBool("debug") {
