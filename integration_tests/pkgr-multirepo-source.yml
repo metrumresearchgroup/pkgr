@@ -20,7 +20,7 @@ Packages:
 # any repositories, order matters
 Repos:
   - r_validated: "https://metrumresearchgroup.github.io/r_validated"
-  - CRAN: "https://cran.rstudio.com"
+  - CRAN: "${CRAN_URL}"
 
 Library: "testsets/multirepo"
 

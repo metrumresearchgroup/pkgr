@@ -1,7 +1,9 @@
 package configlib
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -11,39 +13,18 @@ import (
 	"github.com/spf13/viper"
 )
 
-// LoadGlobalConfig loads pkgcheck configuration into the global Viper
-func LoadGlobalConfig(configFilename string) error {
-	viper.SetConfigName(configFilename)
-	viper.SetConfigType("yaml")
-	viper.AutomaticEnv()
-	viper.SetEnvPrefix("pkgr")
-	viper.AddConfigPath(".")
-	err := viper.ReadInConfig()
-	if err != nil {
-		if _, ok := err.(viper.ConfigParseError); ok {
-			// found config file but couldn't parse it, should error
-			panic(fmt.Errorf("unable to parse config file with error (%s)", err))
-		}
-		if _, ok := err.(*os.PathError); ok {
-			panic(fmt.Errorf("could not find a config file at path: %s", configFilename))
-		}
-		// maybe could be more loose on this later, but for now will require a config file
-		fmt.Println("Error with pkgr config file:")
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	loadDefaultSettings()
-	return nil
-}
-
 // LoadConfigFromPath loads pkc configuration into the global Viper
 func LoadConfigFromPath(configFilename string) error {
-	viper.AutomaticEnv()
+	if configFilename == "" {
+		configFilename = "pkgr.yml"
+	}
 	viper.SetEnvPrefix("pkgr")
+	viper.AutomaticEnv()
 	configFilename, _ = homedir.Expand(filepath.Clean(configFilename))
 	viper.SetConfigFile(configFilename)
-	err := viper.ReadInConfig()
+	b, err := ioutil.ReadFile(configFilename)
+	expb := []byte(os.ExpandEnv(string(b)))
+	err = viper.ReadConfig(bytes.NewReader(expb))
 	if err != nil {
 		// panic if can't find or parse config as this could be explicit to user expectations
 		if _, ok := err.(*os.PathError); ok {
