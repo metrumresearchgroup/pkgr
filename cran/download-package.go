@@ -66,6 +66,7 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string) (*PkgMap, error) 
 			}
 		}
 	}
+	fmt.Println("downloading required packages within directory " + baseDir)
 	for _, d := range ds {
 		wg.Add(1)
 		go func(d PkgDl, wg *sync.WaitGroup) {
