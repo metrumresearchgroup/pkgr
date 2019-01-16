@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/dpastoor/goutils"
 	"github.com/spf13/afero"
 )
@@ -48,7 +50,7 @@ func getRepos(ds []PkgDl) map[string]RepoURL {
 }
 
 // DownloadPackages downloads a set of packages concurrently
-func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string) (*PkgMap, error) {
+func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string, lg *logrus.Logger) (*PkgMap, error) {
 	startTime := time.Now()
 	result := NewPkgMap()
 	sem := make(chan struct{}, 10)
@@ -66,7 +68,7 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string) (*PkgMap, error) 
 			}
 		}
 	}
-	fmt.Println("downloading required packages within directory " + baseDir)
+	lg.Debugln("downloading required packages within directory " + baseDir)
 	for _, d := range ds {
 		wg.Add(1)
 		go func(d PkgDl, wg *sync.WaitGroup) {
@@ -98,6 +100,7 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string) (*PkgMap, error) 
 			} else {
 				pkgFile = filepath.Join(pkgdir, fmt.Sprintf("%s_%s.tar.gz", d.Package.Package, d.Package.Version))
 			}
+			startDl := time.Now()
 			dl, err := DownloadPackage(fs, d, pkgFile)
 			if err != nil {
 				// TODO: this should cause a failure downstream rather than just printing
@@ -105,6 +108,10 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string) (*PkgMap, error) 
 				fmt.Println("downloading failed for package: ", d.Package.Package)
 				return
 			}
+			lg.WithFields(logrus.Fields{
+				"package": d.Package.Package,
+				"time":    time.Since(startDl),
+			}).Debug("downloaded package")
 			result.Put(d.Package.Package, dl)
 		}(d, &wg)
 	}
