@@ -10,7 +10,7 @@ import (
 
 // Start starts a worker
 func (w *Worker) Start() {
-	log.Infof("starting worker %v \n", w.ID)
+	log.Tracef("starting worker %v \n", w.ID)
 	go func() {
 		appFS := afero.NewOsFs()
 		for {
@@ -23,6 +23,14 @@ func (w *Worker) Start() {
 					"package": ir.Package,
 				}).Trace("package install request received")
 				res, bPath, err := w.InstallFunc(appFS, ir, ir.Cache)
+				// if already installed so don't print a message since that would have already been printed
+				if res.ExitCode != -999 {
+					log.WithFields(logrus.Fields{
+						"WID":      w.ID,
+						"package":  ir.Package,
+						"duration": time.Since(startTime),
+					}).Debug("package install request completed")
+				}
 				w.UpdateQueue <- InstallUpdate{
 					Result:       res,
 					Package:      ir.Package,
@@ -31,11 +39,6 @@ func (w *Worker) Start() {
 					Err:          err,
 					ShouldUpdate: true,
 				}
-				log.WithFields(logrus.Fields{
-					"WID":      w.ID,
-					"package":  ir.Package,
-					"duration": time.Since(startTime),
-				}).Info("package install request completed")
 
 			case <-w.Quit:
 				// We have been asked to stop.

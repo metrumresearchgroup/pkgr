@@ -270,7 +270,7 @@ func InstallThroughBinary(
 	if exists {
 		log.WithField("package", ir.Package).Info("package already installed")
 		return CmdResult{
-			ExitCode: 0,
+			ExitCode: -999,
 			Stderr:   fmt.Sprintf("already installed: %s", ir.Package),
 		}, "", nil
 	}
@@ -411,7 +411,10 @@ func InstallPackagePlan(
 				pkg, _ := dl.Get(iu.Package)
 
 				log.WithFields(logrus.Fields{"binary": iu.BinaryPath, "src": pkg.Path}).Debug(iu.Package)
-				log.WithField("package", iu.Package).Info("Successfully Installed")
+
+				if iu.Result.ExitCode != -999 {
+					log.WithField("package", iu.Package).Info("Successfully Installed")
+				}
 				installedPkgs[iu.Package] = true
 				deps, exists := iDeps[iu.Package]
 				if exists {
@@ -452,7 +455,6 @@ func InstallPackagePlan(
 				}
 			}
 			wg.Done()
-			fmt.Println("installed with message: ", iu.Result.Stderr)
 		})
 	go func(c chan string) {
 		requestedPkgs := make(map[string]bool)
