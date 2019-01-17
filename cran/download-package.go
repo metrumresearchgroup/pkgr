@@ -110,7 +110,7 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string) (*PkgMap, error) 
 			}
 			log.WithFields(log.Fields{
 				"package": d.Package.Package,
-				"time":    time.Since(startDl),
+				"dltime":  time.Since(startDl),
 			}).Debug("downloaded package")
 			result.Put(d.Package.Package, dl)
 		}(d, &wg)
