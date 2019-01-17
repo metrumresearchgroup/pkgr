@@ -53,7 +53,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	}
 	// // want to download the packages and return the full path of any downloaded package
 	pc := rcmd.NewPackageCache(userCache(cfg.Cache), false)
-	dl, err := cran.DownloadPackages(fs, toDl, pc.BaseDir, log)
+	dl, err := cran.DownloadPackages(fs, toDl, pc.BaseDir)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
@@ -67,7 +67,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	if nworkers > 2 {
 		nworkers = nworkers - 1
 	}
-	err = rcmd.InstallPackagePlan(fs, ip, dl, pc, ia, rcmd.NewRSettings(), rcmd.ExecSettings{}, log, nworkers)
+	err = rcmd.InstallPackagePlan(fs, ip, dl, pc, ia, rcmd.NewRSettings(), rcmd.ExecSettings{}, nworkers)
 	if err != nil {
 		fmt.Println("failed package install")
 		fmt.Println(err)

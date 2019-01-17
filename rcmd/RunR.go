@@ -5,6 +5,7 @@ import (
 	"os/exec"
 
 	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
 
@@ -16,15 +17,14 @@ func StartR(
 	fs afero.Fs,
 	rs RSettings,
 	rdir string, // this should be put into RSettings
-	lg *logrus.Logger,
 ) error {
 
-	envVars := configureEnv(rs, lg)
+	envVars := configureEnv(rs)
 	cmdArgs := []string{
 		"--vanilla",
 	}
 
-	lg.WithFields(
+	log.WithFields(
 		logrus.Fields{
 			"cmdArgs":   cmdArgs,
 			"RSettings": rs,
@@ -43,7 +43,7 @@ func StartR(
 
 	if rdir == "" {
 		rdir, _ = os.Getwd()
-		lg.WithFields(
+		log.WithFields(
 			logrus.Fields{"rdir": rdir},
 		).Debug("launch dir")
 	}
@@ -61,17 +61,16 @@ func RunR(
 	rs RSettings,
 	script string,
 	rdir string, // this should be put into RSettings
-	lg *logrus.Logger,
 ) ([]byte, error) {
 
-	envVars := configureEnv(rs, lg)
+	envVars := configureEnv(rs)
 	cmdArgs := []string{
 		"--vanilla",
 		"-e",
 		script,
 	}
 
-	lg.WithFields(
+	log.WithFields(
 		logrus.Fields{
 			"cmdArgs":   cmdArgs,
 			"RSettings": rs,
@@ -90,7 +89,7 @@ func RunR(
 
 	if rdir == "" {
 		rdir, _ = os.Getwd()
-		lg.WithFields(
+		log.WithFields(
 			logrus.Fields{"rdir": rdir},
 		).Debug("launch dir")
 	}

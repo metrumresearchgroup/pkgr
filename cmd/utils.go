@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"os"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // returns the cache or sets to a cache dir

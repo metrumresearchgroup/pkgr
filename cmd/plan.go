@@ -15,16 +15,16 @@
 package cmd
 
 import (
-	"strings"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/metrumresearchgroup/pkgr/configlib"
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/sajari/fuzzy"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -42,10 +42,10 @@ var planCmd = &cobra.Command{
 func plan(cmd *cobra.Command, args []string) error {
 	_, ip := planInstall()
 	if viper.GetBool("show-deps") {
-	for pkg, deps := range ip.DepDb {
-		fmt.Println("-----------  ", pkg, "   ------------")
-		fmt.Println(deps)
-	}
+		for pkg, deps := range ip.DepDb {
+			fmt.Println("-----------  ", pkg, "   ------------")
+			fmt.Println(deps)
+		}
 	}
 	return nil
 }
@@ -76,13 +76,11 @@ func planInstall() (*cran.PkgDb, gpsr.InstallPlan) {
 	}
 	cdb, err := cran.NewPkgDb(repos, st, cic)
 	if err != nil {
-		fmt.Println("error getting pkgdb ", err)
-		panic(err)
+		log.Panicln("error getting pkgdb ", err)
 	}
-	//PrettyPrint(cdb)
-	fmt.Println("Default package type: ", st.String())
+	log.Infoln("Default package type: ", st.String())
 	for _, db := range cdb.Db {
-		fmt.Println(fmt.Sprintf("%v:%v (binary:source) packages available in for %s from %s", len(db.Dbs[st]), len(db.Dbs[cran.Source]), db.Repo.Name, db.Repo.URL))
+		log.Infoln(fmt.Sprintf("%v:%v (binary:source) packages available in for %s from %s", len(db.Dbs[st]), len(db.Dbs[cran.Source]), db.Repo.Name, db.Repo.URL))
 	}
 	ids := gpsr.NewDefaultInstallDeps()
 	if cfg.Suggests {
@@ -94,37 +92,37 @@ func planInstall() (*cran.PkgDb, gpsr.InstallPlan) {
 		}
 	}
 	if viper.Sub("Customizations") != nil && viper.Sub("Customizations").AllSettings()["packages"] != nil {
-	pkgSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{}) 
-	//repoSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{}) 
-	for pkg, v := range cfg.Customizations.Packages {
-		if configlib.IsCustomizationSet("Suggests", pkgSettings, pkg) {
-			dp := ids.Default
-			dp.Suggests = v.Suggests
-			ids.Deps[pkg] = dp
-		}
-		if configlib.IsCustomizationSet("Repo", pkgSettings, pkg) {
-			err := cdb.SetPackageRepo(pkg, v.Repo)
-			if err != nil {
-				log.WithFields(logrus.Fields{
-					"pkg":  pkg,
-					"repo": v.Repo,
-				}).Fatal("error finding custom repo to set")
+		pkgSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
+		//repoSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
+		for pkg, v := range cfg.Customizations.Packages {
+			if configlib.IsCustomizationSet("Suggests", pkgSettings, pkg) {
+				dp := ids.Default
+				dp.Suggests = v.Suggests
+				ids.Deps[pkg] = dp
+			}
+			if configlib.IsCustomizationSet("Repo", pkgSettings, pkg) {
+				err := cdb.SetPackageRepo(pkg, v.Repo)
+				if err != nil {
+					log.WithFields(log.Fields{
+						"pkg":  pkg,
+						"repo": v.Repo,
+					}).Fatal("error finding custom repo to set")
+				}
+			}
+			if configlib.IsCustomizationSet("Type", pkgSettings, pkg) {
+				err := cdb.SetPackageType(pkg, v.Type)
+				if err != nil {
+					log.WithFields(log.Fields{
+						"pkg":  pkg,
+						"repo": v.Repo,
+					}).Fatal("error finding custom repo to set")
+				}
 			}
 		}
-		if configlib.IsCustomizationSet("Type", pkgSettings, pkg) {
-			err := cdb.SetPackageType(pkg, v.Type)
-			if err != nil {
-				log.WithFields(logrus.Fields{
-					"pkg":  pkg,
-					"repo": v.Repo,
-				}).Fatal("error finding custom repo to set")
-			}
-		}
-	}
 	}
 	ap := cdb.GetPackages(cfg.Packages)
 	if len(ap.Missing) > 0 {
-		log.Error("missing packages: ", ap.Missing)
+		log.Errorln("missing packages: ", ap.Missing)
 		model := fuzzy.NewModel()
 
 		// For testing only, this is not advisable on production
@@ -136,15 +134,15 @@ func planInstall() (*cran.PkgDb, gpsr.InstallPlan) {
 		pkgs := cdb.GetAllPkgsByName()
 		model.Train(pkgs)
 		for _, mp := range ap.Missing {
-			fmt.Println("did you mean one of: ", model.Suggestions(mp, false))
+			log.Warnln("did you mean one of: ", model.Suggestions(mp, false))
 		}
 		os.Exit(1)
 	}
 	for _, pkg := range ap.Packages {
-		log.WithFields(logrus.Fields{
-			"pkg":  pkg.Package.Package,
-			"repo": pkg.Config.Repo.Name,
-			"type": pkg.Config.Type,
+		log.WithFields(log.Fields{
+			"pkg":     pkg.Package.Package,
+			"repo":    pkg.Config.Repo.Name,
+			"type":    pkg.Config.Type,
 			"version": pkg.Package.Version,
 		}).Info("package repository set")
 	}

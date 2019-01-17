@@ -2,7 +2,6 @@ package rcmd
 
 import (
 	"github.com/metrumresearchgroup/pkgr/cran"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
 
@@ -18,8 +17,15 @@ type ExecSettings struct {
 	WorkDir string `json:"work_dir,omitempty"`
 }
 
+type RVersion struct {
+	Major int
+	Minor int
+	Patch int
+}
+
 // RSettings controls settings related to managing libraries
 type RSettings struct {
+	Version  RVersion          `json:"r_version,omitempty"`
 	LibPaths []string          `json:"lib_paths,omitempty"`
 	Rpath    string            `json:"rpath,omitempty"`
 	EnvVars  map[string]string `json:"env_vars,omitempty"`
@@ -79,8 +85,7 @@ type Worker struct {
 	Quit        chan bool
 	InstallFunc func(fs afero.Fs,
 		ir InstallRequest,
-		pc PackageCache,
-		lg *logrus.Logger) (CmdResult, string, error)
+		pc PackageCache) (CmdResult, string, error)
 }
 
 // InstallQueue represents a new install queue

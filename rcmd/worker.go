@@ -4,12 +4,13 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
 
 // Start starts a worker
-func (w *Worker) Start(lg *logrus.Logger) {
-	lg.Infof("starting worker %v \n", w.ID)
+func (w *Worker) Start() {
+	log.Infof("starting worker %v \n", w.ID)
 	go func() {
 		appFS := afero.NewOsFs()
 		for {
@@ -17,11 +18,11 @@ func (w *Worker) Start(lg *logrus.Logger) {
 			case ir := <-w.WorkQueue:
 				// Receive a work request.
 				startTime := time.Now()
-				lg.WithFields(logrus.Fields{
+				log.WithFields(logrus.Fields{
 					"WID":     w.ID,
 					"package": ir.Package,
 				}).Trace("package install request received")
-				res, bPath, err := w.InstallFunc(appFS, ir, ir.Cache, lg)
+				res, bPath, err := w.InstallFunc(appFS, ir, ir.Cache)
 				w.UpdateQueue <- InstallUpdate{
 					Result:       res,
 					Package:      ir.Package,
@@ -30,7 +31,7 @@ func (w *Worker) Start(lg *logrus.Logger) {
 					Err:          err,
 					ShouldUpdate: true,
 				}
-				lg.WithFields(logrus.Fields{
+				log.WithFields(logrus.Fields{
 					"WID":      w.ID,
 					"package":  ir.Package,
 					"duration": time.Since(startTime),
@@ -38,7 +39,7 @@ func (w *Worker) Start(lg *logrus.Logger) {
 
 			case <-w.Quit:
 				// We have been asked to stop.
-				lg.Printf("worker%d stopping\n", w.ID)
+				log.Printf("worker%d stopping\n", w.ID)
 				return
 			}
 		}
@@ -58,9 +59,8 @@ func (w *Worker) Stop() {
 func NewInstallQueue(n int,
 	installFunc func(fs afero.Fs,
 		ir InstallRequest,
-		pc PackageCache,
-		lg *logrus.Logger) (CmdResult, string, error),
-	updateFunc func(InstallUpdate), lg *logrus.Logger) *InstallQueue {
+		pc PackageCache) (CmdResult, string, error),
+	updateFunc func(InstallUpdate)) *InstallQueue {
 	wq := make(chan InstallRequest, 2000)
 	uq := make(chan InstallUpdate, 500)
 	iq := InstallQueue{
@@ -68,7 +68,7 @@ func NewInstallQueue(n int,
 		UpdateQueue: uq,
 	}
 	for i := 0; i < n; i++ {
-		iq.RegisterNewWorker(i+1, installFunc, lg)
+		iq.RegisterNewWorker(i+1, installFunc)
 	}
 	go iq.HandleUpdates(updateFunc)
 	return &iq
@@ -87,8 +87,7 @@ func (i *InstallQueue) HandleUpdates(fn func(InstallUpdate)) {
 // RegisterNewWorker registers new workers
 func (i *InstallQueue) RegisterNewWorker(id int, fn func(fs afero.Fs,
 	ir InstallRequest,
-	pc PackageCache,
-	lg *logrus.Logger) (CmdResult, string, error), lg *logrus.Logger) {
+	pc PackageCache) (CmdResult, string, error)) {
 	// Create, and return the worker.
 	worker := Worker{
 		ID:          id,
@@ -97,7 +96,7 @@ func (i *InstallQueue) RegisterNewWorker(id int, fn func(fs afero.Fs,
 		Quit:        make(chan bool),
 		InstallFunc: fn,
 	}
-	worker.Start(lg)
+	worker.Start()
 	i.Workers = append(i.Workers, worker)
 	return
 }
