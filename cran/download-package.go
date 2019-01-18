@@ -146,7 +146,11 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string) (Download, error) {
 		pkgdl = fmt.Sprintf("%s/src/contrib/%s", strings.TrimSuffix(d.Config.Repo.URL, "/"), filepath.Base(dest))
 	} else {
 		// TODO: fix so isn't hard coded to 3.5 binaries
-		pkgdl = fmt.Sprintf("%s/bin/%s/contrib/%s/%s", strings.TrimSuffix(d.Config.Repo.URL, "/"), cranBinaryURL(), "3.5", filepath.Base(dest))
+		pkgdl = fmt.Sprintf("%s/bin/%s/contrib/%s/%s",
+			strings.TrimSuffix(d.Config.Repo.URL, "/"),
+			cranBinaryURL(),
+			"3.5",
+			filepath.Base(dest))
 	}
 	resp, err := http.Get(pkgdl)
 	if resp.StatusCode != 200 {
