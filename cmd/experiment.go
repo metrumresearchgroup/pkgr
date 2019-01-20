@@ -48,13 +48,13 @@ func rExperiment(cmd *cobra.Command, args []string) error {
 	// at least for experimentation for now. If necessary can refactor out the
 	// specifics so could be run here exactly.
 	rs.LibPaths = append(rs.LibPaths, cfg.Library)
-	res, _ := rcmd.RunR(fs, rs, ".libPaths()", "", log)
+	res, _ := rcmd.RunR(fs, rs, ".libPaths()", "")
 	fmt.Println(rp.ScanLines(res))
 	startTime := time.Now()
-	res, _ = rcmd.RunR(fs, rs, "paste0(R.Version()$major,'.',R.Version()$minor)", "", log)
+	res, _ = rcmd.RunR(fs, rs, "paste0(R.Version()$major,'.',R.Version()$minor)", "")
 	fmt.Println(rp.ScanLines(res)[0])
 	fmt.Println(time.Since(startTime))
-	res, err := rcmd.RunR(fs, rs, "stop('bad')", "", log)
+	res, err := rcmd.RunR(fs, rs, "stop('bad')", "")
 	fmt.Println(res)
 	fmt.Println("err: ", err)
 	fmt.Println(rp.ScanLines(res))

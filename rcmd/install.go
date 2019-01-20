@@ -12,14 +12,16 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
 	"github.com/dpastoor/goutils"
-	"github.com/metrumresearchgroup/pkgr/cran"
-	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/fatih/structs"
 	"github.com/fatih/structtag"
+	"github.com/metrumresearchgroup/pkgr/cran"
+	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
-	"github.com/thoas/go-funk"
+	funk "github.com/thoas/go-funk"
 )
 
 // NewDefaultInstallArgs provides a set of sane default installation args
@@ -60,27 +62,24 @@ func (i InstallArgs) CliArgs() []string {
 	return args
 }
 
-func configureEnv(
-	rs RSettings,
-	lg *logrus.Logger,
-) ([]string){
+func configureEnv(rs RSettings) []string {
 	envVars := os.Environ()
 	envMap := make(map[string]string)
 	for _, ev := range envVars {
 		evs := strings.SplitN(ev, "=", 2)
 		if len(evs) > 1 && evs[1] != "" {
-			envMap[evs[0]] = evs[1] 
+			envMap[evs[0]] = evs[1]
 		}
 	}
-	 rlu, exists := envMap["R_LIBS_USER"]
-	 if exists {
-		 // R_LIBS_USER takes precidence over R_LIBS_SITE
-		 // so will cause the loading characteristics to
-		 // not be representative of the hierarchy specified
-		 // in Library/Libpaths in the pkgr configuration
+	rlu, exists := envMap["R_LIBS_USER"]
+	if exists {
+		// R_LIBS_USER takes precidence over R_LIBS_SITE
+		// so will cause the loading characteristics to
+		// not be representative of the hierarchy specified
+		// in Library/Libpaths in the pkgr configuration
 		delete(envMap, "R_LIBS_USER")
-		lg.WithField("path", rlu).Debug("deleting set R_LIBS_USER")
-	 }
+		log.WithField("path", rlu).Debug("deleting set R_LIBS_USER")
+	}
 	envVars = []string{}
 	for k, v := range rs.EnvVars {
 		envMap[k] = v
@@ -88,8 +87,8 @@ func configureEnv(
 
 	ok, lp := rs.LibPathsEnv()
 	if ok {
-	// if LibPaths set, lets drop R_LIBS_SITE set as an ENV and instead
-	// add the generated R_LIBS_SITE from LibPathsEnv
+		// if LibPaths set, lets drop R_LIBS_SITE set as an ENV and instead
+		// add the generated R_LIBS_SITE from LibPathsEnv
 		delete(envMap, "R_LIBS_SITE")
 		envVars = append(envVars, lp)
 	}
@@ -102,6 +101,7 @@ func configureEnv(
 
 	return envVars
 }
+
 // Install installs a given tarball
 // exit code 0 - success, 1 - error
 func Install(
@@ -109,13 +109,11 @@ func Install(
 	tbp string, // tarball path
 	args InstallArgs,
 	rs RSettings,
-	es ExecSettings,
-	lg *logrus.Logger,
-) (CmdResult, error) {
+	es ExecSettings) (CmdResult, error) {
 	rdir := es.WorkDir
 	if rdir == "" {
 		rdir, _ = os.Getwd()
-		lg.WithFields(
+		log.WithFields(
 			logrus.Fields{"rdir": rdir},
 		).Trace("launch dir set to working directory")
 	} else {
@@ -134,7 +132,7 @@ func Install(
 
 	ok, err := afero.Exists(fs, tbp)
 	if !ok || err != nil {
-		lg.WithFields(logrus.Fields{
+		log.WithFields(logrus.Fields{
 			"path": tbp,
 			"ok":   ok,
 			"err":  err,
@@ -152,7 +150,7 @@ func Install(
 		}, err
 	}
 
-	envVars := configureEnv(rs, lg) 
+	envVars := configureEnv(rs)
 
 	cmdArgs := []string{
 		"--vanilla",
@@ -161,7 +159,7 @@ func Install(
 	}
 	cmdArgs = append(cmdArgs, args.CliArgs()...)
 	cmdArgs = append(cmdArgs, tbp)
-	lg.WithFields(
+	log.WithFields(
 		logrus.Fields{
 			"cmd":       "install",
 			"cmdArgs":   cmdArgs,
@@ -215,14 +213,14 @@ func Install(
 		ExitCode: exitCode,
 	}
 	if exitCode != 0 {
-		lg.WithFields(
+		log.WithFields(
 			logrus.Fields{
 				"stdout":   stdout,
 				"stderr":   stderr,
 				"exitCode": exitCode,
 			}).Error("cmd output")
 	} else {
-		lg.WithFields(
+		log.WithFields(
 			logrus.Fields{
 				"stdout":   stdout,
 				"stderr":   stderr,
@@ -237,23 +235,21 @@ func Install(
 func isInCache(
 	fs afero.Fs,
 	ir InstallRequest,
-	pc PackageCache,
-	lg *logrus.Logger,
-) (bool, InstallRequest) {
+	pc PackageCache) (bool, InstallRequest) {
 	// if not in cache just pass back
 	meta := ir.Metadata
 	pkg := ir.Metadata.Metadata.Package
 	bpath := filepath.Join(pc.BaseDir, meta.Metadata.Config.Repo.Name, "binary", binaryName(pkg.Package, pkg.Version))
-	lg.WithFields(logrus.Fields{
-		"path": bpath,
+	log.WithFields(logrus.Fields{
+		"path":    bpath,
 		"package": pkg.Package,
-		}).Trace("checking in cache")
+	}).Trace("checking in cache")
 	exists, err := goutils.Exists(fs, bpath)
 	if !exists || err != nil {
-	lg.WithField("package", pkg.Package).Trace("not found in cache")
+		log.WithField("package", pkg.Package).Trace("not found in cache")
 		return false, ir
 	}
-	lg.WithField("package", pkg.Package).Trace("found in cache")
+	log.WithField("package", pkg.Package).Trace("found in cache")
 	ir.Metadata.Path = bpath
 	ir.Metadata.Metadata.Config.Type = cran.Binary
 	return true, ir
@@ -269,29 +265,26 @@ func isInCache(
 func InstallThroughBinary(
 	fs afero.Fs,
 	ir InstallRequest,
-	pc PackageCache,
-	lg *logrus.Logger,
-) (CmdResult, string, error) {
+	pc PackageCache) (CmdResult, string, error) {
 	exists, _ := goutils.DirExists(fs, filepath.Join(ir.InstallArgs.Library, ir.Package))
 	if exists {
-		lg.WithField("package", ir.Package).Info("package already installed")
+		log.WithField("package", ir.Package).Info("package already installed")
 		return CmdResult{
-			ExitCode: 0,
+			ExitCode: -999,
 			Stderr:   fmt.Sprintf("already installed: %s", ir.Package),
 		}, "", nil
 	}
 
-	inCache, ir := isInCache(fs, ir, pc, lg)
+	inCache, ir := isInCache(fs, ir, pc)
 	if inCache {
-		lg.WithField("package", ir.Package).Debug("package detected in cache")
+		log.WithField("package", ir.Package).Debug("package detected in cache")
 		// don't need to build since already a binary
 		ir.InstallArgs.Build = false
 		res, err := Install(fs,
 			ir.Metadata.Path,
 			ir.InstallArgs,
 			ir.RSettings,
-			ir.ExecSettings,
-			lg)
+			ir.ExecSettings)
 		// don't pass binaryball path back since already in cache
 		return res, "", err
 	}
@@ -329,7 +322,7 @@ func InstallThroughBinary(
 	// built binaries have the path extension .tgz rather than tar.gz
 	// but otherwise have the same name from empirical testing
 	// pkg_0.0.1.tar.gz --> pkg_0.0.1.tgz
-	lg.WithFields(logrus.Fields{
+	log.WithFields(logrus.Fields{
 		"tbp":  ir.Metadata.Path,
 		"args": ir.InstallArgs,
 	}).Debug("installing tarball")
@@ -337,15 +330,14 @@ func InstallThroughBinary(
 		ir.Metadata.Path,
 		ir.InstallArgs,
 		ir.RSettings,
-		ir.ExecSettings,
-		lg)
+		ir.ExecSettings)
 	installPath := filepath.Join(tmpdir, ir.Package)
 	de, _ := afero.DirExists(fs, installPath)
 	if de {
 		err := fs.RemoveAll(installPath)
 		if err != nil {
-			lg.WithFields(logrus.Fields{
-				"err": err,
+			log.WithFields(logrus.Fields{
+				"err":  err,
 				"path": installPath,
 			}).Error("error removing installed package in tmp dir")
 		}
@@ -353,14 +345,14 @@ func InstallThroughBinary(
 	if err == nil && res.ExitCode == 0 {
 		bbp := binaryExt(ir.Metadata.Path)
 		binaryBall := filepath.Join(tmpdir, bbp)
-		lg.WithFields(logrus.Fields{
+		log.WithFields(logrus.Fields{
 			"tbp":        ir.Metadata.Path,
 			"bbp":        bbp,
 			"binaryBall": binaryBall,
 		}).Trace("binary location prior to install")
 		ok, _ := afero.Exists(fs, binaryBall)
 		if !ok {
-			lg.WithFields(logrus.Fields{
+			log.WithFields(logrus.Fields{
 				// check previous stderror, which R logs to installation status
 				"stderr":     res.Stderr,
 				"tmpdir":     tmpdir,
@@ -377,13 +369,11 @@ func InstallThroughBinary(
 			binaryBall,
 			ib,
 			ir.RSettings,
-			ir.ExecSettings,
-			lg)
+			ir.ExecSettings)
 		return res, binaryBall, err
 	}
 	return res, "", err
 }
-
 
 // InstallPackagePlan installs a set of packages by layer
 func InstallPackagePlan(
@@ -394,7 +384,6 @@ func InstallPackagePlan(
 	args InstallArgs,
 	rs RSettings,
 	es ExecSettings,
-	lg *logrus.Logger,
 	ncpu int,
 ) error {
 	wg := sync.WaitGroup{}
@@ -411,7 +400,7 @@ func InstallPackagePlan(
 		InstallThroughBinary,
 		func(iu InstallUpdate) {
 			if iu.Err != nil {
-				lg.WithField("err", iu.Err).Warn("error installing")
+				log.WithField("err", iu.Err).Warn("error installing")
 				anyFailed = true
 				failedPkgs = append(failedPkgs, iu.Package)
 			} else {
@@ -421,8 +410,11 @@ func InstallPackagePlan(
 				// be installed
 				pkg, _ := dl.Get(iu.Package)
 
-				lg.WithFields(logrus.Fields{"binary": iu.BinaryPath, "src": pkg.Path}).Debug(iu.Package)
-				lg.WithField("package", iu.Package).Info("Successfully Installed")
+				log.WithFields(logrus.Fields{"binary": iu.BinaryPath, "src": pkg.Path}).Debug(iu.Package)
+
+				if iu.Result.ExitCode != -999 {
+					log.WithField("package", iu.Package).Info("Successfully Installed")
+				}
 				installedPkgs[iu.Package] = true
 				deps, exists := iDeps[iu.Package]
 				if exists {
@@ -437,10 +429,10 @@ func InstallPackagePlan(
 						}
 						if allInstalled && !anyFailed {
 							wg.Add(1)
-							lg.WithFields(logrus.Fields{
-								"from": iu.Package,
+							log.WithFields(logrus.Fields{
+								"from":      iu.Package,
 								"suggested": maybeInstall,
-								}).Trace("suggesting installation")
+							}).Trace("suggesting installation")
 							shouldInstall <- maybeInstall
 						}
 					}
@@ -456,16 +448,14 @@ func InstallPackagePlan(
 						filepath.Base(iu.BinaryPath),
 					)
 					_, err := goutils.Copy(iu.BinaryPath, bpath)
-					lg.WithFields(logrus.Fields{"from": iu.BinaryPath, "to": bpath}).Trace("copied binary")
+					log.WithFields(logrus.Fields{"from": iu.BinaryPath, "to": bpath}).Trace("copied binary")
 					if err != nil {
-						lg.WithFields(logrus.Fields{"from": iu.BinaryPath, "to": bpath}).Error("error copying binary")
+						log.WithFields(logrus.Fields{"from": iu.BinaryPath, "to": bpath}).Error("error copying binary")
 					}
 				}
 			}
 			wg.Done()
-			fmt.Println("installed with message: ", iu.Result.Stderr)
-		}, lg,
-	)
+		})
 	go func(c chan string) {
 		requestedPkgs := make(map[string]bool)
 		for p := range c {
@@ -476,10 +466,10 @@ func InstallPackagePlan(
 
 			// wg added from updater before pushing here
 			// wg.Add(1)
-			 _, seen := requestedPkgs[p] 
+			_, seen := requestedPkgs[p]
 			if seen {
 				// should only need to request a package once to install
-				continue	
+				continue
 			} else {
 				requestedPkgs[p] = true
 			}
@@ -503,7 +493,7 @@ func InstallPackagePlan(
 					ExecSettings: es,
 				})
 			} else {
-				lg.WithField("package", p).Trace("pushing installation to queue")
+				log.WithField("package", p).Trace("pushing installation to queue")
 				iq.Push(InstallRequest{
 					Package:      p,
 					Metadata:     pkg,
@@ -516,7 +506,7 @@ func InstallPackagePlan(
 		}
 	}(shouldInstall)
 
-	lg.WithField("packages", strings.Join(plan.StartingPackages, ", ")).Info("starting initial install")
+	log.WithField("packages", strings.Join(plan.StartingPackages, ", ")).Info("starting initial install")
 
 	for _, p := range plan.StartingPackages {
 		wg.Add(1)
@@ -524,15 +514,15 @@ func InstallPackagePlan(
 	}
 	wg.Wait()
 
-	lg.WithField("duration", time.Since(startTime)).Info("total install time")
+	log.WithField("duration", time.Since(startTime)).Info("total install time")
 	for pkg := range plan.DepDb {
-		_, exists := installedPkgs[pkg]	
+		_, exists := installedPkgs[pkg]
 		if !exists {
-			lg.Errorf("did not install %s", pkg)
+			log.Errorf("did not install %s", pkg)
 		}
 	}
 	if anyFailed {
-		lg.Errorf("installation failed for packages: %s", strings.Join(failedPkgs, ", "))
+		log.Errorf("installation failed for packages: %s", strings.Join(failedPkgs, ", "))
 		return fmt.Errorf("failed installation for packages: %s", strings.Join(failedPkgs, ", "))
 	}
 	return nil

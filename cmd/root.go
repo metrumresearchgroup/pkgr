@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 
@@ -30,9 +31,8 @@ import (
 )
 
 // VERSION is the current pkc version
-const VERSION string = "0.0.1-beta.3"
+const VERSION string = "0.0.1-beta.4"
 
-var log *logrus.Logger
 var fs afero.Fs
 var cfg configlib.PkgrConfig
 
@@ -89,30 +89,25 @@ func init() {
 func setGlobals() {
 
 	fs = afero.NewOsFs()
-
-	log = &logrus.Logger{
-		Out:       os.Stdout,
-		Formatter: &logrus.TextFormatter{ForceColors: true},
-		Hooks:     make(logrus.LevelHooks),
-		// Minimum level to log at (5 is most verbose (debug), 0 is panic)
-	}
+	log.SetOutput(os.Stdout)
+	log.SetFormatter(&logrus.TextFormatter{ForceColors: true})
 	switch logLevel := strings.ToLower(viper.GetString("loglevel")); logLevel {
 	case "trace":
-		log.Level = logrus.TraceLevel
+		log.SetLevel(logrus.TraceLevel)
 	case "debug":
-		log.Level = logrus.DebugLevel
+		log.SetLevel(logrus.DebugLevel)
 	case "info":
-		log.Level = logrus.InfoLevel
+		log.SetLevel(logrus.InfoLevel)
 	case "warn":
-		log.Level = logrus.WarnLevel
+		log.SetLevel(logrus.WarnLevel)
 	case "error":
-		log.Level = logrus.ErrorLevel
+		log.SetLevel(logrus.ErrorLevel)
 	case "fatal":
-		log.Level = logrus.FatalLevel
+		log.SetLevel(logrus.FatalLevel)
 	case "panic":
-		log.Level = logrus.PanicLevel
+		log.SetLevel(logrus.PanicLevel)
 	default:
-		log.Level = logrus.InfoLevel
+		log.SetLevel(logrus.InfoLevel)
 	}
 }
 
@@ -139,7 +134,7 @@ func initConfig() {
 	if cfg.Logging.File != "" {
 		fileHook, err := logger.NewLogrusFileHook(cfg.Logging.File, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 		if err == nil {
-			log.Hooks.Add(fileHook)
+			log.AddHook(fileHook)
 		}
 	}
 }

@@ -11,6 +11,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/dpastoor/goutils"
 	"github.com/spf13/afero"
 )
@@ -60,12 +63,12 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string) (*PkgMap, error) 
 			pkgdir := filepath.Join(baseDir, urlHash, pt)
 			err := fs.MkdirAll(pkgdir, 0777)
 			if err != nil {
-				fmt.Println("error creating package directory ", pkgdir)
-				fmt.Println("error: ", err)
+				log.WithField("dir", pkgdir).WithField("error", err.Error()).Fatal("error creating package directory ")
 				return result, err
 			}
 		}
 	}
+	log.WithField("dir", baseDir).Debug("downloading required packages within directory ")
 	for _, d := range ds {
 		wg.Add(1)
 		go func(d PkgDl, wg *sync.WaitGroup) {
@@ -97,18 +100,23 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string) (*PkgMap, error) 
 			} else {
 				pkgFile = filepath.Join(pkgdir, fmt.Sprintf("%s_%s.tar.gz", d.Package.Package, d.Package.Version))
 			}
+			startDl := time.Now()
 			dl, err := DownloadPackage(fs, d, pkgFile)
 			if err != nil {
-				// TODO: this should cause a failure downstream rather than just printing
-				// as right now it keeps running and just doesn't install that package
-				fmt.Println("downloading failed for package: ", d.Package.Package)
+				// TODO:  should this cause a failure downstream rather than just printing
+				// as right now it keeps running and just doesn't install that package?
+				log.WithField("package", d.Package.Package).Warn("downloading failed")
 				return
 			}
+			log.WithFields(log.Fields{
+				"package": d.Package.Package,
+				"dltime":  time.Since(startDl),
+			}).Debug("downloaded package")
 			result.Put(d.Package.Package, dl)
 		}(d, &wg)
 	}
 	wg.Wait()
-	fmt.Printf("all packages downloaded in %s\n\n", time.Since(startTime))
+	log.WithField("duration", time.Since(startTime)).Info("all packages downloaded")
 	return result, nil
 }
 
@@ -125,7 +133,7 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string) (Download, error) {
 		return Download{}, err
 	}
 	if exists {
-		fmt.Println("already have ", d.Package.Package, " downloaded")
+		log.WithField("package", d.Package.Package).Trace("previously downloaded package")
 		return Download{
 			Path:     dest,
 			New:      false,
@@ -138,28 +146,36 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string) (Download, error) {
 		pkgdl = fmt.Sprintf("%s/src/contrib/%s", strings.TrimSuffix(d.Config.Repo.URL, "/"), filepath.Base(dest))
 	} else {
 		// TODO: fix so isn't hard coded to 3.5 binaries
-		pkgdl = fmt.Sprintf("%s/bin/%s/contrib/%s/%s", strings.TrimSuffix(d.Config.Repo.URL, "/"), cranBinaryURL(), "3.5", filepath.Base(dest))
+		pkgdl = fmt.Sprintf("%s/bin/%s/contrib/%s/%s",
+			strings.TrimSuffix(d.Config.Repo.URL, "/"),
+			cranBinaryURL(),
+			"3.5",
+			filepath.Base(dest))
 	}
 	resp, err := http.Get(pkgdl)
 	if resp.StatusCode != 200 {
-		fmt.Println("error downloading package", d.Package.Package)
-		fmt.Println("from URL:", pkgdl)
-		fmt.Println("status: ", resp.Status)
-		fmt.Println("status code: ", resp.StatusCode)
+		log.WithFields(logrus.Fields{
+			"package":     d.Package.Package,
+			"url":         pkgdl,
+			"status":      resp.Status,
+			"status_code": resp.StatusCode,
+		}).Warn("bad server response")
 		b, _ := ioutil.ReadAll(resp.Body)
-		fmt.Println("body: ", string(b))
+		log.WithField("package", d.Package.Package).Println("body: ", string(b))
 		return Download{}, err
 	}
 	// TODO: the response will often be valid, but return like a server 404 or other error
 	if err != nil {
-		fmt.Println("error downloading package", d.Package)
+		log.WithField("package", d.Package).Warn("error downloading package")
 		return Download{}, err
 	}
 	defer resp.Body.Close()
 	file, err := fs.Create(dest)
 	if err != nil {
-		fmt.Println("couldn't create tarball for ", d.Package)
-		fmt.Println(err)
+		log.WithFields(logrus.Fields{
+			"package": d.Package,
+			"err":     err,
+		}).Warn("error downloading package, no tarball created")
 		return Download{}, err
 	}
 	defer file.Close()
