@@ -3,7 +3,7 @@ package configlib
 // PkgConfig provides information about custom settings during package installation
 type PkgConfig struct {
 	Suggests bool
-	Env      []map[string]string
+	Env      map[string]string
 	Repo     string
 	Type     string
 }
