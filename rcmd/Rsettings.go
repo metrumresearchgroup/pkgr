@@ -8,7 +8,8 @@ import (
 // NewRSettings initializes RSettings
 func NewRSettings() RSettings {
 	return RSettings{
-		EnvVars: make(map[string]string),
+		GlobalEnvVars: make(map[string]string),
+		PkgEnvVars:    make(map[string]map[string]string),
 	}
 }
 

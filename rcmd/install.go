@@ -62,7 +62,7 @@ func (i InstallArgs) CliArgs() []string {
 	return args
 }
 
-func configureEnv(rs RSettings) []string {
+func configureEnv(rs RSettings, pkg string) []string {
 	envVars := os.Environ()
 	envMap := make(map[string]string)
 	for _, ev := range envVars {
@@ -81,7 +81,7 @@ func configureEnv(rs RSettings) []string {
 		log.WithField("path", rlu).Debug("deleting set R_LIBS_USER")
 	}
 	envVars = []string{}
-	for k, v := range rs.EnvVars {
+	for k, v := range rs.GlobalEnvVars {
 		envMap[k] = v
 	}
 
@@ -95,6 +95,20 @@ func configureEnv(rs RSettings) []string {
 	for k, v := range envMap {
 		envVars = append(envVars, fmt.Sprintf("%s=%s", k, v))
 	}
+	pkgEnv, hasCustomEnv := rs.PkgEnvVars[pkg]
+	if hasCustomEnv {
+		// not sure if this is needed when logging maps but for simple json want a single string
+		// so will also collect in a separate set of envs and log as a single combined string
+		var pkgEnvForLog []string
+		for k, v := range pkgEnv {
+			envVars = append(envVars, fmt.Sprintf("%s=%s", k, v))
+			pkgEnvForLog = append(pkgEnvForLog, fmt.Sprintf("%s=%s", k, v))
+		}
+		log.WithFields(logrus.Fields{
+			"envs":    pkgEnvForLog,
+			"package": pkg,
+		}).Trace("Custom Environment Variables")
+	}
 	// double down on overwriting any specification of user customization
 	// and set R_LIBS_SITE to the same as the user
 	envVars = append(envVars, strings.Replace(lp, "R_LIBS_SITE", "R_LIBS_USER", 1))
@@ -106,6 +120,7 @@ func configureEnv(rs RSettings) []string {
 // exit code 0 - success, 1 - error
 func Install(
 	fs afero.Fs,
+	pkg string,
 	tbp string, // tarball path
 	args InstallArgs,
 	rs RSettings,
@@ -150,7 +165,7 @@ func Install(
 		}, err
 	}
 
-	envVars := configureEnv(rs)
+	envVars := configureEnv(rs, pkg)
 
 	cmdArgs := []string{
 		"--vanilla",
@@ -165,6 +180,7 @@ func Install(
 			"cmdArgs":   cmdArgs,
 			"RSettings": rs,
 			"env":       envVars,
+			"package":   pkg,
 		}).Trace("command args")
 
 	// --vanilla is a command for R and should be specified before the CMD, eg
@@ -218,6 +234,7 @@ func Install(
 				"stdout":   stdout,
 				"stderr":   stderr,
 				"exitCode": exitCode,
+				"package":  pkg,
 			}).Error("cmd output")
 	} else {
 		log.WithFields(
@@ -225,6 +242,7 @@ func Install(
 				"stdout":   stdout,
 				"stderr":   stderr,
 				"exitCode": exitCode,
+				"package":  pkg,
 			}).Debug("cmd output")
 	}
 	return cmdResult, err
@@ -281,6 +299,7 @@ func InstallThroughBinary(
 		// don't need to build since already a binary
 		ir.InstallArgs.Build = false
 		res, err := Install(fs,
+			ir.Package,
 			ir.Metadata.Path,
 			ir.InstallArgs,
 			ir.RSettings,
@@ -327,6 +346,7 @@ func InstallThroughBinary(
 		"args": ir.InstallArgs,
 	}).Debug("installing tarball")
 	res, err := Install(fs,
+		ir.Package,
 		ir.Metadata.Path,
 		ir.InstallArgs,
 		ir.RSettings,
@@ -366,6 +386,7 @@ func InstallThroughBinary(
 			return res, "", errors.New("no binary found")
 		}
 		res, err = Install(fs,
+			ir.Package,
 			binaryBall,
 			ib,
 			ir.RSettings,
@@ -474,35 +495,15 @@ func InstallPackagePlan(
 				requestedPkgs[p] = true
 			}
 			pkg, _ := dl.Get(p)
-			if p == "data.table" {
-				nrs := rs
-				fmt.Println("setting data.table makevar")
-				nev := make(map[string]string)
-				for k, v := range rs.EnvVars {
-					nev[k] = v
-				}
-				nev["R_MAKEVARS_USER"] = "~/.R/Makevars_data.table"
-				nrs.EnvVars = nev
-
-				iq.Push(InstallRequest{
-					Package:      p,
-					Metadata:     pkg,
-					Cache:        pc,
-					InstallArgs:  args,
-					RSettings:    nrs,
-					ExecSettings: es,
-				})
-			} else {
-				log.WithField("package", p).Trace("pushing installation to queue")
-				iq.Push(InstallRequest{
-					Package:      p,
-					Metadata:     pkg,
-					Cache:        pc,
-					InstallArgs:  args,
-					RSettings:    rs,
-					ExecSettings: es,
-				})
-			}
+			log.WithField("package", p).Trace("pushing installation to queue")
+			iq.Push(InstallRequest{
+				Package:      p,
+				Metadata:     pkg,
+				Cache:        pc,
+				InstallArgs:  args,
+				RSettings:    rs,
+				ExecSettings: es,
+			})
 		}
 	}(shouldInstall)
 
