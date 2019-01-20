@@ -12,14 +12,16 @@ import (
 const defaultFailedCode = 1
 const defaultSuccessCode = 0
 
-// StartR launches an interactive R console
+// StartR launches an interactive R console given the same
+// configuration as a specific package.
 func StartR(
 	fs afero.Fs,
+	pkg string,
 	rs RSettings,
 	rdir string, // this should be put into RSettings
 ) error {
 
-	envVars := configureEnv(rs)
+	envVars := configureEnv(rs, pkg)
 	cmdArgs := []string{
 		"--vanilla",
 	}
@@ -58,12 +60,13 @@ func StartR(
 // RunR launches an interactive R console
 func RunR(
 	fs afero.Fs,
+	pkg string,
 	rs RSettings,
 	script string,
 	rdir string, // this should be put into RSettings
 ) ([]byte, error) {
 
-	envVars := configureEnv(rs)
+	envVars := configureEnv(rs, pkg)
 	cmdArgs := []string{
 		"--vanilla",
 		"-e",
