@@ -21,7 +21,7 @@ func StartR(
 	rdir string, // this should be put into RSettings
 ) error {
 
-	envVars := configureEnv(rs, pkg)
+	envVars := configureEnv(os.Environ(), rs, pkg)
 	cmdArgs := []string{
 		"--vanilla",
 	}
@@ -66,7 +66,7 @@ func RunR(
 	rdir string, // this should be put into RSettings
 ) ([]byte, error) {
 
-	envVars := configureEnv(rs, pkg)
+	envVars := configureEnv(os.Environ(), rs, pkg)
 	cmdArgs := []string{
 		"--vanilla",
 		"-e",
