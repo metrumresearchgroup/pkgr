@@ -33,7 +33,7 @@ func TestInstallArgs(t *testing.T) {
 	}
 	for i, tt := range installArgsTests {
 		actual := tt.in.CliArgs()
-		assert.Equal(actual, tt.expected, fmt.Sprintf("test num: %v", i+1))
+		assert.Equal(tt.expected, actual, fmt.Sprintf("test num: %v", i+1))
 
 	}
 }
