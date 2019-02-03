@@ -15,6 +15,26 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 	envVars := []string{}
 	envOrder := []string{}
 
+	pkgEnv, hasCustomEnv := rs.PkgEnvVars[pkg]
+	if hasCustomEnv {
+		// not sure if this is needed when logging maps but for simple json want a single string
+		// so will also collect in a separate set of envs and log as a single combined string
+		for k, v := range pkgEnv {
+			envVars = append(envVars, fmt.Sprintf("%s=%s", k, v))
+			envMap[k] = v
+		}
+		log.WithFields(logrus.Fields{
+			"envs":    envVars,
+			"package": pkg,
+		}).Trace("Custom Environment Variables")
+	}
+	for k, v := range rs.GlobalEnvVars {
+		_, exists := envMap[k]
+		if !exists {
+			envMap[k] = v
+			envOrder = append(envOrder, k)
+		}
+	}
 	// system env vars generally
 	for _, ev := range sysEnvVars {
 		evs := strings.SplitN(ev, "=", 2)
@@ -34,37 +54,26 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 				log.WithField("path", evs[1]).Debug("deleting set R_LIBS_USER")
 				continue
 			}
-			envMap[evs[0]] = evs[1]
-			envOrder = append(envOrder, evs[0])
+
+			// if exists would be custom to the package hence should not accept the system env
+			_, exists := envMap[evs[0]]
+			if !exists {
+				envMap[evs[0]] = evs[1]
+				envOrder = append(envOrder, evs[0])
+			}
 		}
 	}
 
 	// TODO: determine if using globalenvvars as a map could cause subtle bug given ordering precedence
-	for k, v := range rs.GlobalEnvVars {
-		envMap[k] = v
-	}
 
 	ok, lp := rs.LibPathsEnv()
 	if ok {
 		envVars = append(envVars, lp)
 	}
+
 	for _, ev := range envOrder {
 		val := envMap[ev]
 		envVars = append(envVars, fmt.Sprintf("%s=%s", ev, val))
-	}
-	pkgEnv, hasCustomEnv := rs.PkgEnvVars[pkg]
-	if hasCustomEnv {
-		// not sure if this is needed when logging maps but for simple json want a single string
-		// so will also collect in a separate set of envs and log as a single combined string
-		var pkgEnvForLog []string
-		for k, v := range pkgEnv {
-			envVars = append(envVars, fmt.Sprintf("%s=%s", k, v))
-			pkgEnvForLog = append(pkgEnvForLog, fmt.Sprintf("%s=%s", k, v))
-		}
-		log.WithFields(logrus.Fields{
-			"envs":    pkgEnvForLog,
-			"package": pkg,
-		}).Trace("Custom Environment Variables")
 	}
 
 	return envVars
