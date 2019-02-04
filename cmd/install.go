@@ -23,7 +23,6 @@ import (
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // installCmd represents the R CMD install command
@@ -67,7 +66,14 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	if nworkers > 2 {
 		nworkers = nworkers - 1
 	}
-	err = rcmd.InstallPackagePlan(fs, ip, dl, pc, ia, rcmd.NewRSettings(), rcmd.ExecSettings{}, nworkers)
+	rs := rcmd.NewRSettings()
+	pkgCustomizations := cfg.Customizations.Packages
+	for n, v := range pkgCustomizations {
+		if v.Env != nil {
+			rs.PkgEnvVars[n] = v.Env
+		}
+	}
+	err = rcmd.InstallPackagePlan(fs, ip, dl, pc, ia, rs, rcmd.ExecSettings{}, nworkers)
 	if err != nil {
 		fmt.Println("failed package install")
 		fmt.Println(err)
@@ -77,7 +83,5 @@ func rInstall(cmd *cobra.Command, args []string) error {
 }
 
 func init() {
-	installCmd.PersistentFlags().String("library", "", "library to install packages to")
-	viper.BindPFlag("library", installCmd.PersistentFlags().Lookup("library"))
 	RootCmd.AddCommand(installCmd)
 }

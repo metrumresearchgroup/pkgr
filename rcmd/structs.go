@@ -25,10 +25,11 @@ type RVersion struct {
 
 // RSettings controls settings related to managing libraries
 type RSettings struct {
-	Version  RVersion          `json:"r_version,omitempty"`
-	LibPaths []string          `json:"lib_paths,omitempty"`
-	Rpath    string            `json:"rpath,omitempty"`
-	EnvVars  map[string]string `json:"env_vars,omitempty"`
+	Version       RVersion                     `json:"r_version,omitempty"`
+	LibPaths      []string                     `json:"lib_paths,omitempty"`
+	Rpath         string                       `json:"rpath,omitempty"`
+	GlobalEnvVars map[string]string            `json:"global_env_vars,omitempty"`
+	PkgEnvVars    map[string]map[string]string `json:"pkg_env_vars,omitempty"`
 }
 
 // InstallArgs represents the installation arguments R CMD INSTALL can consume

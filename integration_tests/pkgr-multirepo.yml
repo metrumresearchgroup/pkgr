@@ -38,7 +38,7 @@ Customizations:
   Packages:
     - data.table:
         Env:
-          - R_MAKEVARS_USER: "~/.R/Makevars_data.table"
+          R_MAKEVARS_USER: "~/.R/Makevars_data.table"
     - mrgsolve:
        Repo: CRAN
        Type: source

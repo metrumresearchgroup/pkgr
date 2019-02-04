@@ -62,50 +62,11 @@ func (i InstallArgs) CliArgs() []string {
 	return args
 }
 
-func configureEnv(rs RSettings) []string {
-	envVars := os.Environ()
-	envMap := make(map[string]string)
-	for _, ev := range envVars {
-		evs := strings.SplitN(ev, "=", 2)
-		if len(evs) > 1 && evs[1] != "" {
-			envMap[evs[0]] = evs[1]
-		}
-	}
-	rlu, exists := envMap["R_LIBS_USER"]
-	if exists {
-		// R_LIBS_USER takes precidence over R_LIBS_SITE
-		// so will cause the loading characteristics to
-		// not be representative of the hierarchy specified
-		// in Library/Libpaths in the pkgr configuration
-		delete(envMap, "R_LIBS_USER")
-		log.WithField("path", rlu).Debug("deleting set R_LIBS_USER")
-	}
-	envVars = []string{}
-	for k, v := range rs.EnvVars {
-		envMap[k] = v
-	}
-
-	ok, lp := rs.LibPathsEnv()
-	if ok {
-		// if LibPaths set, lets drop R_LIBS_SITE set as an ENV and instead
-		// add the generated R_LIBS_SITE from LibPathsEnv
-		delete(envMap, "R_LIBS_SITE")
-		envVars = append(envVars, lp)
-	}
-	for k, v := range envMap {
-		envVars = append(envVars, fmt.Sprintf("%s=%s", k, v))
-	}
-	// double down on overwriting any specification of user customization
-	// and set R_LIBS_SITE to the same as the user
-	envVars = append(envVars, strings.Replace(lp, "R_LIBS_SITE", "R_LIBS_USER", 1))
-
-	return envVars
-}
-
 // Install installs a given tarball
 // exit code 0 - success, 1 - error
 func Install(
 	fs afero.Fs,
+	pkg string,
 	tbp string, // tarball path
 	args InstallArgs,
 	rs RSettings,
@@ -150,7 +111,7 @@ func Install(
 		}, err
 	}
 
-	envVars := configureEnv(rs)
+	envVars := configureEnv(os.Environ(), rs, pkg)
 
 	cmdArgs := []string{
 		"--vanilla",
@@ -165,6 +126,7 @@ func Install(
 			"cmdArgs":   cmdArgs,
 			"RSettings": rs,
 			"env":       envVars,
+			"package":   pkg,
 		}).Trace("command args")
 
 	// --vanilla is a command for R and should be specified before the CMD, eg
@@ -218,6 +180,7 @@ func Install(
 				"stdout":   stdout,
 				"stderr":   stderr,
 				"exitCode": exitCode,
+				"package":  pkg,
 			}).Error("cmd output")
 	} else {
 		log.WithFields(
@@ -225,6 +188,7 @@ func Install(
 				"stdout":   stdout,
 				"stderr":   stderr,
 				"exitCode": exitCode,
+				"package":  pkg,
 			}).Debug("cmd output")
 	}
 	return cmdResult, err
@@ -281,6 +245,7 @@ func InstallThroughBinary(
 		// don't need to build since already a binary
 		ir.InstallArgs.Build = false
 		res, err := Install(fs,
+			ir.Package,
 			ir.Metadata.Path,
 			ir.InstallArgs,
 			ir.RSettings,
@@ -327,6 +292,7 @@ func InstallThroughBinary(
 		"args": ir.InstallArgs,
 	}).Debug("installing tarball")
 	res, err := Install(fs,
+		ir.Package,
 		ir.Metadata.Path,
 		ir.InstallArgs,
 		ir.RSettings,
@@ -366,6 +332,7 @@ func InstallThroughBinary(
 			return res, "", errors.New("no binary found")
 		}
 		res, err = Install(fs,
+			ir.Package,
 			binaryBall,
 			ib,
 			ir.RSettings,
@@ -474,35 +441,15 @@ func InstallPackagePlan(
 				requestedPkgs[p] = true
 			}
 			pkg, _ := dl.Get(p)
-			if p == "data.table" {
-				nrs := rs
-				fmt.Println("setting data.table makevar")
-				nev := make(map[string]string)
-				for k, v := range rs.EnvVars {
-					nev[k] = v
-				}
-				nev["R_MAKEVARS_USER"] = "~/.R/Makevars_data.table"
-				nrs.EnvVars = nev
-
-				iq.Push(InstallRequest{
-					Package:      p,
-					Metadata:     pkg,
-					Cache:        pc,
-					InstallArgs:  args,
-					RSettings:    nrs,
-					ExecSettings: es,
-				})
-			} else {
-				log.WithField("package", p).Trace("pushing installation to queue")
-				iq.Push(InstallRequest{
-					Package:      p,
-					Metadata:     pkg,
-					Cache:        pc,
-					InstallArgs:  args,
-					RSettings:    rs,
-					ExecSettings: es,
-				})
-			}
+			log.WithField("package", p).Trace("pushing installation to queue")
+			iq.Push(InstallRequest{
+				Package:      p,
+				Metadata:     pkg,
+				Cache:        pc,
+				InstallArgs:  args,
+				RSettings:    rs,
+				ExecSettings: es,
+			})
 		}
 	}(shouldInstall)
 
