@@ -2,3 +2,9 @@
 pkgcache
 multirepo
 tidyverse
+simple
+simple-suggests
+linkingTo
+*
+!.gitignore
+!*.yml

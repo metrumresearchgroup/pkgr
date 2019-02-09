@@ -1,0 +1,23 @@
+Version: 1
+# top level packages
+Packages:
+  - R6
+  - pillar 
+  
+Suggests: true
+
+# any repositories, order matters
+Repos:
+  - CRAN: "https://cran.rstudio.com"
+
+Library: "testsets/simple-suggests"
+
+Cache: "pkgcache"
+
+Customizations:
+  Packages:
+    - R6:
+        Type: binary
+  Repos:
+    - CRAN:
+        Type: source

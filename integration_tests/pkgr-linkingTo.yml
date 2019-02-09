@@ -1,33 +1,19 @@
 Version: 1
 # top level packages
 Packages:
-  - PKPDmisc
   - mrgsolve
-  - rmarkdown
-  - bitops
-  - caTools
-  - GGally
-  - knitr
-  - gridExtra
-  - htmltools
-  - xtable
-  - dplyr
-  - ggplot2
-  - shiny
-  - shinydashboard
-  - data.table
 
 # any repositories, order matters
 Repos:
   - r_validated: "https://metrumresearchgroup.github.io/r_validated"
-  - CRAN: "https://cran.rstudio.com"
+  - CRAN: "https://cran.rstudio.com" 
 
-Library: "testsets/multirepo"
+Library: "testsets/linkingTo"
 
 Cache: "testsets/pkgcache"
 
 Logging:
-  File: "multirepo.log"
+  File: "pkgrlinkingTo.log"
 
 # customizations are package specific settings
 # for example, we can use a custom makevar file for data.table
@@ -35,13 +21,9 @@ Logging:
 # each package gets installed in its own process so any env variables
 # or settings will only matter for it
 Customizations:
-  Packages:
-    - data.table:
-        Env:
-          R_MAKEVARS_USER: "~/.R/Makevars_data.table"
-    - mrgsolve:
-       Repo: CRAN
-       Type: source
   Repos:
-    - r_validated:
-        Type: source  
+      - r_validated:
+          Type: source  
+      - CRAN:
+          Type: source  
+

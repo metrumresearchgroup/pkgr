@@ -36,6 +36,7 @@ Libpaths:
 # each package gets installed in its own process so any env variables
 # or settings will only matter for it
 Customizations:
-  - data.table:
-     Env:
-       - R_MAKEVARS_USER: "~/.R/Makevars_data.table"
+  Packages: 
+    - data.table:
+       Env:
+         - R_MAKEVARS_USER: "~/.R/Makevars_data.table"

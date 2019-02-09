@@ -1,17 +1,29 @@
 package configlib
 
-// PkgSettings provides information about custom settings during package installation
-type PkgSettings struct {
+// PkgConfig provides information about custom settings during package installation
+type PkgConfig struct {
 	Suggests bool
-	Env      []map[string]string
+	Env      map[string]string
 	Repo     string
 	Type     string
+}
+
+// RepoConfig provides information about custom repository settings
+type RepoConfig struct {
+	//Suggests bool
+	Type string
 }
 
 // LogConfig stores information for logging purposes
 type LogConfig struct {
 	File  string
 	Level string
+}
+
+// Customizations contains various custom configurations
+type Customizations struct {
+	Packages map[string]PkgConfig
+	Repos    map[string]RepoConfig
 }
 
 // PkgrConfig provides a struct for all pkgr related configuration
@@ -22,7 +34,7 @@ type PkgrConfig struct {
 	Repos          []map[string]string
 	Library        string
 	LibPaths       []string
-	Customizations map[string]PkgSettings
+	Customizations Customizations
 	Threads        int
 	RPath          string
 	Cache          string

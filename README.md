@@ -243,3 +243,10 @@ other packages coming in less than 10 seconds.
 Furthermore, when looking at subsequent layers, neither Matrix or mgcv and its dependencies have any relation
 to stringi, so there is no reason to wait for the layer to complete.
 
+# Development
+
+run all tests with tabular output: 
+
+```
+go test ./... -json -cover | tparse -all 
+```

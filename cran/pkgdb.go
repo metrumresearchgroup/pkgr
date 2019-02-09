@@ -9,7 +9,7 @@ import (
 )
 
 // NewPkgDb returns a new package database
-func NewPkgDb(urls []RepoURL, dst SourceType, cfgdb map[string]PkgConfig) (*PkgDb, error) {
+func NewPkgDb(urls []RepoURL, dst SourceType, cfgdb *InstallConfig) (*PkgDb, error) {
 	db := PkgDb{
 		Config:            cfgdb,
 		DefaultSourceType: dst,
@@ -17,14 +17,32 @@ func NewPkgDb(urls []RepoURL, dst SourceType, cfgdb map[string]PkgConfig) (*PkgD
 	if len(urls) == 0 {
 		return &db, errors.New("Package database must contain at least one RepoUrl")
 	}
-	for _, url := range urls {
-		rdb, err := NewRepoDb(url, dst)
-		if err != nil {
-			return &db, err
-		}
-		db.Db = append(db.Db, rdb)
+	type rd struct {
+		Url RepoURL
+		Rdb *RepoDb
+		Err error
 	}
-	return &db, nil
+	rdbc := make(chan rd, len(urls))
+	defer close(rdbc)
+	for _, url := range urls {
+		go func(url RepoURL, dst SourceType) {
+			rdb, err := NewRepoDb(url, dst, cfgdb.Repos[url.Name])
+			rdbc <- rd{url, rdb, err}
+		}(url, dst)
+	}
+	var err error
+	err = nil
+	for i := 0; i < len(urls); i++ {
+		result := <-rdbc
+		if result.Err != nil {
+			//
+			fmt.Printf("error downloading repo information from: %s:%s\n", result.Url.Name, result.Url.URL)
+			err = result.Err
+		} else {
+			db.Db = append(db.Db, result.Rdb)
+		}
+	}
+	return &db, err
 }
 
 // SetPackageRepo sets a package repository so querying the package will
@@ -32,9 +50,9 @@ func NewPkgDb(urls []RepoURL, dst SourceType, cfgdb map[string]PkgConfig) (*PkgD
 func (p *PkgDb) SetPackageRepo(pkg string, repo string) error {
 	for _, r := range p.Db {
 		if r.Repo.Name == repo {
-			cfg := p.Config[pkg]
+			cfg := p.Config.Packages[pkg]
 			cfg.Repo = r.Repo
-			p.Config[pkg] = cfg
+			p.Config.Packages[pkg] = cfg
 			return nil
 		}
 	}
@@ -43,7 +61,7 @@ func (p *PkgDb) SetPackageRepo(pkg string, repo string) error {
 
 // SetPackageType sets the package type (source/binary) for installation
 func (p *PkgDb) SetPackageType(pkg string, t string) error {
-	cfg := p.Config[pkg]
+	cfg := p.Config.Packages[pkg]
 	if strings.EqualFold(t, "source") {
 		cfg.Type = Source
 	} else if strings.EqualFold(t, "binary") {
@@ -51,7 +69,7 @@ func (p *PkgDb) SetPackageType(pkg string, t string) error {
 	} else {
 		return fmt.Errorf("invalid source type: %s for pkg: %s", t, pkg)
 	}
-	p.Config[pkg] = cfg
+	p.Config.Packages[pkg] = cfg
 	return nil
 }
 
@@ -84,18 +102,22 @@ func isCorrectRepo(pkg string, r RepoURL, cfg map[string]PkgConfig) bool {
 
 // GetPackage gets a package from the package database, returning the first match
 func (p *PkgDb) GetPackage(pkg string) (desc.Desc, PkgConfig, bool) {
-	cfg, exists := p.Config[pkg]
+	cfg, exists := p.Config.Packages[pkg]
 	st := p.DefaultSourceType
 	if exists && cfg.Type != Default {
 		st = cfg.Type
 	}
 	for _, db := range p.Db {
+		rst := st
+		if db.DefaultSourceType != rst && !exists && db.DefaultSourceType != Default {
+			rst = db.DefaultSourceType
+		}
 		// For now package existence is checked exactly as the package is specified
 		// in the config. Eg, if specifies binary, will only check binary version
 		// the checking if also exists as source or otherwise should occur upstream
 		// then be set as part of the explicit configuration.
-		if pkgExists(pkg, db.Dbs[st]) && isCorrectRepo(pkg, db.Repo, p.Config) {
-			return db.Dbs[st][pkg], PkgConfig{Repo: db.Repo, Type: st}, true
+		if pkgExists(pkg, db.Dbs[rst]) && isCorrectRepo(pkg, db.Repo, p.Config.Packages) {
+			return db.Dbs[rst][pkg], PkgConfig{Repo: db.Repo, Type: rst}, true
 		}
 	}
 	return desc.Desc{}, PkgConfig{}, false
@@ -103,7 +125,7 @@ func (p *PkgDb) GetPackage(pkg string) (desc.Desc, PkgConfig, bool) {
 
 // GetPackageFromRepo gets a package from a repo in the package database
 func (p *PkgDb) GetPackageFromRepo(pkg string, repo string) (desc.Desc, PkgConfig, bool) {
-	st := p.Config[pkg].Type
+	st := p.Config.Packages[pkg].Type
 	for _, db := range p.Db {
 		if repo != "" && db.Repo.Name != repo {
 			continue

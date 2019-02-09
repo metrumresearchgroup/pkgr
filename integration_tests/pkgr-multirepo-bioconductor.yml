@@ -1,0 +1,15 @@
+Version: 1
+# top level packages
+Packages:
+  - R6
+
+# any repositories, order matters
+Repos:
+  - CRAN: "https://cran.microsoft.com/snapshot/2018-11-18"
+  - BioCsoft: "https://bioconductor.org/packages/3.8/bioc"
+  - BioCann: "https://bioconductor.org/packages/3.8/data/annotation"
+  - BioCexp: "https://bioconductor.org/packages/3.8/data/experiment"
+  - BioCworkflows: "https://bioconductor.org/packages/3.8/workflows"
+
+Library: "testsets/multirepo-bioconductor"
+

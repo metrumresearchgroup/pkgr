@@ -20,6 +20,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var pkg string
+
 // checkCmd represents the R CMD check command
 var runCmd = &cobra.Command{
 	Use:   "run R",
@@ -37,10 +39,17 @@ func rRun(cmd *cobra.Command, args []string) error {
 	// at least for experimentation for now. If necessary can refactor out the
 	// specifics so could be run here exactly.
 	rs.LibPaths = append(rs.LibPaths, cfg.Library)
-	rcmd.RunR(fs, rs, "", log)
+	pc := cfg.Customizations.Packages
+	for n, v := range pc {
+		if v.Env != nil {
+			rs.PkgEnvVars[n] = v.Env
+		}
+	}
+	rcmd.StartR(fs, pkg, rs, "")
 	return nil
 }
 
 func init() {
+	runCmd.Flags().StringVar(&pkg, "pkg", "", "package environment to set")
 	RootCmd.AddCommand(runCmd)
 }
