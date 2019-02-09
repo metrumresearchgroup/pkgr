@@ -31,7 +31,7 @@ import (
 )
 
 // VERSION is the current pkc version
-const VERSION string = "0.0.1-beta.4"
+const VERSION string = "0.1.0"
 
 var fs afero.Fs
 var cfg configlib.PkgrConfig

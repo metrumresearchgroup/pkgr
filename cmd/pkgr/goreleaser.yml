@@ -3,7 +3,7 @@
 project_name: pkgr
 
 release:
-  prerelease: true
+  prerelease: false
 
 build:
   binary: pkgr
@@ -18,5 +18,5 @@ build:
 brew:
   # Repository to push the tap to.
   github:
-    owner: dpastoor 
+    owner: metrumresearchgroup 
     name: homebrew-tap 
