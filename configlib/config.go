@@ -7,9 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"runtime"
-
-	"github.com/mitchellh/go-homedir"
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
 
@@ -51,7 +49,7 @@ func loadDefaultSettings() {
 	viper.SetDefault("loglevel", "info")
 	// path to R on system, defaults to R in path
 	viper.SetDefault("rpath", "R")
-	viper.SetDefault("threads", runtime.NumCPU())
+	viper.SetDefault("threads", 0)
 }
 
 func IsCustomizationSet(key string, elems []interface{}, elem string) bool {
