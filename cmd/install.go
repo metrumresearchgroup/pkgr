@@ -17,11 +17,7 @@ package cmd
 import (
 	"fmt"
 	"path/filepath"
-	"runtime"
 	"time"
-
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
@@ -62,19 +58,8 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	}
 	ia := rcmd.NewDefaultInstallArgs()
 	ia.Library, _ = filepath.Abs(cfg.Library)
-	var nworkers int
+	nworkers := getWorkerCount()
 
-	if viper.GetInt("threads") < 1 {
-		nworkers = runtime.NumCPU()
-		if nworkers > 2 {
-			nworkers = nworkers - 1
-		}
-	} else {
-		nworkers = viper.GetInt("threads")
-		if nworkers > runtime.NumCPU()+2 {
-			log.Warn("number of workers exceeds the number of threads on machine by at least 2, this may result in degraded performance")
-		}
-	}
 	// leave at least 1 thread open for coordination, given more than 2 threads available.
 	// if only 2 available, will let the OS hypervisor coordinate some else would drop the
 	// install time too much for the little bit of additional coordination going on.

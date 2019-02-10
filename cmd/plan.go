@@ -40,6 +40,7 @@ var planCmd = &cobra.Command{
 }
 
 func plan(cmd *cobra.Command, args []string) error {
+	log.Infof("Installation would launch %v workers\n", getWorkerCount())
 	_, ip := planInstall()
 	if viper.GetBool("show-deps") {
 		for pkg, deps := range ip.DepDb {
