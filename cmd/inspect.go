@@ -15,11 +15,9 @@
 package cmd
 
 import (
-	"fmt"
-
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // inspectCmd shows the install inspect
@@ -32,23 +30,41 @@ var inspectCmd = &cobra.Command{
 	RunE: inspect,
 }
 
+var reverse bool
+var showDeps bool
+var toJSON bool
+
 func inspect(cmd *cobra.Command, args []string) error {
+	if toJSON {
+		// this should suppress all logging from the planning
+		log.SetLevel(logrus.FatalLevel)
+	}
 	log.Infof("Installation would launch %v workers\n", getWorkerCount())
-	pdb, ip := planInstall()
-	fmt.Println(pdb)
-	if viper.GetBool("show-deps") {
-		if viper.GetBool("invert") {
-			prettyPrint(ip.InvertDependencies())
+	_, ip := planInstall()
+	if showDeps {
+		var allDeps map[string][]string
+		keepDeps := make(map[string][]string)
+		if reverse {
+			allDeps = ip.InvertDependencies()
 		} else {
-			prettyPrint(ip.DepDb)
+			allDeps = ip.DepDb
+		}
+		if len(args) > 0 {
+			for _, arg := range args {
+				keepDeps[arg] = allDeps[arg]
+			}
+			prettyPrint(keepDeps)
+		} else {
+			prettyPrint(allDeps)
 		}
 	}
 	return nil
 }
 
 func init() {
-	inspectCmd.PersistentFlags().Bool("show-deps", false, "show the (required) dependencies for each package")
-	viper.BindPFlag("show-deps", inspectCmd.PersistentFlags().Lookup("show-deps"))
-	viper.BindPFlag("invert", inspectCmd.PersistentFlags().Lookup("invert"))
+	inspectCmd.Flags().BoolVar(&showDeps, "deps", false, "show dependency tree")
+	inspectCmd.Flags().BoolVar(&reverse, "reverse", false, "show reverse dependencies")
+	inspectCmd.Flags().BoolVar(&toJSON, "json", false, "output as clean json")
+
 	RootCmd.AddCommand(inspectCmd)
 }
