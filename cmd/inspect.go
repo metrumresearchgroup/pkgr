@@ -77,7 +77,16 @@ func inspect(cmd *cobra.Command, args []string) error {
 				prettyPrint(keepDeps)
 			}
 		} else {
-			prettyPrint(allDeps)
+			if tree {
+				depTree := treeprint.New()
+				for p := range allDeps {
+					tb := depTree.AddBranch(p)
+					recurseDeps(p, ip, tb)
+				}
+				fmt.Println(depTree.String())
+			} else {
+				prettyPrint(allDeps)
+			}
 		}
 	}
 	return nil
