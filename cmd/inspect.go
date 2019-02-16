@@ -15,9 +15,13 @@
 package cmd
 
 import (
+	"fmt"
+
+	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/xlab/treeprint"
 )
 
 // inspectCmd shows the install inspect
@@ -33,13 +37,22 @@ var inspectCmd = &cobra.Command{
 var reverse bool
 var showDeps bool
 var toJSON bool
+var tree bool
 
+func recurseDeps(pkg string, ddb gpsr.InstallPlan, t treeprint.Tree) {
+	pkgDeps := ddb.DepDb[pkg]
+	if len(pkgDeps) == 0 {
+		return
+	}
+	for _, d := range pkgDeps {
+		recurseDeps(d, ddb, t.AddBranch(d))
+	}
+}
 func inspect(cmd *cobra.Command, args []string) error {
 	if toJSON {
 		// this should suppress all logging from the planning
 		log.SetLevel(logrus.FatalLevel)
 	}
-	log.Infof("Installation would launch %v workers\n", getWorkerCount())
 	_, ip := planInstall()
 	if showDeps {
 		var allDeps map[string][]string
@@ -53,7 +66,16 @@ func inspect(cmd *cobra.Command, args []string) error {
 			for _, arg := range args {
 				keepDeps[arg] = allDeps[arg]
 			}
-			prettyPrint(keepDeps)
+			if tree {
+				depTree := treeprint.New()
+				for p := range keepDeps {
+					tb := depTree.AddBranch(p)
+					recurseDeps(p, ip, tb)
+				}
+				fmt.Println(depTree.String())
+			} else {
+				prettyPrint(keepDeps)
+			}
 		} else {
 			prettyPrint(allDeps)
 		}
@@ -64,6 +86,7 @@ func inspect(cmd *cobra.Command, args []string) error {
 func init() {
 	inspectCmd.Flags().BoolVar(&showDeps, "deps", false, "show dependency tree")
 	inspectCmd.Flags().BoolVar(&reverse, "reverse", false, "show reverse dependencies")
+	inspectCmd.Flags().BoolVar(&tree, "tree", false, "show full recursive dependency tree")
 	inspectCmd.Flags().BoolVar(&toJSON, "json", false, "output as clean json")
 
 	RootCmd.AddCommand(inspectCmd)
