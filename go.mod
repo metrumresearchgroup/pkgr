@@ -15,6 +15,7 @@ require (
 	github.com/spf13/viper v1.2.1
 	github.com/stretchr/testify v1.2.2
 	github.com/thoas/go-funk v0.0.0-20180716193722-1060394a7713
+	github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca
 	golang.org/x/crypto v0.0.0-20181030102418-4d3f4d9ffa16 // indirect
 	golang.org/x/sys v0.0.0-20181031143558-9b800f95dbbc // indirect
 	pault.ag/go/debian v0.0.0-20180722221659-90aeb542bd40

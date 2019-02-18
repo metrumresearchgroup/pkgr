@@ -156,7 +156,7 @@ func planInstall() (*cran.PkgDb, gpsr.InstallPlan) {
 	for pkg := range ip.DepDb {
 		pkgs = append(pkgs, pkg)
 	}
-	fmt.Println("total packages required:", len(ip.StartingPackages)+len(ip.DepDb))
-	fmt.Println(time.Since(startTime))
+	log.Infoln("total packages required:", len(ip.StartingPackages)+len(ip.DepDb))
+	log.Infoln("resolution time", time.Since(startTime))
 	return cdb, ip
 }

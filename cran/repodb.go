@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/metrumresearchgroup/pkgr/desc"
-	"github.com/mitchellh/go-homedir"
+	homedir "github.com/mitchellh/go-homedir"
 )
 
 // NewRepoDb returns a new Repo database
