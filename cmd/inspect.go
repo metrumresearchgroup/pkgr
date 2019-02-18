@@ -66,30 +66,25 @@ func inspect(cmd *cobra.Command, args []string) error {
 			for _, arg := range args {
 				keepDeps[arg] = allDeps[arg]
 			}
-			if tree {
-				depTree := treeprint.New()
-				for p := range keepDeps {
-					tb := depTree.AddBranch(p)
-					recurseDeps(p, ip, tb)
-				}
-				fmt.Println(depTree.String())
-			} else {
-				prettyPrint(keepDeps)
-			}
+			printDeps(keepDeps, tree, ip)
 		} else {
-			if tree {
-				depTree := treeprint.New()
-				for p := range allDeps {
-					tb := depTree.AddBranch(p)
-					recurseDeps(p, ip, tb)
-				}
-				fmt.Println(depTree.String())
-			} else {
-				prettyPrint(allDeps)
-			}
+			printDeps(allDeps, tree, ip)
 		}
 	}
 	return nil
+}
+
+func printDeps(deps map[string][]string, tree bool, ip gpsr.InstallPlan) {
+	if tree {
+		depTree := treeprint.New()
+		for p := range deps {
+			tb := depTree.AddBranch(p)
+			recurseDeps(p, ip, tb)
+		}
+		fmt.Println(depTree.String())
+	} else {
+		prettyPrint(deps)
+	}
 }
 
 func init() {
