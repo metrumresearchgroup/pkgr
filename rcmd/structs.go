@@ -17,6 +17,7 @@ type ExecSettings struct {
 	WorkDir string `json:"work_dir,omitempty"`
 }
 
+// RVersion contains information about the R version
 type RVersion struct {
 	Major int
 	Minor int
