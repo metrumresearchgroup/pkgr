@@ -204,16 +204,18 @@ func isInCache(
 	meta := ir.Metadata
 	pkg := ir.Metadata.Metadata.Package
 	bpath := filepath.Join(pc.BaseDir, meta.Metadata.Config.Repo.Name, "binary", binaryName(pkg.Package, pkg.Version))
+	exists, err := goutils.Exists(fs, bpath)
+	if !exists || err != nil {
+		log.WithFields(logrus.Fields{
+			"path":    bpath,
+			"package": pkg.Package,
+		}).Trace("not found in cache")
+		return false, ir
+	}
 	log.WithFields(logrus.Fields{
 		"path":    bpath,
 		"package": pkg.Package,
-	}).Trace("checking in cache")
-	exists, err := goutils.Exists(fs, bpath)
-	if !exists || err != nil {
-		log.WithField("package", pkg.Package).Trace("not found in cache")
-		return false, ir
-	}
-	log.WithField("package", pkg.Package).Trace("found in cache")
+	}).Trace("found in cache")
 	ir.Metadata.Path = bpath
 	ir.Metadata.Metadata.Config.Type = cran.Binary
 	return true, ir
