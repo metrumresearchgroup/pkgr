@@ -28,9 +28,9 @@ func TestRVersion(t *testing.T) {
 	}
 	for i, tt := range installArgsTests {
 		actual := tt.in.ToString()
-		assert.Equal(actual, tt.expectedString, fmt.Sprintf("test num: %v", i+1))
+		assert.Equal(tt.expectedString, actual, fmt.Sprintf("test num: %v", i+1))
 		actual = tt.in.ToFullString()
-		assert.Equal(actual, tt.expectedFull, fmt.Sprintf("test num: %v", i+1))
+		assert.Equal(tt.expectedFull, actual, fmt.Sprintf("test num: %v", i+1))
 
 	}
 }
