@@ -376,11 +376,14 @@ func InstallPackagePlan(
 				// ready to be installed, and if so, signal they should
 				// be installed
 				pkg, _ := dl.Get(iu.Package)
-
 				log.WithFields(logrus.Fields{"binary": iu.BinaryPath, "src": pkg.Path}).Debug(iu.Package)
 
 				if iu.Result.ExitCode != -999 {
-					log.WithField("package", iu.Package).Info("Successfully Installed")
+					log.WithFields(logrus.Fields{
+						"package": iu.Package,
+						"version": pkg.Metadata.Package.Version,
+						"repo":    pkg.Metadata.Config.Repo.Name,
+					}).Info("Successfully Installed")
 				}
 				installedPkgs[iu.Package] = true
 				deps, exists := iDeps[iu.Package]
