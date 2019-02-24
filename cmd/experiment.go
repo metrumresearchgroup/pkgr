@@ -52,8 +52,10 @@ func rExperiment(cmd *cobra.Command, args []string) error {
 	fmt.Println(rp.ScanLines(res))
 	startTime := time.Now()
 	res, _ = rcmd.RunR(fs, "", rs, "paste0(R.Version()$major,'.',R.Version()$minor)", "")
+
 	fmt.Println(rp.ScanLines(res)[0])
 	fmt.Println(time.Since(startTime))
+	fmt.Println(rcmd.GetRVersion(&rs))
 	res, err := rcmd.RunR(fs, "", rs, "stop('bad')", "")
 	fmt.Println(res)
 	fmt.Println("err: ", err)
