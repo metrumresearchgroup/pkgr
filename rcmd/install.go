@@ -243,7 +243,6 @@ func InstallThroughBinary(
 
 	inCache, ir := isInCache(fs, ir, pc)
 	if inCache {
-		log.WithField("package", ir.Package).Debug("package detected in cache")
 		// don't need to build since already a binary
 		ir.InstallArgs.Build = false
 		res, err := Install(fs,

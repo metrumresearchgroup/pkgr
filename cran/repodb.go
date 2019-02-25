@@ -18,7 +18,7 @@ import (
 )
 
 // NewRepoDb returns a new Repo database
-func NewRepoDb(url RepoURL, dst SourceType, rc RepoConfig) (*RepoDb, error) {
+func NewRepoDb(url RepoURL, dst SourceType, rc RepoConfig, rv RVersion) (*RepoDb, error) {
 	ddb := &RepoDb{
 		Dbs:  make(map[SourceType]map[string]desc.Desc),
 		Time: time.Now(),
@@ -36,7 +36,7 @@ func NewRepoDb(url RepoURL, dst SourceType, rc RepoConfig) (*RepoDb, error) {
 
 	ddb.Dbs[Source] = make(map[string]desc.Desc)
 
-	return ddb, ddb.FetchPackages()
+	return ddb, ddb.FetchPackages(rv)
 }
 
 // Decode decodes the package database
@@ -70,15 +70,8 @@ func (r *RepoDb) Encode(file string) error {
 	return nil
 }
 
-// FetchPackages gets the packages for  RepoDb
-// R_AVAILABLE_PACKAGES_CACHE_CONTROL_MAX_AGE controls the timing to requery the cache in R
-func (r *RepoDb) FetchPackages() error {
-	// just get src versions for now
-	cdir, err := os.UserCacheDir()
-	if err != nil {
-		fmt.Println("could not use user cache dir, using temp dir")
-		cdir = os.TempDir()
-	}
+// Hash provides a hash based on the RepoDb sources
+func (r *RepoDb) Hash() string {
 	h := md5.New()
 	// want to get the unique elements in the Dbs so the cache
 	// will be representative of the config. Eg if set to only source
@@ -88,7 +81,28 @@ func (r *RepoDb) FetchPackages() error {
 		stsum += st
 	}
 	io.WriteString(h, r.Repo.Name+r.Repo.URL+string(stsum))
-	pkgdbHash := fmt.Sprintf("%x", h.Sum(nil))
+	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
+// GetBaseURL provides the base URL for a package in a cran-like repo given the source type and version of R
+func GetBaseURL(r RepoURL, st SourceType, rv RVersion) string {
+	if st == Source {
+		return fmt.Sprintf("%s/src/contrib/PACKAGES", strings.TrimSuffix(r.URL, "/"))
+		// TODO: fix so isn't hard coded to 3.5 binaries
+	}
+	return fmt.Sprintf("%s/bin/%s/contrib/%s/PACKAGES", strings.TrimSuffix(r.URL, "/"), cranBinaryURL(), rv.ToString())
+}
+
+// FetchPackages gets the packages for  RepoDb
+// R_AVAILABLE_PACKAGES_CACHE_CONTROL_MAX_AGE controls the timing to requery the cache in R
+func (r *RepoDb) FetchPackages(rv RVersion) error {
+	// just get src versions for now
+	cdir, err := os.UserCacheDir()
+	if err != nil {
+		fmt.Println("could not use user cache dir, using temp dir")
+		cdir = os.TempDir()
+	}
+	pkgdbHash := r.Hash()
 	pkgdbFile := filepath.Join(cdir, "r_packagedb_caches", pkgdbHash)
 	if fi, err := os.Stat(pkgdbFile); !os.IsNotExist(err) {
 		if fi.ModTime().Add(1*time.Hour).Unix() > time.Now().Unix() {
@@ -109,14 +123,8 @@ func (r *RepoDb) FetchPackages() error {
 	defer close(dlchan)
 	for st := range r.Dbs {
 		go func(st SourceType) {
-			var pkgURL string
 			ddb := make(map[string]desc.Desc)
-			if st == Source {
-				pkgURL = fmt.Sprintf("%s/src/contrib/PACKAGES", strings.TrimSuffix(r.Repo.URL, "/"))
-			} else {
-				// TODO: fix so isn't hard coded to 3.5 binaries
-				pkgURL = fmt.Sprintf("%s/bin/%s/contrib/%s/PACKAGES", strings.TrimSuffix(r.Repo.URL, "/"), cranBinaryURL(), "3.5")
-			}
+			pkgURL := GetBaseURL(r.Repo, st, rv)
 			var body []byte
 			if strings.HasPrefix(pkgURL, "http") {
 				res, err := http.Get(pkgURL)
