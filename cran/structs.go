@@ -66,3 +66,10 @@ type AvailablePkgs struct {
 	Packages []PkgDl
 	Missing  []string
 }
+
+// RVersion contains information about the R version
+type RVersion struct {
+	Major int
+	Minor int
+	Patch int
+}

@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/rcmd/rp"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
@@ -37,12 +38,12 @@ func (rs RSettings) R() string {
 // as if it is not defined, it will shell out to R to determine the version, and mutate itself
 // to set that value, while also returning the RVersion.
 // This will keep any program using rs from needing to shell out multiple times
-func GetRVersion(rs *RSettings) RVersion {
+func GetRVersion(rs *RSettings) cran.RVersion {
 	if rs.Version.ToString() == "0.0" {
 		res, err := RunR(afero.NewOsFs(), "", *rs, "paste0(R.Version()$major,'.',R.Version()$minor)", "")
 		if err != nil {
 			log.Fatal("error getting R version")
-			return RVersion{}
+			return cran.RVersion{}
 		}
 		rVersionString := rp.ScanLines(res)[0]
 		rsp := strings.Split(strings.Replace(rVersionString, "\"", "", -1), ".")
@@ -51,7 +52,7 @@ func GetRVersion(rs *RSettings) RVersion {
 			min, _ := strconv.Atoi(rsp[1])
 			pat, _ := strconv.Atoi(rsp[2])
 			// this should now make it so in the future it will be set so should only need to shell out to R once
-			rs.Version = RVersion{
+			rs.Version = cran.RVersion{
 				Major: maj,
 				Minor: min,
 				Patch: pat,

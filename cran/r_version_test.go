@@ -1,4 +1,4 @@
-package rcmd
+package cran
 
 import (
 	"fmt"
