@@ -203,7 +203,15 @@ func isInCache(
 	// if not in cache just pass back
 	meta := ir.Metadata
 	pkg := ir.Metadata.Metadata.Package
-	bpath := filepath.Join(pc.BaseDir, meta.Metadata.Config.Repo.Name, "binary", binaryName(pkg.Package, pkg.Version))
+
+	repoHash := cran.RepoURLHash(meta.Metadata.Config.Repo)
+	bpath := filepath.Join(
+		pc.BaseDir,
+		repoHash,
+		"binary",
+		ir.RSettings.Version.ToString(),
+		binaryName(pkg.Package, pkg.Version),
+	)
 	exists, err := goutils.Exists(fs, bpath)
 	if !exists || err != nil {
 		log.WithFields(logrus.Fields{
