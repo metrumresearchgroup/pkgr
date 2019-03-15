@@ -49,7 +49,7 @@ func SolveLockfile(ldb LockFileDb) ([][]string, error) {
 		workingGraph[p.Reqs.Package] = gpsr.NewNode(p.Reqs.Package, p.Reqs.Requires)
 	}
 
-	resolved, err := gpsr.ResolveGraph(workingGraph)
+	resolved, err := gpsr.ResolveLayers(workingGraph)
 
 	return resolved, err
 }

@@ -15,16 +15,17 @@ func main() {
 	pm := packrat.ChunkLockfile(lf)
 
 	var workingGraph gpsr.Graph
+
 	for _, p := range pm.CRANlike {
-		workingGraph = append(workingGraph, gpsr.NewNode(p.Package, p.Requires))
+		workingGraph[p.Package] = gpsr.NewNode(p.Package, p.Requires) // append(workingGraph, gpsr.NewNode(p.Package, p.Requires))
 	}
 	for _, p := range pm.Github {
-		workingGraph = append(workingGraph, gpsr.NewNode(p.Reqs.Package, p.Reqs.Requires))
+		workingGraph[p.Reqs.Package] = gpsr.NewNode(p.Reqs.Package, p.Reqs.Requires) //append(workingGraph, gpsr.NewNode(p.Reqs.Package, p.Reqs.Requires))
 	}
 
 	gpsr.DisplayGraph(workingGraph)
 
-	resolved, err := gpsr.ResolveGraph(workingGraph)
+	resolved, err := gpsr.ResolveLayers(workingGraph)
 	if err != nil {
 		fmt.Printf("Failed to resolve dependency graph: %s\n", err)
 	} else {
