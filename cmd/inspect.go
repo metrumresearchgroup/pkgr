@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	"github.com/metrumresearchgroup/pkgr/gpsr"
+	"github.com/metrumresearchgroup/pkgr/rcmd"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -53,7 +54,9 @@ func inspect(cmd *cobra.Command, args []string) error {
 		// this should suppress all logging from the planning
 		log.SetLevel(logrus.FatalLevel)
 	}
-	_, ip := planInstall()
+	rs := rcmd.NewRSettings()
+	rVersion := rcmd.GetRVersion(&rs)
+	_, ip := planInstall(rVersion)
 	if showDeps {
 		var allDeps map[string][]string
 		keepDeps := make(map[string][]string)

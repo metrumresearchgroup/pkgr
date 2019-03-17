@@ -9,7 +9,7 @@ import (
 )
 
 // NewPkgDb returns a new package database
-func NewPkgDb(urls []RepoURL, dst SourceType, cfgdb *InstallConfig) (*PkgDb, error) {
+func NewPkgDb(urls []RepoURL, dst SourceType, cfgdb *InstallConfig, rv RVersion) (*PkgDb, error) {
 	db := PkgDb{
 		Config:            cfgdb,
 		DefaultSourceType: dst,
@@ -26,7 +26,7 @@ func NewPkgDb(urls []RepoURL, dst SourceType, cfgdb *InstallConfig) (*PkgDb, err
 	defer close(rdbc)
 	for _, url := range urls {
 		go func(url RepoURL, dst SourceType) {
-			rdb, err := NewRepoDb(url, dst, cfgdb.Repos[url.Name])
+			rdb, err := NewRepoDb(url, dst, cfgdb.Repos[url.Name], rv)
 			rdbc <- rd{url, rdb, err}
 		}(url, dst)
 	}

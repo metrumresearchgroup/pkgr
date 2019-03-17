@@ -203,17 +203,27 @@ func isInCache(
 	// if not in cache just pass back
 	meta := ir.Metadata
 	pkg := ir.Metadata.Metadata.Package
-	bpath := filepath.Join(pc.BaseDir, meta.Metadata.Config.Repo.Name, "binary", binaryName(pkg.Package, pkg.Version))
+
+	repoHash := cran.RepoURLHash(meta.Metadata.Config.Repo)
+	bpath := filepath.Join(
+		pc.BaseDir,
+		repoHash,
+		"binary",
+		ir.RSettings.Version.ToString(),
+		binaryName(pkg.Package, pkg.Version),
+	)
+	exists, err := goutils.Exists(fs, bpath)
+	if !exists || err != nil {
+		log.WithFields(logrus.Fields{
+			"path":    bpath,
+			"package": pkg.Package,
+		}).Trace("not found in cache")
+		return false, ir
+	}
 	log.WithFields(logrus.Fields{
 		"path":    bpath,
 		"package": pkg.Package,
-	}).Trace("checking in cache")
-	exists, err := goutils.Exists(fs, bpath)
-	if !exists || err != nil {
-		log.WithField("package", pkg.Package).Trace("not found in cache")
-		return false, ir
-	}
-	log.WithField("package", pkg.Package).Trace("found in cache")
+	}).Trace("found in cache")
 	ir.Metadata.Path = bpath
 	ir.Metadata.Metadata.Config.Type = cran.Binary
 	return true, ir
@@ -241,7 +251,6 @@ func InstallThroughBinary(
 
 	inCache, ir := isInCache(fs, ir, pc)
 	if inCache {
-		log.WithField("package", ir.Package).Debug("package detected in cache")
 		// don't need to build since already a binary
 		ir.InstallArgs.Build = false
 		res, err := Install(fs,
@@ -376,11 +385,14 @@ func InstallPackagePlan(
 				// ready to be installed, and if so, signal they should
 				// be installed
 				pkg, _ := dl.Get(iu.Package)
-
 				log.WithFields(logrus.Fields{"binary": iu.BinaryPath, "src": pkg.Path}).Debug(iu.Package)
 
 				if iu.Result.ExitCode != -999 {
-					log.WithField("package", iu.Package).Info("Successfully Installed")
+					log.WithFields(logrus.Fields{
+						"package": iu.Package,
+						"version": pkg.Metadata.Package.Version,
+						"repo":    pkg.Metadata.Config.Repo.Name,
+					}).Info("Successfully Installed")
 				}
 				installedPkgs[iu.Package] = true
 				deps, exists := iDeps[iu.Package]

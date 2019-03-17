@@ -51,7 +51,7 @@ func getRepos(ds []PkgDl) map[string]RepoURL {
 }
 
 // DownloadPackages downloads a set of packages concurrently
-func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string) (*PkgMap, error) {
+func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string, rv RVersion) (*PkgMap, error) {
 	startTime := time.Now()
 	result := NewPkgMap()
 	sem := make(chan struct{}, 10)
@@ -59,7 +59,7 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string) (*PkgMap, error) 
 	rpm := getRepos(ds)
 	for _, r := range rpm {
 		urlHash := RepoURLHash(r)
-		for _, pt := range []string{"src", "binary"} {
+		for _, pt := range []string{"src", filepath.Join("binary", rv.ToString())} {
 			pkgdir := filepath.Join(baseDir, urlHash, pt)
 			err := fs.MkdirAll(pkgdir, 0777)
 			if err != nil {
@@ -96,12 +96,12 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string) (*PkgMap, error) 
 			pkgdir := filepath.Join(baseDir, urlHash, pkgType)
 			var pkgFile string
 			if d.Config.Type == Binary {
-				pkgFile = filepath.Join(pkgdir, binaryName(d.Package.Package, d.Package.Version))
+				pkgFile = filepath.Join(pkgdir, rv.ToString(), binaryName(d.Package.Package, d.Package.Version))
 			} else {
 				pkgFile = filepath.Join(pkgdir, fmt.Sprintf("%s_%s.tar.gz", d.Package.Package, d.Package.Version))
 			}
 			startDl := time.Now()
-			dl, err := DownloadPackage(fs, d, pkgFile)
+			dl, err := DownloadPackage(fs, d, pkgFile, rv)
 			if err != nil {
 				// TODO:  should this cause a failure downstream rather than just printing
 				// as right now it keeps running and just doesn't install that package?
@@ -122,7 +122,7 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string) (*PkgMap, error) 
 
 // DownloadPackage should download a package tarball if it doesn't exist and return
 // the path to the downloaded tarball
-func DownloadPackage(fs afero.Fs, d PkgDl, dest string) (Download, error) {
+func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, error) {
 	if !filepath.IsAbs(dest) {
 		cwd, _ := os.Getwd()
 		// turn to absolute
@@ -145,11 +145,10 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string) (Download, error) {
 		d.Config.Type = Source // in case was originally set to binary
 		pkgdl = fmt.Sprintf("%s/src/contrib/%s", strings.TrimSuffix(d.Config.Repo.URL, "/"), filepath.Base(dest))
 	} else {
-		// TODO: fix so isn't hard coded to 3.5 binaries
 		pkgdl = fmt.Sprintf("%s/bin/%s/contrib/%s/%s",
 			strings.TrimSuffix(d.Config.Repo.URL, "/"),
 			cranBinaryURL(),
-			"3.5",
+			rv.ToString(),
 			filepath.Base(dest))
 	}
 	resp, err := http.Get(pkgdl)

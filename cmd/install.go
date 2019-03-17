@@ -21,6 +21,7 @@ import (
 
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -36,7 +37,10 @@ var installCmd = &cobra.Command{
 
 func rInstall(cmd *cobra.Command, args []string) error {
 	startTime := time.Now()
-	cdb, ip := planInstall()
+	rs := rcmd.NewRSettings()
+	rVersion := rcmd.GetRVersion(&rs)
+	log.Infoln("R Version " + rVersion.ToFullString())
+	cdb, ip := planInstall(rVersion)
 
 	var toDl []cran.PkgDl
 	// starting packages
@@ -51,7 +55,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	}
 	// // want to download the packages and return the full path of any downloaded package
 	pc := rcmd.NewPackageCache(userCache(cfg.Cache), false)
-	dl, err := cran.DownloadPackages(fs, toDl, pc.BaseDir)
+	dl, err := cran.DownloadPackages(fs, toDl, pc.BaseDir, rVersion)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
@@ -63,7 +67,6 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	// leave at least 1 thread open for coordination, given more than 2 threads available.
 	// if only 2 available, will let the OS hypervisor coordinate some else would drop the
 	// install time too much for the little bit of additional coordination going on.
-	rs := rcmd.NewRSettings()
 	pkgCustomizations := cfg.Customizations.Packages
 	for n, v := range pkgCustomizations {
 		if v.Env != nil {

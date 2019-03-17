@@ -20,6 +20,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/metrumresearchgroup/pkgr/rcmd"
+
 	"github.com/metrumresearchgroup/pkgr/configlib"
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
@@ -41,7 +43,10 @@ var planCmd = &cobra.Command{
 
 func plan(cmd *cobra.Command, args []string) error {
 	log.Infof("Installation would launch %v workers\n", getWorkerCount())
-	_, ip := planInstall()
+	rs := rcmd.NewRSettings()
+	rVersion := rcmd.GetRVersion(&rs)
+	log.Infoln("R Version " + rVersion.ToFullString())
+	_, ip := planInstall(rVersion)
 	if viper.GetBool("show-deps") {
 		for pkg, deps := range ip.DepDb {
 			fmt.Println("-----------  ", pkg, "   ------------")
@@ -57,7 +62,7 @@ func init() {
 	RootCmd.AddCommand(planCmd)
 }
 
-func planInstall() (*cran.PkgDb, gpsr.InstallPlan) {
+func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 	startTime := time.Now()
 	var repos []cran.RepoURL
 	for _, r := range cfg.Repos {
@@ -75,7 +80,7 @@ func planInstall() (*cran.PkgDb, gpsr.InstallPlan) {
 			cic.Repos[rn] = cran.RepoConfig{DefaultSourceType: cran.Source}
 		}
 	}
-	cdb, err := cran.NewPkgDb(repos, st, cic)
+	cdb, err := cran.NewPkgDb(repos, st, cic, rv)
 	if err != nil {
 		log.Panicln("error getting pkgdb ", err)
 	}

@@ -7,7 +7,8 @@ import (
 )
 
 //NewPackageCache provides a PackageCache, optionally forcing that
-// the package cache definitely is created
+// the package cache directory is definitely exist or be created
+// the overall hierarchy of the cache is to provide the top level cache directory
 func NewPackageCache(dir string, mustWork bool) PackageCache {
 	if !filepath.IsAbs(dir) {
 		wd, _ := os.Getwd()

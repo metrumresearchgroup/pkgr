@@ -31,7 +31,7 @@ import (
 )
 
 // VERSION is the current pkc version
-const VERSION string = "0.2.0-alpha.2"
+var VERSION = "0.2.0-alpha.2"
 
 var fs afero.Fs
 var cfg configlib.PkgrConfig
@@ -40,13 +40,15 @@ var cfg configlib.PkgrConfig
 var RootCmd = &cobra.Command{
 	Use:   "pkgr",
 	Short: "package manager",
-	Long:  fmt.Sprintf("pkgr cli version %s", VERSION),
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-
+func Execute(build string) {
+	if build != "" {
+		VERSION = fmt.Sprintf("%s-%s", VERSION, build)
+	}
+	RootCmd.Long = fmt.Sprintf("pkgr cli version %s", VERSION)
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
@@ -123,13 +125,13 @@ func initConfig() {
 		viper.Debug()
 	}
 	viper.Unmarshal(&cfg)
-	configDir, _ := filepath.Abs(viper.ConfigFileUsed())
+	configFilePath, _ := filepath.Abs(viper.ConfigFileUsed())
 	cwd, _ := os.Getwd()
 	log.WithFields(logrus.Fields{
 		"cwd": cwd,
-		"nwd": filepath.Dir(configDir),
+		"nwd": filepath.Dir(configFilePath),
 	}).Trace("setting directory to configuration file")
-	os.Chdir(filepath.Dir(configDir))
+	os.Chdir(filepath.Dir(configFilePath))
 
 	if cfg.Logging.File != "" {
 		fileHook, err := logger.NewLogrusFileHook(cfg.Logging.File, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
