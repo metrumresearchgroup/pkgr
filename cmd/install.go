@@ -55,7 +55,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	}
 	// // want to download the packages and return the full path of any downloaded package
 	pc := rcmd.NewPackageCache(userCache(cfg.Cache), false)
-	dl, err := cran.DownloadPackages(fs, toDl, pc.BaseDir)
+	dl, err := cran.DownloadPackages(fs, toDl, pc.BaseDir, rVersion)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
