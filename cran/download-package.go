@@ -108,10 +108,13 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string, rv RVersion) (*Pk
 				log.WithField("package", d.Package.Package).Warn("downloading failed")
 				return
 			}
-			log.WithFields(log.Fields{
-				"package": d.Package.Package,
-				"dltime":  time.Since(startDl),
-			}).Info("downloaded package")
+
+			if dl.New {
+				log.WithFields(log.Fields{
+					"package": d.Package.Package,
+					"dltime":  time.Since(startDl),
+				}).Info("download successful")
+			}
 			result.Put(d.Package.Package, dl)
 		}(d, &wg)
 	}
@@ -133,7 +136,7 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 		return Download{}, err
 	}
 	if exists {
-		log.WithField("package", d.Package.Package).Info("previously downloaded package will not be redownloaded ")
+		log.WithField("package", d.Package.Package).Info("package already downloaded ")
 		return Download{
 			Path:     dest,
 			New:      false,
