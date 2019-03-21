@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -87,19 +88,45 @@ func clean(cmd *cobra.Command, args []string) error {
 }
 
 func clearCaches(src, binary []string) error {
-	cacheDir := userCache(cfg.Cache)
-	//specificCache := rcmd.NewPackageCache(cacheDir, false)
-	log.WithField("dir", cacheDir).Info("clearing cache at directory ")
+	cachePath := userCache(cfg.Cache)
+	//specificCache := rcmd.NewPackageCache(cachePath, false)
+	log.WithField("dir", cachePath).Info("clearing cache at directory ")
 
-	cacheDirectoryObject, err := fs.Open(cacheDir)
+	cachedDir, err := fs.Open(cachePath)
 	if err != nil {
-		log.WithField("cache dir", cacheDir).Error(err)
+		log.WithField("cache dir", cachePath).Error(err)
 		return err
 	}
-	cachedFiles, _ := cacheDirectoryObject.Readdir(0)
+	cacheFolders, _ := cachedDir.Readdir(0)
 
-	for _, f := range cachedFiles {
+	//Function
+	var cacheFolderPaths []string
+	for _, f := range cacheFolders {
+		cacheFolderPaths = append(cacheFolderPaths, filepath.Join(cachePath, f.Name()))
+	}
+
+	for _, f := range cacheFolders {
 		fmt.Println(f.Name())
+	}
+
+	//Function
+	if src == nil || len(src) == 0 {
+		for _, p := range cacheFolderPaths {
+			srcFolder := filepath.Join(p, "src")
+			fs.RemoveAll(srcFolder)
+		}
+	} else {
+		//remove specifics
+	}
+
+	//Function
+	if binary == nil || len(binary) == 0 {
+		for _, p := range cacheFolderPaths {
+			binFolder := filepath.Join(p, "bin")
+			fs.RemoveAll(binFolder)
+		}
+	} else {
+		//remove specifics
 	}
 
 	return nil
