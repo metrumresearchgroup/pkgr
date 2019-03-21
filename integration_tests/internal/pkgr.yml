@@ -22,13 +22,13 @@ Suggests: true
 Repos:
   - r_validated: "https://metrumresearchgroup.github.io/r_validated"
   - CRAN: "https://cran.rstudio.com"
+  - local: "/Users/johncarlos/openspace/rpkgs/gh_dev"
 
-Library: "path/to/installation"
+Library: "test-library"
 
 # any libpaths desired to be set
 Libpaths:
-  - "path/to/some/prev/installed"
-  - "another/path/to/some/prev/installed"
+  - "testsets/simple"
 
 # customizations are package specific settings
 # for example, we can use a custom makevar file for data.table
@@ -36,7 +36,13 @@ Libpaths:
 # each package gets installed in its own process so any env variables
 # or settings will only matter for it
 Customizations:
-  Packages: 
-    - data.table:
-       Env:
-         - R_MAKEVARS_USER: "~/.R/Makevars_data.table"
+    Packages:
+        - PKPDmisc:
+            Suggests: true
+        - data.table:
+           Env:
+             - R_MAKEVARS_USER: "~/.R/Makevars_data.table"
+        - internal:
+            Repo: local
+        - mrgsolve:
+            Type: source
