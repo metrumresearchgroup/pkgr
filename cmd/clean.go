@@ -17,6 +17,7 @@ package cmd
 import (
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -39,22 +40,12 @@ var cleanCmd = &cobra.Command{
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// cleanCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// cleanCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	cleanCmd.Flags().BoolVar(&cleanAll, "all", false, "clean all cached items")
 	cleanCmd.Flags().BoolVar(&cleanPkgdbs, "pkgdbs", false, "Remove cached package databases.")
 	cleanCmd.Flags().StringVar(&pkgdbs, "dbs", "ALL", "Package databases to remove.")
 	cleanCmd.Flags().BoolVar(&cleanCache, "cache", false, "Remove cache sources and/or binaries")
 	cleanCmd.Flags().StringVar(&srcCaches, "src", "ALL", "Clean src caches in clean --cache")
 	cleanCmd.Flags().StringVar(&binaryCaches, "binary", "ALL", "Clean binary caches in clean --cache")
-	//viper.BindFlag("pkgdb")
 
 	RootCmd.AddCommand(cleanCmd)
 }
@@ -74,23 +65,31 @@ func clean(cmd *cobra.Command, args []string) error {
 			} else {
 				fmt.Println(fmt.Sprintf("Cleaning specific package databases: %s", pkgdbs))
 			}
+		}
 
-			if cleanCache {
-				if srcCaches == "ALL" {
-					fmt.Println("Cleaning all src caches.")
-				} else {
-					fmt.Println(fmt.Sprintf("Cleaning specific src caches: %s", srcCaches))
-				}
+		if cleanCache {
+			if srcCaches == "ALL" {
+				fmt.Println("Cleaning all src caches.")
+				clearCaches(nil, nil)
+			} else {
+				fmt.Println(fmt.Sprintf("Cleaning specific src caches: %s", srcCaches))
+			}
 
-				if binaryCaches == "ALL" {
-					fmt.Println("Cleaning all binary caches.")
-				} else {
-					fmt.Println(fmt.Sprintf("Cleaning specific binary caches: %s", binaryCaches))
-				}
+			if binaryCaches == "ALL" {
+				fmt.Println("Cleaning all binary caches.")
+			} else {
+				fmt.Println(fmt.Sprintf("Cleaning specific binary caches: %s", binaryCaches))
 			}
 		}
 	}
-	fmt.Println("Done.")
+	fmt.Println("Donezo.")
+	return nil
+}
+
+func clearCaches(src, binary []string) error {
+	cacheDir := userCache(cfg.Cache)
+	log.WithField("dir", cacheDir).Info("clearing cache at directory ")
+
 	return nil
 }
 
