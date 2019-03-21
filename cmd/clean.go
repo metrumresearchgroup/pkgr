@@ -88,7 +88,19 @@ func clean(cmd *cobra.Command, args []string) error {
 
 func clearCaches(src, binary []string) error {
 	cacheDir := userCache(cfg.Cache)
+	//specificCache := rcmd.NewPackageCache(cacheDir, false)
 	log.WithField("dir", cacheDir).Info("clearing cache at directory ")
+
+	cacheDirectoryObject, err := fs.Open(cacheDir)
+	if err != nil {
+		log.WithField("cache dir", cacheDir).Error(err)
+		return err
+	}
+	cachedFiles, _ := cacheDirectoryObject.Readdir(0)
+
+	for _, f := range cachedFiles {
+		fmt.Println(f.Name())
+	}
 
 	return nil
 }

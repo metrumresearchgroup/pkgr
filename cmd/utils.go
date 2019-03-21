@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"os"
+	"path/filepath"
 	"runtime"
 
 	log "github.com/sirupsen/logrus"
@@ -21,7 +22,10 @@ func userCache(pc string) string {
 		cdir = os.TempDir()
 	}
 	log.WithField("dir", cdir).Trace("default package cache directory")
-	return cdir
+
+	pkgrCacheDir := filepath.Join(cdir, "pkgr")
+
+	return pkgrCacheDir
 }
 
 func getWorkerCount() int {
