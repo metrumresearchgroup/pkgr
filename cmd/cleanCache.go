@@ -1,4 +1,4 @@
-// Copyright © 2019 John Carlo Salter <juuncaerlum@gmail.com>
+// Copyright © 2019 NAME HERE <EMAIL ADDRESS>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,64 +16,42 @@ package cmd
 
 import (
 	"fmt"
+	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
 
-var cleanAll bool
-var cleanPkgdbs bool
-var pkgdbs string
+var cleanCache bool
+var srcCaches string
+var binaryCaches string
 
-// var cleanCache bool
-// var srcCaches string
-// var binaryCaches string
-
-// cleanCmd represents the clean command
-var CleanCmd = &cobra.Command{
-	Use:   "clean",
-	Short: "clean up cached information",
-	Long:  "clean up cached source files and binaries, as well as the saved package database.",
-	RunE:  clean,
-	//	Run: func(cmd *cobra.Command, args []string) {
-	//		fmt.Println("clean called")
-	//	},
+// cacheCmd represents the cache command
+var cleanCacheCmd = &cobra.Command{
+	Use:   "cache",
+	Short: "Subcommand to clean cached source and binary files.",
+	Long: `This command is a subcommand of the "clean" command.
+	
+	Using this command deletes cached source and binary files. Use the 
+	--src and --binary options to specify which repos to clean each
+	file type from.
+	
+	`,
+	RunE: cache,
 }
 
 func init() {
-	CleanCmd.Flags().BoolVar(&cleanAll, "all", false, "clean all cached items")
-	CleanCmd.Flags().BoolVar(&cleanPkgdbs, "pkgdbs", false, "Remove cached package databases.")
-	CleanCmd.Flags().StringVar(&pkgdbs, "dbs", "ALL", "Package databases to remove.")
-	CleanCmd.Flags().BoolVar(&cleanCache, "cache", false, "Remove cache sources and/or binaries")
-	// cleanCmd.Flags().StringVar(&srcCaches, "src", "ALL", "Clean src caches in clean --cache")
-	// cleanCmd.Flags().StringVar(&binaryCaches, "binary", "ALL", "Clean binary caches in clean --cache")
+	cleanCacheCmd.Flags().StringVar(&srcCaches, "src", "ALL", "Clean src caches in clean cache")
+	cleanCacheCmd.Flags().StringVar(&binaryCaches, "binary", "ALL", "Clean binary caches in clean cache")
 
-	RootCmd.AddCommand(CleanCmd)
+	CleanCmd.AddCommand(cleanCacheCmd)
 }
 
-func clean(cmd *cobra.Command, args []string) error {
-
-	if !cleanAll && !cleanPkgdbs && !cleanCache {
-		fmt.Println("No clean options passed -- not cleaning.")
-	}
-	if cleanAll {
-		fmt.Println("Cleaning all.")
-	} else {
-		if cleanPkgdbs {
-			if pkgdbs == "ALL" {
-				fmt.Println("Cleaning all pkgdbs")
-			} else {
-				fmt.Println(fmt.Sprintf("Cleaning specific package databases: %s", pkgdbs))
-			}
-		}
-		if cleanCache {
-			cleanCacheFolders()
-		}
-	}
-	fmt.Println("Donezo.")
+func cache(cmd *cobra.Command, args []string) error {
+	cleanCacheFolders()
 	return nil
 }
 
-/*
 func cleanCacheFolders() {
 	cachePath := userCache(cfg.Cache)
 
@@ -126,4 +104,3 @@ func deleteCacheSubfolders(repos []string, subfolder string, cacheDirectory stri
 	}
 	return nil
 }
-*/
