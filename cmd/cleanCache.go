@@ -107,7 +107,7 @@ func deleteCacheSubfolders(repos []string, subfolder string, cacheDirectory stri
 		"repos argument": reposToClear,
 		"repos parsed":   sliceToString(repos),
 		"cache dir":      cacheDirectory,
-	}).Info("cleaning cache")
+	}).Trace("cleaning cache")
 
 	if repos == nil || len(repos) == 0 || reposToClear == "ALL" {
 		for _, repoFolderFsObject := range repoFolderFsObjects {
@@ -140,7 +140,7 @@ func deleteCacheSubfolders(repos []string, subfolder string, cacheDirectory stri
 						"subfolder path":          subfolderPath,
 					}).Trace("match found")
 
-					err = fs.Remove(subfolderPath)
+					err = fs.RemoveAll(subfolderPath)
 					if err != nil {
 						log.Error(err)
 					}
