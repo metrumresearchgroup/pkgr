@@ -44,3 +44,5 @@ Customizations:
              - R_MAKEVARS_USER: "~/.R/Makevars_data.table"
         - internal:
             Repo: local
+        - mrgsolve:
+            Type: source

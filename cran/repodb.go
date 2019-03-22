@@ -78,7 +78,7 @@ func (r *RepoDb) Hash() string {
 	// vs Source/Binary
 	stsum := Source
 	for st := range r.Dbs {
-		stsum += st
+		stsum += st + 1
 	}
 	io.WriteString(h, r.Repo.Name+r.Repo.URL+string(stsum))
 	return fmt.Sprintf("%x", h.Sum(nil))
