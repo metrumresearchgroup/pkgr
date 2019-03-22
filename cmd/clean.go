@@ -28,7 +28,7 @@ var pkgdbs string
 // var srcCaches string
 // var binaryCaches string
 
-// cleanCmd represents the clean command
+// CleanCmd represents the clean command
 var CleanCmd = &cobra.Command{
 	Use:   "clean",
 	Short: "clean up cached information",
@@ -43,7 +43,7 @@ func init() {
 	CleanCmd.Flags().BoolVar(&cleanAll, "all", false, "clean all cached items")
 	CleanCmd.Flags().BoolVar(&cleanPkgdbs, "pkgdbs", false, "Remove cached package databases.")
 	CleanCmd.Flags().StringVar(&pkgdbs, "dbs", "ALL", "Package databases to remove.")
-	CleanCmd.Flags().BoolVar(&cleanCache, "cache", false, "Remove cache sources and/or binaries")
+	//CleanCmd.Flags().BoolVar(&cleanCache, "cache", false, "Remove cache sources and/or binaries")
 	// cleanCmd.Flags().StringVar(&srcCaches, "src", "ALL", "Clean src caches in clean --cache")
 	// cleanCmd.Flags().StringVar(&binaryCaches, "binary", "ALL", "Clean binary caches in clean --cache")
 
@@ -52,12 +52,15 @@ func init() {
 
 func clean(cmd *cobra.Command, args []string) error {
 
-	if !cleanAll && !cleanPkgdbs && !cleanCache {
+	if !cleanAll && !cleanPkgdbs { //} && !cleanCache {
 		fmt.Println("No clean options passed -- not cleaning.")
 	}
 	if cleanAll {
 		fmt.Println("Cleaning all.")
+		cleanCacheFolders()
+		//cleanPkgdbs()
 	} else {
+
 		if cleanPkgdbs {
 			if pkgdbs == "ALL" {
 				fmt.Println("Cleaning all pkgdbs")
@@ -65,9 +68,10 @@ func clean(cmd *cobra.Command, args []string) error {
 				fmt.Println(fmt.Sprintf("Cleaning specific package databases: %s", pkgdbs))
 			}
 		}
-		if cleanCache {
-			cleanCacheFolders()
-		}
+
+		// if cleanCache {
+		// 	cleanCacheFolders()
+		// }
 	}
 	fmt.Println("Donezo.")
 	return nil

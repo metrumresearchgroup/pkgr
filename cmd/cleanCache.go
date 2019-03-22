@@ -15,16 +15,19 @@
 package cmd
 
 import (
-	"fmt"
+	"errors"
 	"path/filepath"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
-var cleanCache bool
-var srcCaches string
-var binaryCaches string
+//var cleanAllFromCache bool
+var srcOnly bool
+var binariesOnly bool
+var reposToClear string
 
 // cacheCmd represents the cache command
 var cleanCacheCmd = &cobra.Command{
@@ -41,8 +44,10 @@ var cleanCacheCmd = &cobra.Command{
 }
 
 func init() {
-	cleanCacheCmd.Flags().StringVar(&srcCaches, "src", "ALL", "Clean src caches in clean cache")
-	cleanCacheCmd.Flags().StringVar(&binaryCaches, "binary", "ALL", "Clean binary caches in clean cache")
+	//cleanCacheCmd.Flags().BoolVar(&cleanAllFromCache, "all", true, "Clean both src and binary files from the cache.")
+	cleanCacheCmd.Flags().BoolVar(&srcOnly, "src-only", false, "Clean only src files from the cache")
+	cleanCacheCmd.Flags().BoolVar(&binariesOnly, "binaries-only", false, "Clean only binary files from the cache")
+	cleanCacheCmd.Flags().StringVar(&reposToClear, "repos", "ALL", "Comma separated list of repositories to be cleaned. Defaults to all.")
 
 	CleanCmd.AddCommand(cleanCacheCmd)
 }
@@ -52,26 +57,31 @@ func cache(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func cleanCacheFolders() {
+func cleanCacheFolders() error {
 	cachePath := userCache(cfg.Cache)
+	repos := strings.Split(reposToClear, ",")
 
-	if srcCaches == "ALL" {
-		fmt.Println("Cleaning all src caches.")
-		_ = deleteCacheSubfolders(nil, "src", cachePath)
+	log.WithFields(logrus.Fields{
+		"repos argument": reposToClear,
+		"repos parsed":   sliceToString(repos),
+		"cache dir":      cachePath,
+	}).Info("cleaning cache")
+
+	if !srcOnly && !binariesOnly {
+		deleteAllCacheSubfolders(cachePath)
+	} else if srcOnly && binariesOnly {
+		err := errors.New("invalid argument combination -- cannot combine srcOnly and binaryOnly flags")
+		log.Error(err)
+		return err
+	} else if srcOnly {
+		deleteCacheSubfolders(repos, "src", cachePath)
+	} else if binariesOnly {
+		deleteCacheSubfolders(repos, "binary", cachePath)
 	} else {
-		fmt.Println(fmt.Sprintf("Cleaning specific src caches: %s", srcCaches))
-		srcRepos := strings.Split(srcCaches, ",")
-		_ = deleteCacheSubfolders(srcRepos, "src", cachePath)
+		return errors.New("'what? that's impossible! my logic is flawless!'")
 	}
 
-	if binaryCaches == "ALL" {
-		fmt.Println("Cleaning all binary caches.")
-		deleteCacheSubfolders(nil, "binary", cachePath)
-	} else {
-		fmt.Println(fmt.Sprintf("Cleaning specific binary caches: %s", binaryCaches))
-		binaryRepos := strings.Split(binaryCaches, ",")
-		_ = deleteCacheSubfolders(binaryRepos, "binary", cachePath)
-	}
+	return nil
 }
 
 func deleteAllCacheSubfolders(cacheDirectory string) {
@@ -85,22 +95,38 @@ func deleteCacheSubfolders(repos []string, subfolder string, cacheDirectory stri
 		return err
 	}
 
-	repoFolders, _ := cacheDirFsObject.Readdir(0)
+	repoFolderFsObjects, _ := cacheDirFsObject.Readdir(0)
 
-	if repos == nil || len(repos) == 0 {
-		for _, repoFolder := range repoFolders {
-			subfolderPath := filepath.Join(cacheDirectory, repoFolder.Name(), subfolder)
+	if repos == nil || len(repos) == 0 || reposToClear == "ALL" {
+		for _, repoFolderFsObject := range repoFolderFsObjects {
+			subfolderPath := filepath.Join(
+				cacheDirectory,
+				repoFolderFsObject.Name(),
+				subfolder,
+			)
 			fs.RemoveAll(subfolderPath)
 		}
 	} else {
 		for _, repoToClear := range repos {
-			for _, repoFolder := range repoFolders {
-				if repoToClear == repoFolder.Name() {
-					subfolderPath := filepath.Join(cacheDirectory, repoFolder.Name(), subfolder)
+			for _, repoFolderFsObject := range repoFolderFsObjects {
+				if repoToClear == repoFolderFsObject.Name() {
+					subfolderPath := filepath.Join(
+						cacheDirectory,
+						repoFolderFsObject.Name(),
+						subfolder,
+					)
 					fs.Remove(subfolderPath)
 				}
 			}
 		}
 	}
 	return nil
+}
+
+func sliceToString(str []string) string {
+	returnString := ""
+	for _, s := range str {
+		returnString += s + "|"
+	}
+	return returnString
 }
