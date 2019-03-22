@@ -17,8 +17,8 @@ package cmd
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -56,7 +56,6 @@ func clean(cmd *cobra.Command, args []string) error {
 	if !cleanAll && !cleanPkgdbs && !cleanCache {
 		fmt.Println("No clean options passed -- not cleaning.")
 	}
-
 	if cleanAll {
 		fmt.Println("Cleaning all.")
 	} else {
@@ -67,70 +66,63 @@ func clean(cmd *cobra.Command, args []string) error {
 				fmt.Println(fmt.Sprintf("Cleaning specific package databases: %s", pkgdbs))
 			}
 		}
-
 		if cleanCache {
-			if srcCaches == "ALL" {
-				fmt.Println("Cleaning all src caches.")
-				clearCaches(nil, nil)
-			} else {
-				fmt.Println(fmt.Sprintf("Cleaning specific src caches: %s", srcCaches))
-			}
-
-			if binaryCaches == "ALL" {
-				fmt.Println("Cleaning all binary caches.")
-			} else {
-				fmt.Println(fmt.Sprintf("Cleaning specific binary caches: %s", binaryCaches))
-			}
+			cleanCacheFolders()
 		}
 	}
 	fmt.Println("Donezo.")
 	return nil
 }
 
-func clearCaches(src, binary []string) error {
+func cleanCacheFolders() {
 	cachePath := userCache(cfg.Cache)
-	//specificCache := rcmd.NewPackageCache(cachePath, false)
-	log.WithField("dir", cachePath).Info("clearing cache at directory ")
 
-	cachedDir, err := fs.Open(cachePath)
-	if err != nil {
-		log.WithField("cache dir", cachePath).Error(err)
-		return err
-	}
-	cacheFolders, _ := cachedDir.Readdir(0)
-
-	//Function
-	var cacheFolderPaths []string
-	for _, f := range cacheFolders {
-		cacheFolderPaths = append(cacheFolderPaths, filepath.Join(cachePath, f.Name()))
-	}
-
-	for _, f := range cacheFolders {
-		fmt.Println(f.Name())
-	}
-
-	//Function
-	if src == nil || len(src) == 0 {
-		for _, p := range cacheFolderPaths {
-			srcFolder := filepath.Join(p, "src")
-			fs.RemoveAll(srcFolder)
-		}
+	if srcCaches == "ALL" {
+		fmt.Println("Cleaning all src caches.")
+		_ = deleteCacheSubfolders(nil, "src", cachePath)
 	} else {
-		//remove specifics
+		fmt.Println(fmt.Sprintf("Cleaning specific src caches: %s", srcCaches))
+		srcRepos := strings.Split(srcCaches, ",")
+		_ = deleteCacheSubfolders(srcRepos, "src", cachePath)
 	}
 
-	//Function
-	if binary == nil || len(binary) == 0 {
-		for _, p := range cacheFolderPaths {
-			binFolder := filepath.Join(p, "binary")
-			fs.RemoveAll(binFolder)
-		}
+	if binaryCaches == "ALL" {
+		fmt.Println("Cleaning all binary caches.")
+		deleteCacheSubfolders(nil, "binary", cachePath)
 	} else {
-		//remove specifics
+		fmt.Println(fmt.Sprintf("Cleaning specific binary caches: %s", binaryCaches))
+		binaryRepos := strings.Split(binaryCaches, ",")
+		_ = deleteCacheSubfolders(binaryRepos, "binary", cachePath)
 	}
-
-	return nil
 }
 
-//When you bind a bool flag, it's basically "if that flag is not set then it's false, if it is set then it's true"
-//Default string is going
+func deleteAllCacheSubfolders(cacheDirectory string) {
+	deleteCacheSubfolders(nil, "src", cacheDirectory)
+	deleteCacheSubfolders(nil, "binary", cacheDirectory)
+}
+
+func deleteCacheSubfolders(repos []string, subfolder string, cacheDirectory string) error {
+	cacheDirFsObject, err := fs.Open(cacheDirectory)
+	if err != nil {
+		return err
+	}
+
+	repoFolders, _ := cacheDirFsObject.Readdir(0)
+
+	if repos == nil || len(repos) == 0 {
+		for _, repoFolder := range repoFolders {
+			subfolderPath := filepath.Join(cacheDirectory, repoFolder.Name(), subfolder)
+			fs.RemoveAll(subfolderPath)
+		}
+	} else {
+		for _, repoToClear := range repos {
+			for _, repoFolder := range repoFolders {
+				if repoToClear == repoFolder.Name() {
+					subfolderPath := filepath.Join(cacheDirectory, repoFolder.Name(), subfolder)
+					fs.Remove(subfolderPath)
+				}
+			}
+		}
+	}
+	return nil
+}
