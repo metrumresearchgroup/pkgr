@@ -122,7 +122,7 @@ func clearCaches(src, binary []string) error {
 	//Function
 	if binary == nil || len(binary) == 0 {
 		for _, p := range cacheFolderPaths {
-			binFolder := filepath.Join(p, "bin")
+			binFolder := filepath.Join(p, "binary")
 			fs.RemoveAll(binFolder)
 		}
 	} else {
