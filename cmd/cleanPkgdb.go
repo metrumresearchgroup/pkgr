@@ -24,80 +24,100 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var pkgdbsToClear string
+var pkgdbsToClearArgument string
 
 // pkgdbCmd represents the pkgdb command
-var pkgdbCmd = &cobra.Command{
-	Use:   "pkgdb",
+var pkgdbsCmd = &cobra.Command{
+	Use:   "pkgdbs",
 	Short: "Subcommand to clean cached pkgdbs",
 	Long: `This command parses the currently-cached pkgdbs and removes all
-	of them by default, or specific ones if desired.`,
-	RunE: pkgdb,
+	of them by default, or specific ones if desired. Identify specific repos using the "repos" argument, i.e.
+	pkgr clean pkgdbs --repos="CRAN,r_validated"
+	Repo names should match names in the pkgr.yml file.`,
+	RunE: cleanPackageDatabases,
 }
 
 func init() {
 
-	pkgdbCmd.Flags().StringVar(&pkgdbsToClear, "repos", "ALL", "Set the repos you wish to clear the pkgdbs for.")
-	CleanCmd.AddCommand(pkgdbCmd)
+	pkgdbsCmd.Flags().StringVar(&pkgdbsToClearArgument, "repos", "ALL", "Set the repos you wish to clear the pkgdbs for.")
+	CleanCmd.AddCommand(pkgdbsCmd)
 }
 
-func pkgdb(cmd *cobra.Command, args []string) error {
+func cleanPackageDatabases(cmd *cobra.Command, args []string) error {
 
-	var clearRepos []string
+	var pkgdbsToClear []string
 
 	//db := NewRepoDb(url, dst, cfgdb.Repos[url.Name], rv)
-	if pkgdbsToClear == "ALL" {
+	if pkgdbsToClearArgument == "ALL" {
 		for _, repoMap := range cfg.Repos {
 			for key := range repoMap {
 				log.Info("Key: " + key)
-				clearRepos = append(clearRepos, key)
+				pkgdbsToClear = append(pkgdbsToClear, key)
 			}
 		}
 	} else {
-		clearRepos = strings.Split(pkgdbsToClear, ",")
+		pkgdbsToClear = strings.Split(pkgdbsToClearArgument, ",")
 	}
+
+	totalPackageDbsProvided := len(pkgdbsToClear)
+	totalPackageDbsDeleted := removePackageDatabases(pkgdbsToClear)
+
+	log.WithFields(logrus.Fields{
+		"Packages specified": totalPackageDbsProvided,
+		"Packages removed":   totalPackageDbsDeleted,
+	}).Info("finished cleaning package dbs.")
+
+	return nil
+}
+
+func removePackageDatabases(pkgdbsToClear []string) int {
+	var err error
+	filesRemoved := 0
 
 	//TODO: This is duplicate code from a another function, see if we can pull this out somewhere.
-	cic := cran.NewInstallConfig()
+	//We need to include thise code block because we'll need this object to make a RepoDb object
+	//later. We need to make a RepoDb object in order to call the "GetRepoDbCacheFilePath" function
+	//on that object. In order for that function to work properly, the RepoDb needs to be constructed
+	//the same way it would on a pkgr plan command.
+	installConfig := cran.NewInstallConfig()
 	for rn, val := range cfg.Customizations.Repos {
 		if strings.EqualFold(val.Type, "binary") {
-			cic.Repos[rn] = cran.RepoConfig{DefaultSourceType: cran.Binary}
+			installConfig.Repos[rn] = cran.RepoConfig{DefaultSourceType: cran.Binary}
 		}
 		if strings.EqualFold(val.Type, "source") {
-			cic.Repos[rn] = cran.RepoConfig{DefaultSourceType: cran.Source}
+			installConfig.Repos[rn] = cran.RepoConfig{DefaultSourceType: cran.Source}
 		}
 	}
 
-	for _, clearRepo := range clearRepos {
+	rs := rcmd.NewRSettings()
+	rVersion := rcmd.GetRVersion(&rs)
 
-		//Taken from plan.go
-		rs := rcmd.NewRSettings()
-		rVersion := rcmd.GetRVersion(&rs)
-
+	for _, dbToClear := range pkgdbsToClear {
 		for _, repoFromConfig := range cfg.Repos {
-
-			log.WithField("repoFromConfig", repoFromConfig).Info("In the for loop.")
-			urlString, found := repoFromConfig[clearRepo]
-			log.WithFields(logrus.Fields{
-				"urlString":      urlString,
-				"found":          found,
-				"repoFromConfig": repoFromConfig,
-				"clearRepo":      clearRepo,
-			}).Info("Check it out, yo.")
-
-			urlObject := cran.RepoURL{Name: clearRepo, URL: urlString}
-
-			if found {
-				db, _ := cran.NewRepoDb(urlObject, cran.DefaultType(), cic.Repos[clearRepo], rVersion)
+			urlString, foundInConfig := repoFromConfig[dbToClear]
+			urlObject := cran.RepoURL{Name: dbToClear, URL: urlString}
+			if foundInConfig {
+				db, _ := cran.NewRepoDb(urlObject, cran.DefaultType(), installConfig.Repos[dbToClear], rVersion)
 				filepathToRemove := db.GetRepoDbCacheFilePath()
-				log.Info("Attempting to remove " + filepathToRemove)
-				err := fs.Remove(filepathToRemove)
-				if err != nil {
-					log.Error(err)
+
+				_, err = fs.Stat(filepathToRemove)
+				fileExists := err == nil
+
+				if fileExists {
+					log.Trace("attempting to remove " + filepathToRemove)
+					err = fs.Remove(filepathToRemove)
+					if err != nil {
+						log.Error(err)
+					} else {
+						filesRemoved++
+					}
+				} else {
+					log.WithField("pkgdb", filepathToRemove).Warn("pkgdb was not found")
 				}
+			} else {
+				log.WithField("dbToClear", dbToClear).Warn("could not find database in config file")
 			}
 		}
 	}
-
-	return nil
+	return filesRemoved
 }
