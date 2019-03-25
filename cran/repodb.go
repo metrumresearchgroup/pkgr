@@ -106,14 +106,7 @@ func GetBaseURL(r RepoURL, st SourceType, rv RVersion) string {
 // FetchPackages gets the packages for  RepoDb
 // R_AVAILABLE_PACKAGES_CACHE_CONTROL_MAX_AGE controls the timing to requery the cache in R
 func (r *RepoDb) FetchPackages(rv RVersion) error {
-	// just get src versions for now
-	cdir, err := os.UserCacheDir()
-	if err != nil {
-		fmt.Println("could not use user cache dir, using temp dir")
-		cdir = os.TempDir()
-	}
-	pkgdbHash := r.Hash()
-	pkgdbFile := filepath.Join(cdir, "pkgr", "r_packagedb_caches", pkgdbHash)
+	pkgdbFile := r.GetRepoDbCacheFilePath()
 	if fi, err := os.Stat(pkgdbFile); !os.IsNotExist(err) {
 		if fi.ModTime().Add(1*time.Hour).Unix() > time.Now().Unix() {
 			// only read if was cached in the last hour

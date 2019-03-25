@@ -16,7 +16,6 @@ package cmd
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"github.com/metrumresearchgroup/pkgr/cran"
@@ -112,14 +111,11 @@ func pkgdb(cmd *cobra.Command, args []string) error {
 
 			if found {
 				db, _ := cran.NewRepoDb(urlObject, cran.DefaultType(), cic.Repos[clearRepo], rVersion)
-				hash := db.Hash()
+				fs.Remove(db.GetRepoDbCacheFilePath)
 			}
 		}
 
 	}
-
-	pkgdbHash := r.Hash()
-	pkgdbFile := filepath.Join(cdir, "pkgr", "r_packagedb_caches", pkgdbHash)
 
 	return nil
 }
