@@ -15,11 +15,12 @@
 package cmd
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
+	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -31,30 +32,30 @@ var pkgdbCmd = &cobra.Command{
 	Short: "Subcommand to clean cached pkgdbs",
 	Long: `This command parses the currently-cached pkgdbs and removes all
 	of them by default, or specific ones if desired.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("pkgdb called")
-	},
+	RunE: pkgdb,
 }
 
 func init() {
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// pkgdbCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// pkgdbCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	pkgdbCmd.Flags().StringVar(&pkgdbsToClear, "repos", "ALL", "Set the repos you wish to clear the pkgdbs for.")
 	CleanCmd.AddCommand(pkgdbCmd)
 }
 
 func pkgdb(cmd *cobra.Command, args []string) error {
 
+	var clearRepos []string
+
 	//db := NewRepoDb(url, dst, cfgdb.Repos[url.Name], rv)
-	clearRepos := strings.Split(pkgdbsToClear, ",")
+	if pkgdbsToClear == "ALL" {
+		for _, repoMap := range cfg.Repos {
+			for key := range repoMap {
+				log.Info("Key: " + key)
+				clearRepos = append(clearRepos, key)
+			}
+		}
+	} else {
+		clearRepos = strings.Split(pkgdbsToClear, ",")
+	}
 
 	//TODO: This is duplicate code from a another function, see if we can pull this out somewhere.
 	cic := cran.NewInstallConfig()
@@ -74,16 +75,28 @@ func pkgdb(cmd *cobra.Command, args []string) error {
 		rVersion := rcmd.GetRVersion(&rs)
 
 		for _, repoFromConfig := range cfg.Repos {
+
+			log.WithField("repoFromConfig", repoFromConfig).Info("In the for loop.")
 			urlString, found := repoFromConfig[clearRepo]
+			log.WithFields(logrus.Fields{
+				"urlString":      urlString,
+				"found":          found,
+				"repoFromConfig": repoFromConfig,
+				"clearRepo":      clearRepo,
+			}).Info("Check it out, yo.")
 
 			urlObject := cran.RepoURL{Name: clearRepo, URL: urlString}
 
 			if found {
 				db, _ := cran.NewRepoDb(urlObject, cran.DefaultType(), cic.Repos[clearRepo], rVersion)
-				fs.Remove(db.GetRepoDbCacheFilePath())
+				filepathToRemove := db.GetRepoDbCacheFilePath()
+				log.Info("Attempting to remove " + filepathToRemove)
+				err := fs.Remove(filepathToRemove)
+				if err != nil {
+					log.Error(err)
+				}
 			}
 		}
-
 	}
 
 	return nil
