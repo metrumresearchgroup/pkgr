@@ -17,6 +17,16 @@ import (
 	homedir "github.com/mitchellh/go-homedir"
 )
 
+func GetPackageDbFilePath() string {
+	cdir, err := os.UserCacheDir()
+	if err != nil {
+		fmt.Println("could not use user cache dir, using temp dir")
+		cdir = os.TempDir()
+	}
+	pkgdbHash := r.Hash()
+	pkgdbFile := filepath.Join(cdir, "pkgr", "r_packagedb_caches", pkgdbHash)
+}
+
 // NewRepoDb returns a new Repo database
 func NewRepoDb(url RepoURL, dst SourceType, rc RepoConfig, rv RVersion) (*RepoDb, error) {
 	ddb := &RepoDb{
@@ -103,7 +113,7 @@ func (r *RepoDb) FetchPackages(rv RVersion) error {
 		cdir = os.TempDir()
 	}
 	pkgdbHash := r.Hash()
-	pkgdbFile := filepath.Join(cdir, "r_packagedb_caches", pkgdbHash)
+	pkgdbFile := filepath.Join(cdir, "pkgr", "r_packagedb_caches", pkgdbHash)
 	if fi, err := os.Stat(pkgdbFile); !os.IsNotExist(err) {
 		if fi.ModTime().Add(1*time.Hour).Unix() > time.Now().Unix() {
 			// only read if was cached in the last hour
@@ -198,4 +208,14 @@ func (r *RepoDb) FetchPackages(rv RVersion) error {
 		return lasterr
 	}
 	return r.Encode(pkgdbFile)
+}
+
+//Get the filename of the file in the cache that will store this RepoDB
+func (r *RepoDb) GetRepoDbCacheFilePath() string {
+	cdir, err := os.UserCacheDir()
+	if err != nil {
+		fmt.Println("could not use user cache dir, using temp dir")
+		cdir = os.TempDir()
+	}
+	return (filepath.Join(cdir, "pkgr", "r_packagedb_caches", r.Hash()))
 }
