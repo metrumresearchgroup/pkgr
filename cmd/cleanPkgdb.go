@@ -34,7 +34,7 @@ var pkgdbsCmd = &cobra.Command{
 	of them by default, or specific ones if desired. Identify specific repos using the "repos" argument, i.e.
 	pkgr clean pkgdbs --repos="CRAN,r_validated"
 	Repo names should match names in the pkgr.yml file.`,
-	RunE: cleanPackageDatabases,
+	RunE: executeCommand,
 }
 
 func init() {
@@ -43,12 +43,21 @@ func init() {
 	CleanCmd.AddCommand(pkgdbsCmd)
 }
 
-func cleanPackageDatabases(cmd *cobra.Command, args []string) error {
+// Using a "middle man" function here allows us to call the cleanPackageDatabases function from the "clean"
+// command when "pkgr clean --all" is run. Without the middle man, passing in arguments becomes strange.
+func executeCommand(cmd *cobra.Command, args []string) error {
+	return cleanPackageDatabases(pkgdbsToClearArgument)
+}
+
+// cleanPackageDatabases function to remove the cached package databases for each package listed in pkgdbs.
+// pkdgbs should be a comma-separated string, e.g. "CRAN,r_validated"
+// To remove all package dbs associated with a pkgr.yml file, use pkgdbs = "ALL"
+func cleanPackageDatabases(pkgdbs string) error {
 
 	var pkgdbsToClear []string
 
 	//db := NewRepoDb(url, dst, cfgdb.Repos[url.Name], rv)
-	if pkgdbsToClearArgument == "ALL" {
+	if pkgdbs == "ALL" {
 		for _, repoMap := range cfg.Repos {
 			for key := range repoMap {
 				log.Info("Key: " + key)
@@ -56,7 +65,7 @@ func cleanPackageDatabases(cmd *cobra.Command, args []string) error {
 			}
 		}
 	} else {
-		pkgdbsToClear = strings.Split(pkgdbsToClearArgument, ",")
+		pkgdbsToClear = strings.Split(pkgdbs, ",")
 	}
 
 	totalPackageDbsProvided := len(pkgdbsToClear)
@@ -115,7 +124,7 @@ func removePackageDatabases(pkgdbsToClear []string) int {
 					log.WithField("pkgdb", filepathToRemove).Warn("pkgdb was not found")
 				}
 			} else {
-				log.WithField("dbToClear", dbToClear).Warn("could not find database in config file")
+				log.WithField("repo", dbToClear).Warn("could not find repository in config file")
 			}
 		}
 	}

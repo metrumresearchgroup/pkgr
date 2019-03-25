@@ -21,12 +21,6 @@ import (
 )
 
 var cleanAll bool
-var cleanPkgdbs bool
-var pkgdbs string
-
-// var cleanCache bool
-// var srcCaches string
-// var binaryCaches string
 
 // CleanCmd represents the clean command
 var CleanCmd = &cobra.Command{
@@ -34,100 +28,31 @@ var CleanCmd = &cobra.Command{
 	Short: "clean up cached information",
 	Long:  "clean up cached source files and binaries, as well as the saved package database.",
 	RunE:  clean,
-	//	Run: func(cmd *cobra.Command, args []string) {
-	//		fmt.Println("clean called")
-	//	},
 }
 
 func init() {
 	CleanCmd.Flags().BoolVar(&cleanAll, "all", false, "clean all cached items")
-	CleanCmd.Flags().BoolVar(&cleanPkgdbs, "pkgdbs", false, "Remove cached package databases.")
-	CleanCmd.Flags().StringVar(&pkgdbs, "dbs", "ALL", "Package databases to remove.")
-	//CleanCmd.Flags().BoolVar(&cleanCache, "cache", false, "Remove cache sources and/or binaries")
-	// cleanCmd.Flags().StringVar(&srcCaches, "src", "ALL", "Clean src caches in clean --cache")
-	// cleanCmd.Flags().StringVar(&binaryCaches, "binary", "ALL", "Clean binary caches in clean --cache")
 
 	RootCmd.AddCommand(CleanCmd)
 }
 
 func clean(cmd *cobra.Command, args []string) error {
 
-	if !cleanAll && !cleanPkgdbs { //} && !cleanCache {
+	var err error
+
+	if !cleanAll {
 		fmt.Println("No clean options passed -- not cleaning.")
 	}
 	if cleanAll {
 		fmt.Println("Cleaning all.")
-		cleanCacheFolders()
-		//cleanPkgdbs()
-	} else {
-
-		if cleanPkgdbs {
-			if pkgdbs == "ALL" {
-				fmt.Println("Cleaning all pkgdbs")
-			} else {
-				fmt.Println(fmt.Sprintf("Cleaning specific package databases: %s", pkgdbs))
-			}
+		err = cleanCacheFolders()
+		if err != nil {
+			return err
 		}
-
-		// if cleanCache {
-		// 	cleanCacheFolders()
-		// }
-	}
-	fmt.Println("Donezo.")
-	return nil
-}
-
-/*
-func cleanCacheFolders() {
-	cachePath := userCache(cfg.Cache)
-
-	if srcCaches == "ALL" {
-		fmt.Println("Cleaning all src caches.")
-		_ = deleteCacheSubfolders(nil, "src", cachePath)
-	} else {
-		fmt.Println(fmt.Sprintf("Cleaning specific src caches: %s", srcCaches))
-		srcRepos := strings.Split(srcCaches, ",")
-		_ = deleteCacheSubfolders(srcRepos, "src", cachePath)
-	}
-
-	if binaryCaches == "ALL" {
-		fmt.Println("Cleaning all binary caches.")
-		deleteCacheSubfolders(nil, "binary", cachePath)
-	} else {
-		fmt.Println(fmt.Sprintf("Cleaning specific binary caches: %s", binaryCaches))
-		binaryRepos := strings.Split(binaryCaches, ",")
-		_ = deleteCacheSubfolders(binaryRepos, "binary", cachePath)
-	}
-}
-
-func deleteAllCacheSubfolders(cacheDirectory string) {
-	deleteCacheSubfolders(nil, "src", cacheDirectory)
-	deleteCacheSubfolders(nil, "binary", cacheDirectory)
-}
-
-func deleteCacheSubfolders(repos []string, subfolder string, cacheDirectory string) error {
-	cacheDirFsObject, err := fs.Open(cacheDirectory)
-	if err != nil {
-		return err
-	}
-
-	repoFolders, _ := cacheDirFsObject.Readdir(0)
-
-	if repos == nil || len(repos) == 0 {
-		for _, repoFolder := range repoFolders {
-			subfolderPath := filepath.Join(cacheDirectory, repoFolder.Name(), subfolder)
-			fs.RemoveAll(subfolderPath)
-		}
-	} else {
-		for _, repoToClear := range repos {
-			for _, repoFolder := range repoFolders {
-				if repoToClear == repoFolder.Name() {
-					subfolderPath := filepath.Join(cacheDirectory, repoFolder.Name(), subfolder)
-					fs.Remove(subfolderPath)
-				}
-			}
+		err = cleanPackageDatabases("ALL")
+		if err != nil {
+			return err
 		}
 	}
 	return nil
 }
-*/
