@@ -17,16 +17,6 @@ import (
 	homedir "github.com/mitchellh/go-homedir"
 )
 
-func GetPackageDbFilePath() string {
-	cdir, err := os.UserCacheDir()
-	if err != nil {
-		fmt.Println("could not use user cache dir, using temp dir")
-		cdir = os.TempDir()
-	}
-	pkgdbHash := r.Hash()
-	pkgdbFile := filepath.Join(cdir, "pkgr", "r_packagedb_caches", pkgdbHash)
-}
-
 // NewRepoDb returns a new Repo database
 func NewRepoDb(url RepoURL, dst SourceType, rc RepoConfig, rv RVersion) (*RepoDb, error) {
 	ddb := &RepoDb{
@@ -47,6 +37,17 @@ func NewRepoDb(url RepoURL, dst SourceType, rc RepoConfig, rv RVersion) (*RepoDb
 	ddb.Dbs[Source] = make(map[string]desc.Desc)
 
 	return ddb, ddb.FetchPackages(rv)
+}
+
+// GetPackageDbFilePath get the filepath for the cached pkgdb
+func (r *RepoDb) GetPackageDbFilePath() string {
+	cdir, err := os.UserCacheDir()
+	if err != nil {
+		fmt.Println("could not use user cache dir, using temp dir")
+		cdir = os.TempDir()
+	}
+	pkgdbHash := r.Hash()
+	return filepath.Join(cdir, "pkgr", "r_packagedb_caches", pkgdbHash)
 }
 
 // Decode decodes the package database
@@ -106,6 +107,7 @@ func GetBaseURL(r RepoURL, st SourceType, rv RVersion) string {
 // FetchPackages gets the packages for  RepoDb
 // R_AVAILABLE_PACKAGES_CACHE_CONTROL_MAX_AGE controls the timing to requery the cache in R
 func (r *RepoDb) FetchPackages(rv RVersion) error {
+	var err error
 	pkgdbFile := r.GetRepoDbCacheFilePath()
 	if fi, err := os.Stat(pkgdbFile); !os.IsNotExist(err) {
 		if fi.ModTime().Add(1*time.Hour).Unix() > time.Now().Unix() {
@@ -203,7 +205,7 @@ func (r *RepoDb) FetchPackages(rv RVersion) error {
 	return r.Encode(pkgdbFile)
 }
 
-//Get the filename of the file in the cache that will store this RepoDB
+//GetRepoDbCacheFilePath Get the filename of the file in the cache that will store this RepoDB
 func (r *RepoDb) GetRepoDbCacheFilePath() string {
 	cdir, err := os.UserCacheDir()
 	if err != nil {

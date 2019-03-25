@@ -23,7 +23,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var dbParam string
+var pkgdbsToClear string
 
 // pkgdbCmd represents the pkgdb command
 var pkgdbCmd = &cobra.Command{
@@ -47,47 +47,16 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// pkgdbCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	pkgdbCmd.Flags().StringVar(&dbParam, "repos", "ALL", "Set the repos you wish to clear the pkgdbs for.")
+	pkgdbCmd.Flags().StringVar(&pkgdbsToClear, "repos", "ALL", "Set the repos you wish to clear the pkgdbs for.")
 	CleanCmd.AddCommand(pkgdbCmd)
 }
 
 func pkgdb(cmd *cobra.Command, args []string) error {
 
-	// //RV also passed in, but it's just R Version.
-	// startTime := time.Now()
-	// var repos []cran.RepoURL
-	// for _, r := range cfg.Repos {
-	// 	for nm, url := range r {
-	// 		repos = append(repos, cran.RepoURL{Name: nm, URL: url})
-	// 	}
-	// }
-	// st := cran.DefaultType()
-	// cic := cran.NewInstallConfig()
-	// for rn, val := range cfg.Customizations.Repos {
-	// 	if strings.EqualFold(val.Type, "binary") {
-	// 		cic.Repos[rn] = cran.RepoConfig{DefaultSourceType: cran.Binary}
-	// 	}
-	// 	if strings.EqualFold(val.Type, "source") {
-	// 		cic.Repos[rn] = cran.RepoConfig{DefaultSourceType: cran.Source}
-	// 	}
-	// }
-
-	// //func NewPkgDb(urls []RepoURL, dst SourceType, cfgdb *InstallConfig, rv RVersion) (*PkgDb, error)
-	// cdb, err := cran.NewPkgDb(repos, st, cic, rv)
-	// if err != nil {
-	// 	log.Panicln("error getting pkgdb ", err)
-	// }
-
-	//We can find R version (rv) easily, probably from the config file.
-	//URL comes from the cfg.Repos[x].url, which is generated in plan.go and passed itno NewPackageDb
-	//cfgdb.Repos[url.Name] is constructed as cic above using data from the config file.
-	//dst is default source type, which is determined by the operating system and comes from cran.DefaultType.
-
-	//func NewRepoDb(url RepoURL, dst SourceType, rc RepoConfig, rv RVersion
-
 	//db := NewRepoDb(url, dst, cfgdb.Repos[url.Name], rv)
-	clearRepos := strings.Split(dbParam, ",")
+	clearRepos := strings.Split(pkgdbsToClear, ",")
 
+	//TODO: This is duplicate code from a another function, see if we can pull this out somewhere.
 	cic := cran.NewInstallConfig()
 	for rn, val := range cfg.Customizations.Repos {
 		if strings.EqualFold(val.Type, "binary") {
@@ -111,7 +80,7 @@ func pkgdb(cmd *cobra.Command, args []string) error {
 
 			if found {
 				db, _ := cran.NewRepoDb(urlObject, cran.DefaultType(), cic.Repos[clearRepo], rVersion)
-				fs.Remove(db.GetRepoDbCacheFilePath)
+				fs.Remove(db.GetRepoDbCacheFilePath())
 			}
 		}
 
