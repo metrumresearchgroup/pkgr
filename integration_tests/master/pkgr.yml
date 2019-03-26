@@ -25,10 +25,6 @@ Repos:
 
 Library: "test-library"
 
-# any libpaths desired to be set
-Libpaths:
-  - "testsets/simple"
-
 # customizations are package specific settings
 # for example, we can use a custom makevar file for data.table
 # by leveraging the R_MAKEVARS_USER to point to a separate makevar

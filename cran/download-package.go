@@ -158,7 +158,7 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 			filepath.Base(dest))
 	}
 
-	log.WithField("package", d.Package.Package).Info("downloading package ")
+	log.WithField("package", d.Package.Package).Debug("downloading package ")
 
 	resp, err := http.Get(pkgdl)
 	if resp.StatusCode != 200 {
