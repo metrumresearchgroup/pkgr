@@ -16,8 +16,9 @@ type RepoConfig struct {
 
 // LogConfig stores information for logging purposes
 type LogConfig struct {
-	File  string
-	Level string
+	File       string
+	Level      string
+	InstallLog string
 }
 
 // Customizations contains various custom configurations
