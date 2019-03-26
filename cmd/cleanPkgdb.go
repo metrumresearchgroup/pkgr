@@ -60,7 +60,6 @@ func cleanPackageDatabases(pkgdbs string) error {
 	if pkgdbs == "ALL" {
 		for _, repoMap := range cfg.Repos {
 			for key := range repoMap {
-				log.Info("Key: " + key)
 				pkgdbsToClear = append(pkgdbsToClear, key)
 			}
 		}
@@ -102,10 +101,18 @@ func removePackageDatabases(pkgdbsToClear []string) int {
 	rVersion := rcmd.GetRVersion(&rs)
 
 	for _, dbToClear := range pkgdbsToClear {
+
+		var foundInConfig bool
+
 		for _, repoFromConfig := range cfg.Repos {
+
 			urlString, foundInConfig := repoFromConfig[dbToClear]
 			urlObject := cran.RepoURL{Name: dbToClear, URL: urlString}
+
+			log.WithField("repoFromConfig", repoFromConfig).Info("Outside the if")
+
 			if foundInConfig {
+				log.WithField("dbToClear", dbToClear).Info("inside the if")
 				db, _ := cran.NewRepoDb(urlObject, cran.DefaultType(), installConfig.Repos[dbToClear], rVersion)
 				filepathToRemove := db.GetRepoDbCacheFilePath()
 
@@ -123,10 +130,13 @@ func removePackageDatabases(pkgdbsToClear []string) int {
 				} else {
 					log.WithField("pkgdb", filepathToRemove).Warn("pkgdb was not found")
 				}
-			} else {
-				log.WithField("repo", dbToClear).Warn("could not find repository in config file")
 			}
+
+		} //end inner for loop
+
+		if !foundInConfig {
+			log.Info("The file wasn't found.")
 		}
-	}
+	} //end outer foor loop
 	return filesRemoved
 }
