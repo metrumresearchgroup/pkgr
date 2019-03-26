@@ -18,9 +18,9 @@ import (
 	"fmt"
 
 	"github.com/metrumresearchgroup/pkgr/gpsr"
+	Log "github.com/metrumresearchgroup/pkgr/logger"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
 	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/xlab/treeprint"
 )
@@ -52,7 +52,7 @@ func recurseDeps(pkg string, ddb gpsr.InstallPlan, t treeprint.Tree) {
 func inspect(cmd *cobra.Command, args []string) error {
 	if toJSON {
 		// this should suppress all logging from the planning
-		log.SetLevel(logrus.FatalLevel)
+		Log.Log.SetLevel(logrus.FatalLevel)
 	}
 	rs := rcmd.NewRSettings()
 	rVersion := rcmd.GetRVersion(&rs)

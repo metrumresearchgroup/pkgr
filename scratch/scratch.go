@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	Log "github.com/metrumresearchgroup/pkgr/logger"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
@@ -12,11 +13,11 @@ import (
 func main() {
 	appFS := afero.NewOsFs()
 	log := logrus.New()
-	log.Level = logrus.DebugLevel
-	// log.SetFormatter(&logrus.JSONFormatter{})
+	Log.Log.Level = logrus.DebugLevel
+	// Log.Log.SetFormatter(&logrus.JSONFormatter{})
 	// appFS.Remove("logfile.txt")
 	// logf, _ := appFS.OpenFile("logfile.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	// log.SetOutput(logf)
+	// Log.Log.SetOutput(logf)
 
 	// fmt.Println("library: ", viper.GetString("library"))
 }

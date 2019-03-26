@@ -21,7 +21,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
+	Log "github.com/metrumresearchgroup/pkgr/logger"
 	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 
@@ -91,25 +91,25 @@ func init() {
 func setGlobals() {
 
 	fs = afero.NewOsFs()
-	log.SetOutput(os.Stdout)
-	log.SetFormatter(&logrus.TextFormatter{ForceColors: true})
+	Log.Log.SetOutput(os.Stdout)
+	Log.Log.SetFormatter(&logrus.TextFormatter{ForceColors: true})
 	switch logLevel := strings.ToLower(viper.GetString("loglevel")); logLevel {
 	case "trace":
-		log.SetLevel(logrus.TraceLevel)
+		Log.Log.SetLevel(logrus.TraceLevel)
 	case "debug":
-		log.SetLevel(logrus.DebugLevel)
+		Log.Log.SetLevel(logrus.DebugLevel)
 	case "info":
-		log.SetLevel(logrus.InfoLevel)
+		Log.Log.SetLevel(logrus.InfoLevel)
 	case "warn":
-		log.SetLevel(logrus.WarnLevel)
+		Log.Log.SetLevel(logrus.WarnLevel)
 	case "error":
-		log.SetLevel(logrus.ErrorLevel)
+		Log.Log.SetLevel(logrus.ErrorLevel)
 	case "fatal":
-		log.SetLevel(logrus.FatalLevel)
+		Log.Log.SetLevel(logrus.FatalLevel)
 	case "panic":
-		log.SetLevel(logrus.PanicLevel)
+		Log.Log.SetLevel(logrus.PanicLevel)
 	default:
-		log.SetLevel(logrus.InfoLevel)
+		Log.Log.SetLevel(logrus.InfoLevel)
 	}
 }
 
@@ -127,7 +127,7 @@ func initConfig() {
 	viper.Unmarshal(&cfg)
 	configFilePath, _ := filepath.Abs(viper.ConfigFileUsed())
 	cwd, _ := os.Getwd()
-	log.WithFields(logrus.Fields{
+	Log.Log.WithFields(logrus.Fields{
 		"cwd": cwd,
 		"nwd": filepath.Dir(configFilePath),
 	}).Trace("setting directory to configuration file")
@@ -136,7 +136,7 @@ func initConfig() {
 	if cfg.Logging.File != "" {
 		fileHook, err := logger.NewLogrusFileHook(cfg.Logging.File, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 		if err == nil {
-			log.AddHook(fileHook)
+			Log.Log.AddHook(fileHook)
 		}
 	}
 }

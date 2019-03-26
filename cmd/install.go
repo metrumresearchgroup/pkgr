@@ -23,7 +23,7 @@ import (
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/logger"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
-	log "github.com/sirupsen/logrus"
+	Log "github.com/metrumresearchgroup/pkgr/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -38,11 +38,14 @@ var installCmd = &cobra.Command{
 }
 
 func initInstallLog() {
-	log.WithField("cfg.Logging.InstallLog", cfg.Logging.InstallLog).Info("team redundancy team is setting up the logging file")
+	Log.Log.WithField("cfg.Logging.InstallLog", cfg.Logging.InstallLog).Info("team redundancy team is setting up the logging file")
 	if cfg.Logging.InstallLog != "" {
 		fileHook, err := logger.NewLogrusFileHook(cfg.Logging.InstallLog, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 		if err == nil {
-			log.AddHook(fileHook)
+			//TODOremove existing hook.
+			// There's no easy way to do this at the moment. Hmm....
+			
+			Log.Log.AddHook(fileHook)
 		}
 	}
 	//else do nothing because the log should already be installed as normal.
@@ -54,7 +57,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	startTime := time.Now()
 	rs := rcmd.NewRSettings()
 	rVersion := rcmd.GetRVersion(&rs)
-	log.Infoln("R Version " + rVersion.ToFullString())
+	Log.Log.Infoln("R Version " + rVersion.ToFullString())
 	cdb, ip := planInstall(rVersion)
 
 	var toDl []cran.PkgDl

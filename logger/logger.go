@@ -14,6 +14,10 @@ type LogrusFileHook struct {
 	formatter *logrus.JSONFormatter
 }
 
+// Log Reinstantiable log to be used globally in the application.
+var Log = logrus.New()
+
+// NewLogrusFileHook
 func NewLogrusFileHook(file string, flag int, chmod os.FileMode) (*LogrusFileHook, error) {
 
 	jsonFormatter := &logrus.JSONFormatter{}
