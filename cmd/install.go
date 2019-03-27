@@ -16,8 +16,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
-	"os"
+	"github.com/spf13/viper"
 	"path/filepath"
 	"time"
 
@@ -38,23 +37,12 @@ var installCmd = &cobra.Command{
 	RunE: rInstall,
 }
 
-func initInstallLog() {
-	if cfg.Logging.Install != "" {
-		//Reinstantiate the log to reset the file hook.
-
-		fileHook, err := logger.NewLogrusFileHook(cfg.Logging.Install, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
-		if err == nil {
-			Log.WithField("installLogFile", cfg.Logging.Install).Info("switching to the install-specific log file")
-			Log = logrus.New()
-			setGlobals()
-			Log.AddHook(fileHook)
-		}
-	}
-	//else do nothing because the log should already be installed as normal.
-}
-
 func rInstall(cmd *cobra.Command, args []string) error {
-	initInstallLog()
+
+	//Init install-specific log, if one has been set. This overwrites the default log.
+	if cfg.Logging.Install != "" {
+		logger.InitLog(cfg.Logging.Install, viper.GetString("loglevel"), cfg.Logging.Overwrite)
+	}
 
 	startTime := time.Now()
 	rs := rcmd.NewRSettings()

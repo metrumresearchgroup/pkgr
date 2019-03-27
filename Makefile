@@ -30,7 +30,12 @@ test-multiple:
 log-test: install
 	cd ${TEST_HOME}/logging-config/install-log; pkgr install
 	cd ${TEST_HOME}/logging-config/default; pkgr install
+	cd ${TEST_HOME}/logging-config/overwrite-setting; pkgr install
+	cd ${TEST_HOME}/logging-config/overwrite-setting; pkgr clean --all
 
 log-test-reset:
 	cd ${TEST_HOME}/logging-config/install-log; rm -rf logs/*
 	cd ${TEST_HOME}/logging-config/default; rm -rf logs/*
+	cd ${TEST_HOME}/logging-config/overwrite-setting; rm -rf logs/*
+	cd ${TEST_HOME}/logging-config/overwrite-setting; echo "This text should be deleted" > logs/all.log
+	cd ${TEST_HOME}/logging-config/overwrite-setting; echo "This text should be deleted" > logs/install.log

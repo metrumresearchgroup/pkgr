@@ -19,6 +19,7 @@ type LogConfig struct {
 	All     string
 	Install string
 	Level   string
+	Overwrite bool
 }
 
 // Customizations contains various custom configurations

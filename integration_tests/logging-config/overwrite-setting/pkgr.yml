@@ -1,0 +1,17 @@
+Version: 1
+# top level packages
+Packages:
+  - R6
+  - pillar
+
+# any repositories, order matters
+Repos:
+  - CRAN: "https://cran.rstudio.com"
+
+Library: "test-library"
+
+Logging:
+  all: logs/all.log
+  install: logs/install.log
+  overwrite: true
+  
