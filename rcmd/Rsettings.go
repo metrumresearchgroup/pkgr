@@ -7,7 +7,7 @@ import (
 
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/rcmd/rp"
-	Log "github.com/metrumresearchgroup/pkgr/logger"
+	. "github.com/metrumresearchgroup/pkgr/logger"
 	"github.com/spf13/afero"
 )
 
@@ -42,7 +42,7 @@ func GetRVersion(rs *RSettings) cran.RVersion {
 	if rs.Version.ToString() == "0.0" {
 		res, err := RunR(afero.NewOsFs(), "", *rs, "paste0(R.Version()$major,'.',R.Version()$minor)", "")
 		if err != nil {
-			Log.Log.Fatal("error getting R version")
+			Log.Fatal("error getting R version")
 			return cran.RVersion{}
 		}
 		rVersionString := rp.ScanLines(res)[0]
@@ -58,7 +58,7 @@ func GetRVersion(rs *RSettings) cran.RVersion {
 				Patch: pat,
 			}
 		} else {
-			Log.Log.Fatal("error getting R version")
+			Log.Fatal("error getting R version")
 		}
 	}
 	return rs.Version

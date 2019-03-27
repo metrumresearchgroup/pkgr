@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
-	Log "github.com/metrumresearchgroup/pkgr/logger"
+	. "github.com/metrumresearchgroup/pkgr/logger"
 	"github.com/spf13/afero"
 )
 
@@ -18,7 +18,7 @@ func Hash(fs afero.Fs, tbp string) (string, error) {
 	defer f.Close()
 	h := md5.New()
 	if _, err := io.Copy(h, f); err != nil {
-		Log.Log.Fatal(err)
+		Log.Fatal(err)
 	}
 
 	return fmt.Sprintf("%x", h.Sum(nil)), err

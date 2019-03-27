@@ -25,7 +25,7 @@ import (
 	"github.com/metrumresearchgroup/pkgr/configlib"
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
-	Log "github.com/metrumresearchgroup/pkgr/logger"
+	. "github.com/metrumresearchgroup/pkgr/logger"
 	"github.com/sajari/fuzzy"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -43,10 +43,10 @@ var planCmd = &cobra.Command{
 }
 
 func plan(cmd *cobra.Command, args []string) error {
-	Log.Log.Infof("Installation would launch %v workers\n", getWorkerCount())
+	Log.Infof("Installation would launch %v workers\n", getWorkerCount())
 	rs := rcmd.NewRSettings()
 	rVersion := rcmd.GetRVersion(&rs)
-	Log.Log.Infoln("R Version " + rVersion.ToFullString())
+	Log.Infoln("R Version " + rVersion.ToFullString())
 	_, ip := planInstall(rVersion)
 	if viper.GetBool("show-deps") {
 		for pkg, deps := range ip.DepDb {
@@ -83,11 +83,11 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 	}
 	cdb, err := cran.NewPkgDb(repos, st, cic, rv)
 	if err != nil {
-		Log.Log.Panicln("error getting pkgdb ", err)
+		Log.Panicln("error getting pkgdb ", err)
 	}
-	Log.Log.Infoln("Default package type: ", st.String())
+	Log.Infoln("Default package type: ", st.String())
 	for _, db := range cdb.Db {
-		Log.Log.Infoln(fmt.Sprintf("%v:%v (binary:source) packages available in for %s from %s", len(db.Dbs[st]), len(db.Dbs[cran.Source]), db.Repo.Name, db.Repo.URL))
+		Log.Infoln(fmt.Sprintf("%v:%v (binary:source) packages available in for %s from %s", len(db.Dbs[st]), len(db.Dbs[cran.Source]), db.Repo.Name, db.Repo.URL))
 	}
 	ids := gpsr.NewDefaultInstallDeps()
 	if cfg.Suggests {
@@ -110,7 +110,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 			if configlib.IsCustomizationSet("Repo", pkgSettings, pkg) {
 				err := cdb.SetPackageRepo(pkg, v.Repo)
 				if err != nil {
-					Log.Log.WithFields(logrus.Fields{
+					Log.WithFields(logrus.Fields{
 						"pkg":  pkg,
 						"repo": v.Repo,
 					}).Fatal("error finding custom repo to set")
@@ -119,7 +119,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 			if configlib.IsCustomizationSet("Type", pkgSettings, pkg) {
 				err := cdb.SetPackageType(pkg, v.Type)
 				if err != nil {
-					Log.Log.WithFields(logrus.Fields{
+					Log.WithFields(logrus.Fields{
 						"pkg":  pkg,
 						"repo": v.Repo,
 					}).Fatal("error finding custom repo to set")
@@ -129,7 +129,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 	}
 	ap := cdb.GetPackages(cfg.Packages)
 	if len(ap.Missing) > 0 {
-		Log.Log.Errorln("missing packages: ", ap.Missing)
+		Log.Errorln("missing packages: ", ap.Missing)
 		model := fuzzy.NewModel()
 
 		// For testing only, this is not advisable on production
@@ -141,12 +141,12 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 		pkgs := cdb.GetAllPkgsByName()
 		model.Train(pkgs)
 		for _, mp := range ap.Missing {
-			Log.Log.Warnln("did you mean one of: ", model.Suggestions(mp, false))
+			Log.Warnln("did you mean one of: ", model.Suggestions(mp, false))
 		}
 		os.Exit(1)
 	}
 	for _, pkg := range ap.Packages {
-		Log.Log.WithFields(logrus.Fields{
+		Log.WithFields(logrus.Fields{
 			"pkg":     pkg.Package.Package,
 			"repo":    pkg.Config.Repo.Name,
 			"type":    pkg.Config.Type,
@@ -162,7 +162,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 	for pkg := range ip.DepDb {
 		pkgs = append(pkgs, pkg)
 	}
-	Log.Log.Infoln("total packages required:", len(ip.StartingPackages)+len(ip.DepDb))
-	Log.Log.Infoln("resolution time", time.Since(startTime))
+	Log.Infoln("total packages required:", len(ip.StartingPackages)+len(ip.DepDb))
+	Log.Infoln("resolution time", time.Since(startTime))
 	return cdb, ip
 }

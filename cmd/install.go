@@ -22,7 +22,7 @@ import (
 
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/logger"
-	Log "github.com/metrumresearchgroup/pkgr/logger"
+	. "github.com/metrumresearchgroup/pkgr/logger"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -41,12 +41,12 @@ var installCmd = &cobra.Command{
 func initInstallLog() {
 	if cfg.Logging.InstallLog != "" {
 		//Reinstantiate the log to reset the file hook.
-		Log.Log = logrus.New()
+		Log = logrus.New()
 		setGlobals()
 
 		fileHook, err := logger.NewLogrusFileHook(cfg.Logging.InstallLog, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 		if err == nil {
-			Log.Log.AddHook(fileHook)
+			Log.AddHook(fileHook)
 		}
 	}
 	//else do nothing because the log should already be installed as normal.
@@ -58,7 +58,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	startTime := time.Now()
 	rs := rcmd.NewRSettings()
 	rVersion := rcmd.GetRVersion(&rs)
-	Log.Log.Infoln("R Version " + rVersion.ToFullString())
+	Log.Infoln("R Version " + rVersion.ToFullString())
 	cdb, ip := planInstall(rVersion)
 
 	var toDl []cran.PkgDl

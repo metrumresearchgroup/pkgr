@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	Log "github.com/metrumresearchgroup/pkgr/logger"
+	. "github.com/metrumresearchgroup/pkgr/logger"
 	"github.com/spf13/viper"
 )
 
@@ -12,15 +12,15 @@ import (
 func userCache(pc string) string {
 	// if actually set then use that cache dir
 	if pc != "" {
-		Log.Log.WithField("dir", pc).Trace("package cache directory set by user")
+		Log.WithField("dir", pc).Trace("package cache directory set by user")
 		return pc
 	}
 	cdir, err := os.UserCacheDir()
 	if err != nil {
-		Log.Log.Warn("could not use user cache dir, using temp dir")
+		Log.Warn("could not use user cache dir, using temp dir")
 		cdir = os.TempDir()
 	}
-	Log.Log.WithField("dir", cdir).Trace("default package cache directory")
+	Log.WithField("dir", cdir).Trace("default package cache directory")
 
 	pkgrCacheDir := filepath.Join(cdir, "pkgr")
 
@@ -37,7 +37,7 @@ func getWorkerCount() int {
 	} else {
 		nworkers = viper.GetInt("threads")
 		if nworkers > runtime.NumCPU()+2 {
-			Log.Log.Warn("number of workers exceeds the number of threads on machine by at least 2, this may result in degraded performance")
+			Log.Warn("number of workers exceeds the number of threads on machine by at least 2, this may result in degraded performance")
 		}
 	}
 	return nworkers
