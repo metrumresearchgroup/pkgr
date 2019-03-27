@@ -24,7 +24,6 @@ import (
 	"path/filepath"
 
 	"github.com/metrumresearchgroup/pkgr/configlib"
-	"github.com/metrumresearchgroup/pkgr/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -97,11 +96,16 @@ func initConfig() {
 	// }
 	_ = configlib.LoadConfigFromPath(viper.GetString("config"))
 
+
 	setGlobals()
+
 	if viper.GetBool("debug") {
 		viper.Debug()
 	}
 	_ = viper.Unmarshal(&cfg)
+
+	InitLog(cfg.Logging.All, viper.GetString("loglevel"), cfg.Logging.Overwrite)
+
 	configFilePath, _ := filepath.Abs(viper.ConfigFileUsed())
 	cwd, _ := os.Getwd()
 	Log.WithFields(logrus.Fields{
@@ -110,5 +114,5 @@ func initConfig() {
 	}).Trace("setting directory to configuration file")
 	_ = os.Chdir(filepath.Dir(configFilePath))
 
-	logger.InitLog(cfg.Logging.All, viper.GetString("loglevel"), cfg.Logging.Overwrite)
+
 }
