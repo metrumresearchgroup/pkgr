@@ -133,8 +133,8 @@ func initConfig() {
 	}).Trace("setting directory to configuration file")
 	os.Chdir(filepath.Dir(configFilePath))
 
-	if cfg.Logging.File != "" {
-		fileHook, err := logger.NewLogrusFileHook(cfg.Logging.File, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+	if cfg.Logging.All != "" {
+		fileHook, err := logger.NewLogrusFileHook(cfg.Logging.All, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 		if err == nil {
 			Log.AddHook(fileHook)
 		}

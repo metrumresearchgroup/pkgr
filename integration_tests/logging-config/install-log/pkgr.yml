@@ -11,8 +11,6 @@ Repos:
 Library: "test-library"
 
 Logging:
-  File: "logs/allFile.log"
   all: logs/all.log
-  InstallLog: logs/install.log
-  overwrite: TRUE
+  install: logs/install.log
   
