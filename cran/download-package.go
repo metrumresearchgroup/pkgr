@@ -113,7 +113,7 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string, rv RVersion) (*Pk
 				Log.WithFields(logrus.Fields{
 					"package": d.Package.Package,
 					"dltime":  time.Since(startDl),
-				}).Info("download successful")
+				}).Debug("download successful")
 			}
 			result.Put(d.Package.Package, dl)
 		}(d, &wg)
@@ -158,7 +158,7 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 			filepath.Base(dest))
 	}
 
-	Log.WithField("package", d.Package.Package).Debug("downloading package ")
+	Log.WithField("package", d.Package.Package).Info("downloading package ")
 
 	resp, err := http.Get(pkgdl)
 	if resp.StatusCode != 200 {
