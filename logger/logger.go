@@ -18,6 +18,13 @@ type LogrusFileHook struct {
 // Log Reinstantiable log to be used globally in the application.
 var Log *logrus.Logger
 
+func init() {
+	Log = logrus.New()
+	Log.SetOutput(os.Stdout)
+	Log.SetFormatter(&logrus.TextFormatter{ForceColors: true})
+}
+
+
 // NewLogrusFileHook
 func NewLogrusFileHook(file string, flag int, chmod os.FileMode) (*LogrusFileHook, error) {
 
@@ -58,15 +65,9 @@ func (hook *LogrusFileHook) Levels() []logrus.Level {
 
 }
 
-func InitLog(outputFile string, level string, overwrite bool) {
-
+func SetLogLevel(level string) {
 	//We want the log to be reset whenever it is initialized.
-	Log = logrus.New()
-
 	logLevel := strings.ToLower(level)
-
-	Log.SetOutput(os.Stdout)
-	Log.SetFormatter(&logrus.TextFormatter{ForceColors: true})
 
 	switch logLevel {
 	case "trace":
@@ -86,6 +87,9 @@ func InitLog(outputFile string, level string, overwrite bool) {
 	default:
 		Log.SetLevel(logrus.InfoLevel)
 	}
+}
+
+func AddLogFile(outputFile string, overwrite bool) {
 
 	if outputFile != "" {
 

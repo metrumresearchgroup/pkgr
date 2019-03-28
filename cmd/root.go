@@ -87,6 +87,7 @@ func init() {
 
 func setGlobals() {
 	fs = afero.NewOsFs()
+	SetLogLevel(viper.GetString("loglevel"))
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -96,7 +97,6 @@ func initConfig() {
 	// }
 	_ = configlib.LoadConfigFromPath(viper.GetString("config"))
 
-
 	setGlobals()
 
 	if viper.GetBool("debug") {
@@ -104,7 +104,6 @@ func initConfig() {
 	}
 	_ = viper.Unmarshal(&cfg)
 
-	InitLog(cfg.Logging.All, viper.GetString("loglevel"), cfg.Logging.Overwrite)
 
 	configFilePath, _ := filepath.Abs(viper.ConfigFileUsed())
 	cwd, _ := os.Getwd()

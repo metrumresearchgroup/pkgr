@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/metrumresearchgroup/pkgr/logger"
 
 	"github.com/spf13/cobra"
 )
@@ -37,6 +38,8 @@ func init() {
 }
 
 func clean(cmd *cobra.Command, args []string) error {
+
+	logger.AddLogFile(cfg.Logging.All, cfg.Logging.Overwrite)
 
 	var err error
 

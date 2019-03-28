@@ -16,7 +16,6 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"path/filepath"
 	"time"
 
@@ -41,7 +40,9 @@ func rInstall(cmd *cobra.Command, args []string) error {
 
 	//Init install-specific log, if one has been set. This overwrites the default log.
 	if cfg.Logging.Install != "" {
-		logger.InitLog(cfg.Logging.Install, viper.GetString("loglevel"), cfg.Logging.Overwrite)
+		logger.AddLogFile(cfg.Logging.Install, cfg.Logging.Overwrite)
+	} else {
+		logger.AddLogFile(cfg.Logging.All, cfg.Logging.Overwrite)
 	}
 
 	startTime := time.Now()
