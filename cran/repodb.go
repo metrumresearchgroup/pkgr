@@ -39,6 +39,17 @@ func NewRepoDb(url RepoURL, dst SourceType, rc RepoConfig, rv RVersion) (*RepoDb
 	return ddb, ddb.FetchPackages(rv)
 }
 
+// GetPackageDbFilePath get the filepath for the cached pkgdb
+func (r *RepoDb) GetPackageDbFilePath() string {
+	cdir, err := os.UserCacheDir()
+	if err != nil {
+		fmt.Println("could not use user cache dir, using temp dir")
+		cdir = os.TempDir()
+	}
+	pkgdbHash := r.Hash()
+	return filepath.Join(cdir, "pkgr", "r_packagedb_caches", pkgdbHash)
+}
+
 // Decode decodes the package database
 func (r *RepoDb) Decode(file string) error {
 	f, err := os.Open(file)
@@ -78,7 +89,7 @@ func (r *RepoDb) Hash() string {
 	// vs Source/Binary
 	stsum := Source
 	for st := range r.Dbs {
-		stsum += st
+		stsum += st + 1
 	}
 	io.WriteString(h, r.Repo.Name+r.Repo.URL+string(stsum))
 	return fmt.Sprintf("%x", h.Sum(nil))
@@ -96,14 +107,8 @@ func GetBaseURL(r RepoURL, st SourceType, rv RVersion) string {
 // FetchPackages gets the packages for  RepoDb
 // R_AVAILABLE_PACKAGES_CACHE_CONTROL_MAX_AGE controls the timing to requery the cache in R
 func (r *RepoDb) FetchPackages(rv RVersion) error {
-	// just get src versions for now
-	cdir, err := os.UserCacheDir()
-	if err != nil {
-		fmt.Println("could not use user cache dir, using temp dir")
-		cdir = os.TempDir()
-	}
-	pkgdbHash := r.Hash()
-	pkgdbFile := filepath.Join(cdir, "r_packagedb_caches", pkgdbHash)
+	var err error
+	pkgdbFile := r.GetRepoDbCacheFilePath()
 	if fi, err := os.Stat(pkgdbFile); !os.IsNotExist(err) {
 		if fi.ModTime().Add(1*time.Hour).Unix() > time.Now().Unix() {
 			// only read if was cached in the last hour
@@ -198,4 +203,14 @@ func (r *RepoDb) FetchPackages(rv RVersion) error {
 		return lasterr
 	}
 	return r.Encode(pkgdbFile)
+}
+
+//GetRepoDbCacheFilePath Get the filename of the file in the cache that will store this RepoDB
+func (r *RepoDb) GetRepoDbCacheFilePath() string {
+	cdir, err := os.UserCacheDir()
+	if err != nil {
+		fmt.Println("could not use user cache dir, using temp dir")
+		cdir = os.TempDir()
+	}
+	return (filepath.Join(cdir, "pkgr", "r_packagedb_caches", r.Hash()))
 }

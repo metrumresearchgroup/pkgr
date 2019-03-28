@@ -68,7 +68,7 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string, rv RVersion) (*Pk
 			}
 		}
 	}
-	log.WithField("dir", baseDir).Debug("downloading required packages within directory ")
+	log.WithField("dir", baseDir).Info("downloading required packages within directory ")
 	for _, d := range ds {
 		wg.Add(1)
 		go func(d PkgDl, wg *sync.WaitGroup) {
@@ -108,10 +108,13 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string, rv RVersion) (*Pk
 				log.WithField("package", d.Package.Package).Warn("downloading failed")
 				return
 			}
-			log.WithFields(log.Fields{
-				"package": d.Package.Package,
-				"dltime":  time.Since(startDl),
-			}).Debug("downloaded package")
+
+			if dl.New {
+				log.WithFields(log.Fields{
+					"package": d.Package.Package,
+					"dltime":  time.Since(startDl),
+				}).Debug("download successful")
+			}
 			result.Put(d.Package.Package, dl)
 		}(d, &wg)
 	}
@@ -133,7 +136,7 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 		return Download{}, err
 	}
 	if exists {
-		log.WithField("package", d.Package.Package).Trace("previously downloaded package")
+		log.WithField("package", d.Package.Package).Info("package already downloaded ")
 		return Download{
 			Path:     dest,
 			New:      false,
@@ -143,6 +146,9 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 	var pkgdl string
 	if d.Config.Type == Source || !SupportsCranBinary() {
 		d.Config.Type = Source // in case was originally set to binary
+		if !SupportsCranBinary() {
+			log.WithField("package", d.Package.Package).Debug("CRAN binary not supported, downloading source instead ")
+		}
 		pkgdl = fmt.Sprintf("%s/src/contrib/%s", strings.TrimSuffix(d.Config.Repo.URL, "/"), filepath.Base(dest))
 	} else {
 		pkgdl = fmt.Sprintf("%s/bin/%s/contrib/%s/%s",
@@ -151,6 +157,9 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 			rv.ToString(),
 			filepath.Base(dest))
 	}
+
+	log.WithField("package", d.Package.Package).Info("downloading package ")
+
 	resp, err := http.Get(pkgdl)
 	if resp.StatusCode != 200 {
 		log.WithFields(logrus.Fields{

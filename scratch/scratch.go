@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/metrumresearchgroup/pkgr/rcmd"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
@@ -25,4 +26,9 @@ func PrettyPrint(v interface{}) (err error) {
 		fmt.Println(string(b))
 	}
 	return
+}
+
+func WhatsTheCache() string {
+	pc := rcmd.NewPackageCache(cmd.userCache(cfg.Cache), false)
+	return ""
 }

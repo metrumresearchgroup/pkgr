@@ -22,14 +22,8 @@ Suggests: true
 Repos:
   - r_validated: "https://metrumresearchgroup.github.io/r_validated"
   - CRAN: "https://cran.rstudio.com"
-  - local: "path/on/filesystem"
 
-Library: "path/to/installation"
-
-# any libpaths desired to be set
-Libpaths:
-  - "path/to/some/prev/installed"
-  - "another/path/to/some/prev/installed"
+Library: "test-library"
 
 # customizations are package specific settings
 # for example, we can use a custom makevar file for data.table
@@ -37,11 +31,7 @@ Libpaths:
 # each package gets installed in its own process so any env variables
 # or settings will only matter for it
 Customizations:
-    Packages:
-        - PKPDmisc:
-            Suggests: true
-        - data.table:
-           Env:
-             - R_MAKEVARS_USER: "~/.R/Makevars_data.table"
-        - internal:
-            Repo: local
+  Packages:
+    - data.table:
+       Env:
+         - R_MAKEVARS_USER: "~/.R/Makevars_data.table"
