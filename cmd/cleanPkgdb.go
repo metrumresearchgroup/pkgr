@@ -17,7 +17,7 @@ package cmd
 import (
 	"strings"
 
-	. "github.com/metrumresearchgroup/pkgr/logger"
+	log "github.com/sirupsen/logrus"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -69,7 +69,7 @@ func cleanPackageDatabases(pkgdbs string) error {
 	totalPackageDbsProvided := len(pkgdbsToClear)
 	totalPackageDbsDeleted := removePackageDatabases(pkgdbsToClear)
 
-	Log.WithFields(logrus.Fields{
+	log.WithFields(logrus.Fields{
 		"Packages specified": totalPackageDbsProvided,
 		"Packages removed":   totalPackageDbsDeleted,
 	}).Info("finished cleaning package dbs.")
@@ -90,19 +90,19 @@ func removePackageDatabases(pkgdbsToClear []string) error {
 	for _, dbToClear := range pkgdbsToClear {
 		for _, repoDatabase := range repoDatabases {
 			if repoDatabase.Repo.Name == dbToClear {
-				Log.WithField("dbToClear", dbToClear).Trace("clearing pkgdb from cache")
+				log.WithField("dbToClear", dbToClear).Trace("clearing pkgdb from cache")
 				filepathToRemove := repoDatabase.GetRepoDbCacheFilePath()
 
 				_, err = fs.Stat(filepathToRemove)
 
 				if err != nil {
 					lastErr = err
-					Log.WithField("file", filepathToRemove).Warn("could not find file for removal")
+					log.WithField("file", filepathToRemove).Warn("could not find file for removal")
 				} else {
-					Log.Trace("attempting to remove " + filepathToRemove)
+					log.Trace("attempting to remove " + filepathToRemove)
 					err = fs.Remove(filepathToRemove)
 					if err != nil {
-						Log.Error(err)
+						log.Error(err)
 						lastErr = err
 					}
 				}

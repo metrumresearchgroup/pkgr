@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	logrus "github.com/sirupsen/logrus"
 )
 
 type LogrusFileHook struct {
@@ -15,13 +15,13 @@ type LogrusFileHook struct {
 	formatter *logrus.JSONFormatter
 }
 
-// Log Reinstantiable log to be used globally in the application.
-var Log *logrus.Logger
+// Log Reinstantiable logrus to be used globally in the application.
+//var Log *logrus.Logger
 
 func init() {
-	Log = logrus.New()
-	Log.SetOutput(os.Stdout)
-	Log.SetFormatter(&logrus.TextFormatter{ForceColors: true})
+	//Log = logrus.New()
+	logrus.SetOutput(os.Stdout)
+	logrus.SetFormatter(&logrus.TextFormatter{ForceColors: true})
 }
 
 
@@ -66,26 +66,26 @@ func (hook *LogrusFileHook) Levels() []logrus.Level {
 }
 
 func SetLogLevel(level string) {
-	//We want the log to be reset whenever it is initialized.
+	//We want the logrus to be reset whenever it is initialized.
 	logLevel := strings.ToLower(level)
 
 	switch logLevel {
 	case "trace":
-		Log.SetLevel(logrus.TraceLevel)
+		logrus.SetLevel(logrus.TraceLevel)
 	case "debug":
-		Log.SetLevel(logrus.DebugLevel)
+		logrus.SetLevel(logrus.DebugLevel)
 	case "info":
-		Log.SetLevel(logrus.InfoLevel)
+		logrus.SetLevel(logrus.InfoLevel)
 	case "warn":
-		Log.SetLevel(logrus.WarnLevel)
+		logrus.SetLevel(logrus.WarnLevel)
 	case "error":
-		Log.SetLevel(logrus.ErrorLevel)
+		logrus.SetLevel(logrus.ErrorLevel)
 	case "fatal":
-		Log.SetLevel(logrus.FatalLevel)
+		logrus.SetLevel(logrus.FatalLevel)
 	case "panic":
-		Log.SetLevel(logrus.PanicLevel)
+		logrus.SetLevel(logrus.PanicLevel)
 	default:
-		Log.SetLevel(logrus.InfoLevel)
+		logrus.SetLevel(logrus.InfoLevel)
 	}
 }
 
@@ -103,7 +103,7 @@ func AddLogFile(outputFile string, overwrite bool) {
 
 		fileHook, err := NewLogrusFileHook(outputFile, osFlag, 0666)
 		if err == nil {
-			Log.AddHook(fileHook)
+			logrus.AddHook(fileHook)
 		}
 	}
 }

@@ -26,7 +26,7 @@ Repos:
 Library: "test-library"
 
 Logging:
-  all: allLog.log
+  all: alllog.log
 
 # customizations are package specific settings
 # for example, we can use a custom makevar file for data.table

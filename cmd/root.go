@@ -16,7 +16,8 @@ package cmd
 
 import (
 	"fmt"
-	. "github.com/metrumresearchgroup/pkgr/logger"
+	"github.com/metrumresearchgroup/pkgr/logger"
+	log "github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"github.com/spf13/viper"
@@ -87,7 +88,7 @@ func init() {
 
 func setGlobals() {
 	fs = afero.NewOsFs()
-	SetLogLevel(viper.GetString("loglevel"))
+	logger.SetLogLevel(viper.GetString("loglevel"))
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -107,7 +108,7 @@ func initConfig() {
 
 	configFilePath, _ := filepath.Abs(viper.ConfigFileUsed())
 	cwd, _ := os.Getwd()
-	Log.WithFields(logrus.Fields{
+	log.WithFields(logrus.Fields{
 		"cwd": cwd,
 		"nwd": filepath.Dir(configFilePath),
 	}).Trace("setting directory to configuration file")

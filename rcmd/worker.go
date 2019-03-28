@@ -4,13 +4,13 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	. "github.com/metrumresearchgroup/pkgr/logger"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
 
 // Start starts a worker
 func (w *Worker) Start() {
-	Log.Tracef("starting worker %v \n", w.ID)
+	log.Tracef("starting worker %v \n", w.ID)
 	go func() {
 		appFS := afero.NewOsFs()
 		for {
@@ -18,14 +18,14 @@ func (w *Worker) Start() {
 			case ir := <-w.WorkQueue:
 				// Receive a work request.
 				startTime := time.Now()
-				Log.WithFields(logrus.Fields{
+				log.WithFields(logrus.Fields{
 					"WID":     w.ID,
 					"package": ir.Package,
 				}).Trace("package install request received")
 				res, bPath, err := w.InstallFunc(appFS, ir, ir.Cache)
 				// if already installed so don't print a message since that would have already been printed
 				if res.ExitCode != -999 {
-					Log.WithFields(logrus.Fields{
+					log.WithFields(logrus.Fields{
 						"WID":      w.ID,
 						"package":  ir.Package,
 						"duration": time.Since(startTime),
@@ -42,7 +42,7 @@ func (w *Worker) Start() {
 
 			case <-w.Quit:
 				// We have been asked to stop.
-				Log.Printf("worker%d stopping\n", w.ID)
+				log.Printf("worker%d stopping\n", w.ID)
 				return
 			}
 		}

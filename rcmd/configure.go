@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	. "github.com/metrumresearchgroup/pkgr/logger"
+	log "github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus"
 )
 
@@ -23,7 +23,7 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 			envVars = append(envVars, fmt.Sprintf("%s=%s", k, v))
 			envMap[k] = v
 		}
-		Log.WithFields(logrus.Fields{
+		log.WithFields(logrus.Fields{
 			"envs":    envVars,
 			"package": pkg,
 		}).Trace("Custom Environment Variables")
@@ -47,11 +47,11 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 			// in Library/Libpaths in the pkgr configuration
 			// we only want R_LIBS_SITE set to control all relevant library paths for the user to
 			if evs[0] == "R_LIBS_USER" {
-				Log.WithField("path", evs[1]).Debug("overriding system R_LIBS_USER")
+				log.WithField("path", evs[1]).Debug("overriding system R_LIBS_USER")
 				continue
 			}
 			if evs[0] == "R_LIBS_SITE" {
-				Log.WithField("path", evs[1]).Debug("overriding system R_LIBS_USER")
+				log.WithField("path", evs[1]).Debug("overriding system R_LIBS_USER")
 				continue
 			}
 

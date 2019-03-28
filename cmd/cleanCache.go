@@ -20,8 +20,7 @@ import (
 	"strconv"
 	"strings"
 
-	. "github.com/metrumresearchgroup/pkgr/logger"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -62,24 +61,24 @@ func cleanCacheFolders() error {
 	cachePath := userCache(cfg.Cache)
 	repos := strings.Split(reposToClear, ",")
 
-	Log.WithFields(logrus.Fields{
+	log.WithFields(log.Fields{
 		"repos argument": reposToClear,
 		"repos parsed":   sliceToString(repos),
 		"cache dir":      cachePath,
 	}).Trace("cleaning cache")
 
 	if !srcOnly && !binariesOnly {
-		Log.Info("clearing source and binary files from the cache")
+		log.Info("clearing source and binary files from the cache")
 		deleteAllCacheSubfolders(repos, cachePath)
 	} else if srcOnly && binariesOnly {
 		err := errors.New("invalid argument combination -- cannot combine srcOnly and binaryOnly flags")
-		Log.Error(err)
+		log.Error(err)
 		return err
 	} else if srcOnly {
-		Log.Info("clearing source files only from the cache")
+		log.Info("clearing source files only from the cache")
 		deleteCacheSubfolders(repos, "src", cachePath)
 	} else if binariesOnly {
-		Log.Info("clearing binary files only from the cache")
+		log.Info("clearing binary files only from the cache")
 		deleteCacheSubfolders(repos, "binary", cachePath)
 	} else {
 		return errors.New("'what? that's impossible! my logic is flawless!'")
@@ -103,7 +102,7 @@ func deleteCacheSubfolders(repos []string, subfolder string, cacheDirectory stri
 
 	repoFolderFsObjects, _ := cacheDirFsObject.Readdir(0)
 
-	Log.WithFields(logrus.Fields{
+	log.WithFields(log.Fields{
 		"repos argument": reposToClear,
 		"repos parsed":   sliceToString(repos),
 		"cache dir":      cacheDirectory,
@@ -118,7 +117,7 @@ func deleteCacheSubfolders(repos []string, subfolder string, cacheDirectory stri
 			)
 			err = fs.RemoveAll(subfolderPath)
 			if err != nil {
-				Log.Error(err)
+				log.Error(err)
 			}
 		}
 	} else {
@@ -133,7 +132,7 @@ func deleteCacheSubfolders(repos []string, subfolder string, cacheDirectory stri
 						subfolder,
 					)
 
-					Log.WithFields(logrus.Fields{
+					log.WithFields(log.Fields{
 						"repoToClear":             repoToClear,
 						"repoFolderFsObject Name": repoFolderFsObject.Name(),
 						"subfolder":               subfolder,
@@ -142,7 +141,7 @@ func deleteCacheSubfolders(repos []string, subfolder string, cacheDirectory stri
 
 					err = fs.RemoveAll(subfolderPath)
 					if err != nil {
-						Log.Error(err)
+						log.Error(err)
 					}
 				}
 			}

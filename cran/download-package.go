@@ -14,7 +14,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/dpastoor/goutils"
-	. "github.com/metrumresearchgroup/pkgr/logger"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
 
@@ -63,12 +63,12 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string, rv RVersion) (*Pk
 			pkgdir := filepath.Join(baseDir, urlHash, pt)
 			err := fs.MkdirAll(pkgdir, 0777)
 			if err != nil {
-				Log.WithField("dir", pkgdir).WithField("error", err.Error()).Fatal("error creating package directory ")
+				log.WithField("dir", pkgdir).WithField("error", err.Error()).Fatal("error creating package directory ")
 				return result, err
 			}
 		}
 	}
-	Log.WithField("dir", baseDir).Info("downloading required packages within directory ")
+	log.WithField("dir", baseDir).Info("downloading required packages within directory ")
 	for _, d := range ds {
 		wg.Add(1)
 		go func(d PkgDl, wg *sync.WaitGroup) {
@@ -105,12 +105,12 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string, rv RVersion) (*Pk
 			if err != nil {
 				// TODO:  should this cause a failure downstream rather than just printing
 				// as right now it keeps running and just doesn't install that package?
-				Log.WithField("package", d.Package.Package).Warn("downloading failed")
+				log.WithField("package", d.Package.Package).Warn("downloading failed")
 				return
 			}
 
 			if dl.New {
-				Log.WithFields(logrus.Fields{
+				log.WithFields(logrus.Fields{
 					"package": d.Package.Package,
 					"dltime":  time.Since(startDl),
 				}).Debug("download successful")
@@ -119,7 +119,7 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string, rv RVersion) (*Pk
 		}(d, &wg)
 	}
 	wg.Wait()
-	Log.WithField("duration", time.Since(startTime)).Info("all packages downloaded")
+	log.WithField("duration", time.Since(startTime)).Info("all packages downloaded")
 	return result, nil
 }
 
@@ -136,7 +136,7 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 		return Download{}, err
 	}
 	if exists {
-		Log.WithField("package", d.Package.Package).Info("package already downloaded ")
+		log.WithField("package", d.Package.Package).Info("package already downloaded ")
 		return Download{
 			Path:     dest,
 			New:      false,
@@ -147,7 +147,7 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 	if d.Config.Type == Source || !SupportsCranBinary() {
 		d.Config.Type = Source // in case was originally set to binary
 		if !SupportsCranBinary() {
-			Log.WithField("package", d.Package.Package).Debug("CRAN binary not supported, downloading source instead ")
+			log.WithField("package", d.Package.Package).Debug("CRAN binary not supported, downloading source instead ")
 		}
 		pkgdl = fmt.Sprintf("%s/src/contrib/%s", strings.TrimSuffix(d.Config.Repo.URL, "/"), filepath.Base(dest))
 	} else {
@@ -158,29 +158,29 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 			filepath.Base(dest))
 	}
 
-	Log.WithField("package", d.Package.Package).Info("downloading package ")
+	log.WithField("package", d.Package.Package).Info("downloading package ")
 
 	resp, err := http.Get(pkgdl)
 	if resp.StatusCode != 200 {
-		Log.WithFields(logrus.Fields{
+		log.WithFields(logrus.Fields{
 			"package":     d.Package.Package,
 			"url":         pkgdl,
 			"status":      resp.Status,
 			"status_code": resp.StatusCode,
 		}).Warn("bad server response")
 		b, _ := ioutil.ReadAll(resp.Body)
-		Log.WithField("package", d.Package.Package).Println("body: ", string(b))
+		log.WithField("package", d.Package.Package).Println("body: ", string(b))
 		return Download{}, err
 	}
 	// TODO: the response will often be valid, but return like a server 404 or other error
 	if err != nil {
-		Log.WithField("package", d.Package).Warn("error downloading package")
+		log.WithField("package", d.Package).Warn("error downloading package")
 		return Download{}, err
 	}
 	defer resp.Body.Close()
 	file, err := fs.Create(dest)
 	if err != nil {
-		Log.WithFields(logrus.Fields{
+		log.WithFields(logrus.Fields{
 			"package": d.Package,
 			"err":     err,
 		}).Warn("error downloading package, no tarball created")

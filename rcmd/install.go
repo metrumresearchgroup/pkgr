@@ -19,7 +19,7 @@ import (
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/sirupsen/logrus"
-	. "github.com/metrumresearchgroup/pkgr/logger"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	funk "github.com/thoas/go-funk"
 )
@@ -74,7 +74,7 @@ func Install(
 	rdir := es.WorkDir
 	if rdir == "" {
 		rdir, _ = os.Getwd()
-		Log.WithFields(
+		log.WithFields(
 			logrus.Fields{"rdir": rdir},
 		).Trace("launch dir set to working directory")
 	} else {
@@ -93,7 +93,7 @@ func Install(
 
 	ok, err := afero.Exists(fs, tbp)
 	if !ok || err != nil {
-		Log.WithFields(logrus.Fields{
+		log.WithFields(logrus.Fields{
 			"path": tbp,
 			"ok":   ok,
 			"err":  err,
@@ -120,7 +120,7 @@ func Install(
 	}
 	cmdArgs = append(cmdArgs, args.CliArgs()...)
 	cmdArgs = append(cmdArgs, tbp)
-	Log.WithFields(
+	log.WithFields(
 		logrus.Fields{
 			"cmd":       "install",
 			"cmdArgs":   cmdArgs,
@@ -175,7 +175,7 @@ func Install(
 		ExitCode: exitCode,
 	}
 	if exitCode != 0 {
-		Log.WithFields(
+		log.WithFields(
 			logrus.Fields{
 				"stdout":   stdout,
 				"stderr":   stderr,
@@ -183,7 +183,7 @@ func Install(
 				"package":  pkg,
 			}).Error("cmd output")
 	} else {
-		Log.WithFields(
+		log.WithFields(
 			logrus.Fields{
 				"stdout":   stdout,
 				"stderr":   stderr,
@@ -214,13 +214,13 @@ func isInCache(
 	)
 	exists, err := goutils.Exists(fs, bpath)
 	if !exists || err != nil {
-		Log.WithFields(logrus.Fields{
+		log.WithFields(logrus.Fields{
 			"path":    bpath,
 			"package": pkg.Package,
 		}).Trace("not found in cache")
 		return false, ir
 	}
-	Log.WithFields(logrus.Fields{
+	log.WithFields(logrus.Fields{
 		"path":    bpath,
 		"package": pkg.Package,
 	}).Trace("found in cache")
@@ -242,7 +242,7 @@ func InstallThroughBinary(
 	pc PackageCache) (CmdResult, string, error) {
 	exists, _ := goutils.DirExists(fs, filepath.Join(ir.InstallArgs.Library, ir.Package))
 	if exists {
-		Log.WithField("package", ir.Package).Info("package already installed")
+		log.WithField("package", ir.Package).Info("package already installed")
 		return CmdResult{
 			ExitCode: -999,
 			Stderr:   fmt.Sprintf("already installed: %s", ir.Package),
@@ -296,7 +296,7 @@ func InstallThroughBinary(
 	// built binaries have the path extension .tgz rather than tar.gz
 	// but otherwise have the same name from empirical testing
 	// pkg_0.0.1.tar.gz --> pkg_0.0.1.tgz
-	Log.WithFields(logrus.Fields{
+	log.WithFields(logrus.Fields{
 		"tbp":  ir.Metadata.Path,
 		"args": ir.InstallArgs,
 	}).Debug("installing tarball")
@@ -311,7 +311,7 @@ func InstallThroughBinary(
 	if de {
 		err := fs.RemoveAll(installPath)
 		if err != nil {
-			Log.WithFields(logrus.Fields{
+			log.WithFields(logrus.Fields{
 				"err":  err,
 				"path": installPath,
 			}).Error("error removing installed package in tmp dir")
@@ -320,14 +320,14 @@ func InstallThroughBinary(
 	if err == nil && res.ExitCode == 0 {
 		bbp := binaryExt(ir.Metadata.Path)
 		binaryBall := filepath.Join(tmpdir, bbp)
-		Log.WithFields(logrus.Fields{
+		log.WithFields(logrus.Fields{
 			"tbp":        ir.Metadata.Path,
 			"bbp":        bbp,
 			"binaryBall": binaryBall,
 		}).Trace("binary location prior to install")
 		ok, _ := afero.Exists(fs, binaryBall)
 		if !ok {
-			Log.WithFields(logrus.Fields{
+			log.WithFields(logrus.Fields{
 				// check previous stderror, which R logs to installation status
 				"stderr":     res.Stderr,
 				"tmpdir":     tmpdir,
@@ -376,7 +376,7 @@ func InstallPackagePlan(
 		InstallThroughBinary,
 		func(iu InstallUpdate) {
 			if iu.Err != nil {
-				Log.WithField("err", iu.Err).Warn("error installing")
+				log.WithField("err", iu.Err).Warn("error installing")
 				anyFailed = true
 				failedPkgs = append(failedPkgs, iu.Package)
 			} else {
@@ -385,10 +385,10 @@ func InstallPackagePlan(
 				// ready to be installed, and if so, signal they should
 				// be installed
 				pkg, _ := dl.Get(iu.Package)
-				Log.WithFields(logrus.Fields{"binary": iu.BinaryPath, "src": pkg.Path}).Debug(iu.Package)
+				log.WithFields(logrus.Fields{"binary": iu.BinaryPath, "src": pkg.Path}).Debug(iu.Package)
 
 				if iu.Result.ExitCode != -999 {
-					Log.WithFields(logrus.Fields{
+					log.WithFields(logrus.Fields{
 						"package": iu.Package,
 						"version": pkg.Metadata.Package.Version,
 						"repo":    pkg.Metadata.Config.Repo.Name,
@@ -408,7 +408,7 @@ func InstallPackagePlan(
 						}
 						if allInstalled && !anyFailed {
 							wg.Add(1)
-							Log.WithFields(logrus.Fields{
+							log.WithFields(logrus.Fields{
 								"from":      iu.Package,
 								"suggested": maybeInstall,
 							}).Trace("suggesting installation")
@@ -427,9 +427,9 @@ func InstallPackagePlan(
 						filepath.Base(iu.BinaryPath),
 					)
 					_, err := goutils.Copy(iu.BinaryPath, bpath)
-					Log.WithFields(logrus.Fields{"from": iu.BinaryPath, "to": bpath}).Trace("copied binary")
+					log.WithFields(logrus.Fields{"from": iu.BinaryPath, "to": bpath}).Trace("copied binary")
 					if err != nil {
-						Log.WithFields(logrus.Fields{"from": iu.BinaryPath, "to": bpath}).Error("error copying binary")
+						log.WithFields(logrus.Fields{"from": iu.BinaryPath, "to": bpath}).Error("error copying binary")
 					}
 				}
 			}
@@ -453,7 +453,7 @@ func InstallPackagePlan(
 				requestedPkgs[p] = true
 			}
 			pkg, _ := dl.Get(p)
-			Log.WithField("package", p).Trace("pushing installation to queue")
+			log.WithField("package", p).Trace("pushing installation to queue")
 			iq.Push(InstallRequest{
 				Package:      p,
 				Metadata:     pkg,
@@ -465,7 +465,7 @@ func InstallPackagePlan(
 		}
 	}(shouldInstall)
 
-	Log.WithField("packages", strings.Join(plan.StartingPackages, ", ")).Info("starting initial install")
+	log.WithField("packages", strings.Join(plan.StartingPackages, ", ")).Info("starting initial install")
 
 	for _, p := range plan.StartingPackages {
 		wg.Add(1)
@@ -473,15 +473,15 @@ func InstallPackagePlan(
 	}
 	wg.Wait()
 
-	Log.WithField("duration", time.Since(startTime)).Info("total install time")
+	log.WithField("duration", time.Since(startTime)).Info("total install time")
 	for pkg := range plan.DepDb {
 		_, exists := installedPkgs[pkg]
 		if !exists {
-			Log.Errorf("did not install %s", pkg)
+			log.Errorf("did not install %s", pkg)
 		}
 	}
 	if anyFailed {
-		Log.Errorf("installation failed for packages: %s", strings.Join(failedPkgs, ", "))
+		log.Errorf("installation failed for packages: %s", strings.Join(failedPkgs, ", "))
 		return fmt.Errorf("failed installation for packages: %s", strings.Join(failedPkgs, ", "))
 	}
 	return nil
