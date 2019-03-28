@@ -1,6 +1,6 @@
 # pkgr
 
-[![asciicast](https://asciinema.org/a/237423.svg)](https://asciinema.org/a/237423)
+[![asciicast](https://asciinema.org/a/wgcPBvCMtEwhpdW793MBjgSi2.svg)](https://asciinema.org/a/wgcPBvCMtEwhpdW793MBjgSi2)
 
 # THIS IS CURRENTLY A WIP, however is getting close for user testing. Check back soon for more comprehensive user docs
 
