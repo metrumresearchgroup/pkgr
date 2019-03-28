@@ -11,22 +11,22 @@ the declarative philosophy of defining _ideal state_ of the entire system, and w
 towards achieving that objective. Furthermore, `pkgr` is built with a focus on reproducibility
 and auditability of what is going on, a vital component for the pharmaceutical sciences + enterprises.
 
-# why pkgr?
+# Why pkgr?
 
-`install.packages` and friends such as `remotes::install_github` have a subtle weakness of
-not being able to well control desired global state. There are some knobs that
-can be tuned, but overall the API is generally not what the user _actually_ needs, rather,
+`install.packages` and friends such as `remotes::install_github` have a subtle weakness --
+they are not good at controlling desired global state. There are some knobs that
+can be turned, but overall their APIs are generally not what the user _actually_ needs. Rather, they
 are the mechanism by which the user can strive towards their needs, in a forceably iterative fashion.
 
-For example, with `install.packages`, how do you control things like:
-- install a number of packages from various repositories, where specific packages can be pulled from a particular repository, rather than just the first repo is is found in.
-- _see_ what would be changed before performing an action, while not actually performing said action.
-- install `Suggested` packages, but only for a subset of all packages you'd like to install.
-- customize the installation behavior of a single package in a documentable and reproducible way without resorting to installing individual packages iteratively
-  - set custom makevars for a package that persist across system installations
-  - install source versions of some packages but binaries for others
+With pkgr, you can, in a **parallel-processed** manner, do things like:
+- Install a number of packages from various repositories, when specific packages must be pulled from specific repositories
+- Install `Suggested` packages only for a subset of all packages you'd like to install
+- Customize the installation behavior of a single package in a documentable and reproducible way
+  - Set custom Makevars for a package that persist across system installations
+  - Install source versions of some packages but binaries for others
+- **Understand how your R environment will be changed _before_ performing an installation or action.**
 
-Today, packages are highly interwoven. Best practices have pushed towards small, well scoped packages that
+Today, packages are highly interwoven. Best practices have pushed towards small, well-scoped packages that
 do behaviors well. For example, rather than just having plyr, we now use dplyr+purrr to achieve
 the same set of responsibilities (dealing with dataframes + dealing with other list/vector objects in an iterative way).
 As such, it is becoming increasingly difficult to manage the _set_ of packages in a transparent and robust
@@ -34,11 +34,11 @@ way.
 
 # How it works
 
-`pkgr` is a command line utility that has a couple top level commands
+`pkgr` is a command line utility with several top level commands. The two primary commands are:
 
 ```bash
 pkgr plan # show what would happen if install is run
-pkgr install
+pkgr install # install the packages specified in pkgr.config
 ```
 
 The actions are controlled by a configuration file that specifies the desired global state, namely,
