@@ -40,11 +40,10 @@ way.
 pkgr plan # show what would happen if install is run
 pkgr install # install the packages specified in pkgr.config
 ```
-
 The actions are controlled by a configuration file that specifies the desired global state, namely,
 by defining the top level packages a user cares about, as well as specific configuration customizations.
 
-An example pkgr configuration file might look like:
+For example, a pkgr configuration file might look like:
 
 ```yaml
 Version: 1
@@ -72,10 +71,22 @@ Customizations:
       Suggests: true
 ```
 
-Another such example, is on CRAN, for OSX, the new devtools (v2.x) is currently available as source,
-however the binary is still v1.13. To control and say we would prefer the source version of devtools,
-while relying on the platform default (binaries) for all other packages, a customization can be set
-for devtools as `Type: source`
+When you run `pkgr install` with this as your _pkgr.config_ file, pkgr will download and
+install the packages rmarkdown, bitops, calToools, knitr, tidyverse, shiny, logrrr,
+and any dependencies that those packages require. Since the "gh_dev" repository is listed first,
+pkgr will search "gh_dev" for those packages before it looks to "CRAN".
+
+If you want to see everything that pkgr is going to install before actually installing, simply run `pkgr plan` and take a look.
+
+
+
+How about a more complex example?
+
+Let's say you're working on an OSX machine.
+On CRAN, for OSX, the package `devtools` (v2.x) is currently available as source,
+but the binary is still v1.13. You want the latest version of devtools, so you'll need to build it from source.
+However, you still want to install from binaries (the default behavior for OSX) for everything else in your environment.
+With pkgr, you can set a `Customization` for `devtools` using `Type: source`
 
 ```yaml
 Version: 1
@@ -103,7 +114,10 @@ Customizations:
       Type: source
 ```
 
-A configuration that also pulls from bioconductor:
+With this customization in your config file, pkgr will install from sources for devtools.
+For everything else, the default install behavior will stay in effect.
+
+For a third example, here is a configuration that also pulls from bioconductor:
 
 ```
 Version: 1
