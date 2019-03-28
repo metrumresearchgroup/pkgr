@@ -1,5 +1,7 @@
 # pkgr
 
+[![asciicast](https://asciinema.org/a/237423.svg)](https://asciinema.org/a/237423)
+
 # THIS IS CURRENTLY A WIP, however is getting close for user testing. Check back soon for more comprehensive user docs
 
 # What is pkgr?
@@ -11,8 +13,8 @@ and auditability of what is going on, a vital component for the pharmaceutical s
 
 # why pkgr?
 
-`install.packages` and friends such as `remotes::install_github` have a subtle weakness of 
-not being able to well control desired global state. There are some knobs that 
+`install.packages` and friends such as `remotes::install_github` have a subtle weakness of
+not being able to well control desired global state. There are some knobs that
 can be tuned, but overall the API is generally not what the user _actually_ needs, rather,
 are the mechanism by which the user can strive towards their needs, in a forceably iterative fashion.
 
@@ -25,7 +27,7 @@ For example, with `install.packages`, how do you control things like:
   - install source versions of some packages but binaries for others
 
 Today, packages are highly interwoven. Best practices have pushed towards small, well scoped packages that
-do behaviors well. For example, rather than just having plyr, we now use dplyr+purrr to achieve 
+do behaviors well. For example, rather than just having plyr, we now use dplyr+purrr to achieve
 the same set of responsibilities (dealing with dataframes + dealing with other list/vector objects in an iterative way).
 As such, it is becoming increasingly difficult to manage the _set_ of packages in a transparent and robust
 way.
@@ -39,7 +41,7 @@ pkgr plan # show what would happen if install is run
 pkgr install
 ```
 
-The actions are controlled by a configuration file that specifies the desired global state, namely, 
+The actions are controlled by a configuration file that specifies the desired global state, namely,
 by defining the top level packages a user cares about, as well as specific configuration customizations.
 
 An example pkgr configuration file might look like:
@@ -149,14 +151,14 @@ TODO:
 ## API options
 
 package declaration can become nuanced as the user desires to customize
-specifically where a package is pulled from. 
+specifically where a package is pulled from.
 Given a set of repositories, the default R tooling
 will stop after the package is found and use that.
 In some cases the user may prefer to explicitly
 declare which repository a package may come from, especially when pulling from
-an environment where multiple repos are specified. 
+an environment where multiple repos are specified.
 
-The remotes API provides a rich experience around customizing the installation 
+The remotes API provides a rich experience around customizing the installation
 behavior from external repositories such as github, where combinations such as
 
 - tidyverse/dplyr#12345 - install from PR 123
@@ -164,11 +166,11 @@ behavior from external repositories such as github, where combinations such as
 
 The intent of this tooling (for now) is to provide a more modular experience,
 in which the ways packages can be identified is minimized, and upstream tooling
-can coalesce packages from many of the scenarios outlined. 
+can coalesce packages from many of the scenarios outlined.
 
 As such, the biggest focus is on targetting packages placed in a specific _repository_.
 With this in mind, the question remains whether the remotes API should be followed.
-The concern is that the repo::package pattern slightly obfusicates the package. 
+The concern is that the repo::package pattern slightly obfusicates the package.
 This is less noticeable when the package is previously declared in the Imports/Depends
 statement of a DESCRIPTION file, however when packages become the forefront
 of the requirements.
@@ -186,7 +188,7 @@ Packages:
 ### Package dependencies:
 
 By default, packages will need Imports/Depends/LinkingTo to make
-sure the packages can work successfully. 
+sure the packages can work successfully.
 
 ```yaml
 Packages:
@@ -245,8 +247,8 @@ to stringi, so there is no reason to wait for the layer to complete.
 
 # Development
 
-run all tests with tabular output: 
+run all tests with tabular output:
 
 ```
-go test ./... -json -cover | tparse -all 
+go test ./... -json -cover | tparse -all
 ```
