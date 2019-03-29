@@ -71,7 +71,7 @@ Customizations:
       Suggests: true
 ```
 
-When you run `pkgr install` with this as your _pkgr.config_ file, pkgr will download and
+When you run `pkgr install` with this as your _pkgr.yml_ file, pkgr will download and
 install the packages rmarkdown, bitops, calToools, knitr, tidyverse, shiny, logrrr,
 and any dependencies that those packages require. Since the "gh_dev" repository is listed first,
 pkgr will search "gh_dev" for those packages before it looks to "CRAN".
@@ -156,20 +156,24 @@ Logging:
 
 ## Pkgr and [Packrat](https://rstudio.github.io/packrat/)
 
-**Pkgr is not a replacement for Packrat**. Packrat is a tool to capture the state
+**Pkgr is designed to work alongside Packrat**. Packrat is a tool to capture the state
 of your R environment and isolate it from outside modification.
 Where Packrat often falls short, however, is in the restoration said environment.
-Packrat::restore() restores packages in an iterative fashion, which is a
+Running packrat::restore() restores packages in an iterative fashion, which is a
 time-consuming process that doesn't always play nice with packages hosted outside
-of CRAN (such as packages hosted on GitHub). Additionally, packrat::restore()
-provides the user with almost no control of the _order_ in which packages are
-restored -- it always installs packages alphabetically by name.
+of CRAN (such as packages hosted on GitHub). Additionally, since Packrat uses `install.packages`
+under the hood, each package is still treated as an individual rather than as a part of
+a holistic environment. This means that the installation process does not stop and inform
+the user when a package fails to install properly. In this situation, Packrat continues to install
+what packages it can without regard for how this might affect the package ecosystem when those
+individual installation failures are later resolved.
 
 Pkgr solves these issues by:
   - Installing packages quickly in parallelized layers (determined by the dependency tree)
-  - Allowing users to control things like what repo a given package is retrieved from
+  - Allowing users to control things like what repo a given package is retrieved from and what Makevars it is built with
   - Showing users a holistic view of their R Environment (`pkgr inspect --deps --tree`) and how that environment would be changed on another install (`pkgr plan`)
-  - Pkgr allows you to pass things like custom Makevars to package installations
+  - Providing timely error messages and halting the installation process whenever the environment described in the pkgr.yml file will not be achieved 
+
 
 ## More info to come as we progress!
 

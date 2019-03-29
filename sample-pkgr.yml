@@ -22,7 +22,8 @@ Repos:
 Library: "path/to/install/library"
 
 # Options for Logging
-# Without any options set, Pkgr will only log Info-level messages to the terminal.
+# Without any options set, Pkgr will only log Info-level (and above) messages
+# to the standard output device..
 # To save logs to a file, use the "all" (as in "log all too").
 # To save logs from the "pkgr install" command to a separate file, use the
 # "install" option.
