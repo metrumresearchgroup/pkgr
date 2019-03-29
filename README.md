@@ -32,6 +32,28 @@ the same set of responsibilities (dealing with dataframes + dealing with other l
 As such, it is becoming increasingly difficult to manage the _set_ of packages in a transparent and robust
 way.
 
+# Getting Started
+
+### OSX Installation
+
+On MacOS, we recommend using [Homebrew](https://brew.sh/) to install pkgr.
+
+```
+brew tap metrumresearchgroup/homebrew-tap
+brew install pkgr
+```
+
+### Linux Installation
+
+To install pkgr on Linux systems, use the following commands:
+
+```
+sudo wget https://github.com/metrumresearchgroup/pkgr/releases/download/v0.2.0-alpha.2-1/pkgr_0.2.0-alpha.2-1_linux_amd64.tar.gz -O /tmp/pkgr.tar.gz
+sudo tar xzf /tmp/pkgr.tar.gz pkgr
+sudo mv pkgr /usr/local/bin/pkgr
+sudo chmod +x /usr/local/bin/pkgr
+```
+
 # How it works
 
 `pkgr` is a command line utility with several top level commands. The two primary commands are:
@@ -154,16 +176,18 @@ Logging:
   File: pkgr-install.log
 ```
 
-## Pkgr and [Packrat](https://rstudio.github.io/packrat/)
+# Pkgr and [Packrat](https://rstudio.github.io/packrat/)
 
-**Pkgr is designed to work alongside Packrat**. Packrat is a tool to capture the state
+**Pkgr is not a replacement for Packrat -- Pkgr is complementary to Packrat**. 
+
+Packrat is a tool to capture the state
 of your R environment and isolate it from outside modification.
 Where Packrat often falls short, however, is in the restoration said environment.
 Running packrat::restore() restores packages in an iterative fashion, which is a
 time-consuming process that doesn't always play nice with packages hosted outside
 of CRAN (such as packages hosted on GitHub). Additionally, since Packrat uses `install.packages`
-under the hood, each package is still treated as an individual rather than as a part of
-a holistic environment. This means that the installation process does not stop and inform
+under the hood, each call to `install.packages` is still treated as an isolated procedure rather than as a part of
+a holistic effort. This means that the installation process does not stop and inform
 the user when a package fails to install properly. In this situation, Packrat continues to install
 what packages it can without regard for how this might affect the package ecosystem when those
 individual installation failures are later resolved.
@@ -172,10 +196,11 @@ Pkgr solves these issues by:
   - Installing packages quickly in parallelized layers (determined by the dependency tree)
   - Allowing users to control things like what repo a given package is retrieved from and what Makevars it is built with
   - Showing users a holistic view of their R Environment (`pkgr inspect --deps --tree`) and how that environment would be changed on another install (`pkgr plan`)
-  - Providing timely error messages and halting the installation process whenever the environment described in the pkgr.yml file will not be achieved 
+  - Providing timely error messages and halting the installation process immediately when something goes wrong during the 
+  installation process (such as a package not being available, a repository being unreachable, etc.)
+  
 
-
-## More info to come as we progress!
+# More info to come as we progress!
 
 As we continue development, we intend to answer the questions:
 - How does pkgr integrate with [Packrat](https://rstudio.github.io/packrat/)?
