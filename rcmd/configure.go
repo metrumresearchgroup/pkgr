@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/sirupsen/logrus"
 )
 
 // sysEnvVars contains the default environment variables usually from
@@ -23,7 +22,7 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 			envVars = append(envVars, fmt.Sprintf("%s=%s", k, v))
 			envMap[k] = v
 		}
-		log.WithFields(logrus.Fields{
+		log.WithFields(log.Fields{
 			"envs":    envVars,
 			"package": pkg,
 		}).Trace("Custom Environment Variables")

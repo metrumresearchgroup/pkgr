@@ -4,7 +4,6 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
@@ -27,7 +26,7 @@ func StartR(
 	}
 
 	log.WithFields(
-		logrus.Fields{
+		log.Fields{
 			"cmdArgs":   cmdArgs,
 			"RSettings": rs,
 			"env":       envVars,
@@ -46,7 +45,7 @@ func StartR(
 	if rdir == "" {
 		rdir, _ = os.Getwd()
 		log.WithFields(
-			logrus.Fields{"rdir": rdir},
+			log.Fields{"rdir": rdir},
 		).Debug("launch dir")
 	}
 	cmd.Dir = rdir
@@ -74,7 +73,7 @@ func RunR(
 	}
 
 	log.WithFields(
-		logrus.Fields{
+		log.Fields{
 			"cmdArgs":   cmdArgs,
 			"RSettings": rs,
 			"env":       envVars,
@@ -93,7 +92,7 @@ func RunR(
 	if rdir == "" {
 		rdir, _ = os.Getwd()
 		log.WithFields(
-			logrus.Fields{"rdir": rdir},
+			log.Fields{"rdir": rdir},
 		).Debug("launch dir")
 	}
 	cmd.Dir = rdir

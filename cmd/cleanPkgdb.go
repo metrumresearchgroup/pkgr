@@ -19,7 +19,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -69,7 +68,7 @@ func cleanPackageDatabases(pkgdbs string) error {
 	totalPackageDbsProvided := len(pkgdbsToClear)
 	totalPackageDbsDeleted := removePackageDatabases(pkgdbsToClear)
 
-	log.WithFields(logrus.Fields{
+	log.WithFields(log.Fields{
 		"Packages specified": totalPackageDbsProvided,
 		"Packages removed":   totalPackageDbsDeleted,
 	}).Info("finished cleaning package dbs.")
