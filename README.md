@@ -154,12 +154,29 @@ Logging:
   File: pkgr-install.log
 ```
 
-TODO:
+## Pkgr and [Packrat](https://rstudio.github.io/packrat/)
 
-- how integrates with packrat
-- how integrates with rstudio package manager
-- performance characteristics (so much faster than install.packages)
-- caveats
+**Pkgr is not a replacement for Packrat**. Packrat is a tool to capture the state
+of your R environment and isolate it from outside modification.
+Where Packrat often falls short, however, is in the restoration said environment.
+Packrat::restore() restores packages in an iterative fashion, which is a
+time-consuming process that doesn't always play nice with packages hosted outside
+of CRAN (such as packages hosted on GitHub). Additionally, packrat::restore()
+provides the user with almost no control of the _order_ in which packages are
+restored -- it always installs packages alphabetically by name.
+
+Pkgr solves these issues by:
+  - Installing packages quickly in parallelized layers (determined by the dependency tree)
+  - Allowing users to control things like what repo a given package is retrieved from
+  - Showing users a holistic view of their R Environment (`pkgr inspect --deps --tree`) and how that environment would be changed on another install (`pkgr plan`)
+
+## More info to come as we progress!
+
+As we continue development, we intend to answer the questions:
+- How does pkgr integrate with [Packrat](https://rstudio.github.io/packrat/)?
+- How does pkgr integrate with [RStudio Package Manager](https://www.rstudio.com/products/package-manager/)?
+- How much faster is pkgr than its peers (such as install.packages)?
+- What are some of the downsides of pkgr?
 
 
 ## API options
