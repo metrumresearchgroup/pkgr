@@ -25,9 +25,8 @@ import (
 	"github.com/metrumresearchgroup/pkgr/configlib"
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
-	log "github.com/sirupsen/logrus"
 	"github.com/sajari/fuzzy"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -110,7 +109,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 			if configlib.IsCustomizationSet("Repo", pkgSettings, pkg) {
 				err := cdb.SetPackageRepo(pkg, v.Repo)
 				if err != nil {
-					log.WithFields(logrus.Fields{
+					log.WithFields(log.Fields{
 						"pkg":  pkg,
 						"repo": v.Repo,
 					}).Fatal("error finding custom repo to set")
@@ -119,7 +118,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 			if configlib.IsCustomizationSet("Type", pkgSettings, pkg) {
 				err := cdb.SetPackageType(pkg, v.Type)
 				if err != nil {
-					log.WithFields(logrus.Fields{
+					log.WithFields(log.Fields{
 						"pkg":  pkg,
 						"repo": v.Repo,
 					}).Fatal("error finding custom repo to set")
@@ -146,7 +145,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 		os.Exit(1)
 	}
 	for _, pkg := range ap.Packages {
-		log.WithFields(logrus.Fields{
+		log.WithFields(log.Fields{
 			"pkg":     pkg.Package.Package,
 			"repo":    pkg.Config.Repo.Name,
 			"type":    pkg.Config.Type,

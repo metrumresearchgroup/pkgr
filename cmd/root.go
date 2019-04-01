@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"github.com/metrumresearchgroup/pkgr/logger"
 	log "github.com/sirupsen/logrus"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 	"os"
@@ -112,7 +111,7 @@ func initConfig() {
 
 	configFilePath, _ := filepath.Abs(viper.ConfigFileUsed())
 	cwd, _ := os.Getwd()
-	log.WithFields(logrus.Fields{
+	log.WithFields(log.Fields{
 		"cwd": cwd,
 		"nwd": filepath.Dir(configFilePath),
 	}).Trace("setting directory to configuration file")

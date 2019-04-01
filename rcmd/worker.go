@@ -3,7 +3,6 @@ package rcmd
 import (
 	"time"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
@@ -18,14 +17,14 @@ func (w *Worker) Start() {
 			case ir := <-w.WorkQueue:
 				// Receive a work request.
 				startTime := time.Now()
-				log.WithFields(logrus.Fields{
+				log.WithFields(log.Fields{
 					"WID":     w.ID,
 					"package": ir.Package,
 				}).Trace("package install request received")
 				res, bPath, err := w.InstallFunc(appFS, ir, ir.Cache)
 				// if already installed so don't print a message since that would have already been printed
 				if res.ExitCode != -999 {
-					log.WithFields(logrus.Fields{
+					log.WithFields(log.Fields{
 						"WID":      w.ID,
 						"package":  ir.Package,
 						"duration": time.Since(startTime),
