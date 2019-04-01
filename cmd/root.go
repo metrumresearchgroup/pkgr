@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/metrumresearchgroup/pkgr/logger"
 	log "github.com/sirupsen/logrus"
@@ -23,6 +24,7 @@ import (
 	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/metrumresearchgroup/pkgr/configlib"
 	"github.com/spf13/cobra"
@@ -105,6 +107,8 @@ func initConfig() {
 	}
 	_ = viper.Unmarshal(&cfg)
 
+	installedPackages := scanInstalledPackages()
+	log.WithField("count", len(installedPackages)).Info("found installed packages")
 
 	configFilePath, _ := filepath.Abs(viper.ConfigFileUsed())
 	cwd, _ := os.Getwd()
@@ -115,4 +119,67 @@ func initConfig() {
 	_ = os.Chdir(filepath.Dir(configFilePath))
 
 
+}
+
+type InstalledPackage struct {
+	Name string
+	Version string
+	Repo string
+}
+
+func scanInstalledPackages() map[string]InstalledPackage {
+
+	installed := make(map[string]InstalledPackage)
+
+	installedLibrary, err := fs.Open(cfg.Library)
+
+	if err != nil {
+		//panic?
+		return installed
+	}
+
+	installedPkgs, _ := installedLibrary.Readdir(0)
+
+	for _, f := range installedPkgs {
+		descriptionFilePath := filepath.Join(cfg.Library, f.Name(), "DESCRIPTION")
+		descriptionFile, err := fs.Open(descriptionFilePath)//, _ := fs.Open()
+
+		if err != nil {
+			//panic?
+			log.WithField("file", descriptionFilePath).Warn("DESCRIPTION missing from installed package")
+		}
+		scanner := bufio.NewScanner(descriptionFile)//#bufio.Scanner(fs.Open(f))
+		log.WithField("description file", descriptionFilePath).Debug("scanning DESCRIPTION file")
+
+		var pkgName, pkgVersion, pkgRepo = "", "", ""
+		for scanner.Scan() {
+			splitLine := strings.Split(scanner.Text(), ":")
+			switch strings.ToLower(splitLine[0]) {
+			case "package":
+				pkgName = splitLine[1]
+			case "version":
+				pkgVersion = splitLine[1]
+			case "repository":
+				pkgRepo = splitLine[1]
+			default:
+				log.WithField("line", scanner.Text()).Debug("no info found on line")
+			}
+		}
+
+		if pkgName != "" {
+			log.WithFields(log.Fields{
+				"package": pkgName,
+				"version": pkgVersion,
+				"source repo": pkgRepo,
+			}).Info("found installed package")
+			installed[pkgName] = InstalledPackage {
+				Name: pkgName,
+				Version: pkgVersion,
+				Repo: pkgRepo,
+			}
+		} else {
+			log.WithField("description file", descriptionFilePath).Warn("encountered description file without package info")
+		}
+	}
+	return installed
 }
