@@ -26,7 +26,7 @@ func InitializeTestEnvironment(goldenSet, testName string) afero.Fs{
 		fmt.Println(fmt.Sprintf("%s", st) )
 	}
 
-	return testWorkDir, fileSystem
+	return fileSystem
 }
 
 func DestroyTestEnvironment() {
@@ -41,7 +41,7 @@ func DestroyTestEnvironment() {
 
 
 func TestGetPriorInstalledPackages_BasicTest (t *testing.T) {
-	fileSystem := InitializeTestEnvironment("basic-test1", "basic-test")
+	fileSystem := InitializeTestEnvironment("basic-test1", "basic-test1")
 
 	cwd, _ := filepath.Abs(".")
 	fmt.Println(fmt.Sprintf("Starting test with working directory %s", cwd ))
@@ -72,10 +72,6 @@ func TestGetPriorInstalledPackages_BasicTest (t *testing.T) {
 func installedPackagesAreEqual(expected, actual InstalledPackage) bool {
 	return expected.Name == actual.Name && expected.Version == actual.Version && expected.Repo == actual.Repo
 }
-
-
-
-
 
 
 func CopyDir(fs afero.Fs, src string, dst string) (string, error) {
