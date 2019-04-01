@@ -17,6 +17,7 @@ package cmd
 import (
 	"bufio"
 	"fmt"
+	"github.com/spf13/afero"
 	"os"
 	"path/filepath"
 	"strings"
@@ -68,7 +69,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 	startTime := time.Now()
 
 
-	installedPackages := GetPriorInstalledPackages(cfg.Library)
+	installedPackages := GetPriorInstalledPackages(fs, cfg.Library)
 	log.WithField("count", len(installedPackages)).Info("found installed packages")
 
 	var repos []cran.RepoURL
@@ -181,11 +182,11 @@ type InstalledPackage struct {
 	Repo string
 }
 
-func GetPriorInstalledPackages(libraryPath string) map[string]InstalledPackage {
+func GetPriorInstalledPackages(fileSystem afero.Fs, libraryPath string) map[string]InstalledPackage {
 
 	installed := make(map[string]InstalledPackage)
 
-	installedLibrary, err := fs.Open(libraryPath)
+	installedLibrary, err := fileSystem.Open(libraryPath)
 
 	if err != nil {
 		//panic?
@@ -196,7 +197,7 @@ func GetPriorInstalledPackages(libraryPath string) map[string]InstalledPackage {
 
 	for _, f := range installedPkgs {
 		descriptionFilePath := filepath.Join(libraryPath, f.Name(), "DESCRIPTION")
-		descriptionFile, err := fs.Open(descriptionFilePath)//, _ := fs.Open()
+		descriptionFile, err := fileSystem.Open(descriptionFilePath)//, _ := fs.Open()
 
 		if err != nil {
 			//panic?
