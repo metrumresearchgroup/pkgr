@@ -20,7 +20,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -35,11 +34,11 @@ var cleanCacheCmd = &cobra.Command{
 	Use:   "cache",
 	Short: "Subcommand to clean cached source and binary files.",
 	Long: `This command is a subcommand of the "clean" command.
-	
-	Using this command deletes cached source and binary files. Use the 
+
+	Using this command deletes cached source and binary files. Use the
 	--src and --binary options to specify which repos to clean each
 	file type from.
-	
+
 	`,
 	RunE: cache,
 }
@@ -62,7 +61,7 @@ func cleanCacheFolders() error {
 	cachePath := userCache(cfg.Cache)
 	repos := strings.Split(reposToClear, ",")
 
-	log.WithFields(logrus.Fields{
+	log.WithFields(log.Fields{
 		"repos argument": reposToClear,
 		"repos parsed":   sliceToString(repos),
 		"cache dir":      cachePath,
@@ -103,7 +102,7 @@ func deleteCacheSubfolders(repos []string, subfolder string, cacheDirectory stri
 
 	repoFolderFsObjects, _ := cacheDirFsObject.Readdir(0)
 
-	log.WithFields(logrus.Fields{
+	log.WithFields(log.Fields{
 		"repos argument": reposToClear,
 		"repos parsed":   sliceToString(repos),
 		"cache dir":      cacheDirectory,
@@ -133,7 +132,7 @@ func deleteCacheSubfolders(repos []string, subfolder string, cacheDirectory stri
 						subfolder,
 					)
 
-					log.WithFields(logrus.Fields{
+					log.WithFields(log.Fields{
 						"repoToClear":             repoToClear,
 						"repoFolderFsObject Name": repoFolderFsObject.Name(),
 						"subfolder":               subfolder,

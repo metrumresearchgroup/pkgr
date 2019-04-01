@@ -11,10 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
-
 	"github.com/dpastoor/goutils"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
 
@@ -162,7 +160,7 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 
 	resp, err := http.Get(pkgdl)
 	if resp.StatusCode != 200 {
-		log.WithFields(logrus.Fields{
+		log.WithFields(log.Fields{
 			"package":     d.Package.Package,
 			"url":         pkgdl,
 			"status":      resp.Status,
@@ -180,7 +178,7 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 	defer resp.Body.Close()
 	file, err := fs.Create(dest)
 	if err != nil {
-		log.WithFields(logrus.Fields{
+		log.WithFields(log.Fields{
 			"package": d.Package,
 			"err":     err,
 		}).Warn("error downloading package, no tarball created")

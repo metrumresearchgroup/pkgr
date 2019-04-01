@@ -20,8 +20,9 @@ import (
 	"time"
 
 	"github.com/metrumresearchgroup/pkgr/cran"
-	"github.com/metrumresearchgroup/pkgr/rcmd"
+	"github.com/metrumresearchgroup/pkgr/logger"
 	log "github.com/sirupsen/logrus"
+	"github.com/metrumresearchgroup/pkgr/rcmd"
 	"github.com/spf13/cobra"
 )
 
@@ -36,6 +37,14 @@ var installCmd = &cobra.Command{
 }
 
 func rInstall(cmd *cobra.Command, args []string) error {
+
+	//Init install-specific log, if one has been set. This overwrites the default log.
+	if cfg.Logging.Install != "" {
+		logger.AddLogFile(cfg.Logging.Install, cfg.Logging.Overwrite)
+	} else {
+		logger.AddLogFile(cfg.Logging.All, cfg.Logging.Overwrite)
+	}
+
 	startTime := time.Now()
 	rs := rcmd.NewRSettings()
 	rVersion := rcmd.GetRVersion(&rs)

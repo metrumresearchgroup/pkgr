@@ -1,2 +1,3 @@
 *.log
 */test-library
+**/test-library

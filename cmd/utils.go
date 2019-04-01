@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
