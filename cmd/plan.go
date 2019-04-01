@@ -15,8 +15,10 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -64,6 +66,11 @@ func init() {
 
 func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 	startTime := time.Now()
+
+
+	installedPackages := GetPriorInstalledPackages(cfg.Library)
+	log.WithField("count", len(installedPackages)).Info("found installed packages")
+
 	var repos []cran.RepoURL
 	for _, r := range cfg.Repos {
 		for nm, url := range r {
@@ -161,7 +168,72 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 	for pkg := range ip.DepDb {
 		pkgs = append(pkgs, pkg)
 	}
+
 	log.Infoln("total packages required:", len(ip.StartingPackages)+len(ip.DepDb))
 	log.Infoln("resolution time", time.Since(startTime))
 	return cdb, ip
+}
+
+
+type InstalledPackage struct {
+	Name string
+	Version string
+	Repo string
+}
+
+func GetPriorInstalledPackages(libraryPath string) map[string]InstalledPackage {
+
+	installed := make(map[string]InstalledPackage)
+
+	installedLibrary, err := fs.Open(libraryPath)
+
+	if err != nil {
+		//panic?
+		return installed
+	}
+
+	installedPkgs, _ := installedLibrary.Readdir(0)
+
+	for _, f := range installedPkgs {
+		descriptionFilePath := filepath.Join(libraryPath, f.Name(), "DESCRIPTION")
+		descriptionFile, err := fs.Open(descriptionFilePath)//, _ := fs.Open()
+
+		if err != nil {
+			//panic?
+			log.WithField("file", descriptionFilePath).Warn("DESCRIPTION missing from installed package")
+		}
+		scanner := bufio.NewScanner(descriptionFile)//#bufio.Scanner(fs.Open(f))
+		log.WithField("description file", descriptionFilePath).Debug("scanning DESCRIPTION file")
+
+		var pkgName, pkgVersion, pkgRepo = "", "", ""
+		for scanner.Scan() {
+			splitLine := strings.Split(scanner.Text(), ":")
+			switch strings.ToLower(splitLine[0]) {
+			case "package":
+				pkgName = strings.TrimSpace(splitLine[1])
+			case "version":
+				pkgVersion = strings.TrimSpace(splitLine[1])
+			case "repository":
+				pkgRepo = strings.TrimSpace(splitLine[1])
+			default:
+				log.WithField("line", scanner.Text()).Debug("no info found on line")
+			}
+		}
+
+		if pkgName != "" {
+			log.WithFields(log.Fields{
+				"package": pkgName,
+				"version": pkgVersion,
+				"source repo": pkgRepo,
+			}).Info("found installed package")
+			installed[pkgName] = InstalledPackage {
+				Name: pkgName,
+				Version: pkgVersion,
+				Repo: pkgRepo,
+			}
+		} else {
+			log.WithField("description file", descriptionFilePath).Warn("encountered description file without package info")
+		}
+	}
+	return installed
 }
