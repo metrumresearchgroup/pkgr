@@ -100,7 +100,7 @@ func TestGetPriorInstalledPackages_BasicTest (t *testing.T) {
 }
 
 func TestGetPriorInstalledPackages_NoPreinstalledPackages(t *testing.T) {
-	fileSystem := InitializeTestEnvironment("basic-test1", "basic-test1")
+	fileSystem := InitializeTestEnvironment("null-test", "null-test")
 
 	cwd, _ := filepath.Abs(".")
 	fmt.Println(fmt.Sprintf("Starting test with working directory %s", cwd ))
@@ -114,3 +114,4 @@ func TestGetPriorInstalledPackages_NoPreinstalledPackages(t *testing.T) {
 
 	DestroyTestEnvironment()
 }
+

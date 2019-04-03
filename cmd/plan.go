@@ -203,38 +203,45 @@ func GetPriorInstalledPackages(fileSystem afero.Fs, libraryPath string) map[stri
 			//panic?
 			log.WithField("file", descriptionFilePath).Warn("DESCRIPTION missing from installed package")
 		}
-		scanner := bufio.NewScanner(descriptionFile)//#bufio.Scanner(fs.Open(f))
 		log.WithField("description file", descriptionFilePath).Debug("scanning DESCRIPTION file")
 
-		var pkgName, pkgVersion, pkgRepo = "", "", ""
-		for scanner.Scan() {
-			splitLine := strings.Split(scanner.Text(), ":")
-			switch strings.ToLower(splitLine[0]) {
-			case "package":
-				pkgName = strings.TrimSpace(splitLine[1])
-			case "version":
-				pkgVersion = strings.TrimSpace(splitLine[1])
-			case "repository":
-				pkgRepo = strings.TrimSpace(splitLine[1])
-			default:
-				log.WithField("line", scanner.Text()).Debug("no info found on line")
-			}
-		}
+		installedPackage := parseDescriptionFile(descriptionFile)
 
-		if pkgName != "" {
+		if installedPackage.Name != "" {
 			log.WithFields(log.Fields{
-				"package": pkgName,
-				"version": pkgVersion,
-				"source repo": pkgRepo,
+				"package":     installedPackage.Name,
+				"version":     installedPackage.Version,
+				"source repo": installedPackage.Repo,
 			}).Info("found installed package")
-			installed[pkgName] = InstalledPackage {
-				Name: pkgName,
-				Version: pkgVersion,
-				Repo: pkgRepo,
-			}
+			installed[installedPackage.Name] = installedPackage
+			
 		} else {
 			log.WithField("description file", descriptionFilePath).Warn("encountered description file without package info")
 		}
 	}
 	return installed
+}
+
+func parseDescriptionFile(descriptionFile afero.File) InstalledPackage {
+	var pkgName, pkgVersion, pkgRepo = "", "", ""
+
+	scanner := bufio.NewScanner(descriptionFile)
+	for scanner.Scan() {
+		splitLine := strings.Split(scanner.Text(), ":")
+		switch strings.ToLower(splitLine[0]) {
+		case "package":
+			pkgName = strings.TrimSpace(splitLine[1])
+		case "version":
+			pkgVersion = strings.TrimSpace(splitLine[1])
+		case "repository":
+			pkgRepo = strings.TrimSpace(splitLine[1])
+		default:
+			log.WithField("line", scanner.Text()).Debug("no info found on line")
+		}
+	}
+	return InstalledPackage{
+		Name: pkgName,
+		Version: pkgVersion,
+		Repo: pkgRepo,
+	}
 }
