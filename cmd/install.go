@@ -21,8 +21,8 @@ import (
 
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/logger"
-	log "github.com/sirupsen/logrus"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -46,7 +46,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	}
 
 	startTime := time.Now()
-	rs := rcmd.NewRSettings()
+	rs := rcmd.NewRSettings(cfg.RPath)
 	rVersion := rcmd.GetRVersion(&rs)
 	log.Infoln("R Version " + rVersion.ToFullString())
 	cdb, ip := planInstall(rVersion)
