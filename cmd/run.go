@@ -34,7 +34,7 @@ var runCmd = &cobra.Command{
 
 func rRun(cmd *cobra.Command, args []string) error {
 
-	rs := rcmd.NewRSettings()
+	rs := rcmd.NewRSettings(cfg.RPath)
 	// installation through binary doesn't do this exactly, but its pretty close
 	// at least for experimentation for now. If necessary can refactor out the
 	// specifics so could be run here exactly.

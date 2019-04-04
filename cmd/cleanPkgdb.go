@@ -17,8 +17,10 @@ package cmd
 import (
 	"strings"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/metrumresearchgroup/pkgr/configlib"
+
 	"github.com/metrumresearchgroup/pkgr/rcmd"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -66,7 +68,7 @@ func cleanPackageDatabases(pkgdbs string) error {
 	}
 
 	totalPackageDbsProvided := len(pkgdbsToClear)
-	totalPackageDbsDeleted := removePackageDatabases(pkgdbsToClear)
+	totalPackageDbsDeleted := removePackageDatabases(pkgdbsToClear, cfg)
 
 	log.WithFields(log.Fields{
 		"Packages specified": totalPackageDbsProvided,
@@ -76,11 +78,11 @@ func cleanPackageDatabases(pkgdbs string) error {
 	return nil
 }
 
-func removePackageDatabases(pkgdbsToClear []string) error {
+func removePackageDatabases(pkgdbsToClear []string, cfg configlib.PkgrConfig) error {
 	var err error
 	var lastErr error
 
-	rs := rcmd.NewRSettings()
+	rs := rcmd.NewRSettings(cfg.RPath)
 	rVersion := rcmd.GetRVersion(&rs)
 
 	packageDatabase, _ := planInstall(rVersion)

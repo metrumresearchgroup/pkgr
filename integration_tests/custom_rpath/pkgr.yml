@@ -1,0 +1,12 @@
+Version: 1
+# top level packages
+Packages:
+  - R6
+  - pillar
+
+RPath: /usr/local/bin/R
+# any repositories, order matters
+Repos:
+  - CRAN: "https://cran.rstudio.com"
+
+Library: "test-library"
