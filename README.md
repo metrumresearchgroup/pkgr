@@ -129,7 +129,9 @@ Cache: "path/to/global/cache"
 
 # can log the actions and outcomes to a file for debugging and auditing
 Logging:
-  File: pkgr-install.log
+  all: pkgr-log.log
+  install: install-only-log.log
+  overwrite: true
 
 Customizations:
   - devtools:
@@ -141,7 +143,7 @@ For everything else, the default install behavior will stay in effect.
 
 For a third example, here is a configuration that also pulls from bioconductor:
 
-```
+```yaml
 Version: 1
 # top level packages
 Packages:
@@ -173,7 +175,9 @@ Library: pkgs
 
 Cache: pkgcache
 Logging:
-  File: pkgr-install.log
+  all: pkgr-log.log
+  install: install-only-log.log
+  overwrite: true
 ```
 
 # Pkgr and [Packrat](https://rstudio.github.io/packrat/)
