@@ -16,7 +16,9 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -62,8 +64,22 @@ func init() {
 	RootCmd.AddCommand(planCmd)
 }
 
-func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
+func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 	startTime := time.Now()
+
+	var packagesOfConcern []string
+	if cfg.PackratDir != "" {
+		packagesOfConcern = cfg.Packages
+		packratPackages := readPackratPackagesFromLockfile(filepath.Join(cfg.PackratDir, "packrat.lock"))
+		for _, packratPackage := range(packratPackages) {
+			packagesOfConcern = append(packagesOfConcern, packratPackage.Package)
+		}
+	} else {
+		packagesOfConcern = cfg.Packages
+	}
+
+	log.WithField("packages", packagesOfConcern).Info("Packages")
+
 	var repos []cran.RepoURL
 	for _, r := range cfg.Repos {
 		for nm, url := range r {
@@ -80,17 +96,19 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 			cic.Repos[rn] = cran.RepoConfig{DefaultSourceType: cran.Source}
 		}
 	}
-	cdb, err := cran.NewPkgDb(repos, st, cic, rv)
+
+	pkgNexus, err := cran.NewPkgNexus(repos, st, cic, rv)
+
 	if err != nil {
 		log.Panicln("error getting pkgdb ", err)
 	}
 	log.Infoln("Default package type: ", st.String())
-	for _, db := range cdb.Db {
+	for _, db := range pkgNexus.Db {
 		log.Infoln(fmt.Sprintf("%v:%v (binary:source) packages available in for %s from %s", len(db.Dbs[st]), len(db.Dbs[cran.Source]), db.Repo.Name, db.Repo.URL))
 	}
 	ids := gpsr.NewDefaultInstallDeps()
 	if cfg.Suggests {
-		for _, pkg := range cfg.Packages {
+		for _, pkg := range packagesOfConcern {
 			// set all top level packages to install suggests
 			dp := ids.Default
 			dp.Suggests = true
@@ -107,7 +125,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 				ids.Deps[pkg] = dp
 			}
 			if configlib.IsCustomizationSet("Repo", pkgSettings, pkg) {
-				err := cdb.SetPackageRepo(pkg, v.Repo)
+				err := pkgNexus.SetPackageRepo(pkg, v.Repo)
 				if err != nil {
 					log.WithFields(log.Fields{
 						"pkg":  pkg,
@@ -116,7 +134,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 				}
 			}
 			if configlib.IsCustomizationSet("Type", pkgSettings, pkg) {
-				err := cdb.SetPackageType(pkg, v.Type)
+				err := pkgNexus.SetPackageType(pkg, v.Type)
 				if err != nil {
 					log.WithFields(log.Fields{
 						"pkg":  pkg,
@@ -126,9 +144,9 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 			}
 		}
 	}
-	ap := cdb.GetPackages(cfg.Packages)
-	if len(ap.Missing) > 0 {
-		log.Errorln("missing packages: ", ap.Missing)
+	availablePkgs := pkgNexus.GetPackages(packagesOfConcern)
+	if len(availablePkgs.Missing) > 0 {
+		log.Errorln("missing packages: ", availablePkgs.Missing)
 		model := fuzzy.NewModel()
 
 		// For testing only, this is not advisable on production
@@ -137,14 +155,14 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 		// This expands the distance searched, but costs more resources (memory and time).
 		// For spell checking, "2" is typically enough, for query suggestions this can be higher
 		model.SetDepth(1)
-		pkgs := cdb.GetAllPkgsByName()
+		pkgs := pkgNexus.GetAllPkgsByName()
 		model.Train(pkgs)
-		for _, mp := range ap.Missing {
+		for _, mp := range availablePkgs.Missing {
 			log.Warnln("did you mean one of: ", model.Suggestions(mp, false))
 		}
 		os.Exit(1)
 	}
-	for _, pkg := range ap.Packages {
+	for _, pkg := range availablePkgs.Packages {
 		log.WithFields(log.Fields{
 			"pkg":     pkg.Package.Package,
 			"repo":    pkg.Config.Repo.Name,
@@ -152,7 +170,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 			"version": pkg.Package.Version,
 		}).Info("package repository set")
 	}
-	ip, err := gpsr.ResolveInstallationReqs(cfg.Packages, ids, cdb)
+	ip, err := gpsr.ResolveInstallationReqs(packagesOfConcern, ids, pkgNexus)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
@@ -163,5 +181,60 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 	}
 	log.Infoln("total packages required:", len(ip.StartingPackages)+len(ip.DepDb))
 	log.Infoln("resolution time", time.Since(startTime))
-	return cdb, ip
+	return pkgNexus, ip
+}
+
+type PackratStanza struct {
+	Package string
+	SourceRepo string
+	Version string
+	Hash string
+	Requires string //We won't use this so I won't bother parsing it out.
+}
+
+func readPackratPackagesFromLockfile(lockfilePath string) []PackratStanza {
+	//lockfile, err := fs.Open(lockfilePath)
+	//scanner := bufio.NewScanner(lockfile)
+
+	var returnList []PackratStanza
+
+	entireFile, _ := ioutil.ReadFile(lockfilePath)
+	entireFileAsString := string(entireFile)
+	stanzas := strings.Split(entireFileAsString, "\n\n")
+
+
+	for _, stanza := range(stanzas) {
+		var pkgName, sourceRepo, version, hash, requires = "", "", "", "", ""
+		lines := strings.Split(stanza, "\n")
+		for _, line := range(lines) {
+			tokens := strings.Split(line, ": ") //the space after the colon is important
+			key := tokens[0]
+			value := tokens[1]
+			switch key {
+			case "Package":
+				pkgName = value
+			case "Source":
+				sourceRepo = value
+			case "Version":
+				version = value
+			case "Hash":
+				hash = value
+			case "Requires":
+				requires = value
+			default:
+				log.WithField("key", key).Info("unprocessed key in packrat lockfile")
+			}
+		}
+		if(pkgName != "") {
+			returnList = append(returnList,
+				PackratStanza{
+					Package: pkgName,
+					SourceRepo: sourceRepo,
+					Version: version,
+					Hash: hash,
+					Requires: requires,
+				})
+		}
+	}
+	return returnList
 }

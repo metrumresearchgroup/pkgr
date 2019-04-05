@@ -10,9 +10,9 @@ import (
 	"github.com/metrumresearchgroup/pkgr/desc"
 )
 
-// NewPkgDb returns a new package database
-func NewPkgDb(urls []RepoURL, dst SourceType, cfgdb *InstallConfig, rv RVersion) (*PkgDb, error) {
-	db := PkgDb{
+// NewPkgNexus returns a new package database
+func NewPkgNexus(urls []RepoURL, dst SourceType, cfgdb *InstallConfig, rv RVersion) (*PkgNexus, error) {
+	db := PkgNexus{
 		Config:            cfgdb,
 		DefaultSourceType: dst,
 	}
@@ -53,7 +53,7 @@ func NewPkgDb(urls []RepoURL, dst SourceType, cfgdb *InstallConfig, rv RVersion)
 
 // SetPackageRepo sets a package repository so querying the package will
 // pull from that repo
-func (p *PkgDb) SetPackageRepo(pkg string, repo string) error {
+func (p *PkgNexus) SetPackageRepo(pkg string, repo string) error {
 	for _, r := range p.Db {
 		if r.Repo.Name == repo {
 			cfg := p.Config.Packages[pkg]
@@ -66,7 +66,7 @@ func (p *PkgDb) SetPackageRepo(pkg string, repo string) error {
 }
 
 // SetPackageType sets the package type (source/binary) for installation
-func (p *PkgDb) SetPackageType(pkg string, t string) error {
+func (p *PkgNexus) SetPackageType(pkg string, t string) error {
 	cfg := p.Config.Packages[pkg]
 	if strings.EqualFold(t, "source") {
 		cfg.Type = Source
@@ -107,7 +107,7 @@ func isCorrectRepo(pkg string, r RepoURL, cfg map[string]PkgConfig) bool {
 }
 
 // GetPackage gets a package from the package database, returning the first match
-func (p *PkgDb) GetPackage(pkg string) (desc.Desc, PkgConfig, bool) {
+func (p *PkgNexus) GetPackage(pkg string) (desc.Desc, PkgConfig, bool) {
 	cfg, exists := p.Config.Packages[pkg]
 	st := p.DefaultSourceType
 	if exists && cfg.Type != Default {
@@ -130,7 +130,7 @@ func (p *PkgDb) GetPackage(pkg string) (desc.Desc, PkgConfig, bool) {
 }
 
 // GetPackageFromRepo gets a package from a repo in the package database
-func (p *PkgDb) GetPackageFromRepo(pkg string, repo string) (desc.Desc, PkgConfig, bool) {
+func (p *PkgNexus) GetPackageFromRepo(pkg string, repo string) (desc.Desc, PkgConfig, bool) {
 	st := p.Config.Packages[pkg].Type
 	for _, db := range p.Db {
 		if repo != "" && db.Repo.Name != repo {
@@ -145,7 +145,7 @@ func (p *PkgDb) GetPackageFromRepo(pkg string, repo string) (desc.Desc, PkgConfi
 
 // GetPackages returns all packages and the repo that they
 // will be acquired from, as well as any missing packages
-func (p *PkgDb) GetPackages(pkgs []string) AvailablePkgs {
+func (p *PkgNexus) GetPackages(pkgs []string) AvailablePkgs {
 	ap := AvailablePkgs{}
 	for _, pkg := range pkgs {
 		pd, cfg, found := p.GetPackage(pkg)
@@ -163,7 +163,7 @@ func (p *PkgDb) GetPackages(pkgs []string) AvailablePkgs {
 // CheckAllAvailable returns whether all requested packages
 // are available in the package database. It is a simple wrapper
 // around GetPackages
-func (p *PkgDb) CheckAllAvailable(pkgs []string) bool {
+func (p *PkgNexus) CheckAllAvailable(pkgs []string) bool {
 	ap := p.GetPackages(pkgs)
 	if len(ap.Missing) > 0 {
 		return false
@@ -172,7 +172,7 @@ func (p *PkgDb) CheckAllAvailable(pkgs []string) bool {
 }
 
 // GetAllPkgsByName returns all packages in the database
-func (p *PkgDb) GetAllPkgsByName() []string {
+func (p *PkgNexus) GetAllPkgsByName() []string {
 	// use map so will remove duplicate packages
 	pkgMap := make(map[string]bool)
 	for _, db := range p.Db {

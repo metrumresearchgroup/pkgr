@@ -40,8 +40,8 @@ type PkgConfig struct {
 	Type SourceType
 }
 
-// PkgDb represents a package database
-type PkgDb struct {
+// PkgNexus represents a sort of phone book of all available repositories and packages in those repositories
+type PkgNexus struct {
 	Db                []*RepoDb
 	Config            *InstallConfig
 	DefaultSourceType SourceType
