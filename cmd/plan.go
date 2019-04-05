@@ -67,18 +67,18 @@ func init() {
 func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 	startTime := time.Now()
 
-	var packagesOfConcern []string
+	var pkgsToInstall []string
 	if cfg.PackratDir != "" {
-		packagesOfConcern = cfg.Packages
+		pkgsToInstall = cfg.Packages
 		packratPackages := readPackratPackagesFromLockfile(filepath.Join(cfg.PackratDir, "packrat.lock"))
 		for _, packratPackage := range(packratPackages) {
-			packagesOfConcern = append(packagesOfConcern, packratPackage.Package)
+			pkgsToInstall = append(pkgsToInstall, packratPackage.Package)
 		}
 	} else {
-		packagesOfConcern = cfg.Packages
+		pkgsToInstall = cfg.Packages
 	}
 
-	log.WithField("packages", packagesOfConcern).Info("Packages")
+	log.WithField("packages", pkgsToInstall).Info("Packages")
 
 	var repos []cran.RepoURL
 	for _, r := range cfg.Repos {
@@ -108,7 +108,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 	}
 	ids := gpsr.NewDefaultInstallDeps()
 	if cfg.Suggests {
-		for _, pkg := range packagesOfConcern {
+		for _, pkg := range pkgsToInstall {
 			// set all top level packages to install suggests
 			dp := ids.Default
 			dp.Suggests = true
@@ -144,7 +144,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 			}
 		}
 	}
-	availablePkgs := pkgNexus.GetPackages(packagesOfConcern)
+	availablePkgs := pkgNexus.GetPackages(pkgsToInstall)
 	if len(availablePkgs.Missing) > 0 {
 		log.Errorln("missing packages: ", availablePkgs.Missing)
 		model := fuzzy.NewModel()
@@ -170,7 +170,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 			"version": pkg.Package.Version,
 		}).Info("package repository set")
 	}
-	ip, err := gpsr.ResolveInstallationReqs(packagesOfConcern, ids, pkgNexus)
+	ip, err := gpsr.ResolveInstallationReqs(pkgsToInstall, ids, pkgNexus)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
@@ -207,22 +207,25 @@ func readPackratPackagesFromLockfile(lockfilePath string) []PackratStanza {
 		var pkgName, sourceRepo, version, hash, requires = "", "", "", "", ""
 		lines := strings.Split(stanza, "\n")
 		for _, line := range(lines) {
+			log.WithField("line", line).Debug("scanning line from lockfile")
 			tokens := strings.Split(line, ": ") //the space after the colon is important
-			key := tokens[0]
-			value := tokens[1]
-			switch key {
-			case "Package":
-				pkgName = value
-			case "Source":
-				sourceRepo = value
-			case "Version":
-				version = value
-			case "Hash":
-				hash = value
-			case "Requires":
-				requires = value
-			default:
-				log.WithField("key", key).Info("unprocessed key in packrat lockfile")
+			if len(tokens) == 2 {
+				key := tokens[0]
+				value := tokens[1]
+				switch key {
+				case "Package":
+					pkgName = value
+				case "Source":
+					sourceRepo = value
+				case "Version":
+					version = value
+				case "Hash":
+					hash = value
+				case "Requires":
+					requires = value
+				default:
+					log.WithField("key", key).Info("unprocessed key in packrat lockfile")
+				}
 			}
 		}
 		if(pkgName != "") {
