@@ -1,6 +1,10 @@
 package cmd
 
 import (
+	"errors"
+	"fmt"
+	"github.com/metrumresearchgroup/pkgr/desc"
+	"github.com/spf13/afero"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -41,4 +45,62 @@ func getWorkerCount() int {
 		}
 	}
 	return nworkers
+}
+
+func GetPriorInstalledPackages(fileSystem afero.Fs, libraryPath string) map[string]desc.Desc {
+	installed := make(map[string]desc.Desc)
+	installedLibrary, err := fileSystem.Open(libraryPath)
+
+	if err != nil {
+		log.WithField("libraryPath", libraryPath).Fatal("package library not found at given library path")
+		return installed
+	}
+	defer installedLibrary.Close()
+
+	installedPackageFolders, _ := installedLibrary.Readdir(0)
+
+	for _, pkgFolder := range installedPackageFolders {
+		descriptionFilePath := filepath.Join(libraryPath, pkgFolder.Name(), "DESCRIPTION")
+		installedPackage, err := scanInstalledPackage(descriptionFilePath, fileSystem)
+
+		if err != nil {
+			log.Error(err)
+			err = nil
+		} else {
+			log.WithFields(log.Fields{
+				"package":     installedPackage.Package,
+				"version":     installedPackage.Version,
+				"source repo": installedPackage.Repository,
+			}).Info("found installed package")
+
+			installed[installedPackage.Package] = installedPackage
+		}
+	}
+
+	return installed
+}
+
+
+func scanInstalledPackage(
+	descriptionFilePath string,	fileSystem afero.Fs) (desc.Desc, error) {
+
+	descriptionFile, err := fileSystem.Open(descriptionFilePath)
+
+	if err != nil {
+		log.WithField("file", descriptionFilePath).Warn("DESCRIPTION missing from installed package.")
+		return desc.Desc{}, err
+	}
+	defer descriptionFile.Close()
+
+	log.WithField("description file", descriptionFilePath).Debug("scanning DESCRIPTION file")
+
+	installedPackage, err := desc.ParseDesc(descriptionFile)
+
+	if installedPackage.Package != "" {
+		return installedPackage, nil
+	} else {
+		err = errors.New(fmt.Sprintf("encountered a description file without package name: %s", descriptionFile))
+		log.WithField("description file", descriptionFilePath).Error(err)
+		return desc.Desc{}, err
+	}
 }
