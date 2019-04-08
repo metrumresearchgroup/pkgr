@@ -15,8 +15,9 @@
 package cmd
 
 import (
-	"bufio"
+	"errors"
 	"fmt"
+	"github.com/metrumresearchgroup/pkgr/desc"
 	"github.com/spf13/afero"
 	"os"
 	"path/filepath"
@@ -175,73 +176,60 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 	return cdb, ip
 }
 
-
-type InstalledPackage struct {
-	Name string
-	Version string
-	Repo string
-}
-
-func GetPriorInstalledPackages(fileSystem afero.Fs, libraryPath string) map[string]InstalledPackage {
-
-	installed := make(map[string]InstalledPackage)
-
+func GetPriorInstalledPackages(fileSystem afero.Fs, libraryPath string) map[string]desc.Desc {
+	installed := make(map[string]desc.Desc)
 	installedLibrary, err := fileSystem.Open(libraryPath)
 
 	if err != nil {
-		//panic?
+		log.WithField("libraryPath", libraryPath).Fatal("package library not found at given library path")
 		return installed
 	}
+	defer installedLibrary.Close()
 
-	installedPkgs, _ := installedLibrary.Readdir(0)
+	installedPackageFolders, _ := installedLibrary.Readdir(0)
 
-	for _, f := range installedPkgs {
-		descriptionFilePath := filepath.Join(libraryPath, f.Name(), "DESCRIPTION")
-		descriptionFile, err := fileSystem.Open(descriptionFilePath)//, _ := fs.Open()
+	for _, pkgFolder := range installedPackageFolders {
+		descriptionFilePath := filepath.Join(libraryPath, pkgFolder.Name(), "DESCRIPTION")
+		installedPackage, err := scanInstalledPackage(descriptionFilePath, fileSystem)
 
 		if err != nil {
-			//panic?
-			log.WithField("file", descriptionFilePath).Warn("DESCRIPTION missing from installed package")
-		}
-		log.WithField("description file", descriptionFilePath).Debug("scanning DESCRIPTION file")
-
-		installedPackage := parseDescriptionFile(descriptionFile)
-
-		if installedPackage.Name != "" {
-			log.WithFields(log.Fields{
-				"package":     installedPackage.Name,
-				"version":     installedPackage.Version,
-				"source repo": installedPackage.Repo,
-			}).Info("found installed package")
-			installed[installedPackage.Name] = installedPackage
-			
+			log.Error(err)
+			err = nil
 		} else {
-			log.WithField("description file", descriptionFilePath).Warn("encountered description file without package info")
+			log.WithFields(log.Fields{
+				"package":     installedPackage.Package,
+				"version":     installedPackage.Version,
+				"source repo": installedPackage.Repository,
+			}).Info("found installed package")
+
+			installed[installedPackage.Package] = installedPackage
 		}
 	}
+
 	return installed
 }
 
-func parseDescriptionFile(descriptionFile afero.File) InstalledPackage {
-	var pkgName, pkgVersion, pkgRepo = "", "", ""
 
-	scanner := bufio.NewScanner(descriptionFile)
-	for scanner.Scan() {
-		splitLine := strings.Split(scanner.Text(), ":")
-		switch strings.ToLower(splitLine[0]) {
-		case "package":
-			pkgName = strings.TrimSpace(splitLine[1])
-		case "version":
-			pkgVersion = strings.TrimSpace(splitLine[1])
-		case "repository":
-			pkgRepo = strings.TrimSpace(splitLine[1])
-		default:
-			log.WithField("line", scanner.Text()).Debug("no info found on line")
-		}
+func scanInstalledPackage(
+	descriptionFilePath string,	fileSystem afero.Fs) (desc.Desc, error) {
+
+	descriptionFile, err := fileSystem.Open(descriptionFilePath)
+
+	if err != nil {
+		log.WithField("file", descriptionFilePath).Warn("DESCRIPTION missing from installed package.")
+		return desc.Desc{}, err
 	}
-	return InstalledPackage{
-		Name: pkgName,
-		Version: pkgVersion,
-		Repo: pkgRepo,
+	defer descriptionFile.Close()
+
+	log.WithField("description file", descriptionFilePath).Debug("scanning DESCRIPTION file")
+
+	installedPackage, err := desc.ParseDesc(descriptionFile)
+
+	if installedPackage.Package != "" {
+		return installedPackage, nil
+	} else {
+		err = errors.New(fmt.Sprintf("encountered a description file without package name: %s", descriptionFile))
+		log.WithField("description file", descriptionFilePath).Error(err)
+		return desc.Desc{}, err
 	}
 }

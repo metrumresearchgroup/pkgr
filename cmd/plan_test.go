@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/dpastoor/goutils"
+	"github.com/metrumresearchgroup/pkgr/desc"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/suite"
 
@@ -50,16 +51,16 @@ func (suite *PlanTestSuite) TestGetPriorInstalledPackages_BasicTest () {
 	cwd, _ := filepath.Abs(".")
 	fmt.Println(fmt.Sprintf("Starting test with working directory %s", cwd ))
 
-	expectedResult1 := InstalledPackage {
-		Name: "crayon",
+	expectedResult1 := desc.Desc {
+		Package: "crayon",
 		Version: "1.3.4",
-		Repo: "CRAN",
+		Repository: "CRAN",
 	}
 
-	expectedResult2 := InstalledPackage {
-		Name: "R6",
+	expectedResult2 := desc.Desc {
+		Package: "R6",
 		Version: "2.4.0",
-		Repo: "CRAN",
+		Repository: "CRAN",
 	}
 
 	libraryPath, _ := filepath.Abs(filepath.Join("testsite", "working", "basic-test1", "test-library"))
@@ -67,8 +68,8 @@ func (suite *PlanTestSuite) TestGetPriorInstalledPackages_BasicTest () {
 	actual := GetPriorInstalledPackages(suite.FileSystem, libraryPath)
 
 	suite.Equal(2, len(actual))
-	suite.True(installedPackagesAreEqual(expectedResult1, actual[expectedResult1.Name]))
-	suite.True(installedPackagesAreEqual(expectedResult2, actual[expectedResult2.Name]))
+	suite.True(installedPackagesAreEqual(expectedResult1, actual[expectedResult1.Package]))
+	suite.True(installedPackagesAreEqual(expectedResult2, actual[expectedResult2.Package]))
 
 
 }
@@ -92,8 +93,8 @@ func (suite *PlanTestSuite) TestGetPriorInstalledPackages_NoPreinstalledPackages
 
 //////// Utility
 
-func installedPackagesAreEqual(expected, actual InstalledPackage) bool {
-	return expected.Name == actual.Name && expected.Version == actual.Version && expected.Repo == actual.Repo
+func installedPackagesAreEqual(expected, actual desc.Desc) bool {
+	return expected.Package == actual.Package && expected.Version == actual.Version && expected.Repository == actual.Repository
 }
 
 
