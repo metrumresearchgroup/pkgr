@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/desc"
+	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/spf13/afero"
 	"os"
 	"path/filepath"
@@ -106,26 +107,20 @@ func scanInstalledPackage(
 	}
 }
 
-func GetOutOfDatePackages(installed map[string]desc.Desc, availablePackages cran.AvailablePkgs) map[string]OutdatedPackage {
-	outdatedPackages := make(map[string]OutdatedPackage)
+func GetOutOfDatePackages(installed map[string]desc.Desc, availablePackages cran.AvailablePkgs) []gpsr.OutdatedPackage {
+	var outdatedPackages []gpsr.OutdatedPackage
 
 	for _, pkgDl := range availablePackages.Packages {
 
 		pkgName := pkgDl.Package.Package
 
 		if _, found := installed[pkgName]; found {
-			outdatedPackages[pkgName] = OutdatedPackage {
+			outdatedPackages = append(outdatedPackages, gpsr.OutdatedPackage {
 				Package:    pkgName,
 				OldVersion: installed[pkgName].Version,
 				NewVersion: pkgDl.Package.Version,
-			}
+			})
 		}
 	}
 	return outdatedPackages
-}
-
-type OutdatedPackage struct {
-	Package string
-	OldVersion string
-	NewVersion string
 }

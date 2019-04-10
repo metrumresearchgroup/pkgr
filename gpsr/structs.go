@@ -4,6 +4,7 @@ package gpsr
 type InstallPlan struct {
 	StartingPackages []string
 	DepDb            map[string][]string
+	OutdatedPackages []OutdatedPackage
 }
 
 // PkgDeps contains which dependencies should be installed
@@ -19,4 +20,11 @@ type PkgDeps struct {
 type InstallDeps struct {
 	Deps    map[string]PkgDeps
 	Default PkgDeps
+}
+
+
+type OutdatedPackage struct {
+	Package string
+	OldVersion string
+	NewVersion string
 }
