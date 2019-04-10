@@ -186,7 +186,7 @@ func restoreUnupdatedPackages(fileSystem afero.Fs, packageBackupInfo []UpdateAtt
 				"old_version": info.OldVersion,
 				"new_version": info.NewVersion,
 			}).Warn("could not update package, restoring last-installed version")
-			err := fileSystem.Rename(info.BackupPackageDirectory, info.ActivePackageDirectory)
+			err := RenameDirRecursive(fileSystem, info.BackupPackageDirectory, info.ActivePackageDirectory)
 			if err != nil {
 				log.WithField("pkg", info.Package).Error(err)
 			}
