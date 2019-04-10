@@ -40,11 +40,13 @@ func (suite *UtilsTestSuite) TestTagOldInstallation_CreatesBackup() {
 
 	_, nilError1 := suite.FileSystem.Stat("test-library/__OLD__CatsAndOranges")
 	_, nilError2 := suite.FileSystem.Stat("test-library/__OLD__CatsAndOranges/DESCRIPTION")
-	_, notNilError := suite.FileSystem.Stat("test-library/CatsAndOranges")
+	_, notNilError1 := suite.FileSystem.Stat("test-library/CatsAndOranges")
+	_, notNilError2 := suite.FileSystem.Stat("test-library/CatsAndOranges/DESCRIPTION")
 
 	suite.True(nilError1 == nil)
 	suite.True(nilError2 == nil)
-	suite.True(notNilError != nil)
+	suite.True(notNilError1 != nil)
+	suite.True(notNilError2 != nil)
 
 
 }

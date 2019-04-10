@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"github.com/dpastoor/goutils"
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/desc"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
@@ -139,12 +140,14 @@ func tagOldInstallations(fileSystem afero.Fs, libraryPath string, outdatedPackag
 func tagOldInstallation(fileSystem afero.Fs, libraryPath string, outdatedPackage gpsr.OutdatedPackage) UpdateAttempt {
 	packageDir := filepath.Join(libraryPath, outdatedPackage.Package)
 	taggedPackageDir := filepath.Join(libraryPath, "__OLD__" + outdatedPackage.Package)
-	err := fileSystem.Rename(packageDir, taggedPackageDir)
+
+	err := RenameDirRecursive(fileSystem, packageDir, taggedPackageDir)
 
 	if err != nil {
 		log.WithField("package dir", packageDir).Warn("error when backing up outdated package")
 		log.Error(err)
 	}
+
 
 	return UpdateAttempt{
 		Package: outdatedPackage.Package,
@@ -154,6 +157,7 @@ func tagOldInstallation(fileSystem afero.Fs, libraryPath string, outdatedPackage
 		NewVersion: outdatedPackage.NewVersion,
 	}
 }
+
 
 func restoreUnupdatedPackages(fileSystem afero.Fs, packageBackupInfo []UpdateAttempt) {
 
@@ -189,6 +193,63 @@ func restoreUnupdatedPackages(fileSystem afero.Fs, packageBackupInfo []UpdateAtt
 		}
 	}
 }
+
+func RenameDirRecursive(fileSystem afero.Fs, oldPath string, newPath string) error {
+	err := CopyDir(fileSystem, oldPath, newPath )
+
+	if err != nil {
+		return err
+	}
+
+	err = fileSystem.RemoveAll(oldPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+//TODO: Move into goutils.
+func CopyDir(fs afero.Fs, src string, dst string) error {
+
+	err := fs.MkdirAll(dst, 0755)
+	if err != nil {
+		return err
+	}
+
+
+	openedDir, err := fs.Open(src)
+	if err != nil {
+		return err
+	}
+
+	directoryContents, err := openedDir.Readdir(0)
+
+	if err != nil {
+		return err
+	}
+
+	for _, item := range(directoryContents) {
+		srcSubPath := filepath.Join(src, item.Name())
+		dstSubPath := filepath.Join(dst, item.Name())
+		if item.IsDir() {
+			fs.Mkdir(dstSubPath, item.Mode())
+			err := CopyDir(fs, srcSubPath, dstSubPath)
+			if err != nil {
+				return err
+			}
+		} else {
+			_, err := goutils.CopyFS(fs, srcSubPath, dstSubPath)
+			if err != nil {
+				fmt.Print("Received error: ")
+				fmt.Println(err)
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 
 type UpdateAttempt struct {
 	Package string

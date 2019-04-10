@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/dpastoor/goutils"
 	"github.com/metrumresearchgroup/pkgr/desc"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/suite"
@@ -35,12 +34,10 @@ func InitializeTestEnvironment(fileSystem afero.Fs, goldenSet, testName string) 
 	testWorkDir := filepath.Join("testsite", "working", testName)
 	fileSystem.MkdirAll(testWorkDir, 0755)
 
-	st, err := CopyDir(fileSystem, goldenSetPath, testWorkDir)
+	err := CopyDir(fileSystem, goldenSetPath, testWorkDir)
 
 	if err != nil {
 		panic(err)
-	} else {
-		fmt.Println(fmt.Sprintf("%s", st) )
 	}
 }
 
@@ -97,33 +94,3 @@ func installedPackagesAreEqual(expected, actual desc.Desc) bool {
 	return expected.Package == actual.Package && expected.Version == actual.Version && expected.Repository == actual.Repository
 }
 
-
-func CopyDir(fs afero.Fs, src string, dst string) (string, error) {
-	openedDir, err := fs.Open(src)
-	if err != nil {
-		return "", err
-	}
-
-	stuff, err := openedDir.Readdir(0)
-
-	if err != nil {
-		return "", err
-	}
-
-	for _, item := range(stuff) {
-		srcSubPath := filepath.Join(src, item.Name())
-		dstSubPath := filepath.Join(dst, item.Name())
-		if item.IsDir() {
-			fs.Mkdir(dstSubPath, item.Mode())
-			CopyDir(fs, srcSubPath, dstSubPath)
-		} else {
-			_, err := goutils.CopyFS(fs, srcSubPath, dstSubPath)
-			if err != nil {
-				fmt.Print("Received error: ")
-				fmt.Println(err)
-			}
-		}
-	}
-
-	return "Created " + dst + " from " + src, nil
-}
