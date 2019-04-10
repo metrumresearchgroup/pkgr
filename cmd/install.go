@@ -16,8 +16,6 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/metrumresearchgroup/pkgr/gpsr"
-	"github.com/spf13/afero"
 	"path/filepath"
 	"time"
 
@@ -110,74 +108,6 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func tagOldInstallations(fileSystem afero.Fs, libraryPath string, outdatedPackages []gpsr.OutdatedPackage) []UpdateAttempt {
-	var updateAttempts []UpdateAttempt
 
-	//Tag each outdated pkg directory in library with "__OLD__"
-	for _, pkg := range outdatedPackages {
-		updateAttempts = append(updateAttempts, tagOldInstallation(fileSystem, libraryPath, pkg))
-	}
-
-	return updateAttempts
-}
-
-func tagOldInstallation(fileSystem afero.Fs, libraryPath string, outdatedPackage gpsr.OutdatedPackage) UpdateAttempt {
-	packageDir := filepath.Join(libraryPath, outdatedPackage.Package)
-	taggedPackageDir := filepath.Join(libraryPath, "__OLD__" + outdatedPackage.Package)
-	err := fileSystem.Rename(packageDir, taggedPackageDir)
-
-	if err != nil {
-		log.WithField("package dir", packageDir).Warn("error when backing up outdated package")
-		log.Error(err)
-	}
-
-	return UpdateAttempt{
-		Package: outdatedPackage.Package,
-		ActivePackageDirectory: packageDir,
-		BackupPackageDirectory: taggedPackageDir,
-		OldVersion: outdatedPackage.OldVersion,
-		NewVersion: outdatedPackage.NewVersion,
-	}
-}
-
-func restoreUnupdatedPackages(fileSystem afero.Fs, packageBackupInfo []UpdateAttempt) {
-
-	if len(packageBackupInfo) == 0 {
-		return
-	}
-
-	//libraryDirectoryFsObject, _ := fs.Open(libraryPath)
-	//packageFolderObjects, _ := libraryDirectoryFsObject.Readdir(0)
-
-	for _, info := range packageBackupInfo {
-		_, err := fileSystem.Stat(info.ActivePackageDirectory) //Checking existence
-		if err == nil {
-
-			fileSystem.RemoveAll(info.BackupPackageDirectory)
-
-			log.WithFields(log.Fields{
-				"pkg": info.Package,
-				"old_version": info.OldVersion,
-				"new_version": info.NewVersion,
-			}).Info("successfully updated package")
-
-		} else {
-			log.WithFields(log.Fields{
-				"pkg": info.Package,
-				"old_version": info.OldVersion,
-				"new_version": info.NewVersion,
-			}).Warn("could not update package, restoring last-installed version")
-			fileSystem.Rename(info.BackupPackageDirectory, info.ActivePackageDirectory)
-		}
-	}
-}
-
-type UpdateAttempt struct {
-	Package string
-	ActivePackageDirectory string
-	BackupPackageDirectory string
-	OldVersion string
-	NewVersion string
-}
 
 
