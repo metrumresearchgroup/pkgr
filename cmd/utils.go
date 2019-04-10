@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/desc"
 	"github.com/spf13/afero"
 	"os"
@@ -103,4 +104,28 @@ func scanInstalledPackage(
 		log.WithField("description file", descriptionFilePath).Error(err)
 		return desc.Desc{}, err
 	}
+}
+
+func getOutOfDatePackages(installed map[string]desc.Desc, availablePackages cran.AvailablePkgs) map[string]OutdatedPackage {
+	outdatedPackages := make(map[string]OutdatedPackage)
+
+	for _, pkgDl := range availablePackages.Packages {
+
+		pkgName := pkgDl.Package.Package
+
+		if _, found := installed[pkgName]; found {
+			outdatedPackages[pkgName] = OutdatedPackage {
+				Package:    pkgName,
+				OldVersion: installed[pkgName].Version,
+				NewVersion: pkgDl.Package.Version,
+			}
+		}
+	}
+	return outdatedPackages
+}
+
+type OutdatedPackage struct {
+	Package string
+	OldVersion string
+	NewVersion string
 }

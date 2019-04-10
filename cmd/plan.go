@@ -133,9 +133,9 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 			}
 		}
 	}
-	ap := cdb.GetPackages(cfg.Packages)
-	if len(ap.Missing) > 0 {
-		log.Errorln("missing packages: ", ap.Missing)
+	availablePackages := cdb.GetPackages(cfg.Packages)
+	if len(availablePackages.Missing) > 0 {
+		log.Errorln("missing packages: ", availablePackages.Missing)
 		model := fuzzy.NewModel()
 
 		// For testing only, this is not advisable on production
@@ -146,12 +146,12 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 		model.SetDepth(1)
 		pkgs := cdb.GetAllPkgsByName()
 		model.Train(pkgs)
-		for _, mp := range ap.Missing {
+		for _, mp := range availablePackages.Missing {
 			log.Warnln("did you mean one of: ", model.Suggestions(mp, false))
 		}
 		os.Exit(1)
 	}
-	for _, pkg := range ap.Packages {
+	for _, pkg := range availablePackages.Packages {
 		log.WithFields(log.Fields{
 			"pkg":     pkg.Package.Package,
 			"repo":    pkg.Config.Repo.Name,
@@ -159,19 +159,28 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 			"version": pkg.Package.Version,
 		}).Info("package repository set")
 	}
-	ip, err := gpsr.ResolveInstallationReqs(cfg.Packages, ids, cdb)
+	installPlan, err := gpsr.ResolveInstallationReqs(cfg.Packages, ids, cdb)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
 	}
-	pkgs := ip.StartingPackages
-	for pkg := range ip.DepDb {
+	pkgs := installPlan.StartingPackages
+	for pkg := range installPlan.DepDb {
 		pkgs = append(pkgs, pkg)
 	}
 
-	log.Infoln("total packages required:", len(ip.StartingPackages)+len(ip.DepDb))
+	outdatedPackages := getOutOfDatePackages(installedPackages, availablePackages)
+	for _, p := range outdatedPackages {
+		log.WithFields(log.Fields{
+			"pkg": p.Package,
+			"old_version": p.OldVersion,
+			"new_version": p.NewVersion,
+		}).Info("outdated package found")
+	}
+
+	log.Infoln("total packages required:", len(installPlan.StartingPackages)+len(installPlan.DepDb))
 	log.Infoln("resolution time", time.Since(startTime))
-	return cdb, ip
+	return cdb, installPlan
 }
 
 
