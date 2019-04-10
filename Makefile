@@ -40,8 +40,10 @@ log-test-reset:
 	cd ${TEST_HOME}/logging-config/overwrite-setting; echo "This text should be deleted" > logs/all.log
 	cd ${TEST_HOME}/logging-config/overwrite-setting; echo "This text should be deleted" > logs/install.log
 
-
-outdated-test: install
+outdated-test-reset:
 	rm -rf ${TEST_HOME}/outdated-pkgs/test-library/*
 	cp -r ${TEST_HOME}/outdated-pkgs/outdated-library/* ${TEST_HOME}/outdated-pkgs/test-library/
+
+outdated-test: install outdated-test-reset
 	cd ${TEST_HOME}/outdated-pkgs; pkgr plan
+	cd ${TEST_HOME}/outdated-pkgs; pkgr install --update

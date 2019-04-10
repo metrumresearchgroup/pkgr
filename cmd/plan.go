@@ -183,4 +183,3 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 	return cdb, installPlan
 }
 
-
