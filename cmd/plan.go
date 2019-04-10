@@ -169,7 +169,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
 		pkgs = append(pkgs, pkg)
 	}
 
-	outdatedPackages := getOutOfDatePackages(installedPackages, availablePackages)
+	outdatedPackages := GetOutOfDatePackages(installedPackages, availablePackages)
 	for _, p := range outdatedPackages {
 		log.WithFields(log.Fields{
 			"pkg": p.Package,

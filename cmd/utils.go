@@ -106,7 +106,7 @@ func scanInstalledPackage(
 	}
 }
 
-func getOutOfDatePackages(installed map[string]desc.Desc, availablePackages cran.AvailablePkgs) map[string]OutdatedPackage {
+func GetOutOfDatePackages(installed map[string]desc.Desc, availablePackages cran.AvailablePkgs) map[string]OutdatedPackage {
 	outdatedPackages := make(map[string]OutdatedPackage)
 
 	for _, pkgDl := range availablePackages.Packages {

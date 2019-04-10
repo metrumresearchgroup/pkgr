@@ -26,6 +26,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+
+var updateArgument bool
+
 // installCmd represents the R CMD install command
 var installCmd = &cobra.Command{
 	Use:   "install",
@@ -34,6 +37,11 @@ var installCmd = &cobra.Command{
 	install a package
  `,
 	RunE: rInstall,
+}
+
+func init() {
+	installCmd.Flags().BoolVar(&updateArgument, "update", false, "Update outdated packages during installation.")
+	RootCmd.AddCommand(installCmd)
 }
 
 func rInstall(cmd *cobra.Command, args []string) error {
@@ -91,6 +99,4 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func init() {
-	RootCmd.AddCommand(installCmd)
-}
+
