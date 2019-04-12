@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/dpastoor/goutils"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/suite"
@@ -130,43 +131,65 @@ func (suite *UtilsTestSuite) TestRestoreUnupdatedPackages_RestoresOneAndAllowsAn
 	suite.False(afero.Exists(suite.FileSystem, "test-library/DogsAndBananas/DESCRIPTION_OLD"))
 }
 
+func (suite *UtilsTestSuite) TestScanInstalledPackage_ScansReleventFieldsForOutdatedComparison() {
+	_ = suite.FileSystem.MkdirAll("test-library/CatsAndOranges", 0755)
+	_, _ = suite.FileSystem.Create("test-library/CatsAndOranges/DESCRIPTION")
 
-
-//////// Utility
-
+	descriptionFileContents := []string{
+		"Package: releasy",
+		"Title: Simple Functions to Make and Download GitHub Releases",
+		"Version: 0.0.0.9000",
+		"Authors@R:",
+		"    person(given = \"CatsAndOranges\",",
+		"           family = \"Guy\",",
+		"           role = c(\"aut\", \"cre\"),",
+		"           email = \"animalsAndFruitsMakeGreatNonsense@hotmail.com\")",
+		"Description: A description, please",
+		"License: What license it uses",
+		"Encoding: UTF-8",
+		"LazyData: true",
+		"Imports:",
+		"    httr,",
+		"    gh,",
+		"    purrr,",
+		"    yaml,",
+		"   config",
+		"RoxygenNote: 6.1.1",
+		"Suggests:",
+		"    testthat",
+	}
 /*
-func installedPackagesAreEqual(expected, actual desc.Desc) bool {
-	return expected.Package == actual.Package && expected.Version == actual.Version && expected.Repository == actual.Repository
-}
+	expectedResults := desc.Desc {
+		Package     : "releasy",
+		//Source      : "",
+		Version     : "0.0.0.9000",
+		//Maintainer  : "",
+		Description : "A description, please",
+		//MD5sum      : "",
+		//Remotes     : "",
+		//Repository  : "",
+		//Imports     :
+		//Suggests    :
+		//Depends     :
+		//LinkingTo   :
+	}
 */
-/*
-func CopyDir(fs afero.Fs, src string, dst string) (string, error) {
-	openedDir, err := fs.Open(src)
-	if err != nil {
-		return "", err
-	}
+	goutils.WriteLinesFS(suite.FileSystem, descriptionFileContents, "test-library/CatsAndOranges/DESCRIPTION")
 
-	stuff, err := openedDir.Readdir(0)
+	actualResults, err := scanInstalledPackage("test-library/CatsAndOranges/DESCRIPTION", suite.FileSystem)
 
-	if err != nil {
-		return "", err
-	}
-
-	for _, item := range(stuff) {
-		srcSubPath := filepath.Join(src, item.Name())
-		dstSubPath := filepath.Join(dst, item.Name())
-		if item.IsDir() {
-			fs.Mkdir(dstSubPath, item.Mode())
-			CopyDir(fs, srcSubPath, dstSubPath)
-		} else {
-			_, err := goutils.CopyFS(fs, srcSubPath, dstSubPath)
-			if err != nil {
-				fmt.Print("Received error: ")
-				fmt.Println(err)
-			}
-		}
-	}
-
-	return "Created " + dst + " from " + src, nil
+	suite.Nil(err)
+	suite.Equal(actualResults.Version, "0.0.0.9000")
+	suite.Equal(actualResults.Package, "releasy")
 }
-*/
+
+func (suite *UtilsTestSuite) TestScanInstalledPackage_ReturnsNilWhenNoDescriptionFileFound() {
+	_ = suite.FileSystem.MkdirAll("test-library/CatsAndOranges", 0755)
+	//_, _ = suite.FileSystem.Create("test-library/CatsAndOranges/DESCRIPTION")
+
+	actualResults, err := scanInstalledPackage("test-library/CatsAndOranges/DESCRIPTION", suite.FileSystem)
+
+	suite.NotNil(err)
+	suite.Equal(actualResults.Version, "")
+	suite.Equal(actualResults.Package, "")
+}

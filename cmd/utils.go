@@ -117,7 +117,9 @@ func GetOutdatedPackages(installed map[string]desc.Desc, availablePackages cran.
 		availableVersion := pkgDl.Package.Version
 
 		if installedPkg, found := installed[pkgName]; found {
-			if availableVersion != installedPkg.Version {
+
+			// If available version is later than currently installed version
+			if desc.CompareVersionStrings(availableVersion, installedPkg.Version) > 0 {
 				outdatedPackages = append(outdatedPackages, gpsr.OutdatedPackage {
 					Package:    pkgName,
 					OldVersion: installed[pkgName].Version,
