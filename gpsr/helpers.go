@@ -10,7 +10,7 @@ func isDefaultPackage(pkg string) bool {
 	return exists
 }
 
-func appendToGraph(m Graph, d desc.Desc, ids InstallDeps, pkgdb *cran.PkgDb) {
+func appendToGraph(m Graph, d desc.Desc, ids InstallDeps, pkgdb *cran.PkgNexus) {
 	var reqs []string
 	id, exists := ids.Deps[d.Package]
 	if !exists {

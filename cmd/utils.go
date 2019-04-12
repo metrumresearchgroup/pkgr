@@ -129,7 +129,7 @@ func GetOutdatedPackages(installed map[string]desc.Desc, availablePackages cran.
 	return outdatedPackages
 }
 
-func tagOldInstallations(fileSystem afero.Fs, libraryPath string, outdatedPackages []gpsr.OutdatedPackage) []UpdateAttempt {
+func preparePackagesForUpdate(fileSystem afero.Fs, libraryPath string, outdatedPackages []gpsr.OutdatedPackage) []UpdateAttempt {
 	var updateAttempts []UpdateAttempt
 
 	//Tag each outdated pkg directory in library with "__OLD__"

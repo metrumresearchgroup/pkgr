@@ -64,7 +64,7 @@ func init() {
 	RootCmd.AddCommand(planCmd)
 }
 
-func planInstall(rv cran.RVersion) (*cran.PkgDb, gpsr.InstallPlan) {
+func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 	startTime := time.Now()
 
 
