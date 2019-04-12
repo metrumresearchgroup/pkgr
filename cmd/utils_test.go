@@ -38,15 +38,10 @@ func (suite *UtilsTestSuite) TestTagOldInstallation_CreatesBackup() {
 
 	tagOldInstallation(suite.FileSystem, "test-library", outdatedPackageFixture)
 
-	_, nilError1 := suite.FileSystem.Stat("test-library/__OLD__CatsAndOranges")
-	_, nilError2 := suite.FileSystem.Stat("test-library/__OLD__CatsAndOranges/DESCRIPTION")
-	_, notNilError1 := suite.FileSystem.Stat("test-library/CatsAndOranges")
-	_, notNilError2 := suite.FileSystem.Stat("test-library/CatsAndOranges/DESCRIPTION")
-
-	suite.True(nilError1 == nil)
-	suite.True(nilError2 == nil)
-	suite.True(notNilError1 != nil)
-	suite.True(notNilError2 != nil)
+	suite.True(afero.DirExists(suite.FileSystem, "test-library/__OLD__CatsAndOranges"))
+	suite.True(afero.Exists(suite.FileSystem, "test-library/__OLD__CatsAndOranges/DESCRIPTION"))
+	suite.False(afero.DirExists(suite.FileSystem, "test-library/CatsAndOranges"))
+	suite.False(afero.Exists(suite.FileSystem, "test-library/CatsAndOranges/DESCRIPTION"))
 }
 
 func (suite *UtilsTestSuite) TestRestoreUnupdatedPackages_RestoresWhenNoActiveInstallation() {
@@ -64,15 +59,10 @@ func (suite *UtilsTestSuite) TestRestoreUnupdatedPackages_RestoresWhenNoActiveIn
 	}
 	restoreUnupdatedPackages(suite.FileSystem, updateAttemptFixture)
 
-	_, nilError1 := suite.FileSystem.Stat("test-library/CatsAndOranges")
-	_, nilError2 := suite.FileSystem.Stat("test-library/CatsAndOranges/DESCRIPTION")
-	_, notNilError1 := suite.FileSystem.Stat("test-library/__OLD__CatsAndOranges")
-	_, notNilError2 := suite.FileSystem.Stat("test-library/__OLD__CatsAndOranges/DESCRIPTION")
-
-	suite.True(nilError1 == nil)
-	suite.True(nilError2 == nil)
-	suite.True(notNilError1 != nil)
-	suite.True(notNilError2 != nil)
+	suite.True(afero.DirExists(suite.FileSystem, "test-library/CatsAndOranges"))
+	suite.True(afero.Exists(suite.FileSystem, "test-library/CatsAndOranges/DESCRIPTION"))
+	suite.False(afero.DirExists(suite.FileSystem, "test-library/__OLD__CatsAndOranges"))
+	suite.False(afero.Exists(suite.FileSystem, "test-library/__OLD__CatsAndOranges/DESCRIPTION"))
 
 }
 
@@ -93,18 +83,12 @@ func (suite *UtilsTestSuite) TestRestoreUnupdatedPackages_DoesNotRestoreWhenProp
 	}
 	restoreUnupdatedPackages(suite.FileSystem, updateAttemptFixture)
 
-	_, nilError1 := suite.FileSystem.Stat("test-library/CatsAndOranges")
-	_, nilError2 := suite.FileSystem.Stat("test-library/CatsAndOranges/DESCRIPTION")
-	_, notNilError1 := suite.FileSystem.Stat("test-library/__OLD__CatsAndOranges")
-	_, notNilError2 := suite.FileSystem.Stat("test-library/__OLD__CatsAndOranges/DESCRIPTION_OLD")
-	_, notNilError3 := suite.FileSystem.Stat("test-library/CatsAndOranges/DESCRIPTION_OLD")
 
-	suite.True(nilError1 == nil)
-	suite.True(nilError2 == nil)
-	suite.True(notNilError1 != nil)
-	suite.True(notNilError2 != nil)
-	suite.True(notNilError3 != nil)
-
+	suite.True(afero.DirExists(suite.FileSystem, "test-library/CatsAndOranges"))
+	suite.True(afero.Exists(suite.FileSystem, "test-library/CatsAndOranges/DESCRIPTION"))
+	suite.False(afero.DirExists(suite.FileSystem, "test-library/__OLD__CatsAndOranges"))
+	suite.False(afero.Exists(suite.FileSystem, "test-library/__OLD__CatsAndOranges/DESCRIPTION_OLD"))
+	suite.False(afero.Exists(suite.FileSystem, "test-library/CatsAndOranges/DESCRIPTION_OLD"))
 }
 
 func (suite *UtilsTestSuite) TestRestoreUnupdatedPackages_RestoresOneAndAllowsAnother() {
@@ -135,29 +119,15 @@ func (suite *UtilsTestSuite) TestRestoreUnupdatedPackages_RestoresOneAndAllowsAn
 	}
 	restoreUnupdatedPackages(suite.FileSystem, updateAttemptFixture)
 
-	//Expect to find
-	_, nilError1 := suite.FileSystem.Stat("test-library/CatsAndOranges")
-	_, nilError2 := suite.FileSystem.Stat("test-library/CatsAndOranges/DESCRIPTION_OLD")
-	_, nilError3 := suite.FileSystem.Stat("test-library/DogsAndBananas")
-	_, nilError4 := suite.FileSystem.Stat("test-library/DogsAndBananas/DESCRIPTION")
-
-	//Expect not to find
-	_, notNilError1 := suite.FileSystem.Stat("test-library/__OLD__CatsAndOranges")
-	_, notNilError2 := suite.FileSystem.Stat("test-library/__OLD__CatsAndOranges/DESCRIPTION_OLD")
-	_, notNilError3 := suite.FileSystem.Stat("test-library/__OLD__DogsAndBananas")
-	_, notNilError4 := suite.FileSystem.Stat("test-library/__OLD__DogsAndBananas/DESCRIPTION_OLD")
-	_, notNilError5 := suite.FileSystem.Stat("test-library/DogsAndBananas/DESCRIPTION_OLD")
-
-	suite.True(nilError1 == nil)
-	suite.True(nilError2 == nil)
-	suite.True(nilError3 == nil)
-	suite.True(nilError4 == nil)
-	suite.True(notNilError1 != nil)
-	suite.True(notNilError2 != nil)
-	suite.True(notNilError3 != nil)
-	suite.True(notNilError4 != nil)
-	suite.True(notNilError5 != nil)
-
+	suite.True(afero.DirExists(suite.FileSystem, "test-library/CatsAndOranges"))
+	suite.True(afero.Exists(suite.FileSystem, "test-library/CatsAndOranges/DESCRIPTION_OLD"))
+	suite.True(afero.DirExists(suite.FileSystem, "test-library/DogsAndBananas"))
+	suite.True(afero.Exists(suite.FileSystem, "test-library/DogsAndBananas/DESCRIPTION"))
+	suite.False(afero.DirExists(suite.FileSystem, "test-library/__OLD__CatsAndOranges"))
+	suite.False(afero.Exists(suite.FileSystem, "test-library/__OLD__CatsAndOranges/DESCRIPTION_OLD"))
+	suite.False(afero.DirExists(suite.FileSystem, "test-library/__OLD__DogsAndBananas"))
+	suite.False(afero.Exists(suite.FileSystem, "test-library/__OLD__DogsAndBananas/DESCRIPTION_OLD"))
+	suite.False(afero.Exists(suite.FileSystem, "test-library/DogsAndBananas/DESCRIPTION_OLD"))
 }
 
 
