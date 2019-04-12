@@ -7,12 +7,12 @@ import (
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/desc"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
+	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
 	"runtime"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 // returns the cache or sets to a cache dir
@@ -99,13 +99,13 @@ func scanInstalledPackage(
 
 	installedPackage, err := desc.ParseDesc(descriptionFile)
 
-	if installedPackage.Package != "" {
-		return installedPackage, nil
-	} else {
+	if installedPackage.Package == "" {
 		err = errors.New(fmt.Sprintf("encountered a description file without package name: %s", descriptionFile))
 		log.WithField("description file", descriptionFilePath).Error(err)
 		return desc.Desc{}, err
 	}
+
+	return installedPackage, nil
 }
 
 func GetOutdatedPackages(installed map[string]desc.Desc, availablePackages cran.AvailablePkgs) []gpsr.OutdatedPackage {
@@ -114,13 +114,16 @@ func GetOutdatedPackages(installed map[string]desc.Desc, availablePackages cran.
 	for _, pkgDl := range availablePackages.Packages {
 
 		pkgName := pkgDl.Package.Package
+		availableVersion := pkgDl.Package.Version
 
-		if _, found := installed[pkgName]; found {
-			outdatedPackages = append(outdatedPackages, gpsr.OutdatedPackage {
-				Package:    pkgName,
-				OldVersion: installed[pkgName].Version,
-				NewVersion: pkgDl.Package.Version,
-			})
+		if installedPkg, found := installed[pkgName]; found {
+			if availableVersion != installedPkg.Version {
+				outdatedPackages = append(outdatedPackages, gpsr.OutdatedPackage {
+					Package:    pkgName,
+					OldVersion: installed[pkgName].Version,
+					NewVersion: pkgDl.Package.Version,
+				})
+			}
 		}
 	}
 	return outdatedPackages
