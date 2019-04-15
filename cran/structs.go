@@ -52,6 +52,11 @@ type Download struct {
 	Path     string
 	New      bool
 	Metadata PkgDl
+	Size	 int64
+}
+
+func (d Download) GetMegabytes() float64 {
+	return float64(d.Size) / (1024 * 1024)
 }
 
 // PkgDl holds the metadata needed to download a package
