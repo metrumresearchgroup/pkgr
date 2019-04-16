@@ -10,7 +10,7 @@ import (
 func TestConfigureArgs(t *testing.T) {
 	assert := assert.New(t)
 
-	defaultRS := NewRSettings()
+	defaultRS := NewRSettings("")
 	// there should always be at least one libpath
 	defaultRS.LibPaths = []string{"path/to/install/lib"}
 	defaultRS.PkgEnvVars["dplyr"] = map[string]string{"DPLYR_ENV": "true"}

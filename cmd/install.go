@@ -50,9 +50,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	// Initialize log and start time.
 	initInstallLog()
 	startTime := time.Now()
-
-	// Initialize objects to hold R settings and metadata.
-	rSettings := rcmd.NewRSettings()
+	rSettings := rcmd.NewRSettings(cfg.RPath)
 	rVersion := rcmd.GetRVersion(&rSettings)
 	log.Infoln("R Version " + rVersion.ToFullString())
 
@@ -139,7 +137,3 @@ func getPackagesToDownload(installPlan gpsr.InstallPlan, pkgNexus *cran.PkgNexus
 	}
 	return toDl
 }
-
-
-
-

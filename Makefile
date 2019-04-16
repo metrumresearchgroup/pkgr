@@ -8,7 +8,7 @@ TEST_HOME=${MAKE_HOME}/integration_tests
 install:
 	cd cmd/pkgr; go install ${LDFLAGS}
 
-test-multiple:
+test-multiple: install
 	cd ${TEST_HOME}
 
 	rm -rf master/test-library/*
@@ -27,7 +27,7 @@ test-multiple:
 
 	#-cd ${TEST_HOME}/simple-suggests; pkgr install
 
-log-test: install
+log-test: install log-test-reset
 	cd ${TEST_HOME}/logging-config/install-log; pkgr install
 	cd ${TEST_HOME}/logging-config/default; pkgr install
 	cd ${TEST_HOME}/logging-config/overwrite-setting; pkgr install
