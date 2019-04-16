@@ -15,6 +15,7 @@ import (
 
 	"github.com/metrumresearchgroup/pkgr/desc"
 	homedir "github.com/mitchellh/go-homedir"
+	log "github.com/sirupsen/logrus"
 )
 
 // NewRepoDb returns a new Repo database
@@ -189,7 +190,7 @@ func (r *RepoDb) FetchPackages(rv RVersion) error {
 	for i := 0; i < len(r.Dbs); i++ {
 		result := <-dlchan
 		if result.Err != nil {
-			fmt.Printf("error downloading repo %s, type: %s, with information: %s\n", r.Repo.Name, result.St, result.Err)
+			log.Warnf("error downloading repo %s, type: %s, with information: %s\n", r.Repo.Name, result.St, result.Err)
 			nerr++
 			lasterr = result.Err
 			// if one repo fails should return the error and not continue

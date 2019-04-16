@@ -11,7 +11,7 @@ import (
 
 func TestRVersionExecution(t *testing.T) {
 	assert := assert.New(t)
-	rs := NewRSettings()
+	rs := NewRSettings("")
 	// this test expects a machine with R 3.5.2 available on the default System Path
 	// TODO: refactor to make more generalized or mock
 	expected := cran.RVersion{3, 5, 2}

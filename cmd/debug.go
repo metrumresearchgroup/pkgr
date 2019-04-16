@@ -21,17 +21,17 @@ import (
 	"github.com/spf13/viper"
 )
 
-// showCmd shows information about internal settings
-var showCmd = &cobra.Command{
-	Use:   "show",
-	Short: "show with the cli",
+// debugCmd debugs information about internal settings
+var debugCmd = &cobra.Command{
+	Use:   "debug",
+	Short: "debug with the cli",
 	Long: `
-	show internal settings
+	debug internal settings
  `,
-	RunE: rShow,
+	RunE: rDebug,
 }
 
-func rShow(cmd *cobra.Command, args []string) error {
+func rDebug(cmd *cobra.Command, args []string) error {
 
 	//AppFs := afero.NewOsFs()
 	// can use this to redirect log output
@@ -44,14 +44,15 @@ func rShow(cmd *cobra.Command, args []string) error {
 	as := viper.AllSettings()
 	fmt.Println(as)
 	fmt.Println("subs:")
-	fmt.Println(viper.Sub("Customizations"))
-	fmt.Println(viper.Sub("Customizations").AllSettings()["packages"])
-	fmt.Println(viper.Sub("Customizations").AllSettings()["repos"])
+	if viper.Sub("Customizations") != nil {
+		fmt.Println(viper.Sub("Customizations").AllSettings()["packages"])
+		fmt.Println(viper.Sub("Customizations").AllSettings()["repos"])
+	}
 	fmt.Println("------config-------")
 	prettyPrint(cfg)
 	return nil
 }
 
 func init() {
-	RootCmd.AddCommand(showCmd)
+	RootCmd.AddCommand(debugCmd)
 }

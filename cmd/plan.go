@@ -45,7 +45,7 @@ var planCmd = &cobra.Command{
 
 func plan(cmd *cobra.Command, args []string) error {
 	log.Infof("Installation would launch %v workers\n", getWorkerCount())
-	rs := rcmd.NewRSettings()
+	rs := rcmd.NewRSettings(cfg.RPath)
 	rVersion := rcmd.GetRVersion(&rs)
 	log.Infoln("R Version " + rVersion.ToFullString())
 	_, ip := planInstall(rVersion)
