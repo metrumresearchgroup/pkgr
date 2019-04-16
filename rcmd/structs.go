@@ -17,15 +17,9 @@ type ExecSettings struct {
 	WorkDir string `json:"work_dir,omitempty"`
 }
 
-type RVersion struct {
-	Major int
-	Minor int
-	Patch int
-}
-
 // RSettings controls settings related to managing libraries
 type RSettings struct {
-	Version       RVersion                     `json:"r_version,omitempty"`
+	Version       cran.RVersion                `json:"r_version,omitempty"`
 	LibPaths      []string                     `json:"lib_paths,omitempty"`
 	Rpath         string                       `json:"rpath,omitempty"`
 	GlobalEnvVars map[string]string            `json:"global_env_vars,omitempty"`

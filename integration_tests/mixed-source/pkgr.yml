@@ -10,7 +10,7 @@ Repos:
   # - CRAN: "https://cran.microsoft.com/snapshot/2018-11-18"
    - CRAN: "https://cran.rstudio.com"
 
-Library: "testsets/mixed-source"
+Library: "test-library"
 
 Cache: "testsets/pkgcache"
 

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -23,7 +22,7 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 			envVars = append(envVars, fmt.Sprintf("%s=%s", k, v))
 			envMap[k] = v
 		}
-		log.WithFields(logrus.Fields{
+		log.WithFields(log.Fields{
 			"envs":    envVars,
 			"package": pkg,
 		}).Trace("Custom Environment Variables")

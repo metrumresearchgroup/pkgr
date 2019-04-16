@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/metrumresearchgroup/pkgr/desc"
 )
 
 // NewPkgDb returns a new package database
-func NewPkgDb(urls []RepoURL, dst SourceType, cfgdb *InstallConfig) (*PkgDb, error) {
+func NewPkgDb(urls []RepoURL, dst SourceType, cfgdb *InstallConfig, rv RVersion) (*PkgDb, error) {
 	db := PkgDb{
 		Config:            cfgdb,
 		DefaultSourceType: dst,
@@ -18,17 +20,21 @@ func NewPkgDb(urls []RepoURL, dst SourceType, cfgdb *InstallConfig) (*PkgDb, err
 		return &db, errors.New("Package database must contain at least one RepoUrl")
 	}
 	type rd struct {
-		Url RepoURL
-		Rdb *RepoDb
-		Err error
+		Url       RepoURL
+		Rdb       *RepoDb
+		repoIndex int
+		Err       error
 	}
 	rdbc := make(chan rd, len(urls))
 	defer close(rdbc)
+	ri := 0
 	for _, url := range urls {
-		go func(url RepoURL, dst SourceType) {
-			rdb, err := NewRepoDb(url, dst, cfgdb.Repos[url.Name])
-			rdbc <- rd{url, rdb, err}
-		}(url, dst)
+		db.Db = append(db.Db, nil)
+		go func(url RepoURL, dst SourceType, ri int) {
+			rdb, err := NewRepoDb(url, dst, cfgdb.Repos[url.Name], rv)
+			rdbc <- rd{url, rdb, ri, err}
+		}(url, dst, ri)
+		ri++
 	}
 	var err error
 	err = nil
@@ -36,10 +42,10 @@ func NewPkgDb(urls []RepoURL, dst SourceType, cfgdb *InstallConfig) (*PkgDb, err
 		result := <-rdbc
 		if result.Err != nil {
 			//
-			fmt.Printf("error downloading repo information from: %s:%s\n", result.Url.Name, result.Url.URL)
+			log.Fatalf("error downloading repo information from: %s:%s\n", result.Url.Name, result.Url.URL)
 			err = result.Err
 		} else {
-			db.Db = append(db.Db, result.Rdb)
+			db.Db[result.repoIndex] = result.Rdb
 		}
 	}
 	return &db, err

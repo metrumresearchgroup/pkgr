@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"os"
-
+	"path/filepath"
+	"runtime"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 // returns the cache or sets to a cache dir
@@ -19,5 +21,24 @@ func userCache(pc string) string {
 		cdir = os.TempDir()
 	}
 	log.WithField("dir", cdir).Trace("default package cache directory")
-	return cdir
+
+	pkgrCacheDir := filepath.Join(cdir, "pkgr")
+
+	return pkgrCacheDir
+}
+
+func getWorkerCount() int {
+	var nworkers int
+	if viper.GetInt("threads") < 1 {
+		nworkers = runtime.NumCPU()
+		if nworkers > 2 {
+			nworkers = nworkers - 1
+		}
+	} else {
+		nworkers = viper.GetInt("threads")
+		if nworkers > runtime.NumCPU()+2 {
+			log.Warn("number of workers exceeds the number of threads on machine by at least 2, this may result in degraded performance")
+		}
+	}
+	return nworkers
 }

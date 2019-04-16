@@ -1,0 +1,17 @@
+Version: 1
+# top level packages
+Packages:
+  - mrgsolve
+
+# any repositories, order matters
+Repos:
+  - CRAN: "https://cran.rstudio.com"
+  - r_validated: "https://metrumresearchgroup.github.io/r_validated"
+
+Library: "test-library"
+
+# mrgsolve is only available in r_validated as source
+Customizations:
+    Packages:
+        - mrgsolve:
+            Type: source

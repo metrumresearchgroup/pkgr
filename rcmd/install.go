@@ -18,7 +18,6 @@ import (
 	"github.com/fatih/structtag"
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	funk "github.com/thoas/go-funk"
@@ -75,7 +74,7 @@ func Install(
 	if rdir == "" {
 		rdir, _ = os.Getwd()
 		log.WithFields(
-			logrus.Fields{"rdir": rdir},
+			log.Fields{"rdir": rdir},
 		).Trace("launch dir set to working directory")
 	} else {
 		ok, err := afero.DirExists(fs, rdir)
@@ -93,7 +92,7 @@ func Install(
 
 	ok, err := afero.Exists(fs, tbp)
 	if !ok || err != nil {
-		log.WithFields(logrus.Fields{
+		log.WithFields(log.Fields{
 			"path": tbp,
 			"ok":   ok,
 			"err":  err,
@@ -121,7 +120,7 @@ func Install(
 	cmdArgs = append(cmdArgs, args.CliArgs()...)
 	cmdArgs = append(cmdArgs, tbp)
 	log.WithFields(
-		logrus.Fields{
+		log.Fields{
 			"cmd":       "install",
 			"cmdArgs":   cmdArgs,
 			"RSettings": rs,
@@ -176,7 +175,7 @@ func Install(
 	}
 	if exitCode != 0 {
 		log.WithFields(
-			logrus.Fields{
+			log.Fields{
 				"stdout":   stdout,
 				"stderr":   stderr,
 				"exitCode": exitCode,
@@ -184,7 +183,7 @@ func Install(
 			}).Error("cmd output")
 	} else {
 		log.WithFields(
-			logrus.Fields{
+			log.Fields{
 				"stdout":   stdout,
 				"stderr":   stderr,
 				"exitCode": exitCode,
@@ -203,17 +202,27 @@ func isInCache(
 	// if not in cache just pass back
 	meta := ir.Metadata
 	pkg := ir.Metadata.Metadata.Package
-	bpath := filepath.Join(pc.BaseDir, meta.Metadata.Config.Repo.Name, "binary", binaryName(pkg.Package, pkg.Version))
-	log.WithFields(logrus.Fields{
-		"path":    bpath,
-		"package": pkg.Package,
-	}).Trace("checking in cache")
+
+	repoHash := cran.RepoURLHash(meta.Metadata.Config.Repo)
+	bpath := filepath.Join(
+		pc.BaseDir,
+		repoHash,
+		"binary",
+		ir.RSettings.Version.ToString(),
+		binaryName(pkg.Package, pkg.Version),
+	)
 	exists, err := goutils.Exists(fs, bpath)
 	if !exists || err != nil {
-		log.WithField("package", pkg.Package).Trace("not found in cache")
+		log.WithFields(log.Fields{
+			"path":    bpath,
+			"package": pkg.Package,
+		}).Trace("not found in cache")
 		return false, ir
 	}
-	log.WithField("package", pkg.Package).Trace("found in cache")
+	log.WithFields(log.Fields{
+		"path":    bpath,
+		"package": pkg.Package,
+	}).Trace("found in cache")
 	ir.Metadata.Path = bpath
 	ir.Metadata.Metadata.Config.Type = cran.Binary
 	return true, ir
@@ -241,7 +250,6 @@ func InstallThroughBinary(
 
 	inCache, ir := isInCache(fs, ir, pc)
 	if inCache {
-		log.WithField("package", ir.Package).Debug("package detected in cache")
 		// don't need to build since already a binary
 		ir.InstallArgs.Build = false
 		res, err := Install(fs,
@@ -287,7 +295,7 @@ func InstallThroughBinary(
 	// built binaries have the path extension .tgz rather than tar.gz
 	// but otherwise have the same name from empirical testing
 	// pkg_0.0.1.tar.gz --> pkg_0.0.1.tgz
-	log.WithFields(logrus.Fields{
+	log.WithFields(log.Fields{
 		"tbp":  ir.Metadata.Path,
 		"args": ir.InstallArgs,
 	}).Debug("installing tarball")
@@ -302,7 +310,7 @@ func InstallThroughBinary(
 	if de {
 		err := fs.RemoveAll(installPath)
 		if err != nil {
-			log.WithFields(logrus.Fields{
+			log.WithFields(log.Fields{
 				"err":  err,
 				"path": installPath,
 			}).Error("error removing installed package in tmp dir")
@@ -311,14 +319,14 @@ func InstallThroughBinary(
 	if err == nil && res.ExitCode == 0 {
 		bbp := binaryExt(ir.Metadata.Path)
 		binaryBall := filepath.Join(tmpdir, bbp)
-		log.WithFields(logrus.Fields{
+		log.WithFields(log.Fields{
 			"tbp":        ir.Metadata.Path,
 			"bbp":        bbp,
 			"binaryBall": binaryBall,
 		}).Trace("binary location prior to install")
 		ok, _ := afero.Exists(fs, binaryBall)
 		if !ok {
-			log.WithFields(logrus.Fields{
+			log.WithFields(log.Fields{
 				// check previous stderror, which R logs to installation status
 				"stderr":     res.Stderr,
 				"tmpdir":     tmpdir,
@@ -376,11 +384,14 @@ func InstallPackagePlan(
 				// ready to be installed, and if so, signal they should
 				// be installed
 				pkg, _ := dl.Get(iu.Package)
-
-				log.WithFields(logrus.Fields{"binary": iu.BinaryPath, "src": pkg.Path}).Debug(iu.Package)
+				log.WithFields(log.Fields{"binary": iu.BinaryPath, "src": pkg.Path}).Debug(iu.Package)
 
 				if iu.Result.ExitCode != -999 {
-					log.WithField("package", iu.Package).Info("Successfully Installed")
+					log.WithFields(log.Fields{
+						"package": iu.Package,
+						"version": pkg.Metadata.Package.Version,
+						"repo":    pkg.Metadata.Config.Repo.Name,
+					}).Info("Successfully Installed")
 				}
 				installedPkgs[iu.Package] = true
 				deps, exists := iDeps[iu.Package]
@@ -396,7 +407,7 @@ func InstallPackagePlan(
 						}
 						if allInstalled && !anyFailed {
 							wg.Add(1)
-							log.WithFields(logrus.Fields{
+							log.WithFields(log.Fields{
 								"from":      iu.Package,
 								"suggested": maybeInstall,
 							}).Trace("suggesting installation")
@@ -415,9 +426,9 @@ func InstallPackagePlan(
 						filepath.Base(iu.BinaryPath),
 					)
 					_, err := goutils.Copy(iu.BinaryPath, bpath)
-					log.WithFields(logrus.Fields{"from": iu.BinaryPath, "to": bpath}).Trace("copied binary")
+					log.WithFields(log.Fields{"from": iu.BinaryPath, "to": bpath}).Trace("copied binary")
 					if err != nil {
-						log.WithFields(logrus.Fields{"from": iu.BinaryPath, "to": bpath}).Error("error copying binary")
+						log.WithFields(log.Fields{"from": iu.BinaryPath, "to": bpath}).Error("error copying binary")
 					}
 				}
 			}

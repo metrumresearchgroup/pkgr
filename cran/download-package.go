@@ -11,10 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
-
 	"github.com/dpastoor/goutils"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
 
@@ -51,7 +49,7 @@ func getRepos(ds []PkgDl) map[string]RepoURL {
 }
 
 // DownloadPackages downloads a set of packages concurrently
-func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string) (*PkgMap, error) {
+func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string, rv RVersion) (*PkgMap, error) {
 	startTime := time.Now()
 	result := NewPkgMap()
 	sem := make(chan struct{}, 10)
@@ -59,7 +57,7 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string) (*PkgMap, error) 
 	rpm := getRepos(ds)
 	for _, r := range rpm {
 		urlHash := RepoURLHash(r)
-		for _, pt := range []string{"src", "binary"} {
+		for _, pt := range []string{"src", filepath.Join("binary", rv.ToString())} {
 			pkgdir := filepath.Join(baseDir, urlHash, pt)
 			err := fs.MkdirAll(pkgdir, 0777)
 			if err != nil {
@@ -68,7 +66,7 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string) (*PkgMap, error) 
 			}
 		}
 	}
-	log.WithField("dir", baseDir).Debug("downloading required packages within directory ")
+	log.WithField("dir", baseDir).Info("downloading required packages within directory ")
 	for _, d := range ds {
 		wg.Add(1)
 		go func(d PkgDl, wg *sync.WaitGroup) {
@@ -96,22 +94,25 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string) (*PkgMap, error) 
 			pkgdir := filepath.Join(baseDir, urlHash, pkgType)
 			var pkgFile string
 			if d.Config.Type == Binary {
-				pkgFile = filepath.Join(pkgdir, binaryName(d.Package.Package, d.Package.Version))
+				pkgFile = filepath.Join(pkgdir, rv.ToString(), binaryName(d.Package.Package, d.Package.Version))
 			} else {
 				pkgFile = filepath.Join(pkgdir, fmt.Sprintf("%s_%s.tar.gz", d.Package.Package, d.Package.Version))
 			}
 			startDl := time.Now()
-			dl, err := DownloadPackage(fs, d, pkgFile)
+			dl, err := DownloadPackage(fs, d, pkgFile, rv)
 			if err != nil {
 				// TODO:  should this cause a failure downstream rather than just printing
 				// as right now it keeps running and just doesn't install that package?
 				log.WithField("package", d.Package.Package).Warn("downloading failed")
 				return
 			}
-			log.WithFields(log.Fields{
-				"package": d.Package.Package,
-				"dltime":  time.Since(startDl),
-			}).Debug("downloaded package")
+
+			if dl.New {
+				log.WithFields(log.Fields{
+					"package": d.Package.Package,
+					"dltime":  time.Since(startDl),
+				}).Debug("download successful")
+			}
 			result.Put(d.Package.Package, dl)
 		}(d, &wg)
 	}
@@ -122,7 +123,7 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string) (*PkgMap, error) 
 
 // DownloadPackage should download a package tarball if it doesn't exist and return
 // the path to the downloaded tarball
-func DownloadPackage(fs afero.Fs, d PkgDl, dest string) (Download, error) {
+func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, error) {
 	if !filepath.IsAbs(dest) {
 		cwd, _ := os.Getwd()
 		// turn to absolute
@@ -133,7 +134,7 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string) (Download, error) {
 		return Download{}, err
 	}
 	if exists {
-		log.WithField("package", d.Package.Package).Trace("previously downloaded package")
+		log.WithField("package", d.Package.Package).Info("package already downloaded ")
 		return Download{
 			Path:     dest,
 			New:      false,
@@ -143,18 +144,23 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string) (Download, error) {
 	var pkgdl string
 	if d.Config.Type == Source || !SupportsCranBinary() {
 		d.Config.Type = Source // in case was originally set to binary
+		if !SupportsCranBinary() {
+			log.WithField("package", d.Package.Package).Debug("CRAN binary not supported, downloading source instead ")
+		}
 		pkgdl = fmt.Sprintf("%s/src/contrib/%s", strings.TrimSuffix(d.Config.Repo.URL, "/"), filepath.Base(dest))
 	} else {
-		// TODO: fix so isn't hard coded to 3.5 binaries
 		pkgdl = fmt.Sprintf("%s/bin/%s/contrib/%s/%s",
 			strings.TrimSuffix(d.Config.Repo.URL, "/"),
 			cranBinaryURL(),
-			"3.5",
+			rv.ToString(),
 			filepath.Base(dest))
 	}
+
+	log.WithField("package", d.Package.Package).Info("downloading package ")
+
 	resp, err := http.Get(pkgdl)
 	if resp.StatusCode != 200 {
-		log.WithFields(logrus.Fields{
+		log.WithFields(log.Fields{
 			"package":     d.Package.Package,
 			"url":         pkgdl,
 			"status":      resp.Status,
@@ -172,7 +178,7 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string) (Download, error) {
 	defer resp.Body.Close()
 	file, err := fs.Create(dest)
 	if err != nil {
-		log.WithFields(logrus.Fields{
+		log.WithFields(log.Fields{
 			"package": d.Package,
 			"err":     err,
 		}).Warn("error downloading package, no tarball created")

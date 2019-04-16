@@ -3,7 +3,7 @@
 project_name: pkgr
 
 release:
-  prerelease: false
+  prerelease: true
 
 build:
   binary: pkgr

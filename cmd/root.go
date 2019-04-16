@@ -16,22 +16,19 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
-
-	"github.com/sirupsen/logrus"
+	"github.com/metrumresearchgroup/pkgr/logger"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"github.com/spf13/viper"
+	"os"
+	"path/filepath"
 
 	"github.com/metrumresearchgroup/pkgr/configlib"
-	"github.com/metrumresearchgroup/pkgr/logger"
 	"github.com/spf13/cobra"
 )
 
 // VERSION is the current pkc version
-const VERSION string = "0.1.0"
+var VERSION = "0.2.0-alpha.2"
 
 var fs afero.Fs
 var cfg configlib.PkgrConfig
@@ -40,13 +37,15 @@ var cfg configlib.PkgrConfig
 var RootCmd = &cobra.Command{
 	Use:   "pkgr",
 	Short: "package manager",
-	Long:  fmt.Sprintf("pkgr cli version %s", VERSION),
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-
+func Execute(build string) {
+	if build != "" {
+		VERSION = fmt.Sprintf("%s-%s", VERSION, build)
+	}
+	RootCmd.Long = fmt.Sprintf("pkgr cli version %s", VERSION)
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
@@ -60,24 +59,24 @@ func init() {
 	// Cobra supports Persistent Flags, which, if defined here,
 	// will be global for your application.
 	RootCmd.PersistentFlags().String("config", "", "config file (default is pkgr.yml)")
-	viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
+	_ = viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
 
 	RootCmd.PersistentFlags().String("loglevel", "", "level for logging")
-	viper.BindPFlag("loglevel", RootCmd.PersistentFlags().Lookup("loglevel"))
+	_ = viper.BindPFlag("loglevel", RootCmd.PersistentFlags().Lookup("loglevel"))
 
 	RootCmd.PersistentFlags().Int("threads", 0, "number of threads to execute with")
-	viper.BindPFlag("threads", RootCmd.PersistentFlags().Lookup("threads"))
+	_ = viper.BindPFlag("threads", RootCmd.PersistentFlags().Lookup("threads"))
 
 	RootCmd.PersistentFlags().Bool("preview", false, "preview action, but don't actually run command")
-	viper.BindPFlag("preview", RootCmd.PersistentFlags().Lookup("preview"))
+	_ = viper.BindPFlag("preview", RootCmd.PersistentFlags().Lookup("preview"))
 
 	RootCmd.PersistentFlags().Bool("debug", false, "use debug mode")
-	viper.BindPFlag("debug", RootCmd.PersistentFlags().Lookup("debug"))
+	_ = viper.BindPFlag("debug", RootCmd.PersistentFlags().Lookup("debug"))
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	// globals
 	RootCmd.PersistentFlags().String("library", "", "library to install packages")
-	viper.BindPFlag("library", RootCmd.PersistentFlags().Lookup("library"))
+	_ = viper.BindPFlag("library", RootCmd.PersistentFlags().Lookup("library"))
 
 	// packrat related
 	// RootCmd.PersistentFlags().String("pr_lockfile", "", "packrat lockfile")
@@ -87,28 +86,8 @@ func init() {
 }
 
 func setGlobals() {
-
 	fs = afero.NewOsFs()
-	log.SetOutput(os.Stdout)
-	log.SetFormatter(&logrus.TextFormatter{ForceColors: true})
-	switch logLevel := strings.ToLower(viper.GetString("loglevel")); logLevel {
-	case "trace":
-		log.SetLevel(logrus.TraceLevel)
-	case "debug":
-		log.SetLevel(logrus.DebugLevel)
-	case "info":
-		log.SetLevel(logrus.InfoLevel)
-	case "warn":
-		log.SetLevel(logrus.WarnLevel)
-	case "error":
-		log.SetLevel(logrus.ErrorLevel)
-	case "fatal":
-		log.SetLevel(logrus.FatalLevel)
-	case "panic":
-		log.SetLevel(logrus.PanicLevel)
-	default:
-		log.SetLevel(logrus.InfoLevel)
-	}
+	logger.SetLogLevel(viper.GetString("loglevel"))
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -116,25 +95,23 @@ func initConfig() {
 	// if cfgFile != "" { // enable ability to specify config file via flag
 	// 	viper.SetConfigFile(cfgFile)
 	// }
-	configlib.LoadConfigFromPath(viper.GetString("config"))
+	_ = configlib.LoadConfigFromPath(viper.GetString("config"))
 
 	setGlobals()
+
 	if viper.GetBool("debug") {
 		viper.Debug()
 	}
-	viper.Unmarshal(&cfg)
-	configDir, _ := filepath.Abs(viper.ConfigFileUsed())
-	cwd, _ := os.Getwd()
-	log.WithFields(logrus.Fields{
-		"cwd": cwd,
-		"nwd": filepath.Dir(configDir),
-	}).Trace("setting directory to configuration file")
-	os.Chdir(filepath.Dir(configDir))
+	_ = viper.Unmarshal(&cfg)
 
-	if cfg.Logging.File != "" {
-		fileHook, err := logger.NewLogrusFileHook(cfg.Logging.File, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
-		if err == nil {
-			log.AddHook(fileHook)
-		}
-	}
+
+	configFilePath, _ := filepath.Abs(viper.ConfigFileUsed())
+	cwd, _ := os.Getwd()
+	log.WithFields(log.Fields{
+		"cwd": cwd,
+		"nwd": filepath.Dir(configFilePath),
+	}).Trace("setting directory to configuration file")
+	_ = os.Chdir(filepath.Dir(configFilePath))
+
+
 }

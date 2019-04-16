@@ -4,15 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
+	"github.com/metrumresearchgroup/pkgr/rcmd"
 	"github.com/spf13/afero"
 )
 
 func main() {
 	appFS := afero.NewOsFs()
-	log := logrus.New()
-	log.Level = logrus.DebugLevel
-	// log.SetFormatter(&logrus.JSONFormatter{})
+	log := log.New()
+	log.Level = log.DebugLevel
+	// log.SetFormatter(&log.JSONFormatter{})
 	// appFS.Remove("logfile.txt")
 	// logf, _ := appFS.OpenFile("logfile.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	// log.SetOutput(logf)
@@ -25,4 +26,9 @@ func PrettyPrint(v interface{}) (err error) {
 		fmt.Println(string(b))
 	}
 	return
+}
+
+func WhatsTheCache() string {
+	pc := rcmd.NewPackageCache(cmd.userCache(cfg.Cache), false)
+	return ""
 }

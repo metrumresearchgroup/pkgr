@@ -23,7 +23,6 @@ Logging:
   File: tidyverse.log
 
 Customizations:
-  - tidyverse:
-      Suggests: false
+  Packages:
   - devtools:
-      Type: source
+     Type: source
