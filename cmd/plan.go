@@ -92,34 +92,38 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 			cic.Repos[rn] = cran.RepoConfig{DefaultSourceType: cran.Source}
 		}
 	}
-	cdb, err := cran.NewPkgDb(repos, st, cic, rv)
+	pkgNexus, err := cran.NewPkgDb(repos, st, cic, rv)
 	if err != nil {
 		log.Panicln("error getting pkgdb ", err)
 	}
 	log.Infoln("Default package type: ", st.String())
-	for _, db := range cdb.Db {
+	for _, db := range pkgNexus.Db {
 		log.Infoln(fmt.Sprintf("%v:%v (binary:source) packages available in for %s from %s", len(db.Dbs[st]), len(db.Dbs[cran.Source]), db.Repo.Name, db.Repo.URL))
 	}
-	ids := gpsr.NewDefaultInstallDeps()
+
+	dependencyConfigurations := gpsr.NewDefaultInstallDeps()
+
 	if cfg.Suggests {
 		for _, pkg := range cfg.Packages {
 			// set all top level packages to install suggests
-			dp := ids.Default
+			dp := dependencyConfigurations.Default
 			dp.Suggests = true
-			ids.Deps[pkg] = dp
+			dependencyConfigurations.Deps[pkg] = dp
 		}
 	}
 	if viper.Sub("Customizations") != nil && viper.Sub("Customizations").AllSettings()["packages"] != nil {
+
 		pkgSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
 		//repoSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
+
 		for pkg, v := range cfg.Customizations.Packages {
 			if configlib.IsCustomizationSet("Suggests", pkgSettings, pkg) {
-				dp := ids.Default
-				dp.Suggests = v.Suggests
-				ids.Deps[pkg] = dp
+				pkgDepTypes := dependencyConfigurations.Default
+				pkgDepTypes.Suggests = v.Suggests
+				dependencyConfigurations.Deps[pkg] = pkgDepTypes
 			}
 			if configlib.IsCustomizationSet("Repo", pkgSettings, pkg) {
-				err := cdb.SetPackageRepo(pkg, v.Repo)
+				err := pkgNexus.SetPackageRepo(pkg, v.Repo)
 				if err != nil {
 					log.WithFields(log.Fields{
 						"pkg":  pkg,
@@ -128,7 +132,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 				}
 			}
 			if configlib.IsCustomizationSet("Type", pkgSettings, pkg) {
-				err := cdb.SetPackageType(pkg, v.Type)
+				err := pkgNexus.SetPackageType(pkg, v.Type)
 				if err != nil {
 					log.WithFields(log.Fields{
 						"pkg":  pkg,
@@ -138,7 +142,8 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 			}
 		}
 	}
-	availablePackages := cdb.GetPackages(cfg.Packages)
+
+	availablePackages := pkgNexus.GetPackages(cfg.Packages)
 	if len(availablePackages.Missing) > 0 {
 		log.Errorln("missing packages: ", availablePackages.Missing)
 		model := fuzzy.NewModel()
@@ -149,7 +154,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 		// This expands the distance searched, but costs more resources (memory and time).
 		// For spell checking, "2" is typically enough, for query suggestions this can be higher
 		model.SetDepth(1)
-		pkgs := cdb.GetAllPkgsByName()
+		pkgs := pkgNexus.GetAllPkgsByName()
 		model.Train(pkgs)
 		for _, mp := range availablePackages.Missing {
 			log.Warnln("did you mean one of: ", model.Suggestions(mp, false))
@@ -164,7 +169,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 			"version": pkg.Package.Version,
 		}).Info("package repository set")
 	}
-	installPlan, err := gpsr.ResolveInstallationReqs(cfg.Packages, ids, cdb)
+	installPlan, err := gpsr.ResolveInstallationReqs(cfg.Packages, dependencyConfigurations, pkgNexus)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
@@ -174,7 +179,12 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 		pkgs = append(pkgs, pkg)
 	}
 
-	installPlan.OutdatedPackages = GetOutdatedPackages(installedPackages, availablePackages)
+	installedPackageNames := make([]string, len(installedPackages))
+	for _, installedPackage := range installedPackages {
+		installedPackageNames = append(installedPackageNames, installedPackage.Package)
+	}
+
+	installPlan.OutdatedPackages = GetOutdatedPackages(installedPackages, pkgNexus.GetPackages(installedPackageNames))
 	for _, p := range installPlan.OutdatedPackages {
 		updateLogFields := log.Fields{
 			"pkg": p.Package,
@@ -191,6 +201,6 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 
 	log.Infoln("total packages required:", len(installPlan.StartingPackages)+len(installPlan.DepDb))
 	log.Infoln("resolution time", time.Since(startTime))
-	return cdb, installPlan
+	return pkgNexus, installPlan
 }
 
