@@ -38,11 +38,11 @@ var installCmd = &cobra.Command{
 
 func rInstall(cmd *cobra.Command, args []string) error {
 
-	//Init install-specific log, if one has been set. This overwrites the default log.
+	logger.AddLogFile(cfg.Logging.All, cfg.Logging.Overwrite)
+
+	//Init install-specific log, if one has been set.
 	if cfg.Logging.Install != "" {
 		logger.AddLogFile(cfg.Logging.Install, cfg.Logging.Overwrite)
-	} else {
-		logger.AddLogFile(cfg.Logging.All, cfg.Logging.Overwrite)
 	}
 
 	startTime := time.Now()
