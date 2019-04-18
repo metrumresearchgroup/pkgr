@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/metrumresearchgroup/pkgr/desc"
 
 	"os"
 
@@ -143,9 +144,9 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 		}
 	}
 
-	availablePackages := pkgNexus.GetPackages(cfg.Packages)
-	if len(availablePackages.Missing) > 0 {
-		log.Errorln("missing packages: ", availablePackages.Missing)
+	availableUserPackages := pkgNexus.GetPackages(cfg.Packages)
+	if len(availableUserPackages.Missing) > 0 {
+		log.Errorln("missing packages: ", availableUserPackages.Missing)
 		model := fuzzy.NewModel()
 
 		// For testing only, this is not advisable on production
@@ -156,12 +157,12 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 		model.SetDepth(1)
 		pkgs := pkgNexus.GetAllPkgsByName()
 		model.Train(pkgs)
-		for _, mp := range availablePackages.Missing {
+		for _, mp := range availableUserPackages.Missing {
 			log.Warnln("did you mean one of: ", model.Suggestions(mp, false))
 		}
 		os.Exit(1)
 	}
-	for _, pkg := range availablePackages.Packages {
+	for _, pkg := range availableUserPackages.Packages {
 		log.WithFields(log.Fields{
 			"pkg":     pkg.Package.Package,
 			"repo":    pkg.Config.Repo.Name,
@@ -179,17 +180,14 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 		pkgs = append(pkgs, pkg)
 	}
 
-	installedPackageNames := make([]string, len(installedPackages))
-	for _, installedPackage := range installedPackages {
-		installedPackageNames = append(installedPackageNames, installedPackage.Package)
-	}
+	installedPackageNames := getInstalledPackageNames(installedPackages)
 
 	installPlan.OutdatedPackages = GetOutdatedPackages(installedPackages, pkgNexus.GetPackages(installedPackageNames))
 	for _, p := range installPlan.OutdatedPackages {
 		updateLogFields := log.Fields{
-			"pkg": p.Package,
+			"pkg":               p.Package,
 			"installed_version": p.OldVersion,
-			"update_version": p.NewVersion,
+			"update_version":    p.NewVersion,
 		}
 		if planUpdateArgument {
 			log.WithFields(updateLogFields).Info("package will be updated")
@@ -202,5 +200,13 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 	log.Infoln("total packages required:", len(installPlan.StartingPackages)+len(installPlan.DepDb))
 	log.Infoln("resolution time", time.Since(startTime))
 	return pkgNexus, installPlan
+}
+
+func getInstalledPackageNames(installedPackages map[string]desc.Desc) []string {
+	var installedPackageNames []string
+	for key := range installedPackages {
+		installedPackageNames = append(installedPackageNames, key)
+	}
+	return installedPackageNames
 }
 
