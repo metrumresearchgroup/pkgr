@@ -181,10 +181,10 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 			"installed_version": p.OldVersion,
 			"update_version": p.NewVersion,
 		}
-		log.WithFields(updateLogFields).Warn("outdated package found")
-
 		if planUpdateArgument {
 			log.WithFields(updateLogFields).Info("package will be updated")
+		} else {
+			log.WithFields(updateLogFields).Warn("outdated package found")
 		}
 
 	}
