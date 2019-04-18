@@ -33,6 +33,9 @@ import (
 	"github.com/spf13/viper"
 )
 
+
+var planUpdateArgument bool
+
 // planCmd shows the install plan
 var planCmd = &cobra.Command{
 	Use:   "plan",
@@ -41,6 +44,13 @@ var planCmd = &cobra.Command{
 	see the plan for an install
  `,
 	RunE: plan,
+}
+
+func init() {
+	planCmd.Flags().BoolVar(&planUpdateArgument, "update", false, "Update outdated packages")
+	planCmd.PersistentFlags().Bool("show-deps", false, "show the (required) dependencies for each package")
+	viper.BindPFlag("show-deps", planCmd.PersistentFlags().Lookup("show-deps"))
+	RootCmd.AddCommand(planCmd)
 }
 
 func plan(cmd *cobra.Command, args []string) error {
@@ -58,11 +68,6 @@ func plan(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func init() {
-	planCmd.PersistentFlags().Bool("show-deps", false, "show the (required) dependencies for each package")
-	viper.BindPFlag("show-deps", planCmd.PersistentFlags().Lookup("show-deps"))
-	RootCmd.AddCommand(planCmd)
-}
 
 func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 	startTime := time.Now()
@@ -171,11 +176,17 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 
 	installPlan.OutdatedPackages = GetOutdatedPackages(installedPackages, availablePackages)
 	for _, p := range installPlan.OutdatedPackages {
-		log.WithFields(log.Fields{
+		updateLogFields := log.Fields{
 			"pkg": p.Package,
-			"old_version": p.OldVersion,
-			"new_version": p.NewVersion,
-		}).Warn("outdated package found")
+			"installed_version": p.OldVersion,
+			"update_version": p.NewVersion,
+		}
+		log.WithFields(updateLogFields).Warn("outdated package found")
+
+		if planUpdateArgument {
+			log.WithFields(updateLogFields).Info("package will be updated")
+		}
+
 	}
 
 	log.Infoln("total packages required:", len(installPlan.StartingPackages)+len(installPlan.DepDb))

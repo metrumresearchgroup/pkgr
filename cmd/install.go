@@ -28,7 +28,7 @@ import (
 )
 
 
-var updateArgument bool
+var installUpdateArgument bool
 
 // installCmd represents the R CMD install command
 var installCmd = &cobra.Command{
@@ -41,7 +41,7 @@ var installCmd = &cobra.Command{
 }
 
 func init() {
-	installCmd.Flags().BoolVar(&updateArgument, "update", false, "Update outdated packages during installation.")
+	installCmd.Flags().BoolVar(&installUpdateArgument, "update", false, "Update outdated packages during installation.")
 	RootCmd.AddCommand(installCmd)
 }
 
@@ -60,7 +60,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 
 	//Prepare our environment to update outdated packages if the "--update" flag is set.
 	var packageUpdateAttempts []UpdateAttempt
-	if updateArgument {
+	if installUpdateArgument {
 		log.Info("update argument passed. staging packages for update...")
 		packageUpdateAttempts = preparePackagesForUpdate(fs, cfg.Library, installPlan.OutdatedPackages)
 	}
