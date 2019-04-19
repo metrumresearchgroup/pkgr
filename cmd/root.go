@@ -78,6 +78,7 @@ func init() {
 	_ = viper.BindPFlag("library", RootCmd.PersistentFlags().Lookup("library"))
 
 	RootCmd.PersistentFlags().Bool("update", cfg.Update, "Update packages along with install")
+	_ = viper.BindPFlag("update", RootCmd.PersistentFlags().Lookup("update"))
 
 	// packrat related
 	// RootCmd.PersistentFlags().String("pr_lockfile", "", "packrat lockfile")

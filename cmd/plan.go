@@ -35,8 +35,6 @@ import (
 )
 
 
-var planUpdateArgument bool
-
 // planCmd shows the install plan
 var planCmd = &cobra.Command{
 	Use:   "plan",
@@ -48,7 +46,6 @@ var planCmd = &cobra.Command{
 }
 
 func init() {
-	planCmd.Flags().BoolVar(&planUpdateArgument, "update", false, "Update outdated packages")
 	planCmd.PersistentFlags().Bool("show-deps", false, "show the (required) dependencies for each package")
 	viper.BindPFlag("show-deps", planCmd.PersistentFlags().Lookup("show-deps"))
 	RootCmd.AddCommand(planCmd)
@@ -189,7 +186,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 			"installed_version": p.OldVersion,
 			"update_version":    p.NewVersion,
 		}
-		if planUpdateArgument || cfg.Update {
+		if viper.GetBool("update") {
 			log.WithFields(updateLogFields).Info("package will be updated")
 		} else {
 			log.WithFields(updateLogFields).Warn("outdated package found")

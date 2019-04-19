@@ -17,6 +17,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
+	"github.com/spf13/viper"
 	"path/filepath"
 	"time"
 
@@ -27,8 +28,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-
-var installUpdateArgument bool
 
 // installCmd represents the R CMD install command
 var installCmd = &cobra.Command{
@@ -41,7 +40,6 @@ var installCmd = &cobra.Command{
 }
 
 func init() {
-	installCmd.Flags().BoolVar(&installUpdateArgument, "update", false, "Update outdated packages during installation.")
 	RootCmd.AddCommand(installCmd)
 }
 
@@ -60,7 +58,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 
 	//Prepare our environment to update outdated packages if the "--update" flag is set.
 	var packageUpdateAttempts []UpdateAttempt
-	if installUpdateArgument || cfg.Update {
+	if viper.GetBool("update") {
 		log.Info("update argument passed. staging packages for update...")
 		packageUpdateAttempts = preparePackagesForUpdate(fs, cfg.Library, installPlan.OutdatedPackages)
 	}

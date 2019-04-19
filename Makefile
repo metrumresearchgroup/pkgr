@@ -46,4 +46,4 @@ outdated-test-reset:
 
 outdated-test: install outdated-test-reset
 	cd ${TEST_HOME}/outdated-pkgs; pkgr plan
-	cd ${TEST_HOME}/outdated-pkgs; pkgr install --update
+	cd ${TEST_HOME}/outdated-pkgs; pkgr install
