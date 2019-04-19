@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/metrumresearchgroup/pkgr/logger"
 
 	"github.com/metrumresearchgroup/pkgr/gpsr"
@@ -57,7 +58,7 @@ func inspect(cmd *cobra.Command, args []string) error {
 		// this should suppress all logging from the planning
 		logger.SetLogLevel("fatal")
 	}
-	rs := rcmd.NewRSettings()
+	rs := rcmd.NewRSettings(cfg.RPath)
 	rVersion := rcmd.GetRVersion(&rs)
 	_, ip := planInstall(rVersion)
 	if showDeps {

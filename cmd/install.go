@@ -139,7 +139,3 @@ func getPackagesToDownload(installPlan gpsr.InstallPlan, pkgNexus *cran.PkgNexus
 	}
 	return toDl
 }
-
-
-
-

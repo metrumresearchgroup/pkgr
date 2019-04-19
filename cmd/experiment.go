@@ -43,7 +43,7 @@ func rExperiment(cmd *cobra.Command, args []string) error {
 	// 	log.Fatalf("error opening file: %v", err)
 	// }
 	// defer f.Close()
-	rs := rcmd.NewRSettings()
+	rs := rcmd.NewRSettings(cfg.RPath)
 	// installation through binary doesn't do this exactly, but its pretty close
 	// at least for experimentation for now. If necessary can refactor out the
 	// specifics so could be run here exactly.

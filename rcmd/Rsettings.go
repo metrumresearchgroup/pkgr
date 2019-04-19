@@ -12,17 +12,17 @@ import (
 )
 
 // NewRSettings initializes RSettings
-func NewRSettings() RSettings {
+func NewRSettings(rPath string) RSettings {
 	return RSettings{
 		GlobalEnvVars: make(map[string]string),
 		PkgEnvVars:    make(map[string]map[string]string),
+		Rpath:         rPath,
 	}
 }
 
 // R provides a cleaned path to the R executable
 func (rs RSettings) R() string {
-	rpath := rs.Rpath
-	if rpath == "" {
+	if rs.Rpath == "" {
 		return ("R")
 	}
 	// TODO: check if this could have problems with trailing slash on windows
@@ -30,7 +30,7 @@ func (rs RSettings) R() string {
 
 	// Need to trim trailing slash as will form the R CMD syntax
 	// eg /path/to/R CMD, so can't have /path/to/R/ CMD
-	return strings.TrimSuffix(rpath, "/")
+	return strings.TrimSuffix(rs.Rpath, "/")
 }
 
 // GetRVersion returns the R version as set in RSettings
