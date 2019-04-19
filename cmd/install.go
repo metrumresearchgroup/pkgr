@@ -60,7 +60,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 
 	//Prepare our environment to update outdated packages if the "--update" flag is set.
 	var packageUpdateAttempts []UpdateAttempt
-	if installUpdateArgument {
+	if installUpdateArgument || cfg.Update {
 		log.Info("update argument passed. staging packages for update...")
 		packageUpdateAttempts = preparePackagesForUpdate(fs, cfg.Library, installPlan.OutdatedPackages)
 	}

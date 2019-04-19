@@ -7,13 +7,15 @@ import (
 )
 
 // ResolveInstallationReqs resolves all the installation requirements
-func ResolveInstallationReqs(pkgs []string, ids InstallDeps, pkgdb *cran.PkgNexus) (InstallPlan, error) {
+func ResolveInstallationReqs(pkgs []string, dependencyConfigs InstallDeps, pkgNexus *cran.PkgNexus) (InstallPlan, error) {
+
 	workingGraph := NewGraph()
 	defaultDependencyConfigs := NewDefaultInstallDeps()
 	depDb := make(map[string][]string)
+
 	for _, p := range pkgs {
-		pkg, _, _ := pkgdb.GetPackage(p)
-		appendToGraph(workingGraph, pkg, ids, pkgdb)
+		pkg, _, _ := pkgNexus.GetPackage(p)
+		appendToGraph(workingGraph, pkg, dependencyConfigs, pkgNexus)
 	}
 	resolved, err := ResolveLayers(workingGraph)
 	if err != nil {
@@ -27,12 +29,12 @@ func ResolveInstallationReqs(pkgs []string, ids InstallDeps, pkgdb *cran.PkgNexu
 		}
 		for _, p := range l {
 			workingGraph := NewGraph()
-			pkg, _, _ := pkgdb.GetPackage(p)
+			pkg, _, _ := pkgNexus.GetPackage(p)
 			// for dependencies don't want to propogate custom config such as suggests TRUE/FALSE
 			// as this should just be about what packages that need to be present
 			// to kick off installation - aka Dep/Import/LinkingTo thus we can use
 			// the default
-			appendToGraph(workingGraph, pkg, defaultDependencyConfigs, pkgdb)
+			appendToGraph(workingGraph, pkg, defaultDependencyConfigs, pkgNexus)
 			resolved, err := ResolveLayers(workingGraph)
 			if err != nil {
 				fmt.Println("error resolving graph")

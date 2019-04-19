@@ -74,7 +74,7 @@ func GetPriorInstalledPackages(fileSystem afero.Fs, libraryPath string) map[stri
 				"package":     installedPackage.Package,
 				"version":     installedPackage.Version,
 				"source repo": installedPackage.Repository,
-			}).Info("found installed package")
+			}).Debug("found installed package")
 
 			installed[installedPackage.Package] = installedPackage
 		}
