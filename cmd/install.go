@@ -16,7 +16,6 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/spf13/viper"
 	"path/filepath"
 	"time"
@@ -54,7 +53,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 
 	// Get master object containing the packages available in each repository (pkgNexus),
 	//  as well as a master install plan to guide our process.
-	pkgNexus, installPlan := planInstall(rVersion)
+	_, installPlan := planInstall(rVersion)
 
 	//Prepare our environment to update outdated packages if the "--update" flag is set.
 	var packageUpdateAttempts []UpdateAttempt
@@ -64,13 +63,13 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create a list of package download objects using our install plan and our "nexus" object.
-	pkgsToDownload := getPackagesToDownload(installPlan, pkgNexus)
+	//pkgsToDownload := getPackagesToDownload(installPlan, pkgNexus)
 
 	// Retrieve a cache to store any packages we need to download for the install.
 	packageCache := rcmd.NewPackageCache(userCache(cfg.Cache), false)
 
 	//Create a pkgMap object, which helps us with parallel downloads (?)
-	pkgMap, err := cran.DownloadPackages(fs, pkgsToDownload, packageCache.BaseDir, rVersion)
+	pkgMap, err := cran.DownloadPackages(fs, installPlan.PackageDownloads, packageCache.BaseDir, rVersion)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
@@ -119,19 +118,4 @@ func initInstallLog() {
 	} else {
 		logger.AddLogFile(cfg.Logging.All, cfg.Logging.Overwrite)
 	}
-}
-
-func getPackagesToDownload(installPlan gpsr.InstallPlan, pkgNexus *cran.PkgNexus) []cran.PkgDl {
-	var toDl []cran.PkgDl
-	// starting packages
-	for _, p := range installPlan.StartingPackages {
-		pkg, cfg, _ := pkgNexus.GetPackage(p)
-		toDl = append(toDl, cran.PkgDl{Package: pkg, Config: cfg})
-	}
-	// all other packages
-	for p := range installPlan.DepDb {
-		pkg, cfg, _ := pkgNexus.GetPackage(p)
-		toDl = append(toDl, cran.PkgDl{Package: pkg, Config: cfg})
-	}
-	return toDl
 }
