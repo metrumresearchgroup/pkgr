@@ -255,6 +255,15 @@ func CopyDir(fs afero.Fs, src string, dst string) error {
 	return nil
 }
 
+func stringInSlice(s string, slice []string) bool {
+	for _, entry := range slice {
+		if s == entry {
+			return true
+		}
+	}
+	return false
+}
+
 
 type UpdateAttempt struct {
 	Package string

@@ -165,6 +165,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 			"repo":    pkg.Config.Repo.Name,
 			"type":    pkg.Config.Type,
 			"version": pkg.Package.Version,
+			"relationship": "user package",
 		}).Info("package repository set")
 	}
 	installPlan, err := gpsr.ResolveInstallationReqs(cfg.Packages, dependencyConfigurations, pkgNexus)
@@ -172,6 +173,22 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 		fmt.Println(err)
 		panic(err)
 	}
+
+	for _, pkgToDownload := range installPlan.PackageDownloads {
+		pkg := pkgToDownload.Package.Package
+
+		if !stringInSlice(pkg, cfg.Packages) {
+			log.WithFields(log.Fields{
+				"pkg":     pkgToDownload.Package.Package,
+				"repo":    pkgToDownload.Config.Repo.Name,
+				"type":    pkgToDownload.Config.Type,
+				"version": pkgToDownload.Package.Version,
+				"relationship": "dependency",
+			}).Debug("package repository set")
+		}
+	}
+
+
 	pkgs := installPlan.StartingPackages
 	for pkg := range installPlan.DepDb {
 		pkgs = append(pkgs, pkg)
