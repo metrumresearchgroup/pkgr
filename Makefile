@@ -38,6 +38,13 @@ test-mixed: install test-mixed-reset
 test-mixed-reset:
 	cd ${TEST_HOME}; rm -rf mixed-source/test-library/*
 
+test-simple: install test-simple-reset
+	cd ${TEST_HOME}/simple;	pkgr install
+
+test-simple-reset:
+	cd ${TEST_HOME};rm -rf simple/test-library/*
+
+
 log-test: install log-test-reset
 	cd ${TEST_HOME}/logging-config/install-log; pkgr install
 	cd ${TEST_HOME}/logging-config/default; pkgr install

@@ -159,35 +159,13 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 		}
 		os.Exit(1)
 	}
-	for _, pkg := range availableUserPackages.Packages {
-		log.WithFields(log.Fields{
-			"pkg":     pkg.Package.Package,
-			"repo":    pkg.Config.Repo.Name,
-			"type":    pkg.Config.Type,
-			"version": pkg.Package.Version,
-			"relationship": "user package",
-		}).Info("package repository set")
-	}
+	logUserPackageRepos(availableUserPackages.Packages)
 	installPlan, err := gpsr.ResolveInstallationReqs(cfg.Packages, dependencyConfigurations, pkgNexus)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
 	}
-
-	for _, pkgToDownload := range installPlan.PackageDownloads {
-		pkg := pkgToDownload.Package.Package
-
-		if !stringInSlice(pkg, cfg.Packages) {
-			log.WithFields(log.Fields{
-				"pkg":     pkgToDownload.Package.Package,
-				"repo":    pkgToDownload.Config.Repo.Name,
-				"type":    pkgToDownload.Config.Type,
-				"version": pkgToDownload.Package.Version,
-				"relationship": "dependency",
-			}).Debug("package repository set")
-		}
-	}
-
+	logDependencyRepos(installPlan.PackageDownloads)
 
 	pkgs := installPlan.StartingPackages
 	for pkg := range installPlan.DepDb {
@@ -223,4 +201,34 @@ func getInstalledPackageNames(installedPackages map[string]desc.Desc) []string {
 	}
 	return installedPackageNames
 }
+
+func logUserPackageRepos(packageDownloads []cran.PkgDl) {
+	for _, pkg := range packageDownloads {
+		log.WithFields(log.Fields{
+			"pkg":          pkg.Package.Package,
+			"repo":         pkg.Config.Repo.Name,
+			"type":         pkg.Config.Type,
+			"version":      pkg.Package.Version,
+			"relationship": "user package",
+		}).Info("package repository set")
+	}
+}
+
+func logDependencyRepos(dependencyDownloads []cran.PkgDl) {
+	for _, pkgToDownload := range dependencyDownloads {
+		pkg := pkgToDownload.Package.Package
+
+		if !stringInSlice(pkg, cfg.Packages) {
+			log.WithFields(log.Fields{
+				"pkg":          pkgToDownload.Package.Package,
+				"repo":         pkgToDownload.Config.Repo.Name,
+				"type":         pkgToDownload.Config.Type,
+				"version":      pkgToDownload.Package.Version,
+				"relationship": "dependency",
+			}).Debug("package repository set")
+		}
+	}
+}
+
+
 
