@@ -95,7 +95,7 @@ func scanInstalledPackage(
 	}
 	defer descriptionFile.Close()
 
-	log.WithField("description_file", descriptionFilePath).Debug("scanning DESCRIPTION file")
+	log.WithField("description_file", descriptionFilePath).Trace("scanning DESCRIPTION file")
 
 	installedPackage, err := desc.ParseDesc(descriptionFile)
 
