@@ -175,6 +175,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 	installedPackageNames := getInstalledPackageNames(installedPackages)
 
 	installPlan.OutdatedPackages = GetOutdatedPackages(installedPackages, pkgNexus.GetPackages(installedPackageNames))
+	pkgsToUpdateCount := 0
 	for _, p := range installPlan.OutdatedPackages {
 		updateLogFields := log.Fields{
 			"pkg":               p.Package,
@@ -183,13 +184,26 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 		}
 		if viper.GetBool("update") {
 			log.WithFields(updateLogFields).Info("package will be updated")
+			pkgsToUpdateCount = len(installPlan.OutdatedPackages)
 		} else {
 			log.WithFields(updateLogFields).Warn("outdated package found")
 		}
 
 	}
 
-	log.Infoln("total packages required:", len(installPlan.StartingPackages)+len(installPlan.DepDb))
+	totalPackagesRequired := len(installPlan.StartingPackages)+len(installPlan.DepDb)
+	log.WithFields(log.Fields{
+		"total_packages_required": 	totalPackagesRequired,
+		"installed":       			len(installedPackages),
+		"outdated":					len(installPlan.OutdatedPackages),
+	}).Info("package installation status")
+
+	log.WithFields(log.Fields{
+		"to_install":      			totalPackagesRequired - len(installedPackages),
+		"to_update": 				pkgsToUpdateCount,
+	}).Info("package installation targets")
+
+
 	log.Infoln("resolution time", time.Since(startTime))
 	return pkgNexus, installPlan
 }
