@@ -16,15 +16,14 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/metrumresearchgroup/pkgr/configlib"
 	"github.com/metrumresearchgroup/pkgr/logger"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
-
-	"github.com/metrumresearchgroup/pkgr/configlib"
-	"github.com/spf13/cobra"
 )
 
 // VERSION is the current pkc version
@@ -105,6 +104,7 @@ func initConfig() {
 	_ = viper.Unmarshal(&cfg)
 
 
+
 	configFilePath, _ := filepath.Abs(viper.ConfigFileUsed())
 	cwd, _ := os.Getwd()
 	log.WithFields(log.Fields{
@@ -115,3 +115,5 @@ func initConfig() {
 
 
 }
+
+

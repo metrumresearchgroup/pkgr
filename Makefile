@@ -8,7 +8,7 @@ TEST_HOME=${MAKE_HOME}/integration_tests
 install:
 	cd cmd/pkgr; go install ${LDFLAGS}
 
-test-multiple:	
+test-multiple: install
 	cd ${TEST_HOME}
 
 	rm -rf master/test-library/*
@@ -27,7 +27,7 @@ test-multiple:
 
 	#-cd ${TEST_HOME}/simple-suggests; pkgr install
 
-log-test: install
+log-test: install log-test-reset
 	cd ${TEST_HOME}/logging-config/install-log; pkgr install
 	cd ${TEST_HOME}/logging-config/default; pkgr install
 	cd ${TEST_HOME}/logging-config/overwrite-setting; pkgr install
@@ -39,3 +39,11 @@ log-test-reset:
 	cd ${TEST_HOME}/logging-config/overwrite-setting; rm -rf logs/*
 	cd ${TEST_HOME}/logging-config/overwrite-setting; echo "This text should be deleted" > logs/all.log
 	cd ${TEST_HOME}/logging-config/overwrite-setting; echo "This text should be deleted" > logs/install.log
+
+outdated-test-reset:
+	rm -rf ${TEST_HOME}/outdated-pkgs/test-library/*
+	cp -r ${TEST_HOME}/outdated-pkgs/outdated-library/* ${TEST_HOME}/outdated-pkgs/test-library/
+
+outdated-test: install outdated-test-reset
+	cd ${TEST_HOME}/outdated-pkgs; pkgr plan
+	cd ${TEST_HOME}/outdated-pkgs; pkgr install --update

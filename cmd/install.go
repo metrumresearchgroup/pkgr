@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"path/filepath"
 	"time"
 
@@ -25,6 +26,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
+
+
+var updateArgument bool
 
 // installCmd represents the R CMD install command
 var installCmd = &cobra.Command{
@@ -36,61 +40,100 @@ var installCmd = &cobra.Command{
 	RunE: rInstall,
 }
 
+func init() {
+	installCmd.Flags().BoolVar(&updateArgument, "update", false, "Update outdated packages during installation.")
+	RootCmd.AddCommand(installCmd)
+}
+
 func rInstall(cmd *cobra.Command, args []string) error {
 
-	logger.AddLogFile(cfg.Logging.All, cfg.Logging.Overwrite)
-
-	//Init install-specific log, if one has been set.
-	if cfg.Logging.Install != "" {
-		logger.AddLogFile(cfg.Logging.Install, cfg.Logging.Overwrite)
-	}
-
+	// Initialize log and start time.
+	initInstallLog()
 	startTime := time.Now()
-	rs := rcmd.NewRSettings(cfg.RPath)
-	rVersion := rcmd.GetRVersion(&rs)
+	rSettings := rcmd.NewRSettings(cfg.RPath)
+	rVersion := rcmd.GetRVersion(&rSettings)
 	log.Infoln("R Version " + rVersion.ToFullString())
-	cdb, ip := planInstall(rVersion)
 
-	var toDl []cran.PkgDl
-	// starting packages
-	for _, p := range ip.StartingPackages {
-		pkg, cfg, _ := cdb.GetPackage(p)
-		toDl = append(toDl, cran.PkgDl{Package: pkg, Config: cfg})
+	// Get master object containing the packages available in each repository (pkgNexus),
+	//  as well as a master install plan to guide our process.
+	pkgNexus, installPlan := planInstall(rVersion)
+
+	//Prepare our environment to update outdated packages if the "--update" flag is set.
+	var packageUpdateAttempts []UpdateAttempt
+	if updateArgument {
+		log.Info("update argument passed. staging packages for update...")
+		packageUpdateAttempts = preparePackagesForUpdate(fs, cfg.Library, installPlan.OutdatedPackages)
 	}
-	// all other packages
-	for p := range ip.DepDb {
-		pkg, cfg, _ := cdb.GetPackage(p)
-		toDl = append(toDl, cran.PkgDl{Package: pkg, Config: cfg})
-	}
-	// // want to download the packages and return the full path of any downloaded package
-	pc := rcmd.NewPackageCache(userCache(cfg.Cache), false)
-	dl, err := cran.DownloadPackages(fs, toDl, pc.BaseDir, rVersion)
+
+	// Create a list of package download objects using our install plan and our "nexus" object.
+	pkgsToDownload := getPackagesToDownload(installPlan, pkgNexus)
+
+	// Retrieve a cache to store any packages we need to download for the install.
+	packageCache := rcmd.NewPackageCache(userCache(cfg.Cache), false)
+
+	//Create a pkgMap object, which helps us with parallel downloads (?)
+	pkgMap, err := cran.DownloadPackages(fs, pkgsToDownload, packageCache.BaseDir, rVersion)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
 	}
-	ia := rcmd.NewDefaultInstallArgs()
-	ia.Library, _ = filepath.Abs(cfg.Library)
-	nworkers := getWorkerCount()
 
+	//Set the arguments to be passed in to the R Package Installer
+	pkgInstallArgs := rcmd.NewDefaultInstallArgs()
+	pkgInstallArgs.Library, _ = filepath.Abs(cfg.Library)
+
+	// Get the number of workers.
 	// leave at least 1 thread open for coordination, given more than 2 threads available.
 	// if only 2 available, will let the OS hypervisor coordinate some else would drop the
 	// install time too much for the little bit of additional coordination going on.
+	nworkers := getWorkerCount()
+
+	// Process any customizations set in the yaml config file for individual packages.
+	// TODO: Refactor this into its own method.
 	pkgCustomizations := cfg.Customizations.Packages
 	for n, v := range pkgCustomizations {
 		if v.Env != nil {
-			rs.PkgEnvVars[n] = v.Env
+			rSettings.PkgEnvVars[n] = v.Env
 		}
 	}
-	err = rcmd.InstallPackagePlan(fs, ip, dl, pc, ia, rs, rcmd.ExecSettings{}, nworkers)
+
+	//
+	// Install the packages
+	//
+	err = rcmd.InstallPackagePlan(fs, installPlan, pkgMap, packageCache, pkgInstallArgs, rSettings, rcmd.ExecSettings{}, nworkers)
 	if err != nil {
 		fmt.Println("failed package install")
 		fmt.Println(err)
 	}
+
+	// After package installation, fix any problems that occurred during reinstallation of
+	//  packages that were to be updated.
+	restoreUnupdatedPackages(fs, packageUpdateAttempts)
+
 	fmt.Println("duration:", time.Since(startTime))
 	return nil
 }
 
-func init() {
-	RootCmd.AddCommand(installCmd)
+func initInstallLog() {
+	//Init install-specific log, if one has been set. This overwrites the default log.
+	if cfg.Logging.Install != "" {
+		logger.AddLogFile(cfg.Logging.Install, cfg.Logging.Overwrite)
+	} else {
+		logger.AddLogFile(cfg.Logging.All, cfg.Logging.Overwrite)
+	}
+}
+
+func getPackagesToDownload(installPlan gpsr.InstallPlan, pkgNexus *cran.PkgNexus) []cran.PkgDl {
+	var toDl []cran.PkgDl
+	// starting packages
+	for _, p := range installPlan.StartingPackages {
+		pkg, cfg, _ := pkgNexus.GetPackage(p)
+		toDl = append(toDl, cran.PkgDl{Package: pkg, Config: cfg})
+	}
+	// all other packages
+	for p := range installPlan.DepDb {
+		pkg, cfg, _ := pkgNexus.GetPackage(p)
+		toDl = append(toDl, cran.PkgDl{Package: pkg, Config: cfg})
+	}
+	return toDl
 }
