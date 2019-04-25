@@ -241,7 +241,10 @@ func InstallThroughBinary(
 	pc PackageCache) (CmdResult, string, error) {
 	exists, _ := goutils.DirExists(fs, filepath.Join(ir.InstallArgs.Library, ir.Package))
 	if exists {
-		log.WithField("package", ir.Package).Info("package already installed")
+		log.WithFields(log.Fields{
+			"package": ir.Package,
+			"version": ir.Metadata.Metadata.Package.Version,
+		}).Info("package already installed")
 		return CmdResult{
 			ExitCode: -999,
 			Stderr:   fmt.Sprintf("already installed: %s", ir.Package),
