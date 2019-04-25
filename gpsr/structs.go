@@ -1,9 +1,12 @@
 package gpsr
 
+import "github.com/metrumresearchgroup/pkgr/cran"
+
 //InstallPlan provides metadata around an installation plan
 type InstallPlan struct {
 	StartingPackages []string
-	DepDb            map[string][]string
+	DepDb            map[string][]string // This is a map of the dependencies [D1, D2, ... Dn] for a given package (A). The map is keyed by package name, i.e. DepDb[A] = [D1, D2, ..., Dn]
+	PackageDownloads []cran.PkgDl
 	OutdatedPackages []OutdatedPackage
 }
 
@@ -28,3 +31,4 @@ type OutdatedPackage struct {
 	OldVersion string
 	NewVersion string
 }
+

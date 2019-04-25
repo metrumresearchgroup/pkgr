@@ -3,6 +3,7 @@ package gpsr
 import (
 	"errors"
 	"fmt"
+	"github.com/metrumresearchgroup/pkgr/cran"
 
 	"github.com/deckarep/golang-set"
 )
@@ -104,7 +105,7 @@ func ResolveLayers(graph Graph) ([][]string, error) {
 // such that each element contains a slice of all packages that depend on it
 // This can be used when a package is installed to identify which
 // other packages may have all their dependencies satisfied.
-func (ip InstallPlan) InvertDependencies() map[string][]string {
+func (ip *InstallPlan) InvertDependencies() map[string][]string {
 	ddb := ip.DepDb
 	idb := make(map[string][]string)
 	for pkg, deps := range ddb {
@@ -115,4 +116,20 @@ func (ip InstallPlan) InvertDependencies() map[string][]string {
 		}
 	}
 	return idb
+}
+
+func (ip *InstallPlan) Pack(pkgNexus *cran.PkgNexus) {
+	var toDl []cran.PkgDl
+	// starting packages
+	for _, p := range ip.StartingPackages {
+		pkg, cfg, _ := pkgNexus.GetPackage(p)
+		toDl = append(toDl, cran.PkgDl{Package: pkg, Config: cfg})
+	}
+	// all other packages
+	for p := range ip.DepDb {
+		pkg, cfg, _ := pkgNexus.GetPackage(p)
+		toDl = append(toDl, cran.PkgDl{Package: pkg, Config: cfg})
+	}
+	ip.PackageDownloads = toDl
+	//return toDl
 }

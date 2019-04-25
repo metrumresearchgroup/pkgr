@@ -59,6 +59,8 @@ func ResolveInstallationReqs(pkgs []string, dependencyConfigs InstallDeps, pkgNe
 			depDb[p] = allDeps
 		}
 	}
-	return InstallPlan{StartingPackages: resolved[0],
-		DepDb: depDb}, nil
+	installPlan := InstallPlan{StartingPackages: resolved[0],
+		DepDb: depDb}
+	installPlan.Pack(pkgNexus)
+	return installPlan, nil
 }

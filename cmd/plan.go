@@ -159,19 +159,14 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 		}
 		os.Exit(1)
 	}
-	for _, pkg := range availableUserPackages.Packages {
-		log.WithFields(log.Fields{
-			"pkg":     pkg.Package.Package,
-			"repo":    pkg.Config.Repo.Name,
-			"type":    pkg.Config.Type,
-			"version": pkg.Package.Version,
-		}).Info("package repository set")
-	}
+	logUserPackageRepos(availableUserPackages.Packages)
 	installPlan, err := gpsr.ResolveInstallationReqs(cfg.Packages, dependencyConfigurations, pkgNexus)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
 	}
+	logDependencyRepos(installPlan.PackageDownloads)
+
 	pkgs := installPlan.StartingPackages
 	for pkg := range installPlan.DepDb {
 		pkgs = append(pkgs, pkg)
@@ -180,6 +175,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 	installedPackageNames := getInstalledPackageNames(installedPackages)
 
 	installPlan.OutdatedPackages = GetOutdatedPackages(installedPackages, pkgNexus.GetPackages(installedPackageNames))
+	pkgsToUpdateCount := 0
 	for _, p := range installPlan.OutdatedPackages {
 		updateLogFields := log.Fields{
 			"pkg":               p.Package,
@@ -188,13 +184,26 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 		}
 		if viper.GetBool("update") {
 			log.WithFields(updateLogFields).Info("package will be updated")
+			pkgsToUpdateCount = len(installPlan.OutdatedPackages)
 		} else {
 			log.WithFields(updateLogFields).Warn("outdated package found")
 		}
 
 	}
 
-	log.Infoln("total packages required:", len(installPlan.StartingPackages)+len(installPlan.DepDb))
+	totalPackagesRequired := len(installPlan.StartingPackages)+len(installPlan.DepDb)
+	log.WithFields(log.Fields{
+		"total_packages_required": 	totalPackagesRequired,
+		"installed":       			len(installedPackages),
+		"outdated":					len(installPlan.OutdatedPackages),
+	}).Info("package installation status")
+
+	log.WithFields(log.Fields{
+		"to_install":      			totalPackagesRequired - len(installedPackages),
+		"to_update": 				pkgsToUpdateCount,
+	}).Info("package installation targets")
+
+
 	log.Infoln("resolution time", time.Since(startTime))
 	return pkgNexus, installPlan
 }
@@ -206,4 +215,34 @@ func getInstalledPackageNames(installedPackages map[string]desc.Desc) []string {
 	}
 	return installedPackageNames
 }
+
+func logUserPackageRepos(packageDownloads []cran.PkgDl) {
+	for _, pkg := range packageDownloads {
+		log.WithFields(log.Fields{
+			"pkg":          pkg.Package.Package,
+			"repo":         pkg.Config.Repo.Name,
+			"type":         pkg.Config.Type,
+			"version":      pkg.Package.Version,
+			"relationship": "user package",
+		}).Info("package repository set")
+	}
+}
+
+func logDependencyRepos(dependencyDownloads []cran.PkgDl) {
+	for _, pkgToDownload := range dependencyDownloads {
+		pkg := pkgToDownload.Package.Package
+
+		if !stringInSlice(pkg, cfg.Packages) {
+			log.WithFields(log.Fields{
+				"pkg":          pkgToDownload.Package.Package,
+				"repo":         pkgToDownload.Config.Repo.Name,
+				"type":         pkgToDownload.Config.Type,
+				"version":      pkgToDownload.Package.Version,
+				"relationship": "dependency",
+			}).Debug("package repository set")
+		}
+	}
+}
+
+
 
