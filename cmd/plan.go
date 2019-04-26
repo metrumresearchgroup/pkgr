@@ -174,7 +174,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 
 	installedPackageNames := getInstalledPackageNames(installedPackages)
 
-	installPlan.OutdatedPackages = GetOutdatedPackages(installedPackages, pkgNexus.GetPackages(installedPackageNames))
+	installPlan.OutdatedPackages = GetOutdatedPackages(installedPackages, pkgNexus.GetPackages(installedPackageNames).Packages)
 	pkgsToUpdateCount := 0
 	for _, p := range installPlan.OutdatedPackages {
 		updateLogFields := log.Fields{

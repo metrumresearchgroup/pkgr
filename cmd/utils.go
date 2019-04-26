@@ -108,10 +108,10 @@ func scanInstalledPackage(
 	return installedPackage, nil
 }
 
-func GetOutdatedPackages(installed map[string]desc.Desc, availablePackages cran.AvailablePkgs) []gpsr.OutdatedPackage {
+func GetOutdatedPackages(installed map[string]desc.Desc, availablePackages []cran.PkgDl) []gpsr.OutdatedPackage {
 	var outdatedPackages []gpsr.OutdatedPackage
 
-	for _, pkgDl := range availablePackages.Packages {
+	for _, pkgDl := range availablePackages {
 
 		pkgName := pkgDl.Package.Package
 		availableVersion := pkgDl.Package.Version

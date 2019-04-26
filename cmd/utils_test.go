@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"github.com/dpastoor/goutils"
+	"github.com/metrumresearchgroup/pkgr/cran"
+	"github.com/metrumresearchgroup/pkgr/desc"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/suite"
@@ -192,4 +194,69 @@ func (suite *UtilsTestSuite) TestScanInstalledPackage_ReturnsNilWhenNoDescriptio
 	suite.NotNil(err)
 	suite.Equal(actualResults.Version, "")
 	suite.Equal(actualResults.Package, "")
+}
+
+func (suite *UtilsTestSuite) TestGetOutdatedPackages_FindsOutdatedPackage() {
+	outdatedDescFixture := desc.Desc {
+		Package: "CatsAndOranges",
+		Version: "1.0.1",
+	}
+	installedFixture := make(map[string]desc.Desc)
+	installedFixture["CatsAndOranges"] = outdatedDescFixture
+
+
+	updatedDescFixture := desc.Desc {
+		Package: "CatsAndOranges",
+		Version: "1.0.2",
+	}
+
+	var availablePackagesFixture []cran.PkgDl
+	updatedPkgDlFixture := cran.PkgDl{ Package: updatedDescFixture }
+	availablePackagesFixture = append(availablePackagesFixture, updatedPkgDlFixture)
+
+	actualResults := GetOutdatedPackages(installedFixture, availablePackagesFixture)
+
+	suite.Equal(1, len(actualResults))
+	suite.Equal("CatsAndOranges", actualResults[0].Package)
+	suite.Equal("1.0.1", actualResults[0].OldVersion)
+	suite.Equal("1.0.2", actualResults[0].NewVersion)
+
+}
+
+
+func (suite *UtilsTestSuite) TestGetOutdatedPackages_DoesNotFlagOlderPackage() {
+	outdatedDescFixture := desc.Desc{
+		Package: "CatsAndOranges",
+		Version: "1.0.1",
+	}
+	installedFixture := make(map[string]desc.Desc)
+	installedFixture["CatsAndOranges"] = outdatedDescFixture
+
+	olderDescFixture := desc.Desc{
+		Package: "CatsAndOranges",
+		Version: "1.0.0",
+	}
+
+	var availablePackagesFixture []cran.PkgDl
+	olderPkgDlFixture := cran.PkgDl{Package: olderDescFixture}
+	availablePackagesFixture = append(availablePackagesFixture, olderPkgDlFixture)
+
+	actualResults := GetOutdatedPackages(installedFixture, availablePackagesFixture)
+
+	suite.Equal(0, len(actualResults))
+}
+
+func (suite *UtilsTestSuite) TestStringInSlice_FindsStringInSlice() {
+	sliceFixture := []string{ "Cats", "And", "Oranges"}
+	suite.True(stringInSlice("Cats", sliceFixture))
+}
+
+func (suite *UtilsTestSuite) TestStringInSlice_DoesNotFindStringNotInSlice() {
+	sliceFixture := []string{ "Cats", "And", "Oranges"}
+	suite.False(stringInSlice("Orangutans", sliceFixture))
+}
+
+func (suite *UtilsTestSuite) TestStringInSlice_IsCaseSensitive() {
+	sliceFixture := []string{ "Cats", "And", "Oranges"}
+	suite.False(stringInSlice("cats", sliceFixture))
 }
