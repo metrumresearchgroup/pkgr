@@ -5,6 +5,9 @@ The directories here contain sample `pkgr.yml` files that are already setup to
 provide common use-cases of pkgr. You can find more details in the `guide.md`
 files within each folder.
 
+For the time being, these environments are meant to be used for manual testing
+as a way to help sanity-check any changes.
+
 ## Quick setup
 * To quickly set your tests to a basic-state, set your working directory to
 `pkgr/integration_tests` and run `make test-setup`. Please note:
