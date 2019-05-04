@@ -244,7 +244,7 @@ func InstallThroughBinary(
 		log.WithFields(log.Fields{
 			"package": ir.Package,
 			"version": ir.Metadata.Metadata.Package.Version,
-		}).Info("package already installed")
+		}).Debug("package already installed")
 		return CmdResult{
 			ExitCode: -999,
 			Stderr:   fmt.Sprintf("already installed: %s", ir.Package),

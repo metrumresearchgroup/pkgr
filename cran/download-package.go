@@ -111,7 +111,7 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string, rv RVersion) (*Pk
 				log.WithFields(log.Fields{
 					"package": d.Package.Package,
 					"dltime":  time.Since(startDl),
-					"size": fmt.Sprintf("%.2f MB", dl.GetMegabytes()),
+					"size":    fmt.Sprintf("%.2f MB", dl.GetMegabytes()),
 				}).Debug("download successful")
 			}
 			result.Put(d.Package.Package, dl)
@@ -135,12 +135,12 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 		return Download{}, err
 	}
 	if exists {
-		log.WithField("package", d.Package.Package).Info("package already downloaded ")
+		log.WithField("package", d.Package.Package).Debug("package already downloaded ")
 		return Download{
 			Path:     dest,
 			New:      false,
 			Metadata: d,
-			Size: 0,
+			Size:     0,
 		}, nil
 	}
 	var pkgdl string
@@ -196,6 +196,6 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 		Path:     dest,
 		New:      true,
 		Metadata: d,
-		Size: resp.ContentLength,
+		Size:     resp.ContentLength,
 	}, nil
 }
