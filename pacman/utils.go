@@ -23,9 +23,11 @@ func GetPriorInstalledPackages(fileSystem afero.Fs, libraryPath string) map[stri
 	}
 	defer installedLibrary.Close()
 
-	installedPackageFolders, _ := installedLibrary.Readdir(0)
+	fileInfo, _ := installedLibrary.Readdir(0)
+	installedPackageFolders := goutils.ListDirNames(fileInfo)
+
 	for _, pkgFolder := range installedPackageFolders {
-		descriptionFilePath := filepath.Join(libraryPath, pkgFolder.Name(), "DESCRIPTION")
+		descriptionFilePath := filepath.Join(libraryPath, pkgFolder, "DESCRIPTION")
 		installedPackage, err := scanInstalledPackage(descriptionFilePath, fileSystem)
 
 		if err != nil {
