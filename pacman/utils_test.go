@@ -1,4 +1,4 @@
-package cmd
+package pacman
 
 import (
 	"github.com/dpastoor/goutils"

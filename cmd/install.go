@@ -16,17 +16,18 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"path/filepath"
 	"time"
 
+	"github.com/spf13/viper"
+
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/logger"
+	"github.com/metrumresearchgroup/pkgr/pacman"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
-
 
 // installCmd represents the R CMD install command
 var installCmd = &cobra.Command{
@@ -56,10 +57,10 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	_, installPlan := planInstall(rVersion)
 
 	//Prepare our environment to update outdated packages if the "--update" flag is set.
-	var packageUpdateAttempts []UpdateAttempt
+	var packageUpdateAttempts []pacman.UpdateAttempt
 	if viper.GetBool("update") {
 		log.Info("update argument passed. staging packages for update...")
-		packageUpdateAttempts = preparePackagesForUpdate(fs, cfg.Library, installPlan.OutdatedPackages)
+		packageUpdateAttempts = pacman.PreparePackagesForUpdate(fs, cfg.Library, installPlan.OutdatedPackages)
 	}
 
 	// Create a list of package download objects using our install plan and our "nexus" object.
@@ -105,7 +106,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 
 	// After package installation, fix any problems that occurred during reinstallation of
 	//  packages that were to be updated.
-	restoreUnupdatedPackages(fs, packageUpdateAttempts)
+	pacman.RestoreUnupdatedPackages(fs, packageUpdateAttempts)
 
 	fmt.Println("duration:", time.Since(startTime))
 	return nil

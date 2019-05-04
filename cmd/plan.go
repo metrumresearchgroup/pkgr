@@ -16,7 +16,9 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/metrumresearchgroup/pkgr/desc"
+	"github.com/metrumresearchgroup/pkgr/pacman"
 
 	"os"
 
@@ -33,7 +35,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
-
 
 // planCmd shows the install plan
 var planCmd = &cobra.Command{
@@ -66,12 +67,10 @@ func plan(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-
 func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 	startTime := time.Now()
 
-
-	installedPackages := GetPriorInstalledPackages(fs, cfg.Library)
+	installedPackages := pacman.GetPriorInstalledPackages(fs, cfg.Library)
 	log.WithField("count", len(installedPackages)).Info("found installed packages")
 
 	var repos []cran.RepoURL
@@ -174,7 +173,7 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 
 	installedPackageNames := getInstalledPackageNames(installedPackages)
 
-	installPlan.OutdatedPackages = GetOutdatedPackages(installedPackages, pkgNexus.GetPackages(installedPackageNames).Packages)
+	installPlan.OutdatedPackages = pacman.GetOutdatedPackages(installedPackages, pkgNexus.GetPackages(installedPackageNames).Packages)
 	pkgsToUpdateCount := 0
 	for _, p := range installPlan.OutdatedPackages {
 		updateLogFields := log.Fields{
@@ -191,18 +190,17 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 
 	}
 
-	totalPackagesRequired := len(installPlan.StartingPackages)+len(installPlan.DepDb)
+	totalPackagesRequired := len(installPlan.StartingPackages) + len(installPlan.DepDb)
 	log.WithFields(log.Fields{
-		"total_packages_required": 	totalPackagesRequired,
-		"installed":       			len(installedPackages),
-		"outdated":					len(installPlan.OutdatedPackages),
+		"total_packages_required": totalPackagesRequired,
+		"installed":               len(installedPackages),
+		"outdated":                len(installPlan.OutdatedPackages),
 	}).Info("package installation status")
 
 	log.WithFields(log.Fields{
-		"to_install":      			totalPackagesRequired - len(installedPackages),
-		"to_update": 				pkgsToUpdateCount,
+		"to_install": totalPackagesRequired - len(installedPackages),
+		"to_update":  pkgsToUpdateCount,
 	}).Info("package installation targets")
-
 
 	log.Infoln("resolution time", time.Since(startTime))
 	return pkgNexus, installPlan
@@ -243,6 +241,3 @@ func logDependencyRepos(dependencyDownloads []cran.PkgDl) {
 		}
 	}
 }
-
-
-
