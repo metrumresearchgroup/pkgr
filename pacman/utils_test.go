@@ -1,13 +1,14 @@
 package pacman
 
 import (
+	"testing"
+
 	"github.com/dpastoor/goutils"
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/desc"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/suite"
-	"testing"
 )
 
 type UtilsTestSuite struct {
@@ -24,7 +25,6 @@ func (suite *UtilsTestSuite) TearDownTest() {
 	mm.RemoveAll("testsite/working")
 }
 
-
 func TestUtilsTestSuite(t *testing.T) {
 	suite.Run(t, new(UtilsTestSuite))
 }
@@ -34,7 +34,7 @@ func (suite *UtilsTestSuite) TestTagOldInstallation_CreatesBackup() {
 	_, _ = suite.FileSystem.Create("test-library/CatsAndOranges/DESCRIPTION")
 
 	outdatedPackageFixture := gpsr.OutdatedPackage{
-		Package: "CatsAndOranges",
+		Package:    "CatsAndOranges",
 		NewVersion: "2",
 		OldVersion: "1",
 	}
@@ -86,7 +86,6 @@ func (suite *UtilsTestSuite) TestRestoreUnupdatedPackages_DoesNotRestoreWhenProp
 	}
 	restoreUnupdatedPackages(suite.FileSystem, updateAttemptFixture)
 
-
 	suite.True(afero.DirExists(suite.FileSystem, "test-library/CatsAndOranges"))
 	suite.True(afero.Exists(suite.FileSystem, "test-library/CatsAndOranges/DESCRIPTION"))
 	suite.False(afero.DirExists(suite.FileSystem, "test-library/__OLD__CatsAndOranges"))
@@ -102,22 +101,21 @@ func (suite *UtilsTestSuite) TestRestoreUnupdatedPackages_RestoresOneAndAllowsAn
 	_ = suite.FileSystem.MkdirAll("test-library/DogsAndBananas", 0755)
 	_, _ = suite.FileSystem.Create("test-library/DogsAndBananas/DESCRIPTION")
 
-
 	//_, _ = suite.FileSystem.Create("test-library/DogsAndBananas/DESCRIPTION_OLD")
 
 	updateAttemptFixture := []UpdateAttempt{
 		{
-			Package:                "CatsAndOranges",	///Not updated successfully
+			Package:                "CatsAndOranges", ///Not updated successfully
 			BackupPackageDirectory: "test-library/__OLD__CatsAndOranges",
 			ActivePackageDirectory: "test-library/CatsAndOranges",
 			NewVersion:             "2",
 			OldVersion:             "1",
 		}, {
-			Package: 				"DogsAndBananas",	///Updated successfully
+			Package:                "DogsAndBananas", ///Updated successfully
 			BackupPackageDirectory: "test-library/__OLD__DogsAndBananas",
 			ActivePackageDirectory: "test-library/DogsAndBananas",
-		NewVersion: 				"1.5",
-			OldVersion: 			"1.2",
+			NewVersion:             "1.5",
+			OldVersion:             "1.2",
 		},
 	}
 	restoreUnupdatedPackages(suite.FileSystem, updateAttemptFixture)
@@ -160,22 +158,22 @@ func (suite *UtilsTestSuite) TestScanInstalledPackage_ScansReleventFieldsForOutd
 		"Suggests:",
 		"    testthat",
 	}
-/*
-	expectedResults := desc.Desc {
-		Package     : "releasy",
-		//Source      : "",
-		Version     : "0.0.0.9000",
-		//Maintainer  : "",
-		Description : "A description, please",
-		//MD5sum      : "",
-		//Remotes     : "",
-		//Repository  : "",
-		//Imports     :
-		//Suggests    :
-		//Depends     :
-		//LinkingTo   :
-	}
-*/
+	/*
+		expectedResults := desc.Desc {
+			Package     : "releasy",
+			//Source      : "",
+			Version     : "0.0.0.9000",
+			//Maintainer  : "",
+			Description : "A description, please",
+			//MD5sum      : "",
+			//Remotes     : "",
+			//Repository  : "",
+			//Imports     :
+			//Suggests    :
+			//Depends     :
+			//LinkingTo   :
+		}
+	*/
 	goutils.WriteLinesFS(suite.FileSystem, descriptionFileContents, "test-library/CatsAndOranges/DESCRIPTION")
 
 	actualResults, err := scanInstalledPackage("test-library/CatsAndOranges/DESCRIPTION", suite.FileSystem)
@@ -197,21 +195,20 @@ func (suite *UtilsTestSuite) TestScanInstalledPackage_ReturnsNilWhenNoDescriptio
 }
 
 func (suite *UtilsTestSuite) TestGetOutdatedPackages_FindsOutdatedPackage() {
-	outdatedDescFixture := desc.Desc {
+	outdatedDescFixture := desc.Desc{
 		Package: "CatsAndOranges",
 		Version: "1.0.1",
 	}
 	installedFixture := make(map[string]desc.Desc)
 	installedFixture["CatsAndOranges"] = outdatedDescFixture
 
-
-	updatedDescFixture := desc.Desc {
+	updatedDescFixture := desc.Desc{
 		Package: "CatsAndOranges",
 		Version: "1.0.2",
 	}
 
 	var availablePackagesFixture []cran.PkgDl
-	updatedPkgDlFixture := cran.PkgDl{ Package: updatedDescFixture }
+	updatedPkgDlFixture := cran.PkgDl{Package: updatedDescFixture}
 	availablePackagesFixture = append(availablePackagesFixture, updatedPkgDlFixture)
 
 	actualResults := GetOutdatedPackages(installedFixture, availablePackagesFixture)
@@ -222,7 +219,6 @@ func (suite *UtilsTestSuite) TestGetOutdatedPackages_FindsOutdatedPackage() {
 	suite.Equal("1.0.2", actualResults[0].NewVersion)
 
 }
-
 
 func (suite *UtilsTestSuite) TestGetOutdatedPackages_DoesNotFlagOlderPackage() {
 	outdatedDescFixture := desc.Desc{
@@ -247,16 +243,16 @@ func (suite *UtilsTestSuite) TestGetOutdatedPackages_DoesNotFlagOlderPackage() {
 }
 
 func (suite *UtilsTestSuite) TestStringInSlice_FindsStringInSlice() {
-	sliceFixture := []string{ "Cats", "And", "Oranges"}
+	sliceFixture := []string{"Cats", "And", "Oranges"}
 	suite.True(stringInSlice("Cats", sliceFixture))
 }
 
 func (suite *UtilsTestSuite) TestStringInSlice_DoesNotFindStringNotInSlice() {
-	sliceFixture := []string{ "Cats", "And", "Oranges"}
+	sliceFixture := []string{"Cats", "And", "Oranges"}
 	suite.False(stringInSlice("Orangutans", sliceFixture))
 }
 
 func (suite *UtilsTestSuite) TestStringInSlice_IsCaseSensitive() {
-	sliceFixture := []string{ "Cats", "And", "Oranges"}
+	sliceFixture := []string{"Cats", "And", "Oranges"}
 	suite.False(stringInSlice("cats", sliceFixture))
 }
