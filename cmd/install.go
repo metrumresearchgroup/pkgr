@@ -15,7 +15,6 @@
 package cmd
 
 import (
-	"fmt"
 	"path/filepath"
 	"time"
 
@@ -72,8 +71,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	//Create a pkgMap object, which helps us with parallel downloads (?)
 	pkgMap, err := cran.DownloadPackages(fs, installPlan.PackageDownloads, packageCache.BaseDir, rVersion)
 	if err != nil {
-		fmt.Println(err)
-		panic(err)
+		log.Fatalf("error downloading packages: ", err)
 	}
 
 	//Set the arguments to be passed in to the R Package Installer
@@ -99,16 +97,18 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	// Install the packages
 	//
 	err = rcmd.InstallPackagePlan(fs, installPlan, pkgMap, packageCache, pkgInstallArgs, rSettings, rcmd.ExecSettings{}, nworkers)
-	if err != nil {
-		fmt.Println("failed package install")
-		fmt.Println(err)
-	}
-
 	// After package installation, fix any problems that occurred during reinstallation of
 	//  packages that were to be updated.
-	pacman.RestoreUnupdatedPackages(fs, packageUpdateAttempts)
+	if cfg.Update {
+		pacman.RestoreUnupdatedPackages(fs, packageUpdateAttempts)
+	}
 
-	fmt.Println("duration:", time.Since(startTime))
+	log.Info("duration:", time.Since(startTime))
+
+	if err != nil {
+		log.Fatalf("failed package install with err, %s", err)
+	}
+
 	return nil
 }
 
