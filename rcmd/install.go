@@ -467,7 +467,7 @@ func InstallPackagePlan(
 		}
 	}(shouldInstall)
 
-	log.WithField("packages", strings.Join(plan.StartingPackages, ", ")).Info("starting initial install")
+	log.Info("starting initial install")
 
 	for _, p := range plan.StartingPackages {
 		wg.Add(1)
