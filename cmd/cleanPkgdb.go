@@ -85,8 +85,8 @@ func removePackageDatabases(pkgdbsToClear []string, cfg configlib.PkgrConfig) er
 	rs := rcmd.NewRSettings(cfg.RPath)
 	rVersion := rcmd.GetRVersion(&rs)
 
-	packageDatabase, _ := planInstall(rVersion)
-	repoDatabases := packageDatabase.Db
+	pkgNexus, _ := planInstall(rVersion)
+	repoDatabases := pkgNexus.Db
 
 	for _, dbToClear := range pkgdbsToClear {
 		for _, repoDatabase := range repoDatabases {
