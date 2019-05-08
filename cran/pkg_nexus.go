@@ -12,12 +12,12 @@ import (
 
 // NewPkgDb returns a new package database
 func NewPkgDb(urls []RepoURL, dst SourceType, cfgdb *InstallConfig, rv RVersion) (*PkgNexus, error) {
-	db := PkgNexus{
+	pkgNexus := PkgNexus{
 		Config:            cfgdb,
 		DefaultSourceType: dst,
 	}
 	if len(urls) == 0 {
-		return &db, errors.New("Package database must contain at least one RepoUrl")
+		return &pkgNexus, errors.New("Package database must contain at least one RepoUrl")
 	}
 	type rd struct {
 		Url       RepoURL
@@ -29,7 +29,7 @@ func NewPkgDb(urls []RepoURL, dst SourceType, cfgdb *InstallConfig, rv RVersion)
 	defer close(rdbc)
 	ri := 0
 	for _, url := range urls {
-		db.Db = append(db.Db, nil)
+		pkgNexus.Db = append(pkgNexus.Db, nil)
 		go func(url RepoURL, dst SourceType, ri int) {
 			rdb, err := NewRepoDb(url, dst, cfgdb.Repos[url.Name], rv)
 			rdbc <- rd{url, rdb, ri, err}
@@ -45,20 +45,20 @@ func NewPkgDb(urls []RepoURL, dst SourceType, cfgdb *InstallConfig, rv RVersion)
 			log.Fatalf("error downloading repo information from: %s:%s\n", result.Url.Name, result.Url.URL)
 			err = result.Err
 		} else {
-			db.Db[result.repoIndex] = result.Rdb
+			pkgNexus.Db[result.repoIndex] = result.Rdb
 		}
 	}
-	return &db, err
+	return &pkgNexus, err
 }
 
 // SetPackageRepo sets a package repository so querying the package will
 // pull from that repo
-func (p *PkgNexus) SetPackageRepo(pkg string, repo string) error {
-	for _, r := range p.Db {
+func (pkgNexus *PkgNexus) SetPackageRepo(pkg string, repo string) error {
+	for _, r := range pkgNexus.Db {
 		if r.Repo.Name == repo {
-			cfg := p.Config.Packages[pkg]
+			cfg := pkgNexus.Config.Packages[pkg]
 			cfg.Repo = r.Repo
-			p.Config.Packages[pkg] = cfg
+			pkgNexus.Config.Packages[pkg] = cfg
 			return nil
 		}
 	}
@@ -66,8 +66,8 @@ func (p *PkgNexus) SetPackageRepo(pkg string, repo string) error {
 }
 
 // SetPackageType sets the package type (source/binary) for installation
-func (p *PkgNexus) SetPackageType(pkg string, t string) error {
-	cfg := p.Config.Packages[pkg]
+func (pkgNexus *PkgNexus) SetPackageType(pkg string, t string) error {
+	cfg := pkgNexus.Config.Packages[pkg]
 	if strings.EqualFold(t, "source") {
 		cfg.Type = Source
 	} else if strings.EqualFold(t, "binary") {
@@ -75,7 +75,7 @@ func (p *PkgNexus) SetPackageType(pkg string, t string) error {
 	} else {
 		return fmt.Errorf("invalid source type: %s for pkg: %s", t, pkg)
 	}
-	p.Config.Packages[pkg] = cfg
+	pkgNexus.Config.Packages[pkg] = cfg
 	return nil
 }
 
@@ -107,13 +107,13 @@ func isCorrectRepo(pkg string, r RepoURL, cfg map[string]PkgConfig) bool {
 }
 
 // GetPackage gets a package from the package database, returning the first match
-func (p *PkgNexus) GetPackage(pkg string) (desc.Desc, PkgConfig, bool) {
-	cfg, exists := p.Config.Packages[pkg]
-	st := p.DefaultSourceType
+func (pkgNexus *PkgNexus) GetPackage(pkg string) (desc.Desc, PkgConfig, bool) {
+	cfg, exists := pkgNexus.Config.Packages[pkg]
+	st := pkgNexus.DefaultSourceType
 	if exists && cfg.Type != Default {
 		st = cfg.Type
 	}
-	for _, db := range p.Db {
+	for _, db := range pkgNexus.Db {
 		rst := st
 		if db.DefaultSourceType != rst && !exists && db.DefaultSourceType != Default {
 			rst = db.DefaultSourceType
@@ -122,22 +122,22 @@ func (p *PkgNexus) GetPackage(pkg string) (desc.Desc, PkgConfig, bool) {
 		// in the config. Eg, if specifies binary, will only check binary version
 		// the checking if also exists as source or otherwise should occur upstream
 		// then be set as part of the explicit configuration.
-		if pkgExists(pkg, db.Dbs[rst]) && isCorrectRepo(pkg, db.Repo, p.Config.Packages) {
-			return db.Dbs[rst][pkg], PkgConfig{Repo: db.Repo, Type: rst}, true
+		if pkgExists(pkg, db.DescriptionsBySourceType[rst]) && isCorrectRepo(pkg, db.Repo, pkgNexus.Config.Packages) {
+			return db.DescriptionsBySourceType[rst][pkg], PkgConfig{Repo: db.Repo, Type: rst}, true
 		}
 	}
 	return desc.Desc{}, PkgConfig{}, false
 }
 
 // GetPackageFromRepo gets a package from a repo in the package database
-func (p *PkgNexus) GetPackageFromRepo(pkg string, repo string) (desc.Desc, PkgConfig, bool) {
-	st := p.Config.Packages[pkg].Type
-	for _, db := range p.Db {
+func (pkgNexus *PkgNexus) GetPackageFromRepo(pkg string, repo string) (desc.Desc, PkgConfig, bool) {
+	st := pkgNexus.Config.Packages[pkg].Type
+	for _, db := range pkgNexus.Db {
 		if repo != "" && db.Repo.Name != repo {
 			continue
 		}
-		if pkgExists(pkg, db.Dbs[st]) {
-			return db.Dbs[st][pkg], PkgConfig{Repo: db.Repo, Type: st}, true
+		if pkgExists(pkg, db.DescriptionsBySourceType[st]) {
+			return db.DescriptionsBySourceType[st][pkg], PkgConfig{Repo: db.Repo, Type: st}, true
 		}
 	}
 	return desc.Desc{}, PkgConfig{}, false
@@ -145,10 +145,10 @@ func (p *PkgNexus) GetPackageFromRepo(pkg string, repo string) (desc.Desc, PkgCo
 
 // GetPackages returns all packages and the repo that they
 // will be acquired from, as well as any missing packages
-func (p *PkgNexus) GetPackages(pkgs []string) AvailablePkgs {
+func (pkgNexus *PkgNexus) GetPackages(pkgs []string) AvailablePkgs {
 	ap := AvailablePkgs{}
 	for _, pkg := range pkgs {
-		pd, cfg, found := p.GetPackage(pkg)
+		pd, cfg, found := pkgNexus.GetPackage(pkg)
 		ap.Packages = append(ap.Packages, PkgDl{
 			Package: pd,
 			Config:  cfg,
@@ -163,8 +163,8 @@ func (p *PkgNexus) GetPackages(pkgs []string) AvailablePkgs {
 // CheckAllAvailable returns whether all requested packages
 // are available in the package database. It is a simple wrapper
 // around GetPackages
-func (p *PkgNexus) CheckAllAvailable(pkgs []string) bool {
-	ap := p.GetPackages(pkgs)
+func (pkgNexus *PkgNexus) CheckAllAvailable(pkgs []string) bool {
+	ap := pkgNexus.GetPackages(pkgs)
 	if len(ap.Missing) > 0 {
 		return false
 	}
@@ -172,12 +172,12 @@ func (p *PkgNexus) CheckAllAvailable(pkgs []string) bool {
 }
 
 // GetAllPkgsByName returns all packages in the database
-func (p *PkgNexus) GetAllPkgsByName() []string {
+func (pkgNexus *PkgNexus) GetAllPkgsByName() []string {
 	// use map so will remove duplicate packages
 	pkgMap := make(map[string]bool)
-	for _, db := range p.Db {
-		for st := range db.Dbs {
-			for pkg := range db.Dbs[st] {
+	for _, db := range pkgNexus.Db {
+		for st := range db.DescriptionsBySourceType {
+			for pkg := range db.DescriptionsBySourceType[st] {
 				pkgMap[pkg] = true
 			}
 		}
