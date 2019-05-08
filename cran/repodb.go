@@ -112,9 +112,9 @@ func (repoDb *RepoDb) FetchPackages(rVersion RVersion) error {
 	}
 
 	type downloadDatabase struct {
-		St   SourceType
-		Stdb map[string]desc.Desc
-		Err  error
+		St                    SourceType
+		AvailableDescriptions map[string]desc.Desc
+		Err                   error
 	}
 
 	downloadChannel := make(chan downloadDatabase, len(repoDb.DescriptionsBySourceType))
@@ -131,15 +131,15 @@ func (repoDb *RepoDb) FetchPackages(rVersion RVersion) error {
 				res, err := http.Get(pkgURL)
 				if res.StatusCode != 200 {
 					downloadChannel <- downloadDatabase{
-						St: st,
-						Stdb: descriptionMap,
-						Err:  fmt.Errorf("failed fetching PACKAGES file from %s, with status %s", pkgURL, res.Status)}
+						St:                    st,
+						AvailableDescriptions: descriptionMap,
+						Err:                   fmt.Errorf("failed fetching PACKAGES file from %s, with status %s", pkgURL, res.Status)}
 					return
 				}
 
 				if err != nil {
 					err = fmt.Errorf("problem getting packages from url %s: %s", pkgURL, err)
-					downloadChannel <- downloadDatabase{St: st, Stdb: descriptionMap, Err: err}
+					downloadChannel <- downloadDatabase{St: st, AvailableDescriptions: descriptionMap, Err: err}
 					return
 				}
 
@@ -147,7 +147,7 @@ func (repoDb *RepoDb) FetchPackages(rVersion RVersion) error {
 				body, err = ioutil.ReadAll(res.Body)
 				if err != nil {
 					err = fmt.Errorf("error reading body: %s", err)
-					downloadChannel <- downloadDatabase{St: st, Stdb: descriptionMap, Err: err}
+					downloadChannel <- downloadDatabase{St: st, AvailableDescriptions: descriptionMap, Err: err}
 					return
 				}
 
@@ -158,7 +158,7 @@ func (repoDb *RepoDb) FetchPackages(rVersion RVersion) error {
 					body, err = ioutil.ReadAll(fi)
 				} else {
 					err = fmt.Errorf("no package file found at: %s", pkgdir)
-					downloadChannel <- downloadDatabase{St: st, Stdb: descriptionMap, Err: err}
+					downloadChannel <- downloadDatabase{St: st, AvailableDescriptions: descriptionMap, Err: err}
 					return
 				}
 			}
@@ -174,37 +174,66 @@ func (repoDb *RepoDb) FetchPackages(rVersion RVersion) error {
 				}
 				reader := bytes.NewReader(pkg)
 				pkgDesc, err := desc.ParseDesc(reader)
-				descriptionMap[pkgDesc.Package] = pkgDesc
-				if err != nil {
+
+				// TODO:
+				// Prune out packages that are not compatible with current R Version
+				// Check If required R version is compatible with given R version
+				// Get R Version
+				rVersionConstraints := pkgDesc.Depends["R"]
+
+				installationVersion := desc.ParseVersion(rVersion.ToFullString())
+				var packageValid bool
+				if rVersionConstraints.Name != "" {
+					switch rVersionConstraints.Constraint {
+					case desc.GT:
+						packageValid = desc.CompareVersions(installationVersion, rVersionConstraints.Version) > 0
+					case desc.GTE:
+						packageValid = desc.CompareVersions(installationVersion, rVersionConstraints.Version) >= 0
+					case desc.LT:
+						packageValid = desc.CompareVersions(installationVersion, rVersionConstraints.Version) < 0
+					case desc.LTE:
+						packageValid = desc.CompareVersions(installationVersion, rVersionConstraints.Version) <= 0
+					case desc.Equals:
+						packageValid = desc.CompareVersions(installationVersion, rVersionConstraints.Version) == 0
+					default:
+						break
+					}
+				}
+
+				 if packageValid {
+					 descriptionMap[pkgDesc.Package] = pkgDesc
+				 }
+				 if err != nil {
 					fmt.Println("problem parsing package with info ", string(pkg))
 					fmt.Println(err)
-					downloadChannel <- downloadDatabase{St: st, Stdb: descriptionMap, Err: err}
+					downloadChannel <- downloadDatabase{St: st, AvailableDescriptions: descriptionMap, Err: err}
 					return
 				}
 			}
 
-			downloadChannel <- downloadDatabase{St: st, Stdb: descriptionMap, Err: err}
+			downloadChannel <- downloadDatabase{St: st, AvailableDescriptions: descriptionMap, Err: err}
 		}(sourceType)
 
 	}
-	nerr := 0
+	errorCount := 0
 	var lasterr error
 	for i := 0; i < len(repoDb.DescriptionsBySourceType); i++ {
 		result := <-downloadChannel
 		if result.Err != nil {
 			log.Warnf("error downloading repo %s, type: %s, with information: %s\n", repoDb.Repo.Name, result.St, result.Err)
-			nerr++
+			errorCount++
 			lasterr = result.Err
 			// if one repo fails should return the error and not continue
 			// as don't want a partial repodb as it might cause improperly pulled packages
 		} else {
-			repoDb.DescriptionsBySourceType[result.St] = result.Stdb
+			repoDb.DescriptionsBySourceType[result.St] = result.AvailableDescriptions
 		}
 	}
 	// if only one source fails, this could be because it isn't present - eg if have binary/source but only source available
-	if len(repoDb.DescriptionsBySourceType) > 1 && nerr == len(repoDb.DescriptionsBySourceType) {
+	if len(repoDb.DescriptionsBySourceType) > 1 && errorCount == len(repoDb.DescriptionsBySourceType) {
 		return lasterr
 	}
+
 	return repoDb.Encode(pkgdbFile)
 }
 
