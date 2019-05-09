@@ -72,7 +72,7 @@ func (repoDb *RepoDb) Encode(file string) error {
 }
 
 // Hash provides a hash based on the RepoDb sources
-func (repoDb *RepoDb) Hash() string {
+func (repoDb *RepoDb) Hash(rVersion string) string {
 	h := md5.New()
 	// want to get the unique elements in the DescriptionsBySourceType so the cache
 	// will be representative of the config. Eg if set to only source
@@ -81,7 +81,7 @@ func (repoDb *RepoDb) Hash() string {
 	for st := range repoDb.DescriptionsBySourceType {
 		stsum += st + 1
 	}
-	io.WriteString(h, repoDb.Repo.Name+repoDb.Repo.URL+string(stsum))
+	io.WriteString(h, repoDb.Repo.Name+repoDb.Repo.URL+string(stsum)+rVersion)
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
@@ -98,7 +98,7 @@ func GetPackagesFileURL(r RepoURL, st SourceType, rv RVersion) string {
 // R_AVAILABLE_PACKAGES_CACHE_CONTROL_MAX_AGE controls the timing to requery the cache in R
 func (repoDb *RepoDb) FetchPackages(rVersion RVersion) error {
 	var err error
-	pkgdbFile := repoDb.GetRepoDbCacheFilePath()
+	pkgdbFile := repoDb.GetRepoDbCacheFilePath(rVersion.ToFullString())
 
 	if fi, err := os.Stat(pkgdbFile); !os.IsNotExist(err) {
 		if fi.ModTime().Add(1*time.Hour).Unix() > time.Now().Unix() {
@@ -258,22 +258,22 @@ func checkRVersionCompatibility(rVersion RVersion, pkgRConstraint desc.Dep) bool
 }
 
 //GetRepoDbCacheFilePath Get the filename of the file in the cache that will store this RepoDB
-func (repoDb *RepoDb) GetRepoDbCacheFilePath() string {
+func (repoDb *RepoDb) GetRepoDbCacheFilePath(rVersion string) string {
 	cdir, err := os.UserCacheDir()
 	if err != nil {
 		fmt.Println("could not use user cache dir, using temp dir")
 		cdir = os.TempDir()
 	}
-	return (filepath.Join(cdir, "pkgr", "r_packagedb_caches", repoDb.Hash()))
+	return (filepath.Join(cdir, "pkgr", "r_packagedb_caches", repoDb.Hash(rVersion)))
 }
 
 // GetPackageDbFilePath get the filepath for the cached pkgdbs
-func (repoDb *RepoDb) GetPackageDbFilePath() string {
+func (repoDb *RepoDb) GetPackageDbFilePath(rVersion string) string {
 	cdir, err := os.UserCacheDir()
 	if err != nil {
 		fmt.Println("could not use user cache dir, using temp dir")
 		cdir = os.TempDir()
 	}
-	pkgdbHash := repoDb.Hash()
+	pkgdbHash := repoDb.Hash(rVersion)
 	return filepath.Join(cdir, "pkgr", "r_packagedb_caches", pkgdbHash)
 }

@@ -52,7 +52,7 @@ type Download struct {
 	Path     string
 	New      bool
 	Metadata PkgDl
-	Size	 int64
+	Size     int64
 }
 
 func (d Download) GetMegabytes() float64 {
