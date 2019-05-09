@@ -222,6 +222,14 @@ func (repoDb *RepoDb) FetchPackages(rVersion RVersion) error {
 
 func isRVersionCompatible(pkgDesc desc.Desc, rVersion RVersion) (desc.Dep, bool) {
 	pkgRConstraint, present := pkgDesc.Depends["R"]
+	packageValid := true
+	if present {
+		packageValid = checkRVersionCompatibility(rVersion, pkgRConstraint)
+	}
+	return pkgRConstraint, packageValid
+}
+
+func checkRVersionCompatibility(rVersion RVersion, pkgRConstraint desc.Dep) bool {
 	installationVersion := desc.ParseVersion(rVersion.ToFullString())
 	// we can have packages that are not valid based on the R constraint, so we should check those
 	// and not include them in the repodb if they are invalid.
@@ -231,24 +239,22 @@ func isRVersionCompatible(pkgDesc desc.Desc, rVersion RVersion) (desc.Dep, bool)
 	// pkgX v2.0 for R >= 3.5
 	// we want the repo db to reflect that pkgX v1 should be downloaded if you have R < 3.5 vs
 	// v2 for R >= 3.5
-	packageValid := true
-	if present {
-		switch pkgRConstraint.Constraint {
-		case desc.GT:
-			packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) > 0
-		case desc.GTE:
-			packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) >= 0
-		case desc.LT:
-			packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) < 0
-		case desc.LTE:
-			packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) <= 0
-		case desc.Equals:
-			packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) == 0
-		default:
-			break
-		}
+	packageValid := false
+	switch pkgRConstraint.Constraint {
+	case desc.GT:
+		packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) > 0
+	case desc.GTE:
+		packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) >= 0
+	case desc.LT:
+		packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) < 0
+	case desc.LTE:
+		packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) <= 0
+	case desc.Equals:
+		packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) == 0
+	default:
+		break
 	}
-	return pkgRConstraint, packageValid
+	return packageValid
 }
 
 //GetRepoDbCacheFilePath Get the filename of the file in the cache that will store this RepoDB
