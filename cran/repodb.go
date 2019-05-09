@@ -181,38 +181,8 @@ func (repoDb *RepoDb) FetchPackages(rVersion RVersion) error {
 					downloadChannel <- downloadDatabase{St: st, AvailableDescriptions: descriptionMap, Err: err}
 					return
 				}
-				// TODO:
-				// Prune out packages that are not compatible with current R Version
-				// Check If required R version is compatible with given R version
-				// Get R Version
-				pkgRConstraint, present := pkgDesc.Depends["R"]
 
-				installationVersion := desc.ParseVersion(rVersion.ToFullString())
-				// we can have packages that are not valid based on the R constraint, so we should check those
-				// and not include them in the repodb if they are invalid.
-				// this is important as multiple versions of a single package can be present in a single
-				// database to provide a particular package version given the version of R installed.
-				// eg pkgX v1.0 for R < 3.5
-				// pkgX v2.0 for R >= 3.5
-				// we want the repo db to reflect that pkgX v1 should be downloaded if you have R < 3.5 vs
-				// v2 for R >= 3.5
-				packageValid := true
-				if present {
-					switch pkgRConstraint.Constraint {
-					case desc.GT:
-						packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) > 0
-					case desc.GTE:
-						packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) >= 0
-					case desc.LT:
-						packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) < 0
-					case desc.LTE:
-						packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) <= 0
-					case desc.Equals:
-						packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) == 0
-					default:
-						break
-					}
-				}
+				pkgRConstraint, packageValid := isRVersionCompatible(pkgDesc, rVersion)
 
 				if packageValid {
 					descriptionMap[pkgDesc.Package] = pkgDesc
@@ -248,6 +218,37 @@ func (repoDb *RepoDb) FetchPackages(rVersion RVersion) error {
 	}
 
 	return repoDb.Encode(pkgdbFile)
+}
+
+func isRVersionCompatible(pkgDesc desc.Desc, rVersion RVersion) (desc.Dep, bool) {
+	pkgRConstraint, present := pkgDesc.Depends["R"]
+	installationVersion := desc.ParseVersion(rVersion.ToFullString())
+	// we can have packages that are not valid based on the R constraint, so we should check those
+	// and not include them in the repodb if they are invalid.
+	// this is important as multiple versions of a single package can be present in a single
+	// database to provide a particular package version given the version of R installed.
+	// eg pkgX v1.0 for R < 3.5
+	// pkgX v2.0 for R >= 3.5
+	// we want the repo db to reflect that pkgX v1 should be downloaded if you have R < 3.5 vs
+	// v2 for R >= 3.5
+	packageValid := true
+	if present {
+		switch pkgRConstraint.Constraint {
+		case desc.GT:
+			packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) > 0
+		case desc.GTE:
+			packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) >= 0
+		case desc.LT:
+			packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) < 0
+		case desc.LTE:
+			packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) <= 0
+		case desc.Equals:
+			packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) == 0
+		default:
+			break
+		}
+	}
+	return pkgRConstraint, packageValid
 }
 
 //GetRepoDbCacheFilePath Get the filename of the file in the cache that will store this RepoDB

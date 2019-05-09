@@ -77,7 +77,6 @@ func (suite *PlanTestSuite) TestGetPriorInstalledPackages_NoPreinstalledPackages
 	cwd, _ := filepath.Abs(".")
 	fmt.Println(fmt.Sprintf("Starting test with working directory %s", cwd ))
 
-
 	libraryPath, _ := filepath.Abs(filepath.Join("testsite", "working", "null-test", "test-library"))
 
 	actual := GetPriorInstalledPackages(suite.FileSystem, libraryPath)
