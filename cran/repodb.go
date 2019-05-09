@@ -175,39 +175,52 @@ func (repoDb *RepoDb) FetchPackages(rVersion RVersion) error {
 				reader := bytes.NewReader(pkg)
 				pkgDesc, err := desc.ParseDesc(reader)
 
+				if err != nil {
+					fmt.Println("problem parsing package with info ", string(pkg))
+					fmt.Println(err)
+					downloadChannel <- downloadDatabase{St: st, AvailableDescriptions: descriptionMap, Err: err}
+					return
+				}
 				// TODO:
 				// Prune out packages that are not compatible with current R Version
 				// Check If required R version is compatible with given R version
 				// Get R Version
-				rVersionConstraints := pkgDesc.Depends["R"]
+				pkgRConstraint, present := pkgDesc.Depends["R"]
 
 				installationVersion := desc.ParseVersion(rVersion.ToFullString())
-				var packageValid bool
-				if rVersionConstraints.Name != "" {
-					switch rVersionConstraints.Constraint {
+				// we can have packages that are not valid based on the R constraint, so we should check those
+				// and not include them in the repodb if they are invalid.
+				// this is important as multiple versions of a single package can be present in a single
+				// database to provide a particular package version given the version of R installed.
+				// eg pkgX v1.0 for R < 3.5
+				// pkgX v2.0 for R >= 3.5
+				// we want the repo db to reflect that pkgX v1 should be downloaded if you have R < 3.5 vs
+				// v2 for R >= 3.5
+				packageValid := true
+				if present {
+					switch pkgRConstraint.Constraint {
 					case desc.GT:
-						packageValid = desc.CompareVersions(installationVersion, rVersionConstraints.Version) > 0
+						packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) > 0
 					case desc.GTE:
-						packageValid = desc.CompareVersions(installationVersion, rVersionConstraints.Version) >= 0
+						packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) >= 0
 					case desc.LT:
-						packageValid = desc.CompareVersions(installationVersion, rVersionConstraints.Version) < 0
+						packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) < 0
 					case desc.LTE:
-						packageValid = desc.CompareVersions(installationVersion, rVersionConstraints.Version) <= 0
+						packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) <= 0
 					case desc.Equals:
-						packageValid = desc.CompareVersions(installationVersion, rVersionConstraints.Version) == 0
+						packageValid = desc.CompareVersions(installationVersion, pkgRConstraint.Version) == 0
 					default:
 						break
 					}
 				}
 
-				 if packageValid {
-					 descriptionMap[pkgDesc.Package] = pkgDesc
-				 }
-				 if err != nil {
-					fmt.Println("problem parsing package with info ", string(pkg))
-					fmt.Println(err)
-					downloadChannel <- downloadDatabase{St: st, AvailableDescriptions: descriptionMap, Err: err}
-					return
+				if packageValid {
+					descriptionMap[pkgDesc.Package] = pkgDesc
+				} else {
+					log.WithFields(log.Fields{
+						"pkg":     pkgDesc.Package,
+						"version": pkgRConstraint.ToString(),
+					}).Debug("invalid package constraint")
 				}
 			}
 
