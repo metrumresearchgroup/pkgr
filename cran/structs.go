@@ -17,10 +17,10 @@ type RepoURL struct {
 
 // RepoDb represents a Db
 type RepoDb struct {
-	Dbs               map[SourceType]map[string]desc.Desc
-	Time              time.Time
-	Repo              RepoURL
-	DefaultSourceType SourceType
+	DescriptionsBySourceType map[SourceType]map[string]desc.Desc
+	Time                     time.Time
+	Repo                     RepoURL
+	DefaultSourceType        SourceType
 }
 
 // InstallConfig contains custom settings for a full install
