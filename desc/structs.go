@@ -14,7 +14,7 @@ func (c Constraint) ToString() string {
 	case LTE:
 		return "<="
 	case Equals:
-		return "="
+		return "=="
 	default:
 		return "Unknown constraint"
 	}

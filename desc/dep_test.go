@@ -88,7 +88,7 @@ func (suite *DepTestSuite) TestDepToString_EqualsConstaint() {
 		Name: "CatsAndOranges",
 	}
 
-	expected := "CatsAndOranges (= 2.3.1)"
+	expected := "CatsAndOranges (== 2.3.1)"
 	actual := fixture.ToString()
 
 	suite.Equal(expected, actual)
