@@ -16,18 +16,19 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/metrumresearchgroup/pkgr/configlib"
 	"github.com/metrumresearchgroup/pkgr/logger"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"os"
-	"path/filepath"
 )
 
 // VERSION is the current pkc version
-var VERSION = "0.2.0-alpha.2"
+var VERSION = "0.3.0-rc"
 
 var fs afero.Fs
 var cfg configlib.PkgrConfig
@@ -106,8 +107,6 @@ func initConfig() {
 	}
 	_ = viper.Unmarshal(&cfg)
 
-
-
 	configFilePath, _ := filepath.Abs(viper.ConfigFileUsed())
 	cwd, _ := os.Getwd()
 	log.WithFields(log.Fields{
@@ -116,7 +115,4 @@ func initConfig() {
 	}).Trace("setting directory to configuration file")
 	_ = os.Chdir(filepath.Dir(configFilePath))
 
-
 }
-
-

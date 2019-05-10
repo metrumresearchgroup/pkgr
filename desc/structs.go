@@ -3,6 +3,23 @@ package desc
 // Constraint on version requirement
 type Constraint int
 
+func (c Constraint) ToString() string {
+	switch c {
+	case GT:
+		return ">"
+	case GTE:
+		return ">="
+	case LT:
+		return "<"
+	case LTE:
+		return "<="
+	case Equals:
+		return "=="
+	default:
+		return "Unknown constraint"
+	}
+}
+
 // Constraints on package deps
 // Least to most constraining
 const (
