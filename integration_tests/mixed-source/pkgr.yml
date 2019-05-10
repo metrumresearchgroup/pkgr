@@ -4,11 +4,13 @@ Packages:
   - rmarkdown
   - shiny
   - devtools
+  - mrgsolve
 
 # any repositories, order matters
 Repos:
-   - CRAN-Micro: "https://cran.microsoft.com/snapshot/2018-11-18"
-   - CRAN: "https://cran.rstudio.com"
+  - r_validated: "https://metrumresearchgroup.github.io/r_validated"
+  - CRAN-Micro: "https://cran.microsoft.com/snapshot/2018-11-18"
+  - CRAN: "https://cran.rstudio.com"
 
 Library: "test-library"
 
@@ -18,5 +20,10 @@ Logging:
   File: mixed-source.log
 
 Customizations:
-  - devtools:
-      Type: source
+  Packages:
+    - devtools:
+        Type: source
+    - mrgsolve:
+        Type: source
+    - shiny:
+        Repo: CRAN
