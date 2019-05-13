@@ -17,10 +17,10 @@ type RepoURL struct {
 
 // RepoDb represents a Db
 type RepoDb struct {
-	Dbs               map[SourceType]map[string]desc.Desc
-	Time              time.Time
-	Repo              RepoURL
-	DefaultSourceType SourceType
+	DescriptionsBySourceType map[SourceType]map[string]desc.Desc
+	Time                     time.Time
+	Repo                     RepoURL
+	DefaultSourceType        SourceType
 }
 
 // InstallConfig contains custom settings for a full install
@@ -40,8 +40,8 @@ type PkgConfig struct {
 	Type SourceType
 }
 
-// PkgDb represents a package database
-type PkgDb struct {
+// PkgNexus represents a package database
+type PkgNexus struct {
 	Db                []*RepoDb
 	Config            *InstallConfig
 	DefaultSourceType SourceType
@@ -52,6 +52,11 @@ type Download struct {
 	Path     string
 	New      bool
 	Metadata PkgDl
+	Size     int64
+}
+
+func (d Download) GetMegabytes() float64 {
+	return float64(d.Size) / (1024 * 1024)
 }
 
 // PkgDl holds the metadata needed to download a package

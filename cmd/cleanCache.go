@@ -20,6 +20,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/dpastoor/goutils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -100,7 +101,8 @@ func deleteCacheSubfolders(repos []string, subfolder string, cacheDirectory stri
 		return err
 	}
 
-	repoFolderFsObjects, _ := cacheDirFsObject.Readdir(0)
+	fileInfo, _ := cacheDirFsObject.Readdir(0)
+	repoFolderFsObjects := goutils.ListDirNames(fileInfo)
 
 	log.WithFields(log.Fields{
 		"repos argument": reposToClear,
@@ -112,7 +114,7 @@ func deleteCacheSubfolders(repos []string, subfolder string, cacheDirectory stri
 		for _, repoFolderFsObject := range repoFolderFsObjects {
 			subfolderPath := filepath.Join(
 				cacheDirectory,
-				repoFolderFsObject.Name(),
+				repoFolderFsObject,
 				subfolder,
 			)
 			err = fs.RemoveAll(subfolderPath)
@@ -124,17 +126,17 @@ func deleteCacheSubfolders(repos []string, subfolder string, cacheDirectory stri
 		for _, repoToClear := range repos {
 			for _, repoFolderFsObject := range repoFolderFsObjects {
 
-				if repoToClear == repoFolderFsObject.Name() {
+				if repoToClear == repoFolderFsObject {
 
 					subfolderPath := filepath.Join(
 						cacheDirectory,
-						repoFolderFsObject.Name(),
+						repoFolderFsObject,
 						subfolder,
 					)
 
 					log.WithFields(log.Fields{
 						"repoToClear":             repoToClear,
-						"repoFolderFsObject Name": repoFolderFsObject.Name(),
+						"repoFolderFsObject Name": repoFolderFsObject,
 						"subfolder":               subfolder,
 						"subfolder path":          subfolderPath,
 					}).Trace("match found")

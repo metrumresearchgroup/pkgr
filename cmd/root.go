@@ -16,19 +16,19 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/metrumresearchgroup/pkgr/logger"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/afero"
-	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
 
 	"github.com/metrumresearchgroup/pkgr/configlib"
+	"github.com/metrumresearchgroup/pkgr/logger"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // VERSION is the current pkc version
-var VERSION = "0.2.0-alpha.2"
+var VERSION = "0.3.0-rc"
 
 var fs afero.Fs
 var cfg configlib.PkgrConfig
@@ -78,6 +78,9 @@ func init() {
 	RootCmd.PersistentFlags().String("library", "", "library to install packages")
 	_ = viper.BindPFlag("library", RootCmd.PersistentFlags().Lookup("library"))
 
+	RootCmd.PersistentFlags().Bool("update", cfg.Update, "Update packages along with install")
+	_ = viper.BindPFlag("update", RootCmd.PersistentFlags().Lookup("update"))
+
 	// packrat related
 	// RootCmd.PersistentFlags().String("pr_lockfile", "", "packrat lockfile")
 	// viper.BindPFlag("pr_lockfile", RootCmd.PersistentFlags().Lookup("pr_lockfile"))
@@ -104,7 +107,6 @@ func initConfig() {
 	}
 	_ = viper.Unmarshal(&cfg)
 
-
 	configFilePath, _ := filepath.Abs(viper.ConfigFileUsed())
 	cwd, _ := os.Getwd()
 	log.WithFields(log.Fields{
@@ -112,6 +114,5 @@ func initConfig() {
 		"nwd": filepath.Dir(configFilePath),
 	}).Trace("setting directory to configuration file")
 	_ = os.Chdir(filepath.Dir(configFilePath))
-
 
 }

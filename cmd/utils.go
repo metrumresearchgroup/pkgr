@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -41,4 +42,12 @@ func getWorkerCount() int {
 		}
 	}
 	return nworkers
+}
+func stringInSlice(s string, slice []string) bool {
+	for _, entry := range slice {
+		if s == entry {
+			return true
+		}
+	}
+	return false
 }

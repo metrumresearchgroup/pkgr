@@ -41,4 +41,6 @@ type PkgrConfig struct {
 	RPath          string
 	Cache          string
 	Logging        LogConfig
+	Update		   bool
+
 }
