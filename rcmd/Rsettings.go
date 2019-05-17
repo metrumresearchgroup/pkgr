@@ -33,35 +33,50 @@ func (rs RSettings) R() string {
 	return strings.TrimSuffix(rs.Rpath, "/")
 }
 
-// GetRVersion returns the R version as set in RSettings
+// GetRVersion returns the R version, and sets R Version and R platform in RSettings
 // unlike the other methods, this one is a pointer, as RVersion mutates the known R Version,
 // as if it is not defined, it will shell out to R to determine the version, and mutate itself
 // to set that value, while also returning the RVersion.
 // This will keep any program using rs from needing to shell out multiple times
 func GetRVersion(rs *RSettings) cran.RVersion {
 	if rs.Version.ToString() == "0.0" {
-		res, err := RunR(afero.NewOsFs(), "", *rs, "paste0(R.Version()$major,'.',R.Version()$minor)", "")
+		res, err := RunR(afero.NewOsFs(), "", *rs, "version", "")
 		if err != nil {
-			log.Fatal("error getting R version")
+			log.Fatal("error getting R version info")
 			return cran.RVersion{}
 		}
-		rVersionString := rp.ScanLines(res)[0]
-		rsp := strings.Split(strings.Replace(rVersionString, "\"", "", -1), ".")
-		if len(rsp) == 3 {
-			maj, _ := strconv.Atoi(rsp[0])
-			min, _ := strconv.Atoi(rsp[1])
-			pat, _ := strconv.Atoi(rsp[2])
-			// this should now make it so in the future it will be set so should only need to shell out to R once
-			rs.Version = cran.RVersion{
-				Major: maj,
-				Minor: min,
-				Patch: pat,
-			}
-		} else {
-			log.Fatal("error getting R version")
-		}
+		rs.Version, rs.Platform = parseVersionData(res)
 	}
 	return rs.Version
+}
+
+func parseVersionData(data []byte) (version cran.RVersion, platform string) {
+	lines := rp.ScanLines(data)
+	for _, line := range lines {
+		s := strings.Fields(line)
+		switch s[0] {
+		case "version.string":
+			rsp := strings.Split(strings.Replace(s[3], "\"", "", -1), ".")
+			if len(rsp) == 3 {
+				maj, _ := strconv.Atoi(rsp[0])
+				min, _ := strconv.Atoi(rsp[1])
+				pat, _ := strconv.Atoi(rsp[2])
+				// this should now make it so in the future it will be set so should only need to shell out to R once
+				version = cran.RVersion{
+					Major: maj,
+					Minor: min,
+					Patch: pat,
+				}
+			} else {
+				log.Fatal("error getting R version")
+			}
+		case "platform":
+			// set platform in Rsettings for future access
+			platform = s[1]
+		default:
+		}
+	}
+	return version, platform
 }
 
 // LibPathsEnv returns the library formatted in the style to be set as an environment variable
