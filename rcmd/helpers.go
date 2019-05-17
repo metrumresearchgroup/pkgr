@@ -19,8 +19,8 @@ func binaryNameOs(os, pkg, version, platform string) string {
 		return fmt.Sprintf("%s_%s.zip", pkg, version)
 	default:
 		log.Fatal("platform not supported for binary detection")
-		return ("")
 	}
+	return ("")
 }
 
 func binaryName(pkg, version, platform string) string {
@@ -38,8 +38,8 @@ func binaryExtOs(os, p, platform string) string {
 		return strings.Replace(filepath.Base(p), "tar.gz", "zip", 1)
 	default:
 		log.Fatal("platform not supported for binary detection")
-		return ("")
 	}
+	return ("")
 }
 
 func binaryExt(p, platform string) string {
