@@ -28,7 +28,7 @@ import (
 )
 
 // VERSION is the current pkc version
-var VERSION = "0.3.0-rc"
+var VERSION = "0.4.0-alpha"
 
 var fs afero.Fs
 var cfg configlib.PkgrConfig
