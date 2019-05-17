@@ -72,7 +72,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	//Create a pkgMap object, which helps us with parallel downloads (?)
 	pkgMap, err := cran.DownloadPackages(fs, installPlan.PackageDownloads, packageCache.BaseDir, rVersion)
 	if err != nil {
-		log.Fatalf("error downloading packages: ", err)
+		log.Fatalf("error downloading packages: %s", err)
 	}
 
 	//Set the arguments to be passed in to the R Package Installer

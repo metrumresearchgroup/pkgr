@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 
 	homedir "github.com/mitchellh/go-homedir"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 )
 
@@ -37,11 +39,11 @@ func LoadConfigFromPath(configFilename string) error {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
 	loadDefaultSettings()
 	return nil
 }
 
+// loadDefaultSettings load default settings
 func loadDefaultSettings() {
 	viper.SetDefault("debug", false)
 	viper.SetDefault("preview", false)
@@ -52,6 +54,7 @@ func loadDefaultSettings() {
 	viper.SetDefault("threads", 0)
 }
 
+// IsCustomizationSet ...
 func IsCustomizationSet(key string, elems []interface{}, elem string) bool {
 	for _, v := range elems {
 		for k, iv := range v.(map[interface{}]interface{}) {
@@ -65,4 +68,93 @@ func IsCustomizationSet(key string, elems []interface{}, elem string) bool {
 		}
 	}
 	return false
+}
+
+// AddPackage add a package to the Package section of the yml config file
+func AddPackage(name string) error {
+	cfgname := viper.ConfigFileUsed()
+	err := add(cfgname, name)
+	if err != nil {
+		return err
+	}
+	err = LoadConfigFromPath(cfgname)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// add add a package to the Package section of the yml config file
+func add(ymlfile string, packageName string) error {
+	appFS := afero.NewOsFs()
+	fi, _ := os.Stat(ymlfile)
+	yf, err := afero.ReadFile(appFS, ymlfile)
+	if err != nil {
+		return err
+	}
+
+	if bytes.Contains(yf, []byte(packageName)) {
+		log.Info(fmt.Sprintf("Package <%s> already found in <%s>", packageName, ymlfile))
+		return nil
+	}
+
+	var out []byte
+	i := 0
+	lines := bytes.Split(yf, []byte("\n"))
+	for _, line := range lines {
+		i++
+		out = append(out, line...)
+		if i < len(lines) {
+			out = append(out, []byte("\n")...)
+		}
+		if bytes.HasPrefix(line, []byte("Packages:")) {
+			out = append(out, []byte("  - "+packageName)...)
+			out = append(out, []byte("\n")...)
+		}
+	}
+
+	err = afero.WriteFile(appFS, ymlfile, out, fi.Mode())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// RemovePackage remove a package from the Package section of the yml config file
+func RemovePackage(name string) error {
+	cfgname := viper.ConfigFileUsed()
+	err := remove(cfgname, name)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// remove remove a package from the Package section of the yml config file
+func remove(ymlfile string, packageName string) error {
+	appFS := afero.NewOsFs()
+	yf, _ := afero.ReadFile(appFS, ymlfile)
+	fi, err := os.Stat(ymlfile)
+	if err != nil {
+		return err
+	}
+
+	var out []byte
+	i := 0
+	lines := bytes.Split(yf, []byte("\n"))
+	for _, line := range lines {
+		i++
+		if bytes.HasPrefix(line, []byte("  - "+packageName)) {
+			continue
+		}
+		out = append(out, line...)
+		if i < len(lines) {
+			out = append(out, []byte("\n")...)
+		}
+	}
+	err = afero.WriteFile(appFS, ymlfile, out, fi.Mode())
+	if err != nil {
+		return err
+	}
+	return nil
 }
