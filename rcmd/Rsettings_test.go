@@ -41,52 +41,80 @@ func TestLibPathsEnv(t *testing.T) {
 	}
 }
 
-func TestGetRVersion(t *testing.T) {
+func TestParseVersionData(t *testing.T) {
 	var rVersionTests = []struct {
-		version    cran.RVersion
-		platform   string
-		message    string
-		assertTrue bool
+		data     []byte
+		version  cran.RVersion
+		platform string
+		message  string
 	}{
 		{
-			cran.RVersion{
+			data: []byte(`
+			platform       x86_64-apple-darwin15.6.0
+			arch           x86_64
+			os             darwin15.6.0
+			system         x86_64, darwin15.6.0
+			status
+			major          3
+			minor          5.3
+			year           2019
+			month          03
+			day            11
+			svn rev        76217
+			language       R
+			version.string R version 3.5.3 (2019-03-11)
+			nickname       Great Truth
+			`),
+			version: cran.RVersion{
 				Major: 3,
 				Minor: 5,
 				Patch: 3,
 			},
-			"x86_64-apple-darwin15.6.0",
-			"version info - accurate on mac",
-			true,
+			platform: "x86_64-apple-darwin15.6.0",
+			message:  "darwin test",
 		},
 		{
-			cran.RVersion{
-				Major: 9,
-				Minor: 9,
-				Patch: 9,
+			data: []byte(`
+			platform       i386-w64-mingw32            
+			arch           i386                        
+			os             mingw32                     
+			system         i386, mingw32               
+			status                                     
+			major          3                           
+			minor          1.2                         
+			year           2014                        
+			month          10                          
+			day            31                          
+			svn rev        66913                       
+			language       R                           
+			version.string R version 3.1.2 (2014-10-31)
+			nickname       Pumpkin Helmet              
+			`),
+			version: cran.RVersion{
+				Major: 3,
+				Minor: 1,
+				Patch: 2,
 			},
-			"999_x86_64-apple-darwin15.6.0",
-			"version info - wrong version",
-			false,
+			platform: "i386-w64-mingw32",
+			message:  "windows test",
+		},
+		{
+			data: []byte(`
+			platform       x86_64-pc-linux-gnu (64-bit)            
+			version.string R version 3.4.4 (2018-03-15)
+			`),
+			version: cran.RVersion{
+				Major: 3,
+				Minor: 4,
+				Patch: 4,
+			},
+			platform: "x86_64-pc-linux-gnu",
+			message:  "Manually built Ubuntu test",
 		},
 	}
 	for _, tt := range rVersionTests {
-		rSettings := NewRSettings("")
-		version := GetRVersion(&rSettings)
-		if tt.assertTrue {
-			assert.Equal(t, tt.version, version, fmt.Sprintf("Not equal: %s", tt.message))
-			assert.Equal(t, tt.version, rSettings.Version, fmt.Sprintf("Not equal: %s", tt.message))
-			assert.Equal(t, tt.platform, rSettings.Platform, fmt.Sprintf("Not equal: %s", tt.message))
-		} else {
-			assert.NotEqual(t, tt.version, version, fmt.Sprintf("Equal: %s", tt.message))
-			assert.NotEqual(t, tt.version, rSettings.Version, fmt.Sprintf("Equal: %s", tt.message))
-			assert.NotEqual(t, tt.platform, rSettings.Platform, fmt.Sprintf("Equal: %s", tt.message))
-		}
-	}
-}
-
-func BenchmarkGetVersionInfo(b *testing.B) {
-	rSettings := NewRSettings("")
-	for n := 0; n < 10; n++ {
-		GetRVersion(&rSettings)
+		version, platform := parseVersionData(tt.data)
+		assert.Equal(t, tt.version, version, fmt.Sprintf("Version not equal: %s", tt.message))
+		assert.Equal(t, tt.platform, platform, fmt.Sprintf("Platform not equal: %s", tt.message))
 	}
 }
