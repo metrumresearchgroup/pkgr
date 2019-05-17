@@ -36,27 +36,31 @@ func TestBinaryName(t *testing.T) {
 func TestBinaryExt(t *testing.T) {
 	tests := []struct {
 		os       string
+		platform string
 		path     string
 		expected string
 	}{
 		{
 			os:       "linux",
-			path:     "/var/tmp/gz",
-			expected: "gz",
+			platform: "PLATFORM",
+			path:     "/var/tmp/package_1.2.3.tar.gz",
+			expected: "package_1.2.3_R_PLATFORM.tar.gz",
 		},
 		{
 			os:       "darwin",
-			path:     "/var/tmp/tgz",
-			expected: "tgz",
+			platform: "PLATFORM",
+			path:     "/var/tmp/package_1.2.3.tar.gz",
+			expected: "package_1.2.3.tgz",
 		},
 		{
 			os:       "windows",
-			path:     "/var/tmp/zip",
-			expected: "zip",
+			platform: "PLATFORM",
+			path:     "/var/tmp/package_1.2.3.tar.gz",
+			expected: "package_1.2.3.zip",
 		},
 	}
 	for _, tt := range tests {
-		name := binaryExtOs(tt.os, tt.path, tt.os)
+		name := binaryExtOs(tt.os, tt.path, tt.platform)
 		assert.Equal(t, tt.expected, name, fmt.Sprintf("Not equal: %s", tt.os))
 	}
 }
