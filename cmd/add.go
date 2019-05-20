@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"os"
+	"strings"
 	"time"
 
 	"github.com/metrumresearchgroup/pkgr/configlib"
@@ -52,14 +53,15 @@ func rAdd(ccmd *cobra.Command, args []string) error {
 		os.Exit(0)
 	}
 
-	err := configlib.AddPackage(args[0])
+	pkgName := strings.Trim(args[0], " ")
+	err := configlib.AddPackage(pkgName)
 	if err != nil {
 		log.Fatalf("%s", err)
-	} else if install {
+	}
+	if install {
+		initConfig()
 		rInstall(nil, nil)
 	}
-
-	initConfig()
 
 	log.Info("duration:", time.Since(startTime))
 	return nil
