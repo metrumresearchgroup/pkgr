@@ -138,13 +138,16 @@ func remove(ymlfile string, packageName string) error {
 	if err != nil {
 		return err
 	}
-
 	var out []byte
 	i := 0
 	lines := bytes.Split(yf, []byte("\n"))
 	for _, line := range lines {
 		i++
-		if bytes.HasPrefix(line, []byte("  - "+packageName)) {
+		// trim the line to detect the start of the list of packages
+		// but do not write the trimmed string as it may cause an
+		// unneeded file diff to the yml file
+		sline := bytes.TrimLeft(line, " ")
+		if bytes.HasPrefix(sline, []byte("- "+packageName)) {
 			continue
 		}
 		out = append(out, line...)
