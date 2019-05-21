@@ -26,10 +26,10 @@ import (
 
 // installCmd represents the R CMD install command
 var removeCmd = &cobra.Command{
-	Use:   "remove [package name]",
-	Short: "remove a package",
+	Use:   "remove [package name1] [package name2] [package name3] ...",
+	Short: "remove one or more packages",
 	Long: `
-	remove a package from the configuration file
+	remove package/s from the configuration file
 `,
 	RunE: rRemove,
 }
@@ -49,9 +49,11 @@ func rRemove(ccmd *cobra.Command, args []string) error {
 		os.Exit(0)
 	}
 
-	err := configlib.RemovePackage(args[0])
-	if err != nil {
-		log.Fatalf("%s", err)
+	for _, arg := range args {
+		err := configlib.RemovePackage(arg)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
 	}
 
 	log.Info("duration:", time.Since(startTime))

@@ -16,7 +16,6 @@ package cmd
 
 import (
 	"os"
-	"strings"
 	"time"
 
 	"github.com/metrumresearchgroup/pkgr/configlib"
@@ -27,10 +26,10 @@ import (
 
 // installCmd represents the R CMD install command
 var addCmd = &cobra.Command{
-	Use:   "add [package name]",
-	Short: "add a package",
+	Use:   "add [package name1] [package name2] [package name3] ...",
+	Short: "add one or more packages",
 	Long: `
-	add a package to the configuration file and optionally install
+	add package/s to the configuration file and optionally install
 `,
 	RunE: rAdd,
 }
@@ -38,7 +37,7 @@ var addCmd = &cobra.Command{
 var install bool
 
 func init() {
-	addCmd.Flags().BoolVar(&install, "install", false, "install package after adding")
+	addCmd.Flags().BoolVar(&install, "install", false, "install package/s after adding")
 	RootCmd.AddCommand(addCmd)
 }
 
@@ -53,11 +52,13 @@ func rAdd(ccmd *cobra.Command, args []string) error {
 		os.Exit(0)
 	}
 
-	pkgName := strings.Trim(args[0], " ")
-	err := configlib.AddPackage(pkgName)
-	if err != nil {
-		log.Fatalf("%s", err)
+	for _, arg := range args {
+		err := configlib.AddPackage(arg)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
 	}
+
 	if install {
 		initConfig()
 		rInstall(nil, nil)
