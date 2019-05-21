@@ -102,3 +102,24 @@ func RunR(
 
 	return cmd.Output()
 }
+
+// RunRBatch runs a non-interactive R command
+func RunRBatch(
+	fs afero.Fs,
+	rs RSettings,
+	cmdArgs []string,
+) ([]byte, error) {
+
+	log.WithFields(
+		log.Fields{
+			"cmdArgs":   cmdArgs,
+			"RSettings": rs,
+		}).Trace("command args")
+
+	cmd := exec.Command(
+		rs.R(),
+		cmdArgs...,
+	)
+
+	return cmd.Output()
+}
