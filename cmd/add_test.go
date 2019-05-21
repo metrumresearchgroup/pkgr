@@ -45,7 +45,7 @@ func Test_rAdd(t *testing.T) {
 
 	tests := []testData{
 		{
-			ymlfolder: "/Users/davidl/go/src/github.com/metrumresearchgroup/pkgr/integration_tests/simple",
+			ymlfolder: "../integration_tests/simple",
 			data: []pkgData{
 				{
 					name:   "shiny",
