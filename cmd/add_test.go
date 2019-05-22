@@ -61,6 +61,11 @@ func Test_rAdd(t *testing.T) {
 	fs := afero.NewOsFs()
 	for _, tt := range tests {
 
+		ymlFilename := filepath.Join(tt.ymlfolder, "pkgr.yml")
+		b, _ := afero.Exists(fs, ymlFilename)
+		assert.Equal(t, true, b, fmt.Sprintf("yml file not found:%s", ymlFilename))
+		ymlStart, _ := afero.ReadFile(fs, ymlFilename)
+
 		t.Log("testing add ...")
 		errstr, err := pkgrCommand("add", tt, "--install")
 		assert.Equal(t, nil, err, fmt.Sprintf("Package add error. Check state of yml file <%s>. <%s> ", tt.ymlfolder, errstr))
@@ -80,16 +85,16 @@ func Test_rAdd(t *testing.T) {
 		}
 
 		t.Log("testing pkgr.yml for difference ...")
-		b, msg := isDiff(filepath.Join(tt.ymlfolder, "pkgr.yml"))
-		assert.Equal(t, false, b, fmt.Sprintf("Yml file differs:%s", msg))
-
+		ymlEnd, _ := afero.ReadFile(fs, ymlFilename)
+		n := bytes.Compare(ymlStart, ymlEnd)
+		assert.Equal(t, 0, n, fmt.Sprintf("Yml file differs"))
 	}
 }
 
 func pkgrCommand(cmd string, test testData, flag string) (string, error) {
 
 	var stderr bytes.Buffer
-	pkgr := os.Getenv("HOME") + "/go/bin/pkgr"
+	pkgr := filepath.Join(os.Getenv("HOME"), "/go/bin/pkgr")
 	args := []string{cmd}
 	for _, d := range test.data {
 		args = append(args, d.name)
@@ -106,27 +111,4 @@ func pkgrCommand(cmd string, test testData, flag string) (string, error) {
 	err := command.Run()
 	errstr := string(stderr.Bytes())
 	return errstr, err
-}
-
-func isDiff(filename string) (bool, string) {
-	var stdout, stderr bytes.Buffer
-	git := "/usr/bin/git"
-	args := []string{"diff"}
-	args = append(args, filename)
-
-	command := exec.Command(git, args...)
-	command.Stdout = &stdout
-	command.Stderr = &stderr
-
-	err := command.Run()
-	if err != nil {
-		errstr := string(stderr.Bytes())
-		return true, errstr
-	}
-
-	outstr := string(stdout.Bytes())
-	if len(outstr) > 0 {
-		return true, outstr
-	}
-	return false, ""
 }
