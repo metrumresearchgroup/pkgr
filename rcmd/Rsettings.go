@@ -40,7 +40,7 @@ func (rs RSettings) R() string {
 // This will keep any program using rs from needing to shell out multiple times
 func GetRVersion(rs *RSettings) cran.RVersion {
 	if rs.Version.ToString() == "0.0" {
-		res, err := RunR(afero.NewOsFs(), "", *rs, "version", "")
+		res, err := RunRBatch(afero.NewOsFs(), *rs, []string{"--version"})
 		if err != nil {
 			log.Fatal("error getting R version info")
 			return cran.RVersion{}
@@ -53,10 +53,12 @@ func GetRVersion(rs *RSettings) cran.RVersion {
 func parseVersionData(data []byte) (version cran.RVersion, platform string) {
 	lines := rp.ScanLines(data)
 	for _, line := range lines {
-		s := strings.Fields(line)
-		switch s[0] {
-		case "version.string":
-			rsp := strings.Split(strings.Replace(s[3], "\"", "", -1), ".")
+		if strings.HasPrefix(line, "R version") {
+			spl := strings.Split(line, " ")
+			if len(spl) < 3 {
+				log.Fatal("error getting R version")
+			}
+			rsp := strings.Split(spl[2], ".")
 			if len(rsp) == 3 {
 				maj, _ := strconv.Atoi(rsp[0])
 				min, _ := strconv.Atoi(rsp[1])
@@ -70,10 +72,13 @@ func parseVersionData(data []byte) (version cran.RVersion, platform string) {
 			} else {
 				log.Fatal("error getting R version")
 			}
-		case "platform":
-			// set platform in Rsettings for future access
-			platform = s[1]
-		default:
+		} else if strings.HasPrefix(line, "Platform:") {
+			rsp := strings.Split(line, " ")
+			if len(rsp) > 0 {
+				platform = strings.Trim(rsp[1], " ")
+			} else {
+				log.Fatal("error getting R platform")
+			}
 		}
 	}
 	return version, platform

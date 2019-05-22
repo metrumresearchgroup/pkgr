@@ -49,22 +49,17 @@ func TestParseVersionData(t *testing.T) {
 		message  string
 	}{
 		{
-			data: []byte(`
-			platform       x86_64-apple-darwin15.6.0
-			arch           x86_64
-			os             darwin15.6.0
-			system         x86_64, darwin15.6.0
-			status
-			major          3
-			minor          5.3
-			year           2019
-			month          03
-			day            11
-			svn rev        76217
-			language       R
-			version.string R version 3.5.3 (2019-03-11)
-			nickname       Great Truth
-			`),
+			data: []byte(`R version 3.5.3 (2019-03-11) -- "Great Truth"
+Copyright (C) 2019 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin15.6.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under the terms of the
+GNU General Public License versions 2 or 3.
+For more information about these matters see
+http://www.gnu.org/licenses/.
+
+`),
 			version: cran.RVersion{
 				Major: 3,
 				Minor: 5,
@@ -74,39 +69,34 @@ func TestParseVersionData(t *testing.T) {
 			message:  "darwin test",
 		},
 		{
-			data: []byte(`
-			platform       i386-w64-mingw32            
-			arch           i386                        
-			os             mingw32                     
-			system         i386, mingw32               
-			status                                     
-			major          3                           
-			minor          1.2                         
-			year           2014                        
-			month          10                          
-			day            31                          
-			svn rev        66913                       
-			language       R                           
-			version.string R version 3.1.2 (2014-10-31)
-			nickname       Pumpkin Helmet              
-			`),
+			data: []byte(`R version 3.5.2 (2018-12-20) -- "Eggshell Igloo"
+Copyright (C) 2018 The R Foundation for Statistical Computing
+Platform: x86_64-w64-mingw32/x64 (64-bit)
+			
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under the terms of the
+GNU General Public License versions 2 or 3.
+For more information about these matters see
+http://www.gnu.org/licenses/.
+
+`),
 			version: cran.RVersion{
 				Major: 3,
-				Minor: 1,
+				Minor: 5,
 				Patch: 2,
 			},
-			platform: "i386-w64-mingw32",
+			platform: "x86_64-w64-mingw32/x64",
 			message:  "windows test",
 		},
 		{
 			data: []byte(`
-			platform       x86_64-pc-linux-gnu (64-bit)            
-			version.string R version 3.4.4 (2018-03-15)
+			R version 1.2.3 (2018-12-20) -- "name for Ubuntu"            
+			Platform: x86_64-pc-linux-gnu (64-bit)
 			`),
 			version: cran.RVersion{
-				Major: 3,
-				Minor: 4,
-				Patch: 4,
+				Major: 1,
+				Minor: 2,
+				Patch: 3,
 			},
 			platform: "x86_64-pc-linux-gnu",
 			message:  "Manually built Ubuntu test",
