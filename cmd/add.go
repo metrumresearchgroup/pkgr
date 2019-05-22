@@ -60,7 +60,6 @@ func rAdd(ccmd *cobra.Command, args []string) error {
 	}
 
 	if install {
-		initConfig()
 		rInstall(nil, nil)
 	}
 
