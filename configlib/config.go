@@ -92,7 +92,10 @@ func add(ymlfile string, packageName string) error {
 	if err != nil {
 		return err
 	}
-
+	yf, err = Format(yf)
+	if err != nil {
+		return err
+	}
 	if bytes.Contains(yf, []byte(packageName)) {
 		log.Info(fmt.Sprintf("Package <%s> already found in <%s>", packageName, ymlfile))
 		return nil
