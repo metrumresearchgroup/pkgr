@@ -60,3 +60,19 @@ http://www.gnu.org/licenses/.
 		})
 	}
 }
+
+func BenchmarkRunR(b *testing.B) {
+	rs := NewRSettings("/usr/local/bin/R")
+	fs := afero.NewOsFs()
+	for n := 0; n < b.N; n++ {
+		RunR(fs, "", rs, "version", "")
+	}
+}
+
+func BenchmarkRunRBatch(b *testing.B) {
+	rs := NewRSettings("/usr/local/bin/R")
+	fs := afero.NewOsFs()
+	for n := 0; n < b.N; n++ {
+		RunRBatch(fs, rs, []string{"--version"})
+	}
+}
