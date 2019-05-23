@@ -60,6 +60,7 @@ func rAdd(ccmd *cobra.Command, args []string) error {
 	}
 
 	if install {
+		// if installing now, must call initConfig again for cobra to read in the yml file changes and see the new package/s
 		initConfig()
 		rInstall(nil, nil)
 	}
