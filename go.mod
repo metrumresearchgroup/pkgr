@@ -21,6 +21,8 @@ require (
 	golang.org/x/sys v0.0.0-20190425145619-16072639606e // indirect
 	golang.org/x/text v0.3.1 // indirect
 	golang.org/x/tools v0.0.0-20190425150028-36563e24a262 // indirect
+	gopkg.in/yaml.v2 v2.2.1
+	gopkg.in/yaml.v3 v3.0.0-20190502103701-55513cacd4ae
 	pault.ag/go/debian v0.0.0-20180722221659-90aeb542bd40
 	pault.ag/go/topsort v0.0.0-20160530003732-f98d2ad46e1a // indirect
 )

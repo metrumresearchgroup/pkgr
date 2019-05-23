@@ -4,21 +4,33 @@ import (
 	"encoding/json"
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/metrumresearchgroup/pkgr/rcmd"
-	"github.com/spf13/afero"
+	"github.com/metrumresearchgroup/pkgr/configlib"
 )
 
 func main() {
-	appFS := afero.NewOsFs()
-	log := log.New()
-	log.Level = log.DebugLevel
-	// log.SetFormatter(&log.JSONFormatter{})
-	// appFS.Remove("logfile.txt")
-	// logf, _ := appFS.OpenFile("logfile.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	// log.SetOutput(logf)
+	// appFS := afero.NewOsFs()
+	// afero.ReadFile(appFS, "../integration_tests/")
+	yml := `
+Version: 1
+Packages:
+- test1 # some inline comment
+# some other comment
+- test2
 
-	// fmt.Println("library: ", viper.GetString("library"))
+Library: some/lib/path
+Customizations:
+  Packages:
+    - R6:
+        Type: binary
+
+`
+	fmtedyml, err := configlib.Format([]byte(yml))
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println(string(fmtedyml))
+	}
+
 }
 func PrettyPrint(v interface{}) (err error) {
 	b, err := json.MarshalIndent(v, "", "  ")
@@ -26,9 +38,4 @@ func PrettyPrint(v interface{}) (err error) {
 		fmt.Println(string(b))
 	}
 	return
-}
-
-func WhatsTheCache() string {
-	pc := rcmd.NewPackageCache(cmd.userCache(cfg.Cache), false)
-	return ""
 }
