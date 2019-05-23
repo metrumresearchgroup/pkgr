@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"sync"
 	"syscall"
@@ -134,7 +135,7 @@ func Install(
 	// 	cmdArgs = append([]string{"--vanilla"}, cmdArgs...)
 	// }
 	cmd := exec.Command(
-		fmt.Sprintf("%s", rs.R()),
+		fmt.Sprintf("%s", rs.R(runtime.GOOS)),
 		cmdArgs...,
 	)
 	cmd.Env = envVars

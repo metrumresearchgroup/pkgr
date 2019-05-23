@@ -3,6 +3,7 @@ package rcmd
 import (
 	"os"
 	"os/exec"
+	"runtime"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
@@ -38,7 +39,7 @@ func StartR(
 	// 	cmdArgs = append([]string{"--vanilla"}, cmdArgs...)
 	// }
 	cmd := exec.Command(
-		rs.R(),
+		rs.R(runtime.GOOS),
 		cmdArgs...,
 	)
 
@@ -85,7 +86,7 @@ func RunR(
 	// 	cmdArgs = append([]string{"--vanilla"}, cmdArgs...)
 	// }
 	cmd := exec.Command(
-		rs.R()+"script",
+		rs.R(runtime.GOOS)+"script",
 		cmdArgs...,
 	)
 
@@ -117,7 +118,7 @@ func RunRBatch(
 		}).Trace("command args")
 
 	cmd := exec.Command(
-		rs.R(),
+		rs.R(runtime.GOOS),
 		cmdArgs...,
 	)
 

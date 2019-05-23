@@ -108,3 +108,87 @@ http://www.gnu.org/licenses/.
 		assert.Equal(t, tt.platform, platform, fmt.Sprintf("Platform not equal: %s", tt.message))
 	}
 }
+
+func TestRMethod(t *testing.T) {
+	var rTests = []struct {
+		rpath    string
+		platform string
+		expected string
+		message  string
+	}{
+		{
+			rpath:    "",
+			platform: "windows",
+			expected: "R.exe",
+			message:  "windows - empty Rpath",
+		},
+		{
+			rpath:    `C:\Program Files\R\R-3.5.2\bin\i386\R.exe`,
+			platform: "windows",
+			expected: `C:\Program Files\R\R-3.5.2\bin\i386\R.exe`,
+			message:  "windows - full Rpath",
+		},
+		{
+			rpath:    `C:\Program Files\R\R-3.5.2\bin\i386\R`,
+			platform: "windows",
+			expected: `C:\Program Files\R\R-3.5.2\bin\i386\R.exe`,
+			message:  "windows - full Rpath, without exe extension",
+		},
+		{
+			rpath:    `R.exe`,
+			platform: "windows",
+			expected: `R.exe`,
+			message:  "windows - R with exe extension",
+		},
+		{
+			rpath:    `R`,
+			platform: "windows",
+			expected: `R.exe`,
+			message:  "windows - R without extension",
+		},
+		// filepath.Clean does not remove trailing \ on mac.
+		// maybe it works on windows
+		// {
+		// 	rpath:    `C:\Program Files\R\R-3.5.2\bin\i386\R.exe\`,
+		// 	platform: "windows",
+		// 	expected: `C:\Program Files\R\R-3.5.2\bin\i386\R.exe`,
+		// 	message:  "windows - full Rpath",
+		// },
+		{
+			rpath:    "",
+			platform: "darwin",
+			expected: "R",
+			message:  "darwin - empty Rpath",
+		},
+		{
+			rpath:    "/usr/local/bin/R",
+			platform: "darwin",
+			expected: "/usr/local/bin/R",
+			message:  "darwin: full Rpath",
+		},
+		{
+			rpath:    "/usr/local/bin/R/",
+			platform: "darwin",
+			expected: "/usr/local/bin/R",
+			message:  "darwin: full Rpath, trailing /",
+		},
+		{
+			rpath:    "/R",
+			platform: "darwin",
+			expected: "/R",
+			message:  "darwin: full Rpath, root R /",
+		},
+		{
+			rpath:    "/R/",
+			platform: "darwin",
+			expected: "/R",
+			message:  "darwin: full Rpath, root R / with trailing /",
+		},
+		// TODO: linux tests
+	}
+	for _, tt := range rTests {
+		rs := NewRSettings(tt.rpath)
+		r := rs.R(tt.platform)
+		assert.Equal(t, tt.expected, r, fmt.Sprintf("R not equal to <%s>. %s", tt.expected, tt.message))
+	}
+}
