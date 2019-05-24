@@ -14,7 +14,6 @@ import (
 )
 
 func TestFormat(t *testing.T) {
-
 	tests := []struct {
 		ymlfolder string
 		expected  []string
@@ -36,7 +35,6 @@ func TestFormat(t *testing.T) {
 			},
 			message: "remove whitespace",
 		},
-
 		{
 			ymlfolder: "../integration_tests/mixed-source",
 			expected: []string{
@@ -47,8 +45,7 @@ func TestFormat(t *testing.T) {
 			},
 			message: "add whitespace",
 		},
-
-		// fails because of the nested structure ...
+		// //fails, may be because of the nested structure of Customizations: -> Packages:
 		// {
 		// 	ymlfolder: "../integration_tests/mixed-source",
 		// 	expected: []string{
@@ -100,8 +97,8 @@ func TestFormat(t *testing.T) {
 		err = afero.WriteFile(fs, ymlFile, ymlTest, fi.Mode())
 		assert.Equal(t, nil, err, "Error writing yml test file")
 
-		fmt.Println(string(ymlTest))
-		fmt.Print(string(ymlStart))
+		// fmt.Println(string(ymlTest))
+		// fmt.Print(string(ymlStart))
 
 		// viper-load the yml
 		viper.Reset()
