@@ -2,6 +2,7 @@ package rcmd
 
 import (
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -21,16 +22,26 @@ func NewRSettings(rPath string) RSettings {
 }
 
 // R provides a cleaned path to the R executable
-func (rs RSettings) R() string {
-	if rs.Rpath == "" {
-		return ("R")
+func (rs RSettings) R(os string) string {
+	r := "R"
+	if os == "windows" {
+		r = "R.exe"
+	}
+
+	if rs.Rpath != "" {
+		// Need to trim trailing slash as will form the R CMD syntax
+		// eg /path/to/R CMD, so can't have /path/to/R/ CMD
+		r = strings.TrimSuffix(rs.Rpath, "/")
 	}
 	// TODO: check if this could have problems with trailing slash on windows
 	// TODO: better to use something like filepath.clean? would that sanitize better?
+	// filepath.Clean does not remove trailing \ on mac. maybe it works on windows?
+	r = filepath.Clean(r)
 
-	// Need to trim trailing slash as will form the R CMD syntax
-	// eg /path/to/R CMD, so can't have /path/to/R/ CMD
-	return strings.TrimSuffix(rs.Rpath, "/")
+	if os == "windows" && !strings.HasSuffix(r, ".exe") {
+		r = r + ".exe"
+	}
+	return r
 }
 
 // GetRVersion returns the R version, and sets R Version and R platform in RSettings

@@ -57,6 +57,7 @@ func Test_rAdd(t *testing.T) {
 				},
 			},
 		},
+		// Note: before adding a test, make sure the base test "pkgr install" works before testing "pkgr add --install"
 	}
 	fs := afero.NewOsFs()
 	for _, tt := range tests {
@@ -86,13 +87,17 @@ func Test_rAdd(t *testing.T) {
 
 		t.Log("testing pkgr.yml for difference ...")
 		ymlEnd, _ := afero.ReadFile(fs, ymlFilename)
-		n := bytes.Compare(ymlStart, ymlEnd)
+		n := bytes.Compare(cleanWs(ymlStart), cleanWs(ymlEnd))
 		assert.Equal(t, 0, n, fmt.Sprintf("Yml file differs"))
+
+		t.Log("restoring yml file ...")
+		fi, _ := os.Stat(ymlFilename)
+		err = afero.WriteFile(fs, ymlFilename, ymlStart, fi.Mode())
+		assert.Equal(t, nil, err, "Error restoring yml file")
 	}
 }
 
 func pkgrCommand(cmd string, test testData, flag string) (string, error) {
-
 	var stderr bytes.Buffer
 	pkgr := filepath.Join(os.Getenv("HOME"), "/go/bin/pkgr")
 	args := []string{cmd}
@@ -112,3 +117,35 @@ func pkgrCommand(cmd string, test testData, flag string) (string, error) {
 	errstr := string(stderr.Bytes())
 	return errstr, err
 }
+
+// cleanWs removes blank lines and leading and trailing white space
+// it makes the above bytes.Compare(..) equivilent to: /usr/bin/diff -wB
+func cleanWs(b []byte) []byte {
+	var cb []byte
+	lines := bytes.Split(b, []byte("\n"))
+	for _, line := range lines {
+		tl := bytes.Trim(line, " ")
+		if len(tl) > 0 {
+			cb = append(cb, line...)
+		}
+	}
+	return cb
+}
+
+// // saving in case ...
+// func diff(file1, file2 string) bool {
+// 	var stdout bytes.Buffer
+// 	diff := "/usr/bin/diff"
+// 	args := []string{"-wB", file1, file2}
+
+// 	command := exec.Command(diff, args...)
+// 	command.Stdout = &stdout
+
+// 	err := command.Run()
+// 	outstr := string(stdout.Bytes())
+
+// 	if err != nil || len(outstr) > 0 {
+// 		return true
+// 	}
+// 	return false
+// }
