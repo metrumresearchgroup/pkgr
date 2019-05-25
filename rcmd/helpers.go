@@ -5,32 +5,43 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
-func binaryName(pkg, version string) string {
-	switch runtime.GOOS {
+func binaryNameOs(os, pkg, version, platform string) string {
+	switch os {
 	case "darwin":
 		return fmt.Sprintf("%s_%s.tgz", pkg, version)
 	case "linux":
-		return fmt.Sprintf("%s_%s_R_x86_64-pc-linux-gnu.tar.gz", pkg, version)
+		return fmt.Sprintf("%s_%s_R_%s.tar.gz", pkg, version, platform)
 	case "windows":
 		return fmt.Sprintf("%s_%s.zip", pkg, version)
 	default:
-		fmt.Println("platform not supported for binary detection")
-		return ""
+		log.Fatal("platform not supported for binary detection")
 	}
+	return ("")
 }
 
-func binaryExt(p string) string {
-	switch runtime.GOOS {
+func binaryName(pkg, version, platform string) string {
+	return binaryNameOs(runtime.GOOS, pkg, version, platform)
+}
+
+func binaryExtOs(os, p, platform string) string {
+	switch os {
 	case "darwin":
 		return strings.Replace(filepath.Base(p), "tar.gz", "tgz", 1)
 	case "linux":
-		return strings.Replace(filepath.Base(p), ".tar.gz", "_R_x86_64-pc-linux-gnu.tar.gz", 1)
+		pf := "_R_" + platform + ".tar.gz"
+		return strings.Replace(filepath.Base(p), ".tar.gz", pf, 1)
 	case "windows":
 		return strings.Replace(filepath.Base(p), "tar.gz", "zip", 1)
 	default:
-		fmt.Println("platform not supported for binary detection")
-		return ""
+		log.Fatal("platform not supported for binary detection")
 	}
+	return ("")
+}
+
+func binaryExt(p, platform string) string {
+	return binaryExtOs(runtime.GOOS, p, platform)
 }

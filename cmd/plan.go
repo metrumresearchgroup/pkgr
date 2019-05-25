@@ -57,6 +57,7 @@ func plan(cmd *cobra.Command, args []string) error {
 	rs := rcmd.NewRSettings(cfg.RPath)
 	rVersion := rcmd.GetRVersion(&rs)
 	log.Infoln("R Version " + rVersion.ToFullString())
+	log.Infoln("OS Platform " + rs.Platform)
 	_, ip := planInstall(rVersion)
 	if viper.GetBool("show-deps") {
 		for pkg, deps := range ip.DepDb {

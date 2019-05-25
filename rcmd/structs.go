@@ -24,6 +24,7 @@ type RSettings struct {
 	Rpath         string                       `json:"rpath,omitempty"`
 	GlobalEnvVars map[string]string            `json:"global_env_vars,omitempty"`
 	PkgEnvVars    map[string]map[string]string `json:"pkg_env_vars,omitempty"`
+	Platform      string                       `json:"platform,omitempty"`
 }
 
 // InstallArgs represents the installation arguments R CMD INSTALL can consume

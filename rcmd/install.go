@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"sync"
 	"syscall"
@@ -134,7 +135,7 @@ func Install(
 	// 	cmdArgs = append([]string{"--vanilla"}, cmdArgs...)
 	// }
 	cmd := exec.Command(
-		fmt.Sprintf("%s", rs.R()),
+		fmt.Sprintf("%s", rs.R(runtime.GOOS)),
 		cmdArgs...,
 	)
 	cmd.Env = envVars
@@ -209,7 +210,7 @@ func isInCache(
 		repoHash,
 		"binary",
 		ir.RSettings.Version.ToString(),
-		binaryName(pkg.Package, pkg.Version),
+		binaryName(pkg.Package, pkg.Version, ir.RSettings.Platform),
 	)
 	exists, err := goutils.Exists(fs, bpath)
 	if !exists || err != nil {
@@ -320,7 +321,7 @@ func InstallThroughBinary(
 		}
 	}
 	if err == nil && res.ExitCode == 0 {
-		bbp := binaryExt(ir.Metadata.Path)
+		bbp := binaryExt(ir.Metadata.Path, ir.RSettings.Platform)
 		binaryBall := filepath.Join(tmpdir, bbp)
 		log.WithFields(log.Fields{
 			"tbp":        ir.Metadata.Path,
