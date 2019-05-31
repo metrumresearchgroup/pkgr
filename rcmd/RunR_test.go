@@ -25,9 +25,7 @@ func TestRunRBatch(t *testing.T) {
 			name: "Test R Version",
 			args: args{
 				fs: afero.NewOsFs(),
-				rs: RSettings{
-					Rpath: "/usr/local/bin/R",
-				},
+				rs: NewRSettings(""),
 				cmdArgs: []string{
 					"--version",
 				},
