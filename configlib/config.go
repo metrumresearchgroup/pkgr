@@ -7,11 +7,31 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/metrumresearchgroup/pkgr/rcmd"
 	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 )
+
+// NewConfig create a new PkgrConfig
+func NewConfig(cfg *PkgrConfig) {
+
+	_ = viper.Unmarshal(cfg)
+
+	if len(cfg.Library) == 0 {
+		switch cfg.Lockfile.Type {
+		case "packrat":
+			rs := rcmd.NewRSettings(cfg.RPath)
+			rVersion := rcmd.GetRVersion(&rs)
+			cfg.Library = filepath.Join("packrat/lib", rs.Platform, rVersion.ToFullString())
+		case "renv":
+		case "pkgr":
+		default:
+		}
+	}
+	return
+}
 
 // LoadConfigFromPath loads pkc configuration into the global Viper
 func LoadConfigFromPath(configFilename string) error {
