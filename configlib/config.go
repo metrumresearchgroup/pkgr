@@ -14,9 +14,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-// NewConfig create a new PkgrConfig
+// NewConfig initialize a PkgrConfig passed in by caller
 func NewConfig(cfg *PkgrConfig) {
-
 	_ = viper.Unmarshal(cfg)
 
 	if len(cfg.Library) == 0 {

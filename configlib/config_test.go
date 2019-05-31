@@ -2,9 +2,11 @@ package configlib
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/spf13/afero"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -70,4 +72,46 @@ func equal(a []byte, b []byte) bool {
 		}
 	}
 	return true
+}
+
+func TestNewConfigPackrat(t *testing.T) {
+	tests := []struct {
+		folder   string
+		expected string
+		message  string
+	}{
+		{
+			folder:   "../integration_tests/packrat-library",
+			expected: "packrat",
+			message:  "packrat exists",
+		},
+	}
+	for _, tt := range tests {
+		var cfg PkgrConfig
+		_ = os.Chdir(tt.folder)
+		_ = LoadConfigFromPath(viper.GetString("config"))
+		NewConfig(&cfg)
+		assert.Equal(t, tt.expected, cfg.Lockfile.Type, fmt.Sprintf("Fail:%s", tt.message))
+	}
+}
+
+func TestNewConfigNoPackrat(t *testing.T) {
+	tests := []struct {
+		folder   string
+		expected string
+		message  string
+	}{
+		{
+			folder:   "../integration_tests/simple",
+			expected: "",
+			message:  "packrat does not exist",
+		},
+	}
+	for _, tt := range tests {
+		var cfg PkgrConfig
+		_ = os.Chdir(tt.folder)
+		_ = LoadConfigFromPath(viper.GetString("config"))
+		NewConfig(&cfg)
+		assert.Equal(t, tt.expected, cfg.Lockfile.Type, fmt.Sprintf("Fail:%s", tt.message))
+	}
 }
