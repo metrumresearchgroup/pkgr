@@ -110,17 +110,20 @@ func RunRBatch(
 	rs RSettings,
 	cmdArgs []string,
 ) ([]byte, error) {
-
+	envVars := configureEnv(os.Environ(), rs, "")
+	rpath := rs.R(runtime.GOOS)
 	log.WithFields(
 		log.Fields{
 			"cmdArgs":   cmdArgs,
 			"RSettings": rs,
+			"rpath":     rpath,
 		}).Trace("command args")
 
 	cmd := exec.Command(
-		rs.R(runtime.GOOS),
+		rpath,
 		cmdArgs...,
 	)
+	cmd.Env = envVars
 
-	return cmd.Output()
+	return cmd.CombinedOutput()
 }

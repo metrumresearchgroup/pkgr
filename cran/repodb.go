@@ -162,8 +162,13 @@ func (repoDb *RepoDb) FetchPackages(rVersion RVersion) error {
 					return
 				}
 			}
-
+			// cran windows PACKAGES file can have windows carriage returns, lets normalize
+			body = bytes.ReplaceAll(body, []byte("\r\n"), []byte("\n"))
 			parsedPackagesFile := bytes.Split(body, []byte("\n\n"))
+			log.WithFields(log.Fields{
+				"url":      pkgURL,
+				"num_pkgs": len(parsedPackagesFile),
+			}).Debug("potential packages")
 			for _, pkg := range parsedPackagesFile {
 				if len(pkg) == 0 {
 					// end of file might have double spaces

@@ -58,7 +58,7 @@ func plan(cmd *cobra.Command, args []string) error {
 	rVersion := rcmd.GetRVersion(&rs)
 	log.Infoln("R Version " + rVersion.ToFullString())
 	log.Infoln("OS Platform " + rs.Platform)
-	_, ip := planInstall(rVersion)
+	_, ip := planInstall(rVersion, true)
 	if viper.GetBool("show-deps") {
 		for pkg, deps := range ip.DepDb {
 			fmt.Println("-----------  ", pkg, "   ------------")
@@ -68,7 +68,7 @@ func plan(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
+func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.InstallPlan) {
 	startTime := time.Now()
 
 	installedPackages := pacman.GetPriorInstalledPackages(fs, cfg.Library)
@@ -157,7 +157,11 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 		for _, mp := range availableUserPackages.Missing {
 			log.Warnln("did you mean one of: ", model.Suggestions(mp, false))
 		}
-		os.Exit(1)
+		if exitOnMissing {
+			os.Exit(1)
+		} else {
+			return pkgNexus, gpsr.InstallPlan{}
+		}
 	}
 	logUserPackageRepos(availableUserPackages.Packages)
 	installPlan, err := gpsr.ResolveInstallationReqs(cfg.Packages, dependencyConfigurations, pkgNexus)
