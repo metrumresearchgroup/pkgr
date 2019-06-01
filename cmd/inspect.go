@@ -60,7 +60,7 @@ func inspect(cmd *cobra.Command, args []string) error {
 	}
 	rs := rcmd.NewRSettings(cfg.RPath)
 	rVersion := rcmd.GetRVersion(&rs)
-	_, ip := planInstall(rVersion)
+	_, ip := planInstall(rVersion, true)
 	if showDeps {
 		var allDeps map[string][]string
 		keepDeps := make(map[string][]string)

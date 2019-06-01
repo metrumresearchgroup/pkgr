@@ -54,7 +54,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 
 	// Get master object containing the packages available in each repository (pkgNexus),
 	//  as well as a master install plan to guide our process.
-	_, installPlan := planInstall(rVersion)
+	_, installPlan := planInstall(rVersion, true)
 
 	//Prepare our environment to update outdated packages if the "--update" flag is set.
 	var packageUpdateAttempts []pacman.UpdateAttempt

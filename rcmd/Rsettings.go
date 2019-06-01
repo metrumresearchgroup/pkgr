@@ -14,11 +14,14 @@ import (
 
 // NewRSettings initializes RSettings
 func NewRSettings(rPath string) RSettings {
-	return RSettings{
+	rs := RSettings{
 		GlobalEnvVars: make(map[string]string),
 		PkgEnvVars:    make(map[string]map[string]string),
 		Rpath:         rPath,
 	}
+	// since we have the path in the constructor, we might as well get the R version now too
+	GetRVersion(&rs)
+	return rs
 }
 
 // R provides a cleaned path to the R executable
