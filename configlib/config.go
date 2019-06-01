@@ -14,6 +14,17 @@ import (
 	"github.com/spf13/viper"
 )
 
+// packrat uses R.version platform, which is not the same as the Platform
+// as printed in R --version, at least on windows
+func packratPlatform(p string) string {
+	switch p {
+	case "x86_64-w64-mingw32/x64":
+		return "x86_64-w64-mingw32"
+	default:
+		return p
+	}
+}
+
 // NewConfig initialize a PkgrConfig passed in by caller
 func NewConfig(cfg *PkgrConfig) {
 	_ = viper.Unmarshal(cfg)
@@ -23,7 +34,7 @@ func NewConfig(cfg *PkgrConfig) {
 		case "packrat":
 			rs := rcmd.NewRSettings(cfg.RPath)
 			rVersion := rcmd.GetRVersion(&rs)
-			cfg.Library = filepath.Join("packrat/lib", rs.Platform, rVersion.ToFullString())
+			cfg.Library = filepath.Join("packrat", "lib", packratPlatform(rs.Platform), rVersion.ToFullString())
 		case "renv":
 		case "pkgr":
 		default:
