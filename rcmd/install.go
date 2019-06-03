@@ -504,3 +504,28 @@ func InstallPackagePlan(
 	}
 	return nil
 }
+
+func parseDescriptionFile(filename string, fields []string) (data map[string]string, err error) {
+	m := make(map[string]string)
+	fs := afero.NewOsFs()
+	desc, e := afero.ReadFile(fs, filename)
+	if e != nil {
+		return m, e
+	}
+
+	desc = bytes.Replace(desc, []byte("\n    "), []byte(" "), -1)
+
+	lines := bytes.Split(desc, []byte("\n"))
+	for _, line := range lines {
+		if len(bytes.Trim(line, " ")) == 0 {
+			continue
+		}
+		d := bytes.SplitN(line, []byte(":"), 2)
+		if len(d) > 0 {
+			d0 := string(bytes.Trim(d[0], " "))
+			d1 := string(bytes.Trim(d[1], " "))
+			m[d0] = d1
+		}
+	}
+	return m, nil
+}
