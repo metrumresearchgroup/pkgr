@@ -1,10 +1,9 @@
 package rcmd
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
-
-	"github.com/spf13/afero"
 
 	"github.com/metrumresearchgroup/pkgr/desc"
 	"github.com/stretchr/testify/assert"
@@ -42,45 +41,40 @@ func TestInstallArgs(t *testing.T) {
 
 func TestUpdateDcfFile(t *testing.T) {
 	var tests = []struct {
-		filename    string
-		version     string
-		installType string
-		repoURL     string
-		repo        string
-		message     string
+		filename     string
+		version      string
+		installType  string
+		repoURL      string
+		repo         string
+		expectedRepo string
+		message      string
 	}{
 		{
-			filename:    "../integration_tests/simple/test-library/R6/Description",
-			version:     "version",
-			installType: "binary",
-			repoURL:     "myURL",
-			repo:        "CRAN",
-			message:     "R6 test",
+			filename:     "../integration_tests/simple/test-library/R6/Description",
+			version:      "version",
+			installType:  "binary",
+			repoURL:      "myURL",
+			repo:         "CRAN",
+			expectedRepo: "CRAN",
+			message:      "R6 test",
+		},
+		{
+			filename:     "../integration_tests/simple/test-library/pillar/Description",
+			version:      "1.2.3",
+			installType:  "binary",
+			repoURL:      "www.myURL.com",
+			repo:         "GitHub",
+			expectedRepo: "CRAN GitHub",
+			message:      "pillar test",
 		},
 	}
 
-	osfs := afero.NewOsFs()
-	dfcname := "/tmp/Description"
 	for _, tt := range tests {
 
-		dcf, err := updateDcfFile(tt.filename, tt.version, tt.installType, tt.repoURL, tt.repo)
-		assert.Equal(t, nil, err, fmt.Sprintf("Failed: %s", tt.message))
+		dcf, _ := updateDcfFile(tt.filename, tt.version, tt.installType, tt.repoURL, tt.repo)
+		installedPackage, _ := desc.ParseDesc(bytes.NewReader(dcf))
 
-		err = osfs.Remove(dfcname)
-		assert.Equal(t, nil, err, fmt.Sprintf("Failed: %s", tt.message))
-
-		descriptionFile, err := osfs.Create(dfcname)
-		assert.Equal(t, nil, err, fmt.Sprintf("Failed: %s", tt.message))
-
-		n, err := descriptionFile.WriteString(string(dcf))
-		assert.Equal(t, nil, err, fmt.Sprintf("Failed: %s", tt.message))
-		assert.NotEqual(t, 0, n, fmt.Sprintf("Failed: %s", tt.message))
-
-		//installedPackage, err := desc.ParseDesc(descriptionFile)
-		installedPackage, err := desc.ReadDesc(dfcname)
-		assert.Equal(t, nil, err, fmt.Sprintf("Failed: %s", tt.message))
-
-		assert.Equal(t, tt.repo, installedPackage.Repository, fmt.Sprintf("Failed: %s", tt.message))
+		assert.Equal(t, tt.expectedRepo, installedPackage.Repository, fmt.Sprintf("Failed: %s", tt.message))
 		assert.Equal(t, tt.version, installedPackage.PkgrVersion, fmt.Sprintf("Failed: %s", tt.message))
 		assert.Equal(t, tt.repoURL, installedPackage.PkgrRepositoryURL, fmt.Sprintf("Failed: %s", tt.message))
 		assert.Equal(t, tt.installType, installedPackage.PkgrInstallType, fmt.Sprintf("Failed: %s", tt.message))
