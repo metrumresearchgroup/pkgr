@@ -5,6 +5,9 @@ import (
 	"github.com/spf13/afero"
 )
 
+// VERSION is the current pkgr version
+var VERSION = "0.5.0-alpha"
+
 // CmdResult stores information about the executed cmd
 type CmdResult struct {
 	Stdout   string `json:"stdout,omitempty"`
@@ -15,6 +18,7 @@ type CmdResult struct {
 // ExecSettings controls settings related to R execution
 type ExecSettings struct {
 	WorkDir string `json:"work_dir,omitempty"`
+	//PkgrVersion string `json:"pkgr_version,omitempty"`
 }
 
 // RSettings controls settings related to managing libraries

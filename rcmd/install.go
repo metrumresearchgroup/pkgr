@@ -70,7 +70,8 @@ func Install(
 	tbp string, // tarball path
 	args InstallArgs,
 	rs RSettings,
-	es ExecSettings) (CmdResult, error) {
+	es ExecSettings,
+	ir InstallRequest) (CmdResult, error) {
 	rdir := es.WorkDir
 	if rdir == "" {
 		rdir, _ = os.Getwd()
@@ -169,6 +170,8 @@ func Install(
 		exitCode = ws.ExitStatus()
 	}
 
+	//WriteDescriptionInfo(args, ir)
+
 	cmdResult := CmdResult{
 		Stdout:   stdout,
 		Stderr:   stderr,
@@ -261,7 +264,8 @@ func InstallThroughBinary(
 			ir.Metadata.Path,
 			ir.InstallArgs,
 			ir.RSettings,
-			ir.ExecSettings)
+			ir.ExecSettings,
+			ir)
 		// don't pass binaryball path back since already in cache
 		return res, "", err
 	}
@@ -315,7 +319,8 @@ func InstallThroughBinary(
 		ir.Metadata.Path,
 		ir.InstallArgs,
 		ir.RSettings,
-		ir.ExecSettings)
+		ir.ExecSettings,
+		ir)
 	installPath := filepath.Join(tmpdir, ir.Package)
 	de, _ := afero.DirExists(fs, installPath)
 	if de {
@@ -355,7 +360,8 @@ func InstallThroughBinary(
 			binaryBall,
 			ib,
 			ir.RSettings,
-			ir.ExecSettings)
+			ir.ExecSettings,
+			ir)
 		return res, binaryBall, err
 	}
 	return res, "", err
@@ -505,27 +511,38 @@ func InstallPackagePlan(
 	return nil
 }
 
-func parseDescriptionFile(filename string, fields []string) (data map[string]string, err error) {
-	m := make(map[string]string)
+// WriteDescriptionInfo ...
+func WriteDescriptionInfo(args InstallArgs, ir InstallRequest) {
+	dcf, _ := updateDcfFile(
+		filepath.Join(args.Library, ir.Package, "DESCRIPTION"),
+		VERSION,
+		ir.Metadata.Metadata.Config.Type.String(),
+		ir.Metadata.Metadata.Config.Repo.URL,
+		ir.Metadata.Metadata.Config.Repo.Name)
+
+	//log.Info(fmt.Sprintf("filename: %s", filename))
+	log.Info(fmt.Sprintf("%s", string(dcf)))
+}
+
+func updateDcfFile(filename, version, installType, repoURL, repo string) ([]byte, error) {
+	var update []byte
 	fs := afero.NewOsFs()
-	desc, e := afero.ReadFile(fs, filename)
-	if e != nil {
-		return m, e
-	}
-
-	desc = bytes.Replace(desc, []byte("\n    "), []byte(" "), -1)
-
-	lines := bytes.Split(desc, []byte("\n"))
-	for _, line := range lines {
-		if len(bytes.Trim(line, " ")) == 0 {
-			continue
+	dcf, err := afero.ReadFile(fs, filename)
+	if err == nil {
+		lines := bytes.Split(dcf, []byte("\n"))
+		for _, line := range lines {
+			if len(bytes.Trim(line, " ")) == 0 {
+				continue
+			}
+			if bytes.Contains(line, []byte("Repository:")) && !bytes.Contains(line, []byte(repo)) {
+				line = append(line, []byte(" "+repo)...)
+			}
+			update = append(update, line...)
+			update = append(update, []byte("\n")...)
 		}
-		d := bytes.SplitN(line, []byte(":"), 2)
-		if len(d) > 0 {
-			d0 := string(bytes.Trim(d[0], " "))
-			d1 := string(bytes.Trim(d[1], " "))
-			m[d0] = d1
-		}
+		update = append(update, []byte("PkgrVersion:"+version+"\n")...)
+		update = append(update, []byte("PkgrInstallType:"+installType+"\n")...)
+		update = append(update, []byte("PkgrRepositoryUrl:"+repoURL+"\n\n")...)
 	}
-	return m, nil
+	return update, err
 }

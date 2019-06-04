@@ -56,18 +56,21 @@ type Dep struct {
 
 // Desc represents a package description
 type Desc struct {
-	Package     string
-	Source      string
-	Version     string
-	Maintainer  string
-	Description string
-	MD5sum      string
-	Remotes     []string
-	Repository  string
-	Imports     map[string]Dep
-	Suggests    map[string]Dep
-	Depends     map[string]Dep
-	LinkingTo   map[string]Dep
+	Package           string
+	Source            string
+	Version           string
+	Maintainer        string
+	Description       string
+	MD5sum            string
+	Remotes           []string
+	Repository        string
+	Imports           map[string]Dep
+	Suggests          map[string]Dep
+	Depends           map[string]Dep
+	LinkingTo         map[string]Dep
+	PkgrVersion       string
+	PkgrInstallType   string
+	PkgrRepositoryURL string
 }
 
 // TODO figure out unmarshalling pattern so can

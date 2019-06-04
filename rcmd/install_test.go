@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/metrumresearchgroup/pkgr/desc"
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,57 +39,32 @@ func TestInstallArgs(t *testing.T) {
 	}
 }
 
-func TestParseDescriptionFile(t *testing.T) {
+func TestUpdateDcfFile(t *testing.T) {
 	var tests = []struct {
-		filename string
-		fields   []string
-		expected map[string]string
-		message  string
+		filename    string
+		version     string
+		installType string
+		repoURL     string
+		repo        string
+		message     string
 	}{
 		{
-			filename: "../integration_tests/simple/test-library/R6/Description",
-			fields: []string{
-				"Repository",
-				"URL",
-				"NeedsCompilation",
-			},
-			expected: map[string]string{
-				"Repository":       "CRAN",
-				"URL":              "https://r6.r-lib.org, https://github.com/r-lib/R6/",
-				"NeedsCompilation": "no",
-			},
-			message: "simple test",
+			filename:    "../integration_tests/simple/test-library/R6/Description",
+			version:     "version",
+			installType: "binary",
+			repoURL:     "?",
+			repo:        "CRAN",
+			message:     "R6 test",
 		},
-		// {
-		// 	filename: "../integration_tests/simple/test-library/rlang/Description",
-		// 	fields: []string{
-		// 		"Repository",
-		// 		"URL",
-		// 		"NeedsCompilation",
-		// 	},
-		// 	expected: map[string]string{
-		// 		"Repository":       "CRAN",
-		// 		"URL":              "http://rlang.r-lib.org, https://github.com/r-lib/rlang",
-		// 		"NeedsCompilation": "no",
-		// 	},
-		// 	message: "simple test",
-		// },
 	}
+	fs := afero.NewMemMapFs()
+	//var err error
 	for _, tt := range tests {
-		actual, err := parseDescriptionFile(tt.filename, tt.fields)
-		fail := false
 
-		if err != nil {
-			fail = true
-		} else {
-
-			for _, field := range tt.fields {
-				if tt.expected[field] != actual[field] {
-					fail = true
-				}
-			}
-		}
-
-		assert.Equal(t, false, fail, fmt.Sprintf("Failed: %s", tt.message))
+		dcf, _ := updateDcfFile(tt.filename, tt.version, tt.installType, tt.repoURL, tt.repo)
+		descriptionFile, _ := fs.Create("descriptionFilePath")
+		descriptionFile.WriteString(string(dcf))
+		installedPackage, _ := desc.ParseDesc(descriptionFile)
+		assert.Equal(t, tt.repo, installedPackage.Repository, fmt.Sprintf("Failed: %s", tt.message))
 	}
 }
