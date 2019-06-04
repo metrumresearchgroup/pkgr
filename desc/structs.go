@@ -77,16 +77,19 @@ type Desc struct {
 // implement that on Desc so don't need intermediate
 // desc struct
 type desc struct {
-	Package     string
-	Source      string
-	Version     string
-	Maintainer  string
-	Description string
-	MD5sum      string
-	Remotes     []string `delim:"," strip:"\n\r\t "`
-	Repository  string
-	Imports     []string `delim:"," strip:"\n\r\t "`
-	Suggests    []string `delim:"," strip:"\n\r\t "`
-	Depends     []string `delim:"," strip:"\n\r\t "`
-	LinkingTo   []string `delim:"," strip:"\n\r\t "`
+	Package           string
+	Source            string
+	Version           string
+	Maintainer        string
+	Description       string
+	MD5sum            string
+	Remotes           []string `delim:"," strip:"\n\r\t "`
+	Repository        string
+	Imports           []string `delim:"," strip:"\n\r\t "`
+	Suggests          []string `delim:"," strip:"\n\r\t "`
+	Depends           []string `delim:"," strip:"\n\r\t "`
+	LinkingTo         []string `delim:"," strip:"\n\r\t "`
+	PkgrVersion       string
+	PkgrInstallType   string
+	PkgrRepositoryURL string
 }

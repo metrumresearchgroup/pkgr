@@ -540,9 +540,9 @@ func updateDcfFile(filename, version, installType, repoURL, repo string) ([]byte
 			update = append(update, line...)
 			update = append(update, []byte("\n")...)
 		}
-		update = append(update, []byte("PkgrVersion:"+version+"\n")...)
-		update = append(update, []byte("PkgrInstallType:"+installType+"\n")...)
-		update = append(update, []byte("PkgrRepositoryUrl:"+repoURL+"\n\n")...)
+		update = append(update, []byte("PkgrVersion: "+version+"\n")...)
+		update = append(update, []byte("PkgrInstallType: "+installType+"\n")...)
+		update = append(update, []byte("PkgrRepositoryURL: "+repoURL+"\n")...)
 	}
 	return update, err
 }
