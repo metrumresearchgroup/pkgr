@@ -21,12 +21,14 @@ import (
 
 	"github.com/metrumresearchgroup/pkgr/configlib"
 	"github.com/metrumresearchgroup/pkgr/logger"
-	"github.com/metrumresearchgroup/pkgr/rcmd"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+// VERSION is the current pkgr version
+var VERSION = "0.5.0-alpha"
 
 var fs afero.Fs
 var cfg configlib.PkgrConfig
@@ -41,9 +43,9 @@ var RootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute(build string) {
 	if build != "" {
-		rcmd.VERSION = fmt.Sprintf("%s-%s", rcmd.VERSION, build)
+		VERSION = fmt.Sprintf("%s-%s", VERSION, build)
 	}
-	RootCmd.Long = fmt.Sprintf("pkgr cli version %s", rcmd.VERSION)
+	RootCmd.Long = fmt.Sprintf("pkgr cli version %s", VERSION)
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)

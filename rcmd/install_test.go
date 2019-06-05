@@ -71,7 +71,7 @@ func TestUpdateDcfFile(t *testing.T) {
 
 	for _, tt := range tests {
 
-		dcf, _ := updateDcfFile(tt.filename, tt.version, tt.installType, tt.repoURL, tt.repo)
+		dcf, _ := updateDescriptionInfo(tt.filename, tt.version, tt.installType, tt.repoURL, tt.repo)
 		installedPackage, _ := desc.ParseDesc(bytes.NewReader(dcf))
 
 		assert.Equal(t, tt.expectedRepo, installedPackage.Repository, fmt.Sprintf("Failed: %s", tt.message))

@@ -170,7 +170,7 @@ func Install(
 		exitCode = ws.ExitStatus()
 	}
 
-	//WriteDescriptionInfo(args, ir)
+	//writeDescriptionInfo(ir)
 
 	cmdResult := CmdResult{
 		Stdout:   stdout,
@@ -511,20 +511,18 @@ func InstallPackagePlan(
 	return nil
 }
 
-// WriteDescriptionInfo ...
-func WriteDescriptionInfo(args InstallArgs, ir InstallRequest) {
-	dcf, _ := updateDcfFile(
-		filepath.Join(args.Library, ir.Package, "DESCRIPTION"),
-		VERSION,
+func writeDescriptionInfo(ir InstallRequest) {
+	dcf, _ := updateDescriptionInfo(
+		filepath.Join(ir.InstallArgs.Library, ir.Package, "DESCRIPTION"),
+		ir.ExecSettings.PkgrVersion,
 		ir.Metadata.Metadata.Config.Type.String(),
 		ir.Metadata.Metadata.Config.Repo.URL,
 		ir.Metadata.Metadata.Config.Repo.Name)
-
-	//log.Info(fmt.Sprintf("filename: %s", filename))
+	log.Info(fmt.Sprintf("filename: %s", filepath.Join(ir.InstallArgs.Library, ir.Package, "DESCRIPTION")))
 	log.Info(fmt.Sprintf("%s", string(dcf)))
 }
 
-func updateDcfFile(filename, version, installType, repoURL, repo string) ([]byte, error) {
+func updateDescriptionInfo(filename, version, installType, repoURL, repo string) ([]byte, error) {
 	var update []byte
 	fs := afero.NewOsFs()
 	dcf, err := afero.ReadFile(fs, filename)
