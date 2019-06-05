@@ -39,6 +39,7 @@ var reverse bool
 var showDeps bool
 var toJSON bool
 var tree bool
+var installedFrom bool
 
 func recurseDeps(pkg string, ddb gpsr.InstallPlan, t treeprint.Tree) {
 	pkgDeps := ddb.DepDb[pkg]
@@ -58,6 +59,12 @@ func inspect(cmd *cobra.Command, args []string) error {
 		// this should suppress all logging from the planning
 		logger.SetLogLevel("fatal")
 	}
+
+	if installedFrom {
+		installedFromPackages()
+		return nil
+	}
+
 	rs := rcmd.NewRSettings(cfg.RPath)
 	rVersion := rcmd.GetRVersion(&rs)
 	_, ip := planInstall(rVersion, true)
@@ -94,11 +101,35 @@ func printDeps(deps map[string][]string, tree bool, ip gpsr.InstallPlan) {
 	}
 }
 
+func installedFromPackages() {
+	var pkgr, packrat, unknown []string
+	ip := GetInstalledPackages()
+	for k, v := range ip {
+		if len(v.PkgrVersion) == 0 {
+			packrat = append(packrat, k)
+		} else {
+			pkgr = append(pkgr, k)
+		}
+	}
+	prettyPrint(
+		struct {
+			Pkgr    []string `json:"pkgr"`
+			Packrat []string `json:"packrat"`
+			Unknown []string `json:"unknown"`
+		}{
+			Pkgr:    pkgr,
+			Packrat: packrat,
+			Unknown: unknown,
+		},
+	)
+}
+
 func init() {
 	inspectCmd.Flags().BoolVar(&showDeps, "deps", false, "show dependency tree")
 	inspectCmd.Flags().BoolVar(&reverse, "reverse", false, "show reverse dependencies")
 	inspectCmd.Flags().BoolVar(&tree, "tree", false, "show full recursive dependency tree")
 	inspectCmd.Flags().BoolVar(&toJSON, "json", false, "output as clean json")
+	inspectCmd.Flags().BoolVar(&installedFrom, "installed-from", false, "show package installation source")
 
 	RootCmd.AddCommand(inspectCmd)
 }
