@@ -68,11 +68,6 @@ func plan(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// GetInstalledPackages returns a list of PriorInstalledPackages
-func GetInstalledPackages() map[string]desc.Desc {
-	return pacman.GetPriorInstalledPackages(fs, cfg.Library)
-}
-
 func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.InstallPlan) {
 	startTime := time.Now()
 

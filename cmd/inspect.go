@@ -20,6 +20,7 @@ import (
 	"github.com/metrumresearchgroup/pkgr/logger"
 
 	"github.com/metrumresearchgroup/pkgr/gpsr"
+	"github.com/metrumresearchgroup/pkgr/pacman"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
 	"github.com/spf13/cobra"
 	"github.com/xlab/treeprint"
@@ -103,9 +104,9 @@ func printDeps(deps map[string][]string, tree bool, ip gpsr.InstallPlan) {
 
 func installedFromPackages() {
 	var pkgr, packrat, unknown []string
-	ip := GetInstalledPackages()
+	ip := pacman.GetPriorInstalledPackages(fs, cfg.Library)
 	for k, v := range ip {
-		if len(v.PkgrVersion) == 0 {
+		if v.PkgrVersion == "" {
 			packrat = append(packrat, k)
 		} else {
 			pkgr = append(pkgr, k)
