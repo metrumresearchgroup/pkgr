@@ -62,7 +62,7 @@ func inspect(cmd *cobra.Command, args []string) error {
 	}
 
 	if installedFrom {
-		installedFromPackages()
+		printInstalledFromPackages()
 		return nil
 	}
 
@@ -102,7 +102,7 @@ func printDeps(deps map[string][]string, tree bool, ip gpsr.InstallPlan) {
 	}
 }
 
-func installedFromPackages() {
+func printInstalledFromPackages() {
 	var pkgr, packrat, unknown []string
 	ip := pacman.GetPriorInstalledPackages(fs, cfg.Library)
 	for k, v := range ip {
