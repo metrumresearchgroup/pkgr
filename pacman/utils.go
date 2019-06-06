@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/dpastoor/goutils"
+	"github.com/metrumresearchgroup/pkgr-work/pkgr/pacman"
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/desc"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
@@ -13,6 +14,7 @@ import (
 	"github.com/spf13/afero"
 )
 
+// GetPriorInstalledPackages ...
 func GetPriorInstalledPackages(fileSystem afero.Fs, libraryPath string) map[string]desc.Desc {
 	installed := make(map[string]desc.Desc)
 	installedLibrary, err := fileSystem.Open(libraryPath)
@@ -47,6 +49,25 @@ func GetPriorInstalledPackages(fileSystem afero.Fs, libraryPath string) map[stri
 	return installed
 }
 
+// GetPackagesByInstalledFrom returns InstalledFromPkgs structure
+// single location where business rule of "not pkgr" is applied
+func GetPackagesByInstalledFrom(fileSystem afero.Fs, libraryPath string) (installedFrom InstalledFromPkgs) {
+	var pkgr, packrat, unknown []string
+	ip := pacman.GetPriorInstalledPackages(fileSystem, libraryPath)
+	for k, v := range ip {
+		if v.PkgrVersion == "" {
+			packrat = append(packrat, k)
+		} else {
+			pkgr = append(pkgr, k)
+		}
+	}
+	return InstalledFromPkgs{
+		Pkgr:    pkgr,
+		Packrat: packrat,
+		Unknown: unknown,
+	}
+}
+
 func scanInstalledPackage(
 	descriptionFilePath string, fileSystem afero.Fs) (desc.Desc, error) {
 
@@ -71,6 +92,7 @@ func scanInstalledPackage(
 	return installedPackage, nil
 }
 
+// GetOutdatedPackages returns a list of outdated packages
 func GetOutdatedPackages(installed map[string]desc.Desc, availablePackages []cran.PkgDl) []gpsr.OutdatedPackage {
 	var outdatedPackages []gpsr.OutdatedPackage
 
@@ -94,6 +116,7 @@ func GetOutdatedPackages(installed map[string]desc.Desc, availablePackages []cra
 	return outdatedPackages
 }
 
+// PreparePackagesForUpdate ...
 func PreparePackagesForUpdate(fileSystem afero.Fs, libraryPath string, outdatedPackages []gpsr.OutdatedPackage) []UpdateAttempt {
 	var updateAttempts []UpdateAttempt
 
@@ -125,6 +148,7 @@ func tagOldInstallation(fileSystem afero.Fs, libraryPath string, outdatedPackage
 	}
 }
 
+// RestoreUnupdatedPackages ...
 func RestoreUnupdatedPackages(fileSystem afero.Fs, packageBackupInfo []UpdateAttempt) {
 
 	if len(packageBackupInfo) == 0 {
@@ -160,6 +184,7 @@ func RestoreUnupdatedPackages(fileSystem afero.Fs, packageBackupInfo []UpdateAtt
 	}
 }
 
+// RenameDirRecursive ...
 func RenameDirRecursive(fileSystem afero.Fs, oldPath string, newPath string) error {
 	err := CopyDir(fileSystem, oldPath, newPath)
 
@@ -175,6 +200,7 @@ func RenameDirRecursive(fileSystem afero.Fs, oldPath string, newPath string) err
 	return nil
 }
 
+// CopyDir ...
 //TODO: Move into goutils.
 func CopyDir(fs afero.Fs, src string, dst string) error {
 
@@ -224,10 +250,30 @@ func stringInSlice(s string, slice []string) bool {
 	return false
 }
 
+// UpdateAttempt ...
 type UpdateAttempt struct {
 	Package                string
 	ActivePackageDirectory string
 	BackupPackageDirectory string
 	OldVersion             string
 	NewVersion             string
+}
+
+// InstalledFromPkgs ...
+type InstalledFromPkgs struct {
+	Pkgr    []string `json:"pkgr"`
+	Packrat []string `json:"packrat"`
+	Unknown []string `json:"unknown"`
+}
+
+// NotPkgr returns a list of packages not installed by Pkgr
+func (ip *InstalledFromPkgs) NotPkgr() []string {
+	var list []string
+	for _, p := range ip.Packrat {
+		list = append(list, p)
+	}
+	for _, p := range ip.Unknown {
+		list = append(list, p)
+	}
+	return list
 }

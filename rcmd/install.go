@@ -19,6 +19,7 @@ import (
 	"github.com/fatih/structtag"
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
+	"github.com/metrumresearchgroup/pkgr/pacman"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	funk "github.com/thoas/go-funk"
@@ -489,6 +490,13 @@ func InstallPackagePlan(
 		}
 	}(shouldInstall)
 
+	ifp := pacman.GetPackagesByInstalledFrom(fs, args.Library)
+	notPkgr := ifp.NotPkgr()
+	if len(notPkgr) > 0 {
+		// TODO: should this say "prior installed packages" not ...
+		log.Warn(fmt.Sprintf("Packages not installed by pkgr:%s", notPkgr))
+	}
+
 	log.Info("starting initial install")
 
 	for _, p := range plan.StartingPackages {
@@ -504,6 +512,7 @@ func InstallPackagePlan(
 			log.Errorf("did not install %s", pkg)
 		}
 	}
+
 	if anyFailed {
 		log.Errorf("installation failed for packages: %s", strings.Join(failedPkgs, ", "))
 		return fmt.Errorf("failed installation for packages: %s", strings.Join(failedPkgs, ", "))

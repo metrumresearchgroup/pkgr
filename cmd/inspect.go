@@ -103,26 +103,7 @@ func printDeps(deps map[string][]string, tree bool, ip gpsr.InstallPlan) {
 }
 
 func printInstalledFromPackages() {
-	var pkgr, packrat, unknown []string
-	ip := pacman.GetPriorInstalledPackages(fs, cfg.Library)
-	for k, v := range ip {
-		if v.PkgrVersion == "" {
-			packrat = append(packrat, k)
-		} else {
-			pkgr = append(pkgr, k)
-		}
-	}
-	prettyPrint(
-		struct {
-			Pkgr    []string `json:"pkgr"`
-			Packrat []string `json:"packrat"`
-			Unknown []string `json:"unknown"`
-		}{
-			Pkgr:    pkgr,
-			Packrat: packrat,
-			Unknown: unknown,
-		},
-	)
+	prettyPrint(pacman.GetPackagesByInstalledFrom(fs, cfg.Library))
 }
 
 func init() {
