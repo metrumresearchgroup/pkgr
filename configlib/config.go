@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
 	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
@@ -31,18 +32,18 @@ func NewConfig(cfg *PkgrConfig) {
 	if len(cfg.Library) == 0 {
 		rs := rcmd.NewRSettings(cfg.RPath)
 		rVersion := rcmd.GetRVersion(&rs)
-		cfg.Library = getLibraryPath(cfg.Lockfile.Type, cfg.RPath, rVersion.ToFullString(), rs.Platform, cfg.Library)
+		cfg.Library = getLibraryPath(cfg.Lockfile.Type, cfg.RPath, rVersion, rs.Platform, cfg.Library)
 	}
 	return
 }
 
-func getLibraryPath(lockfileType, rpath, rversion, platform, library string) string {
+func getLibraryPath(lockfileType string, rpath string, rversion cran.RVersion, platform string, library string) string {
 	switch lockfileType {
 	case "packrat":
-		library = filepath.Join("packrat", "lib", packratPlatform(platform), rversion)
+		library = filepath.Join("packrat", "lib", packratPlatform(platform), rversion.ToFullString())
 	case "renv":
-		rversion = fmt.Sprintf("R-%s", rversion)
-		library = filepath.Join("renv", "library", rversion, packratPlatform(platform))
+		s := fmt.Sprintf("R-%s", rversion.ToString())
+		library = filepath.Join("renv", "library", s, packratPlatform(platform))
 	case "pkgr":
 	default:
 	}

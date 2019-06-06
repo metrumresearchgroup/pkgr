@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -180,7 +181,7 @@ func TestGetLibraryPath(t *testing.T) {
 	}{
 		{
 			lftype:   "renv",
-			expected: "renv/library/R-1.2.3/apple",
+			expected: "renv/library/R-1.2/apple",
 		},
 		{
 			lftype:   "packrat",
@@ -192,7 +193,12 @@ func TestGetLibraryPath(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		library := getLibraryPath(tt.lftype, "myRpath", "1.2.3", "apple", "original")
+		var rv = cran.RVersion{
+			Major: 1,
+			Minor: 2,
+			Patch: 3,
+		}
+		library := getLibraryPath(tt.lftype, "myRpath", rv, "apple", "original")
 		assert.Equal(t, tt.expected, library, fmt.Sprintf("Fail:%s", tt.expected))
 	}
 }
