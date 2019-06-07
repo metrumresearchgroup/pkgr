@@ -53,7 +53,12 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 				log.WithField("path", evs[1]).Debug("overriding system R_LIBS_USER")
 				continue
 			}
-
+			if evs[0] == "PATH" {
+				if rs.Rpath != "" && !strings.HasPrefix(evs[1], rs.Rpath) {
+					evs[1] = fmt.Sprintf("%s:%s", rs.Rpath, evs[1])
+					log.WithField("path", evs[1]).Debug("adding Rpath to front of system PATH")
+				}
+			}
 			// if exists would be custom to the package hence should not accept the system env
 			_, exists := envMap[evs[0]]
 			if !exists {
