@@ -105,7 +105,7 @@ func initConfig() {
 	if viper.GetBool("debug") {
 		viper.Debug()
 	}
-	_ = viper.Unmarshal(&cfg)
+	configlib.NewConfig(&cfg)
 
 	configFilePath, _ := filepath.Abs(viper.ConfigFileUsed())
 	cwd, _ := os.Getwd()
