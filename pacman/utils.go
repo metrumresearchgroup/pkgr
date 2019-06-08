@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/dpastoor/goutils"
-	"github.com/metrumresearchgroup/pkgr-work/pkgr/pacman"
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/desc"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
@@ -53,7 +52,7 @@ func GetPriorInstalledPackages(fileSystem afero.Fs, libraryPath string) map[stri
 // single location where business rule of "not pkgr" is applied
 func GetPackagesByInstalledFrom(fileSystem afero.Fs, libraryPath string) (installedFrom InstalledFromPkgs) {
 	var pkgr, packrat, unknown []string
-	ip := pacman.GetPriorInstalledPackages(fileSystem, libraryPath)
+	ip := GetPriorInstalledPackages(fileSystem, libraryPath)
 	for k, v := range ip {
 		if v.PkgrVersion == "" {
 			packrat = append(packrat, k)
