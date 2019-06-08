@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
 	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
@@ -28,19 +29,25 @@ func packratPlatform(p string) string {
 // NewConfig initialize a PkgrConfig passed in by caller
 func NewConfig(cfg *PkgrConfig) {
 	_ = viper.Unmarshal(cfg)
-
 	if len(cfg.Library) == 0 {
-		switch cfg.Lockfile.Type {
-		case "packrat":
-			rs := rcmd.NewRSettings(cfg.RPath)
-			rVersion := rcmd.GetRVersion(&rs)
-			cfg.Library = filepath.Join("packrat", "lib", packratPlatform(rs.Platform), rVersion.ToFullString())
-		case "renv":
-		case "pkgr":
-		default:
-		}
+		rs := rcmd.NewRSettings(cfg.RPath)
+		rVersion := rcmd.GetRVersion(&rs)
+		cfg.Library = getLibraryPath(cfg.Lockfile.Type, cfg.RPath, rVersion, rs.Platform, cfg.Library)
 	}
 	return
+}
+
+func getLibraryPath(lockfileType string, rpath string, rversion cran.RVersion, platform string, library string) string {
+	switch lockfileType {
+	case "packrat":
+		library = filepath.Join("packrat", "lib", packratPlatform(platform), rversion.ToFullString())
+	case "renv":
+		s := fmt.Sprintf("R-%s", rversion.ToString())
+		library = filepath.Join("renv", "library", s, packratPlatform(platform))
+	case "pkgr":
+	default:
+	}
+	return library
 }
 
 // LoadConfigFromPath loads pkc configuration into the global Viper
