@@ -19,7 +19,6 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 		// not sure if this is needed when logging maps but for simple json want a single string
 		// so will also collect in a separate set of envs and log as a single combined string
 		for k, v := range pkgEnv {
-			envVars = append(envVars, fmt.Sprintf("%s=%s", k, v))
 			envList.Append(k, v)
 		}
 		log.WithFields(log.Fields{
@@ -70,11 +69,12 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 
 	ok, lp := rs.LibPathsEnv()
 	if ok {
-		envVars = append(envVars, lp)
+		envList.AppendNvp(lp)
 	}
 
 	for _, p := range envList.Pairs {
-		envVars = append(envVars, fmt.Sprintf("%s=%s", p.Name, p.Value))
+		// the one and only place to append name=value strings to envVars
+		envVars = append(envVars, p.GetString(p.Name))
 	}
 
 	return envVars
