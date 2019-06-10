@@ -522,13 +522,18 @@ func InstallPackagePlan(
 }
 
 func writeDescriptionInfo(ir InstallRequest) {
-	updateDescriptionInfo(
+	_, err := updateDescriptionInfo(
 		filepath.Join(ir.InstallArgs.Library, ir.Package, "DESCRIPTION"),
 		ir.ExecSettings.PkgrVersion,
 		ir.Metadata.Metadata.Config.Type.String(),
 		ir.Metadata.Metadata.Config.Repo.URL,
 		ir.Metadata.Metadata.Config.Repo.Name,
 		true)
+
+	if err != nil {
+		log.Warn(fmt.Sprintf("DESCRIPTION file error:%s", err))
+	}
+
 }
 
 func updateDescriptionInfo(filename, version, installType, repoURL, repo string, writeFile bool) ([]byte, error) {

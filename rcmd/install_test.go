@@ -71,9 +71,10 @@ func TestUpdateDcfFile(t *testing.T) {
 
 	for _, tt := range tests {
 
-		dcf, _ := updateDescriptionInfo(tt.filename, tt.version, tt.installType, tt.repoURL, tt.repo, false)
+		dcf, err := updateDescriptionInfo(tt.filename, tt.version, tt.installType, tt.repoURL, tt.repo, false)
 		installedPackage, _ := desc.ParseDesc(bytes.NewReader(dcf))
 
+		assert.Equal(t, nil, err, fmt.Sprintf("Error: %s", err))
 		assert.Equal(t, tt.expectedRepo, installedPackage.Repository, fmt.Sprintf("Failed: %s", tt.message))
 		assert.Equal(t, tt.version, installedPackage.PkgrVersion, fmt.Sprintf("Failed: %s", tt.message))
 		assert.Equal(t, tt.repoURL, installedPackage.PkgrRepositoryURL, fmt.Sprintf("Failed: %s", tt.message))
