@@ -1,6 +1,7 @@
 package rcmd
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -535,21 +536,23 @@ func writeDescriptionInfo(ir InstallRequest) {
 	}
 
 }
-
 func updateDescriptionInfo(filename, version, installType, repoURL, repo string, writeFile bool) ([]byte, error) {
 	var update []byte
 	fs := afero.NewOsFs()
-	dcf, err := afero.ReadFile(fs, filename)
+	file, err := fs.Open(filename)
+
 	if err == nil {
-		lines := bytes.Split(dcf, []byte("\n"))
-		for _, line := range lines {
-			if len(bytes.Trim(line, " ")) == 0 {
+		defer file.Close()
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if len(strings.Trim(line, " ")) == 0 {
 				continue
 			}
-			if bytes.Contains(line, []byte("Repository:")) && !bytes.Contains(line, []byte(repo)) {
-				line = append(line, []byte(" "+repo)...)
+			if strings.Contains(line, string("Repository:")) && !strings.Contains(line, repo) {
+				line = line + " " + repo
 			}
-			update = append(update, line...)
+			update = append(update, []byte(line)...)
 			update = append(update, []byte("\n")...)
 		}
 		update = append(update, []byte("PkgrVersion: "+version+"\n")...)
