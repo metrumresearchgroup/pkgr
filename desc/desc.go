@@ -48,18 +48,21 @@ func ParseDep(d string) Dep {
 // NewDesc creates a new Description
 func NewDesc(d desc) Desc {
 	dsc := Desc{
-		Package:     d.Package,
-		Source:      d.Source,
-		Version:     d.Version,
-		Maintainer:  d.Maintainer,
-		Description: d.Description,
-		MD5sum:      d.MD5sum,
-		Remotes:     d.Remotes,
-		Repository:  d.Repository,
-		Imports:     make(map[string]Dep),
-		Suggests:    make(map[string]Dep),
-		Depends:     make(map[string]Dep),
-		LinkingTo:   make(map[string]Dep),
+		Package:           d.Package,
+		Source:            d.Source,
+		Version:           d.Version,
+		Maintainer:        d.Maintainer,
+		Description:       d.Description,
+		MD5sum:            d.MD5sum,
+		Remotes:           d.Remotes,
+		Repository:        d.Repository,
+		Imports:           make(map[string]Dep),
+		Suggests:          make(map[string]Dep),
+		Depends:           make(map[string]Dep),
+		LinkingTo:         make(map[string]Dep),
+		PkgrVersion:       d.PkgrVersion,
+		PkgrInstallType:   d.PkgrInstallType,
+		PkgrRepositoryURL: d.PkgrRepositoryURL,
 	}
 	if len(d.Imports) > 0 {
 		for _, dp := range d.Imports {

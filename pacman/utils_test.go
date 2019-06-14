@@ -60,7 +60,7 @@ func (suite *UtilsTestSuite) TestRestoreUnupdatedPackages_RestoresWhenNoActiveIn
 			OldVersion:             "1",
 		},
 	}
-	restoreUnupdatedPackages(suite.FileSystem, updateAttemptFixture)
+	RestoreUnupdatedPackages(suite.FileSystem, updateAttemptFixture)
 
 	suite.True(afero.DirExists(suite.FileSystem, "test-library/CatsAndOranges"))
 	suite.True(afero.Exists(suite.FileSystem, "test-library/CatsAndOranges/DESCRIPTION"))
@@ -84,7 +84,7 @@ func (suite *UtilsTestSuite) TestRestoreUnupdatedPackages_DoesNotRestoreWhenProp
 			OldVersion:             "1",
 		},
 	}
-	restoreUnupdatedPackages(suite.FileSystem, updateAttemptFixture)
+	RestoreUnupdatedPackages(suite.FileSystem, updateAttemptFixture)
 
 	suite.True(afero.DirExists(suite.FileSystem, "test-library/CatsAndOranges"))
 	suite.True(afero.Exists(suite.FileSystem, "test-library/CatsAndOranges/DESCRIPTION"))
@@ -118,7 +118,7 @@ func (suite *UtilsTestSuite) TestRestoreUnupdatedPackages_RestoresOneAndAllowsAn
 			OldVersion:             "1.2",
 		},
 	}
-	restoreUnupdatedPackages(suite.FileSystem, updateAttemptFixture)
+	RestoreUnupdatedPackages(suite.FileSystem, updateAttemptFixture)
 
 	suite.True(afero.DirExists(suite.FileSystem, "test-library/CatsAndOranges"))
 	suite.True(afero.Exists(suite.FileSystem, "test-library/CatsAndOranges/DESCRIPTION_OLD"))

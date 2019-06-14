@@ -27,7 +27,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// VERSION is the current pkc version
+// VERSION is the current pkgr version
 var VERSION = "0.5.0-alpha"
 
 var fs afero.Fs

@@ -14,7 +14,8 @@ type CmdResult struct {
 
 // ExecSettings controls settings related to R execution
 type ExecSettings struct {
-	WorkDir string `json:"work_dir,omitempty"`
+	WorkDir     string `json:"work_dir,omitempty"`
+	PkgrVersion string `json:"pkgr_version,omitempty"`
 }
 
 // RSettings controls settings related to managing libraries
