@@ -168,7 +168,7 @@ func Install(
 		}
 	} else {
 		// update DESCRIPTION file with pkgr metadata
-		writeDescriptionInfo(ir)
+		writeDescriptionInfo(ir, args)
 
 		// success, exitCode should be 0 if go is ok
 		ws := cmd.ProcessState.Sys().(syscall.WaitStatus)
@@ -522,9 +522,9 @@ func InstallPackagePlan(
 	return nil
 }
 
-func writeDescriptionInfo(ir InstallRequest) {
+func writeDescriptionInfo(ir InstallRequest, ia InstallArgs) {
 	_, err := updateDescriptionInfo(
-		filepath.Join(ir.InstallArgs.Library, ir.Package, "DESCRIPTION"),
+		filepath.Join(ia.Library, ir.Package, "DESCRIPTION"),
 		ir.ExecSettings.PkgrVersion,
 		ir.Metadata.Metadata.Config.Type.String(),
 		ir.Metadata.Metadata.Config.Repo.URL,
@@ -534,8 +534,8 @@ func writeDescriptionInfo(ir InstallRequest) {
 	if err != nil {
 		log.Warn(fmt.Sprintf("DESCRIPTION file error:%s", err))
 	}
-
 }
+
 func updateDescriptionInfo(filename, version, installType, repoURL, repo string, writeFile bool) ([]byte, error) {
 	var update []byte
 	fs := afero.NewOsFs()
