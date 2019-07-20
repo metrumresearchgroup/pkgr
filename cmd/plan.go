@@ -34,6 +34,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	funk "github.com/thoas/go-funk"
 )
 
 // planCmd shows the install plan
@@ -74,6 +75,14 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	installedPackages := pacman.GetPriorInstalledPackages(fs, cfg.Library)
 	log.WithField("count", len(installedPackages)).Info("found installed packages")
 
+	whereInstalledFrom := pacman.GetInstallers(installedPackages)
+	notPkgr := whereInstalledFrom.NotFromPkgr()
+	if len(notPkgr) > 0 {
+		// TODO: should this say "prior installed packages" not ...
+		log.WithFields(log.Fields{
+			"packages": notPkgr,
+		}).Warn("Packages not installed by pkgr")
+	}
 	var repos []cran.RepoURL
 	for _, r := range cfg.Repos {
 		for nm, url := range r {
@@ -94,7 +103,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	if err != nil {
 		log.Panicln("error getting pkgdb ", err)
 	}
-	log.Infoln("Default package type: ", st.String())
+	log.Infoln("Default package installation type: ", st.String())
 	for _, db := range pkgNexus.Db {
 		log.Infoln(fmt.Sprintf("%v:%v (binary:source) packages available in for %s from %s", len(db.DescriptionsBySourceType[st]), len(db.DescriptionsBySourceType[cran.Source]), db.Repo.Name, db.Repo.URL))
 	}
@@ -175,7 +184,6 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	for pkg := range installPlan.DepDb {
 		pkgs = append(pkgs, pkg)
 	}
-
 	installedPackageNames := getInstalledPackageNames(installedPackages)
 
 	installPlan.OutdatedPackages = pacman.GetOutdatedPackages(installedPackages, pkgNexus.GetPackages(installedPackageNames).Packages)
@@ -195,17 +203,34 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 
 	}
 
-	totalPackagesRequired := len(installPlan.StartingPackages) + len(installPlan.DepDb)
+	totalPackagesRequired := len(pkgs)
+	toInstall := totalPackagesRequired - len(whereInstalledFrom.FromPkgr())
 	log.WithFields(log.Fields{
 		"total_packages_required": totalPackagesRequired,
 		"installed":               len(installedPackages),
 		"outdated":                len(installPlan.OutdatedPackages),
+		"not_from_pkgr":           len(whereInstalledFrom.NotFromPkgr()),
 	}).Info("package installation status")
 
 	log.WithFields(log.Fields{
-		"to_install": totalPackagesRequired - len(installedPackages),
-		"to_update":  pkgsToUpdateCount,
-	}).Info("package installation targets")
+		"to_install":   toInstall,
+		"could_update": pkgsToUpdateCount,
+	}).Info("package installation plan")
+
+	if toInstall > 0 && toInstall != totalPackagesRequired {
+		// log which packages to install, but only if doing an incremental install
+		for _, pn := range pkgs {
+			if !funk.ContainsString(installedPackageNames, pn) {
+				pkgDesc, cfg, _ := pkgNexus.GetPackage(pn)
+				log.WithFields(log.Fields{
+					"package": pkgDesc.Package,
+					"version": pkgDesc.Version,
+					"repo":    cfg.Repo.Name,
+					"type":    cfg.Type,
+				}).Info("to install")
+			}
+		}
+	}
 
 	log.Infoln("resolution time", time.Since(startTime))
 	return pkgNexus, installPlan
@@ -227,7 +252,7 @@ func logUserPackageRepos(packageDownloads []cran.PkgDl) {
 			"type":         pkg.Config.Type,
 			"version":      pkg.Package.Version,
 			"relationship": "user package",
-		}).Info("package repository set")
+		}).Debug("package repository set")
 	}
 }
 
