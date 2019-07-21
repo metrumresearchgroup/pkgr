@@ -58,7 +58,7 @@ func plan(cmd *cobra.Command, args []string) error {
 	rs := rcmd.NewRSettings(cfg.RPath)
 	rVersion := rcmd.GetRVersion(&rs)
 	log.Infoln("R Version " + rVersion.ToFullString())
-	log.Infoln("OS Platform " + rs.Platform)
+	log.Debugln("OS Platform " + rs.Platform)
 	_, ip := planInstall(rVersion, true)
 	if viper.GetBool("show-deps") {
 		for pkg, deps := range ip.DepDb {
@@ -211,6 +211,17 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		"outdated":                len(installPlan.OutdatedPackages),
 		"not_from_pkgr":           len(whereInstalledFrom.NotFromPkgr()),
 	}).Info("package installation status")
+
+	installSources := make(map[string]int)
+	for _, pkgdl := range installPlan.PackageDownloads {
+		_, rn := pkgdl.PkgAndRepoNames()
+		installSources[rn]++
+	}
+	fields := make(log.Fields)
+	for k, v := range installSources {
+		fields[k] = v
+	}
+	log.WithFields(fields).Info("package installation sources")
 
 	log.WithFields(log.Fields{
 		"to_install":   toInstall,
