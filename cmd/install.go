@@ -50,7 +50,8 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	rSettings := rcmd.NewRSettings(cfg.RPath)
 	rVersion := rcmd.GetRVersion(&rSettings)
 	log.Infoln("R Version " + rVersion.ToFullString())
-	log.Infoln("OS Platform " + rSettings.Platform)
+	// most people should know what platform they are on
+	log.Debugln("OS Platform " + rSettings.Platform)
 
 	// Get master object containing the packages available in each repository (pkgNexus),
 	//  as well as a master install plan to guide our process.

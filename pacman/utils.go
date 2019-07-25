@@ -48,9 +48,27 @@ func GetPriorInstalledPackages(fileSystem afero.Fs, libraryPath string) map[stri
 	return installed
 }
 
+// GetInstallers returns the installers for the installed packages
+func GetInstallers(ip map[string]desc.Desc) InstalledFromPkgs {
+	var pkgr, packrat, unknown []string
+	for k, v := range ip {
+		if v.PkgrVersion == "" {
+			packrat = append(packrat, k)
+		} else {
+			pkgr = append(pkgr, k)
+		}
+	}
+	return InstalledFromPkgs{
+		Pkgr:    pkgr,
+		Packrat: packrat,
+		Unknown: unknown,
+	}
+
+}
+
 // GetPackagesByInstalledFrom returns InstalledFromPkgs structure
 // single location where business rule of "not pkgr" is applied
-func GetPackagesByInstalledFrom(fileSystem afero.Fs, libraryPath string) (installedFrom InstalledFromPkgs) {
+func GetPackagesByInstalledFrom(fileSystem afero.Fs, libraryPath string) InstalledFromPkgs {
 	var pkgr, packrat, unknown []string
 	ip := GetPriorInstalledPackages(fileSystem, libraryPath)
 	for k, v := range ip {
@@ -266,7 +284,7 @@ type InstalledFromPkgs struct {
 }
 
 // NotPkgr returns a list of packages not installed by Pkgr
-func (ip *InstalledFromPkgs) NotPkgr() []string {
+func (ip *InstalledFromPkgs) NotFromPkgr() []string {
 	var list []string
 	for _, p := range ip.Packrat {
 		list = append(list, p)
@@ -275,4 +293,9 @@ func (ip *InstalledFromPkgs) NotPkgr() []string {
 		list = append(list, p)
 	}
 	return list
+}
+
+// IsPkgr returns a list of packages installed by Pkgr
+func (ip *InstalledFromPkgs) FromPkgr() []string {
+	return ip.Pkgr
 }
