@@ -37,12 +37,24 @@ Logging:
 # Package-specific Customizations
 # These optional customizations should take the format
 # Customizations:
-#   - <package name>
-#     CustomizationA: <value>
-#     CustomizationB: <value>
-#   - <package name>
-#     CustomizationA: <value>
-#     CustomizationC: <value>
+#  Packages:
+#    - <package name>
+#      CustomizationA: <value>
+#      CustomizationB: <value>
+#    - <package name>
+#      CustomizationA: <value>
+#      CustomizationC: <value>
+#  Repos:
+#    - <repo name>
+#      CustomizationA: <value>
+#    - <repo name>
+#      CustomizationB: <value>
 Customizations:
-  - tidyverse:
-      Suggests: true
+  Packages:
+    - pkg1:
+        Suggests: true
+    - pkg2:
+        Type: source
+  Repos:
+    - companyA_repo:
+        Type: source
