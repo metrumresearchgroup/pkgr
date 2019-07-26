@@ -89,8 +89,9 @@ Library: "path/to/install/library"
 
 # package specific customizations
 Customizations:
-  - tidyverse:
-      Suggests: true
+  Packages:
+    - tidyverse:
+        Suggests: true
 ```
 
 When you run `pkgr install` with this as your _pkgr.yml_ file, pkgr will download and
@@ -134,8 +135,9 @@ Logging:
   overwrite: true
 
 Customizations:
-  - devtools:
-      Type: source
+  Packages:
+    - devtools:
+        Type: source
 ```
 
 With this customization in your config file, pkgr will install from sources for devtools.
@@ -182,7 +184,7 @@ Logging:
 
 # Pkgr and [Packrat](https://rstudio.github.io/packrat/)
 
-**Pkgr is not a replacement for Packrat -- Pkgr is complementary to Packrat**. 
+**Pkgr is not a replacement for Packrat -- Pkgr is complementary to Packrat**.
 
 Packrat is a tool to capture the state
 of your R environment and isolate it from outside modification.
@@ -200,9 +202,9 @@ Pkgr solves these issues by:
   - Installing packages quickly in parallelized layers (determined by the dependency tree)
   - Allowing users to control things like what repo a given package is retrieved from and what Makevars it is built with
   - Showing users a holistic view of their R Environment (`pkgr inspect --deps --tree`) and how that environment would be changed on another install (`pkgr plan`)
-  - Providing timely error messages and halting the installation process immediately when something goes wrong during the 
+  - Providing timely error messages and halting the installation process immediately when something goes wrong during the
   installation process (such as a package not being available, a repository being unreachable, etc.)
-  
+
 
 # More info to come as we progress!
 
