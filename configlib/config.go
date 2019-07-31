@@ -60,13 +60,16 @@ func LoadConfigFromPath(configFilename string) error {
 	configFilename, _ = homedir.Expand(filepath.Clean(configFilename))
 	viper.SetConfigFile(configFilename)
 	b, err := ioutil.ReadFile(configFilename)
-	expb := []byte(os.ExpandEnv(string(b)))
-	err = viper.ReadConfig(bytes.NewReader(expb))
+	// panic if can't find or parse config as this could be explicit to user expectations
 	if err != nil {
 		// panic if can't find or parse config as this could be explicit to user expectations
 		if _, ok := err.(*os.PathError); ok {
 			panic(fmt.Errorf("could not find a config file at path: %s", configFilename))
 		}
+	}
+	expb := []byte(os.ExpandEnv(string(b)))
+	err = viper.ReadConfig(bytes.NewReader(expb))
+	if err != nil {
 		if _, ok := err.(viper.ConfigParseError); ok {
 			// found config file but couldn't parse it, should error
 			panic(fmt.Errorf("unable to parse config file with error (%s)", err))
