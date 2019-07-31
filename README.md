@@ -54,6 +54,18 @@ sudo mv pkgr /usr/local/bin/pkgr
 sudo chmod +x /usr/local/bin/pkgr
 ```
 
+### Windows installation
+
+Pkgr for Windows is supported, but we have not yet published on a Windows-compatible package manager like Chocolatey. For now, follow the steps below to install on Windows:
+
+- Navigate to the [latest release on GitHub](https://github.com/metrumresearchgroup/pkgr/releases/latest)
+- Download the windows tarball
+  ![windows_tarball](/docs/images/windows_tarball_picture.png)
+- Extract the contents of the windows tarball using a utility such as [7zip](https://www.7-zip.org/).
+  - If using 7zip, you may need to extract "twice" (once for the gzip layer, once for the tar layer). Ultimately, you're trying to pull out the `pkgr.exe` file.
+  - The destination folder should be on your Windows PATH. You may need to [modify your Windows PATH environment variable](https://www.architectryan.com/2018/03/17/add-to-the-path-on-windows-10/) to make this happen.
+  - If you do not already have a preferred way of accomplishing the above, we suggest creating a folder called "apps" in your home directory, then adding the "apps" directory to your PATH. From there, simply make sure that the `pkgr.exe` file from the tarball ends up in your "apps/" directory.
+
 # How it works
 
 `pkgr` is a command line utility with several top level commands. The two primary commands are:
