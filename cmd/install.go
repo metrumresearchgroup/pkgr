@@ -15,7 +15,6 @@
 package cmd
 
 import (
-	"github.com/dpastoor/goutils"
 	"path/filepath"
 	"time"
 
@@ -70,44 +69,6 @@ func rInstall(cmd *cobra.Command, args []string) error {
 
 	// Retrieve a cache to store any packages we need to download for the install.
 	packageCache := rcmd.NewPackageCache(userCache(cfg.Cache), false)
-
-	// Remove already installed packages here
-	//exists, _ := goutils.DirExists(fs, filepath.Join(ir.InstallArgs.Library, ir.Package))
-	//if exists {
-	//	log.WithFields(log.Fields{
-	//		"package": ir.Package,
-	//		"version": ir.Metadata.Metadata.Package.Version,
-	//	}).Debug("package already installed")
-	//	return CmdResult{
-	//		ExitCode: -999,
-	//		Stderr:   fmt.Sprintf("already installed: %s", ir.Package),
-	//	}, "", nil
-	//}
-
-	//library := filepath.Abs(cfg.Library)
-	//exists, _ := goutils.DirExists(fs, filepath.Join(ir.InstallArgs.Library, ir.Package))
-	var libraryAsString string
-	libraryAsString, _ = filepath.Abs(cfg.Library)
-
-	var prunedPackagesToDownload []cran.PkgDl
-
-	for _, p := range installPlan.PackageDownloads {
-		currentPackage := p.Package.Package
-		exists, _ := goutils.DirExists(fs, filepath.Join(libraryAsString, currentPackage))
-		if exists {
-			log.WithFields(log.Fields{
-				"package": currentPackage,
-				"version": p.Package.Version,
-			}).Debug("package already installed")
-		} else {
-			log.WithFields(log.Fields{
-				"package": currentPackage,
-				"version": p.Package.Version,
-			}).Info("going to download package")
-			prunedPackagesToDownload = append(prunedPackagesToDownload, p)
-		}
-	}
-	installPlan.PackageDownloads = prunedPackagesToDownload
 
 	//Create a pkgMap object, which helps us with parallel downloads (?)
 	pkgMap, err := cran.DownloadPackages(fs, installPlan.PackageDownloads, packageCache.BaseDir, rVersion)

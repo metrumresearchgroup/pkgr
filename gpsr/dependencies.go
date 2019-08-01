@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/metrumresearchgroup/pkgr/cran"
+	"github.com/metrumresearchgroup/pkgr/desc"
 
 	"github.com/deckarep/golang-set"
 )
@@ -118,7 +119,7 @@ func (ip *InstallPlan) InvertDependencies() map[string][]string {
 	return idb
 }
 
-func (ip *InstallPlan) Pack(pkgNexus *cran.PkgNexus) {
+func (ip *InstallPlan) Pack(pkgNexus *cran.PkgNexus, excludedPkgs []desc.Desc) {
 	var toDl []cran.PkgDl
 	// starting packages
 	for _, p := range ip.StartingPackages {
@@ -130,6 +131,25 @@ func (ip *InstallPlan) Pack(pkgNexus *cran.PkgNexus) {
 		pkg, cfg, _ := pkgNexus.GetPackage(p)
 		toDl = append(toDl, cran.PkgDl{Package: pkg, Config: cfg})
 	}
-	ip.PackageDownloads = toDl
+
+	var toDlPruned []cran.PkgDl
+	for _, p := range toDl {
+
+		foundMatchWithExcluded := false
+
+		for _, excluded := range excludedPkgs {
+			foundMatchWithExcluded = foundMatchWithExcluded ||
+				(p.Package.Package == excluded.Package &&
+					desc.CompareVersions( //TODO: Should we even check version here, or should we assume that was done upstream?
+						desc.ParseVersion(p.Package.Version),
+						desc.ParseVersion(excluded.Version)) == 0)
+		}
+
+		if(!foundMatchWithExcluded) {
+			toDlPruned = append(toDlPruned, p)
+		}
+	}
+
+	ip.PackageDownloads = toDlPruned
 	//return toDl
 }

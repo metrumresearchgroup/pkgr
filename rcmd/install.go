@@ -246,19 +246,6 @@ func InstallThroughBinary( //#jcb //jcb
 	ir InstallRequest,
 	pc PackageCache) (CmdResult, string, error) {
 
-
-	exists, _ := goutils.DirExists(fs, filepath.Join(ir.InstallArgs.Library, ir.Package))
-	if exists {
-		log.WithFields(log.Fields{
-			"package": ir.Package,
-			"version": ir.Metadata.Metadata.Package.Version,
-		}).Debug("package already installed")
-		return CmdResult{
-			ExitCode: -999,
-			Stderr:   fmt.Sprintf("already installed: %s", ir.Package),
-		}, "", nil
-	}
-
 	inCache, ir := isInCache(fs, ir, pc)
 	if inCache {
 		// don't need to build since already a binary
