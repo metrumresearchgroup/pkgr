@@ -5,12 +5,12 @@ LDFLAGS=-ldflags "-X main.buildTime=${BUILD}"
 BUILD_HOME=${PWD}/../cmd/pkgr
 TEST_HOME=${PWD}
 
-.PHONY: install test-setup test-mixed-source-reset test-simple-reset test-logging-config-reset test-outdated-pkgs-reset test-repo-order-reset test-simple-suggests-reset
+.PHONY: install test-setup test-mixed-source-reset test-simple-reset test-logging-config-reset test-outdated-pkgs-reset test-repo-order-reset test-simple-suggests-reset test-partially-installed-reset
 
 install:
 	cd ${BUILD_HOME}; go install ${LDFLAGS}
 
-test-setup: test-mixed-source-reset test-simple-reset test-logging-config-reset test-outdated-pkgs-reset test-repo-order-reset test-simple-suggests-reset install
+test-setup: test-mixed-source-reset test-simple-reset test-logging-config-reset test-outdated-pkgs-reset test-repo-order-reset test-simple-suggests-reset test-partially-installed-reset install
 
 
 test-mixed-source-reset:
@@ -53,3 +53,8 @@ test-simple-suggests-reset:
 	rm -rf ${TEST_HOME}/simple-suggests/pkgcache/
 	mkdir ${TEST_HOME}/simple-suggests/test-library
 	mkdir ${TEST_HOME}/simple-suggests/pkgcache/
+
+test-partially-installed-reset:
+	rm -rf ${TEST_HOME}/partially-installed/test-library
+	mkdir ${TEST_HOME}/partially-installed/test-library
+	cp -r ${TEST_HOME}/partially-installed/preinstalled-library/* ${TEST_HOME}/partially-installed/test-library/

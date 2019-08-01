@@ -241,10 +241,12 @@ func isInCache(
 // In addition to returning the CmdResult and any errors
 // the path to the binary is also provided for
 // additional handling of the binary such as caching
-func InstallThroughBinary(
+func InstallThroughBinary( //#jcb //jcb
 	fs afero.Fs,
 	ir InstallRequest,
 	pc PackageCache) (CmdResult, string, error) {
+
+
 	exists, _ := goutils.DirExists(fs, filepath.Join(ir.InstallArgs.Library, ir.Package))
 	if exists {
 		log.WithFields(log.Fields{

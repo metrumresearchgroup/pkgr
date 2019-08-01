@@ -1,0 +1,11 @@
+Version: 1
+# top level packages
+Packages:
+  - R6 # Not installed
+  - pillar # some deps not installed. Fansi, CLI, UTF8, crayon.
+
+# any repositories, order matters
+Repos:
+  - CRAN: "https://cran.rstudio.com"
+
+Library: "test-library"
