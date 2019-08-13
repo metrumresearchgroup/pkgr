@@ -187,6 +187,11 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	installedPackageNames := getInstalledPackageNames(installedPackages)
 
 	installPlan.OutdatedPackages = pacman.GetOutdatedPackages(installedPackages, pkgNexus.GetPackages(installedPackageNames).Packages)
+	installPlan.InstalledPackages = make(map[string]desc.Desc)
+	for _, p := range installedPackages {
+		installPlan.InstalledPackages[p.Package] = p
+	}
+
 	pkgsToUpdateCount := 0
 	for _, p := range installPlan.OutdatedPackages {
 		updateLogFields := log.Fields{
