@@ -57,6 +57,8 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	//  as well as a master install plan to guide our process.
 	_, installPlan := planInstall(rVersion, true)
 
+	//Make a backup of the current library
+
 	//Prepare our environment to update outdated packages if the "--update" flag is set.
 	var packageUpdateAttempts []pacman.UpdateAttempt
 	if viper.GetBool("update") {
@@ -101,6 +103,28 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	err = rcmd.InstallPackagePlan(fs, installPlan, pkgMap, packageCache, pkgInstallArgs, rSettings, rcmd.ExecSettings{PkgrVersion: VERSION}, nworkers)
 	// After package installation, fix any problems that occurred during reinstallation of
 	//  packages that were to be updated.
+
+	if err != nil {
+		//reset packages
+		log.Info("Resetting package environment")
+
+		toInstall := installPlan.StartingPackages
+		for depsList := range installPlan.DepDb {
+			toInstall = append(toInstall, depsList)
+		}
+
+		for _, pkg := range toInstall {
+
+			_, found := installPlan.InstalledPackages[pkg]
+			if !found {
+				err = fs.RemoveAll(filepath.Join(cfg.Library, pkg))
+				if err != nil {
+					log.Warn(err)
+				}
+			}
+		}
+	}
+
 	if cfg.Update {
 		pacman.RestoreUnupdatedPackages(fs, packageUpdateAttempts)
 	}
