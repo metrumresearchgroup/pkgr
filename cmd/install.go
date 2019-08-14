@@ -123,12 +123,17 @@ func rInstall(cmd *cobra.Command, args []string) error {
 				}
 			}
 		}
+
+		if cfg.Update {
+			pacman.RollbackUpdatePackages(fs, packageUpdateAttempts)
+		}
 	}
 
+	/*
 	if cfg.Update {
 		pacman.RestoreUnupdatedPackages(fs, packageUpdateAttempts)
 	}
-
+	*/
 	log.Info("duration:", time.Since(startTime))
 
 	if err != nil {

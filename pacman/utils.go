@@ -149,7 +149,8 @@ func tagOldInstallation(fileSystem afero.Fs, libraryPath string, outdatedPackage
 	packageDir := filepath.Join(libraryPath, outdatedPackage.Package)
 	taggedPackageDir := filepath.Join(libraryPath, "__OLD__"+outdatedPackage.Package)
 
-	err := RenameDirRecursive(fileSystem, packageDir, taggedPackageDir)
+	err := fileSystem.Rename(packageDir, taggedPackageDir)
+	//err := RenameDirRecursive(fileSystem, packageDir, taggedPackageDir)
 
 	if err != nil {
 		log.WithField("package dir", packageDir).Warn("error when backing up outdated package")
@@ -165,6 +166,37 @@ func tagOldInstallation(fileSystem afero.Fs, libraryPath string, outdatedPackage
 	}
 }
 
+func RollbackUpdatePackages(fileSystem afero.Fs, packageBackupInfo []UpdateAttempt) {
+	if len(packageBackupInfo) == 0 {
+		return
+	}
+
+	for _, info := range packageBackupInfo {
+
+		log.WithFields(log.Fields{
+			"pkg":         info.Package,
+			"rolling back to": info.OldVersion,
+			"failed to update to": info.NewVersion,
+		}).Warn("did not update package, restoring last-installed version")
+
+		_, err1 := fileSystem.Stat(info.ActivePackageDirectory) // Checking existence
+		if err1 == nil {
+			err1 = fileSystem.RemoveAll(info.ActivePackageDirectory)
+			if err1 != nil {
+				log.Warn(err1)
+			}
+		}
+
+		err2 := fileSystem.Rename(info.BackupPackageDirectory, info.ActivePackageDirectory)
+
+		if err2 != nil {
+			log.WithFields(log.Fields{
+				"pkg":         info.Package,
+			}).Warn("could not rollback package. Package will need reinstallation.", err2)
+		}
+	}
+}
+
 // RestoreUnupdatedPackages ...
 func RestoreUnupdatedPackages(fileSystem afero.Fs, packageBackupInfo []UpdateAttempt) {
 
@@ -176,28 +208,28 @@ func RestoreUnupdatedPackages(fileSystem afero.Fs, packageBackupInfo []UpdateAtt
 	//packageFolderObjects, _ := libraryDirectoryFsObject.Readdir(0)
 
 	for _, info := range packageBackupInfo {
-		_, err := fileSystem.Stat(info.ActivePackageDirectory) //Checking existence
-		if err == nil {
+		//_, err := fileSystem.Stat(info.ActivePackageDirectory) //Checking existence
+		//if err == nil {
 
 			fileSystem.RemoveAll(info.BackupPackageDirectory)
-
+		/*
 			log.WithFields(log.Fields{
 				"pkg":         info.Package,
 				"old_version": info.OldVersion,
 				"new_version": info.NewVersion,
 			}).Info("successfully updated package")
-
-		} else {
+		*/
+		//} else {
 			log.WithFields(log.Fields{
 				"pkg":         info.Package,
 				"old_version": info.OldVersion,
 				"new_version": info.NewVersion,
-			}).Warn("could not update package, restoring last-installed version")
-			err := RenameDirRecursive(fileSystem, info.BackupPackageDirectory, info.ActivePackageDirectory)
+			}).Warn("did not update package, restoring last-installed version")
+			err := fileSystem.Rename(info.BackupPackageDirectory, info.ActivePackageDirectory)
 			if err != nil {
 				log.WithField("pkg", info.Package).Error(err)
 			}
-		}
+		//}
 	}
 }
 
