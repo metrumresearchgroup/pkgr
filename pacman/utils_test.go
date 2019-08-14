@@ -1,7 +1,6 @@
 package pacman
 
 import (
-	"log"
 	"path/filepath"
 	"testing"
 
