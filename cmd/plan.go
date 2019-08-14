@@ -230,7 +230,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 
 	log.WithFields(log.Fields{
 		"to_install":   toInstall,
-		"could_update": pkgsToUpdateCount,
+		"to_update": pkgsToUpdateCount,
 	}).Info("package installation plan")
 
 	if toInstall > 0 && toInstall != totalPackagesRequired {

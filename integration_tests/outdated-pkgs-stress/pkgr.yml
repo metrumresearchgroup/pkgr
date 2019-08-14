@@ -1,0 +1,36 @@
+# The version number of the config file, used to indicate the API for the config.
+# Do not change.
+Version: 1
+
+Packages:
+  - tidyverse
+  - pmplots
+  - yspec
+
+# I initially started with
+# Repos:
+#  - CRAN: https://cran.microsoft.com/"https://cran.microsoft.com/snapshot/2019-08-01/"
+#  - metrumrg_repo: "https://metrumresearchgroup.github.io/r_validated"
+# I installed some packages, switched to a different branch, and changed to this:
+Repos:
+  - CRAN_old: "https://cran.microsoft.com/snapshot/2018-11-18"
+  - metrumrg_repo: "https://github.com/metrumresearchgroup/r_validated"
+  # - CRAN: "https://cran.microsoft.com"
+# I then added devtools (I think) to the Packages list and installed.
+# Then I switched back to the original branch and ran pkgr install --udpate and got the error.
+
+# Path the install packages to
+Library: "test-library"
+
+# Cache
+# Cache: "script/pkg"
+
+Logging:
+    all: pkgr_all.log
+    install: pkgr_install.log
+    overwrite: true
+
+Customizations:
+    Repos:
+      - metrumrg_repo:
+            Type: source
