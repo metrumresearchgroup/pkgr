@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"path/filepath"
 	"time"
 
@@ -101,28 +102,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	//  packages that were to be updated.
 
 	if err != nil {
-		//reset packages
-		log.Info("Resetting package environment")
-
-		toInstall := installPlan.StartingPackages
-		for depsList := range installPlan.DepDb {
-			toInstall = append(toInstall, depsList)
-		}
-
-		for _, pkg := range toInstall {
-
-			_, found := installPlan.InstalledPackages[pkg]
-			if !found {
-				err = fs.RemoveAll(filepath.Join(cfg.Library, pkg))
-				if err != nil {
-					log.Warn(err)
-				}
-			}
-		}
-
-		if cfg.Update {
-			pacman.RollbackUpdatePackages(fs, packageUpdateAttempts)
-		}
+		err = rollbackPackageEnvironment(installPlan, err, packageUpdateAttempts)
 	}
 
 	/*
@@ -137,6 +117,42 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+func rollbackPackageEnvironment(installPlan gpsr.InstallPlan, packageUpdateAttempts []pacman.UpdateAttempt) {
+	//reset packages
+	log.Info("Resetting package environment")
+
+	//figure out which packages we were even dealing with. Maybe this should be a unified list somewhere?
+	//as of August 14, 2019, the InstallPlan treats installed packages as if they were going to be installed again,
+	//and we simply figure out downstream that the installed packages shouldn't be run.
+	//Because of this, toInstall will end up containing info about all packages pkgr is managing, not just the ones
+	//to be installed.
+	toInstall := installPlan.StartingPackages
+	for depsList := range installPlan.DepDb {
+		toInstall = append(toInstall, depsList)
+	}
+
+	//
+	for _, pkg := range toInstall {
+
+		//Filter out the packages that were already installed -- we don't want to touch those, they shouldn't have changed.
+		_, found := installPlan.InstalledPackages[pkg]
+		if !found {
+
+			//Remove packages that were installed during this run.
+			err := fs.RemoveAll(filepath.Join(cfg.Library, pkg))
+			if err != nil {
+				log.Warn(err)
+			}
+		}
+	}
+
+	//Rollback updated packages -- we have to do this differently than the rest, because updated packages need to be
+	//restored from backups.
+	if cfg.Update {
+		pacman.RollbackUpdatePackages(fs, packageUpdateAttempts)
+	}
 }
 
 func initInstallLog() {

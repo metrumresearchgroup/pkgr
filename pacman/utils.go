@@ -197,42 +197,7 @@ func RollbackUpdatePackages(fileSystem afero.Fs, packageBackupInfo []UpdateAttem
 	}
 }
 
-// RestoreUnupdatedPackages ...
-func RestoreUnupdatedPackages(fileSystem afero.Fs, packageBackupInfo []UpdateAttempt) {
-
-	if len(packageBackupInfo) == 0 {
-		return
-	}
-
-	//libraryDirectoryFsObject, _ := fs.Open(libraryPath)
-	//packageFolderObjects, _ := libraryDirectoryFsObject.Readdir(0)
-
-	for _, info := range packageBackupInfo {
-		//_, err := fileSystem.Stat(info.ActivePackageDirectory) //Checking existence
-		//if err == nil {
-
-			fileSystem.RemoveAll(info.BackupPackageDirectory)
-		/*
-			log.WithFields(log.Fields{
-				"pkg":         info.Package,
-				"old_version": info.OldVersion,
-				"new_version": info.NewVersion,
-			}).Info("successfully updated package")
-		*/
-		//} else {
-			log.WithFields(log.Fields{
-				"pkg":         info.Package,
-				"old_version": info.OldVersion,
-				"new_version": info.NewVersion,
-			}).Warn("did not update package, restoring last-installed version")
-			err := fileSystem.Rename(info.BackupPackageDirectory, info.ActivePackageDirectory)
-			if err != nil {
-				log.WithField("pkg", info.Package).Error(err)
-			}
-		//}
-	}
-}
-
+/* Keeping for posterity, for now. I'm not convinced we won't need this in the future.
 // RenameDirRecursive ...
 func RenameDirRecursive(fileSystem afero.Fs, oldPath string, newPath string) error {
 	err := CopyDir(fileSystem, oldPath, newPath)
@@ -292,7 +257,8 @@ func CopyDir(fs afero.Fs, src string, dst string) error {
 	}
 	return nil
 }
-
+*/
+/* Use funk.ContainsString (I figured this had to exist somewhere)
 func stringInSlice(s string, slice []string) bool {
 	for _, entry := range slice {
 		if s == entry {
@@ -301,6 +267,7 @@ func stringInSlice(s string, slice []string) bool {
 	}
 	return false
 }
+*/
 
 // UpdateAttempt ...
 type UpdateAttempt struct {
