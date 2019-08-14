@@ -100,11 +100,10 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	// Install the packages
 	//
 	err = rcmd.InstallPackagePlan(fs, installPlan, pkgMap, packageCache, pkgInstallArgs, rSettings, rcmd.ExecSettings{PkgrVersion: VERSION}, nworkers)
-	// After package installation, fix any problems that occurred during reinstallation of
-	//  packages that were to be updated.
 
+	//If anything went wrong during the installation, rollback the environment.
 	if err != nil {
-		err = rollbackPackageEnvironment(installPlan, err, packageUpdateAttempts)
+		rollbackPackageEnvironment(installPlan, packageUpdateAttempts)
 	}
 
 	/*

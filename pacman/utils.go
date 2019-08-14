@@ -8,7 +8,6 @@ import (
 	"github.com/dpastoor/goutils"
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/desc"
-	"github.com/metrumresearchgroup/pkgr/gpsr"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
@@ -110,8 +109,8 @@ func scanInstalledPackage(
 }
 
 // GetOutdatedPackages returns a list of outdated packages
-func GetOutdatedPackages(installed map[string]desc.Desc, availablePackages []cran.PkgDl) []gpsr.OutdatedPackage {
-	var outdatedPackages []gpsr.OutdatedPackage
+func GetOutdatedPackages(installed map[string]desc.Desc, availablePackages []cran.PkgDl) []cran.OutdatedPackage {
+	var outdatedPackages []cran.OutdatedPackage
 
 	for _, pkgDl := range availablePackages {
 
@@ -122,7 +121,7 @@ func GetOutdatedPackages(installed map[string]desc.Desc, availablePackages []cra
 
 			// If available version is later than currently installed version
 			if desc.CompareVersionStrings(availableVersion, installedPkg.Version) > 0 {
-				outdatedPackages = append(outdatedPackages, gpsr.OutdatedPackage{
+				outdatedPackages = append(outdatedPackages, cran.OutdatedPackage{
 					Package:    pkgName,
 					OldVersion: installed[pkgName].Version,
 					NewVersion: pkgDl.Package.Version,
@@ -134,7 +133,7 @@ func GetOutdatedPackages(installed map[string]desc.Desc, availablePackages []cra
 }
 
 // PreparePackagesForUpdate ...
-func PreparePackagesForUpdate(fileSystem afero.Fs, libraryPath string, outdatedPackages []gpsr.OutdatedPackage) []UpdateAttempt {
+func PreparePackagesForUpdate(fileSystem afero.Fs, libraryPath string, outdatedPackages []cran.OutdatedPackage) []UpdateAttempt {
 	var updateAttempts []UpdateAttempt
 
 	//Tag each outdated pkg directory in library with "__OLD__"
@@ -145,7 +144,7 @@ func PreparePackagesForUpdate(fileSystem afero.Fs, libraryPath string, outdatedP
 	return updateAttempts
 }
 
-func tagOldInstallation(fileSystem afero.Fs, libraryPath string, outdatedPackage gpsr.OutdatedPackage) UpdateAttempt {
+func tagOldInstallation(fileSystem afero.Fs, libraryPath string, outdatedPackage cran.OutdatedPackage) UpdateAttempt {
 	packageDir := filepath.Join(libraryPath, outdatedPackage.Package)
 	taggedPackageDir := filepath.Join(libraryPath, "__OLD__"+outdatedPackage.Package)
 

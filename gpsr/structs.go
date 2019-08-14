@@ -10,7 +10,7 @@ type InstallPlan struct {
 	StartingPackages []string
 	DepDb            map[string][]string // This is a map of the dependencies [D1, D2, ... Dn] for a given package (A). The map is keyed by package name, i.e. DepDb[A] = [D1, D2, ..., Dn]
 	PackageDownloads []cran.PkgDl
-	OutdatedPackages []OutdatedPackage
+	OutdatedPackages []cran.OutdatedPackage
 	InstalledPackages map[string]desc.Desc
 }
 
@@ -27,12 +27,5 @@ type PkgDeps struct {
 type InstallDeps struct {
 	Deps    map[string]PkgDeps
 	Default PkgDeps
-}
-
-
-type OutdatedPackage struct {
-	Package string
-	OldVersion string
-	NewVersion string
 }
 
