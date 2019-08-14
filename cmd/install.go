@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"github.com/metrumresearchgroup/pkgr/gpsr"
+	"github.com/spf13/afero"
 	"path/filepath"
 	"time"
 
@@ -103,7 +104,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 
 	//If anything went wrong during the installation, rollback the environment.
 	if err != nil {
-		rollbackPackageEnvironment(installPlan, packageUpdateAttempts)
+		rollbackPackageEnvironment(fs, installPlan, packageUpdateAttempts)
 	}
 
 	/*
@@ -120,7 +121,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func rollbackPackageEnvironment(installPlan gpsr.InstallPlan, packageUpdateAttempts []pacman.UpdateAttempt) {
+func rollbackPackageEnvironment(fileSystem afero.Fs, installPlan gpsr.InstallPlan, packageUpdateAttempts []pacman.UpdateAttempt) {
 	//reset packages
 	log.Info("Resetting package environment")
 
@@ -134,15 +135,13 @@ func rollbackPackageEnvironment(installPlan gpsr.InstallPlan, packageUpdateAttem
 		toInstall = append(toInstall, depsList)
 	}
 
-	//
 	for _, pkg := range toInstall {
 
 		//Filter out the packages that were already installed -- we don't want to touch those, they shouldn't have changed.
 		_, found := installPlan.InstalledPackages[pkg]
 		if !found {
-
 			//Remove packages that were installed during this run.
-			err := fs.RemoveAll(filepath.Join(cfg.Library, pkg))
+			err := fileSystem.RemoveAll(filepath.Join(cfg.Library, pkg))
 			if err != nil {
 				log.Warn(err)
 			}
@@ -152,7 +151,7 @@ func rollbackPackageEnvironment(installPlan gpsr.InstallPlan, packageUpdateAttem
 	//Rollback updated packages -- we have to do this differently than the rest, because updated packages need to be
 	//restored from backups.
 	if cfg.Update {
-		pacman.RollbackUpdatePackages(fs, packageUpdateAttempts)
+		pacman.RollbackUpdatePackages(fileSystem, packageUpdateAttempts)
 	}
 }
 

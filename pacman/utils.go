@@ -167,6 +167,7 @@ func tagOldInstallation(fileSystem afero.Fs, libraryPath string, outdatedPackage
 
 func RollbackUpdatePackages(fileSystem afero.Fs, packageBackupInfo []UpdateAttempt) {
 	if len(packageBackupInfo) == 0 {
+		log.Debug("Not update-packages to restore.")
 		return
 	}
 
@@ -195,78 +196,6 @@ func RollbackUpdatePackages(fileSystem afero.Fs, packageBackupInfo []UpdateAttem
 		}
 	}
 }
-
-/* Keeping for posterity, for now. I'm not convinced we won't need this in the future.
-// RenameDirRecursive ...
-func RenameDirRecursive(fileSystem afero.Fs, oldPath string, newPath string) error {
-	err := CopyDir(fileSystem, oldPath, newPath)
-
-	if err != nil {
-		return err
-	}
-
-	err = fileSystem.RemoveAll(oldPath)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// CopyDir ...
-//TODO: Move into goutils.
-func CopyDir(fs afero.Fs, src string, dst string) error {
-
-	err := fs.MkdirAll(dst, 0755)
-	if err != nil {
-		return err
-	}
-
-	openedDir, err := fs.Open(src)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		openedDir.Close() //If we
-	}()
-
-	directoryContents, err := openedDir.Readdir(0)
-
-	if err != nil {
-		return err
-	}
-
-	for _, item := range directoryContents {
-		srcSubPath := filepath.Join(src, item.Name())
-		dstSubPath := filepath.Join(dst, item.Name())
-		if item.IsDir() {
-			fs.Mkdir(dstSubPath, item.Mode())
-			err := CopyDir(fs, srcSubPath, dstSubPath)
-			if err != nil {
-				return err
-			}
-		} else {
-			_, err := goutils.CopyFS(fs, srcSubPath, dstSubPath)
-			if err != nil {
-				fmt.Print("Received error: ")
-				fmt.Println(err)
-				return err
-			}
-		}
-	}
-	return nil
-}
-*/
-/* Use funk.ContainsString (I figured this had to exist somewhere)
-func stringInSlice(s string, slice []string) bool {
-	for _, entry := range slice {
-		if s == entry {
-			return true
-		}
-	}
-	return false
-}
-*/
 
 // UpdateAttempt ...
 type UpdateAttempt struct {
