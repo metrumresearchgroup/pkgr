@@ -47,6 +47,7 @@ func (suite *UtilsTestSuite) TestTagOldInstallation_CreatesBackup() {
 	suite.False(afero.Exists(suite.FileSystem, "test-library/CatsAndOranges/DESCRIPTION"))
 }
 
+/*
 func (suite *UtilsTestSuite) TestRestoreUnupdatedPackages_RestoresWhenNoActiveInstallation() {
 	_ = suite.FileSystem.MkdirAll("test-library/__OLD__CatsAndOranges", 0755)
 	_, _ = suite.FileSystem.Create("test-library/__OLD__CatsAndOranges/DESCRIPTION")
@@ -130,7 +131,7 @@ func (suite *UtilsTestSuite) TestRestoreUnupdatedPackages_RestoresOneAndAllowsAn
 	suite.False(afero.Exists(suite.FileSystem, "test-library/__OLD__DogsAndBananas/DESCRIPTION_OLD"))
 	suite.False(afero.Exists(suite.FileSystem, "test-library/DogsAndBananas/DESCRIPTION_OLD"))
 }
-
+*/
 func (suite *UtilsTestSuite) TestScanInstalledPackage_ScansReleventFieldsForOutdatedComparison() {
 	_ = suite.FileSystem.MkdirAll("test-library/CatsAndOranges", 0755)
 	_, _ = suite.FileSystem.Create("test-library/CatsAndOranges/DESCRIPTION")
@@ -241,7 +242,7 @@ func (suite *UtilsTestSuite) TestGetOutdatedPackages_DoesNotFlagOlderPackage() {
 
 	suite.Equal(0, len(actualResults))
 }
-
+/*
 func (suite *UtilsTestSuite) TestStringInSlice_FindsStringInSlice() {
 	sliceFixture := []string{"Cats", "And", "Oranges"}
 	suite.True(stringInSlice("Cats", sliceFixture))
@@ -256,3 +257,4 @@ func (suite *UtilsTestSuite) TestStringInSlice_IsCaseSensitive() {
 	sliceFixture := []string{"Cats", "And", "Oranges"}
 	suite.False(stringInSlice("cats", sliceFixture))
 }
+*/
