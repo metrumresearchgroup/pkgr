@@ -73,9 +73,10 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	startTime := time.Now()
 
 	installedPackages := pacman.GetPriorInstalledPackages(fs, cfg.Library)
+	installedPackageNames := extractNamesFromDesc(installedPackages)
 	log.WithField("count", len(installedPackages)).Info("found installed packages")
-
 	whereInstalledFrom := pacman.GetInstallers(installedPackages)
+
 	notPkgr := whereInstalledFrom.NotFromPkgr()
 	if len(notPkgr) > 0 {
 		// TODO: should this say "prior installed packages" not ...
@@ -173,7 +174,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		}
 	}
 	logUserPackageRepos(availableUserPackages.Packages)
-	installPlan, err := gpsr.ResolveInstallationReqs(cfg.Packages, dependencyConfigurations, pkgNexus)
+	installPlan, err := gpsr.ResolveInstallationReqs(cfg.Packages,installedPackages, dependencyConfigurations, pkgNexus)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
@@ -183,13 +184,6 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	pkgs := installPlan.StartingPackages
 	for pkg := range installPlan.DepDb {
 		pkgs = append(pkgs, pkg)
-	}
-	installedPackageNames := getInstalledPackageNames(installedPackages)
-
-	installPlan.OutdatedPackages = pacman.GetOutdatedPackages(installedPackages, pkgNexus.GetPackages(installedPackageNames).Packages)
-	installPlan.InstalledPackages = make(map[string]desc.Desc)
-	for _, p := range installedPackages {
-		installPlan.InstalledPackages[p.Package] = p
 	}
 
 	pkgsToUpdateCount := 0
@@ -252,14 +246,6 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	return pkgNexus, installPlan
 }
 
-func getInstalledPackageNames(installedPackages map[string]desc.Desc) []string {
-	var installedPackageNames []string
-	for key := range installedPackages {
-		installedPackageNames = append(installedPackageNames, key)
-	}
-	return installedPackageNames
-}
-
 func logUserPackageRepos(packageDownloads []cran.PkgDl) {
 	for _, pkg := range packageDownloads {
 		log.WithFields(log.Fields{
@@ -286,4 +272,12 @@ func logDependencyRepos(dependencyDownloads []cran.PkgDl) {
 			}).Debug("package repository set")
 		}
 	}
+}
+
+func extractNamesFromDesc(installedPackages map[string]desc.Desc) []string {
+	var installedPackageNames []string
+	for key := range installedPackages {
+		installedPackageNames = append(installedPackageNames, key)
+	}
+	return installedPackageNames
 }
