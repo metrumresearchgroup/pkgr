@@ -103,11 +103,6 @@ func rInstall(cmd *cobra.Command, args []string) error {
 		rollbackPackageEnvironment(fs, installPlan, packageUpdateAttempts)
 	}
 
-	/*
-	if cfg.Update {
-		pacman.RestoreUnupdatedPackages(fs, packageUpdateAttempts)
-	}
-	*/
 	log.Info("duration:", time.Since(startTime))
 
 	if err != nil {
@@ -121,18 +116,14 @@ func rollbackPackageEnvironment(fileSystem afero.Fs, installPlan gpsr.InstallPla
 	//reset packages
 	log.Info("Resetting package environment")
 
-	//figure out which packages we were even dealing with. Maybe this should be a unified list somewhere?
-	//as of August 14, 2019, the InstallPlan treats installed packages as if they were going to be installed again,
-	//and we simply figure out downstream that the installed packages shouldn't be run.
-	//Because of this, toInstall will end up containing info about all packages pkgr is managing, not just the ones
-	//to be installed.
+	// Determine which packages were to be installed.
+	// Perhaps we should put this in a single list in the installPlan rather than deriving it?
 	toInstall := installPlan.StartingPackages
 	for depsList := range installPlan.DepDb {
 		toInstall = append(toInstall, depsList)
 	}
 
 	for _, pkg := range toInstall {
-
 		//Filter out the packages that were already installed -- we don't want to touch those, they shouldn't have changed.
 		_, found := installPlan.InstalledPackages[pkg]
 		if !found {
