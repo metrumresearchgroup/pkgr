@@ -1,0 +1,16 @@
+Version: 1
+# top level packages
+Packages:
+  - RColorBrewer
+  - httr
+
+# any repositories, order matters
+Repos:
+  - miniCRAN: "/Users/johncarlos/go/src/github.com/metrumresearchgroup/pkgr/integration_tests/minicran"
+
+Library: "test-library"
+
+Customizations:
+    Repos:
+      - miniCRAN:
+            Type: source

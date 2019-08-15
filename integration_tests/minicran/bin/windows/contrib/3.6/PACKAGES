@@ -1,0 +1,69 @@
+Package: askpass
+Version: 1.1
+Imports: sys (>= 2.1)
+Suggests: testthat
+License: MIT + file LICENSE
+Archs: i386, x64
+
+Package: curl
+Version: 4.0
+Depends: R (>= 3.0.0)
+Suggests: askpass, spelling, testthat (>= 1.0.0), knitr, jsonlite,
+        rmarkdown, magrittr, httpuv (>= 1.4.4), webutils
+License: MIT + file LICENSE
+Archs: i386, x64
+
+Package: glue
+Version: 1.3.1
+Depends: R (>= 3.1)
+Imports: methods
+Suggests: testthat, covr, magrittr, crayon, knitr, rmarkdown, DBI,
+        RSQLite, R.utils, forcats, microbenchmark, rprintf, stringr,
+        ggplot2, dplyr, withr
+License: MIT + file LICENSE
+Archs: i386, x64
+
+Package: httr
+Version: 1.4.1
+Depends: R (>= 3.2)
+Imports: curl (>= 3.0.0), jsonlite, mime, openssl (>= 0.8), R6
+Suggests: covr, httpuv, jpeg, knitr, png, readr, rmarkdown, testthat (>=
+        0.8.0), xml2
+License: MIT + file LICENSE
+
+Package: jsonlite
+Version: 1.6
+Depends: methods
+Suggests: httr, curl, plyr, testthat, knitr, rmarkdown, R.rsp, sp
+License: MIT + file LICENSE
+Archs: i386, x64
+
+Package: mime
+Version: 0.7
+Imports: tools
+License: GPL
+Archs: i386, x64
+
+Package: openssl
+Version: 1.4.1
+Imports: askpass
+Suggests: testthat, digest, knitr, rmarkdown, jsonlite, jose, sodium
+License: MIT + file LICENSE
+Archs: i386, x64
+
+Package: R6
+Version: 2.4.0
+Depends: R (>= 3.0)
+Suggests: knitr, microbenchmark, pryr, testthat, ggplot2, scales
+License: MIT + file LICENSE
+
+Package: RColorBrewer
+Version: 1.1-2
+Depends: R (>= 2.0.0)
+License: Apache License 2.0
+
+Package: sys
+Version: 3.2
+Suggests: unix (>= 1.4), spelling, testthat
+License: MIT + file LICENSE
+Archs: i386, x64

@@ -5,12 +5,12 @@ LDFLAGS=-ldflags "-X main.buildTime=${BUILD}"
 BUILD_HOME=${PWD}/../cmd/pkgr
 TEST_HOME=${PWD}
 
-.PHONY: install test-setup test-mixed-source-reset test-simple-reset test-logging-config-reset test-outdated-pkgs-reset test-repo-order-reset test-rollback-reset test-simple-suggests-reset test-rollback-reset
+.PHONY: install test-setup test-mixed-source-reset test-simple-reset test-logging-config-reset test-outdated-pkgs-reset test-repo-order-reset test-repo-local-reset test-repo-local-and-remote-reset test-rollback-reset test-simple-suggests-reset test-rollback-reset
 
 install:
 	cd ${BUILD_HOME}; go install ${LDFLAGS}
 
-test-setup: test-mixed-source-reset test-simple-reset test-logging-config-reset test-outdated-pkgs-reset test-outdated-pkgs-stress-reset test-repo-order-reset test-simple-suggests-reset install
+test-setup: test-mixed-source-reset test-simple-reset test-logging-config-reset test-outdated-pkgs-reset test-outdated-pkgs-stress-reset test-repo-order-reset test-repo-local-reset test-repo-local-and-remote-reset test-simple-suggests-reset install
 
 
 test-mixed-source-reset:
@@ -52,6 +52,14 @@ test-outdated-pkgs-stress-reset:
 test-repo-order-reset:
 	rm -rf ${TEST_HOME}/repo-order/test-library/
 	mkdir ${TEST_HOME}/repo-order/test-library/
+
+test-repo-local-reset:
+	rm -rf ${TEST_HOME}/repo-local/test-library/
+	mkdir ${TEST_HOME}/repo-local/test-library/
+
+test-repo-local-and-remote-reset:
+	rm -rf ${TEST_HOME}/repo-local-and-remote/test-library/
+	mkdir ${TEST_HOME}/repo-local-and-remote/test-library/
 
 test-simple-suggests-reset:
 	rm -rf ${TEST_HOME}/simple-suggests/test-library/
