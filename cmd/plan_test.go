@@ -101,12 +101,9 @@ func CopyDir(fs afero.Fs, src string, dst string) error {
 	if err != nil {
 		return err
 	}
-	defer func() {
-		openedDir.Close() //If we
-	}()
 
 	directoryContents, err := openedDir.Readdir(0)
-
+	openedDir.Close()
 	if err != nil {
 		return err
 	}

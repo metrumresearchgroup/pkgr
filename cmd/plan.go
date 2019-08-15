@@ -181,10 +181,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	}
 	logDependencyRepos(installPlan.PackageDownloads)
 
-	pkgs := installPlan.StartingPackages
-	for pkg := range installPlan.DepDb {
-		pkgs = append(pkgs, pkg)
-	}
+	pkgs := installPlan.GetAllPackages()
 
 	pkgsToUpdateCount := 0
 	for _, p := range installPlan.OutdatedPackages {
