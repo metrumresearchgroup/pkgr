@@ -165,10 +165,11 @@ func tagOldInstallation(fileSystem afero.Fs, libraryPath string, outdatedPackage
 	}
 }
 
-func RollbackUpdatePackages(fileSystem afero.Fs, packageBackupInfo []UpdateAttempt) {
+func RollbackUpdatePackages(fileSystem afero.Fs, packageBackupInfo []UpdateAttempt) error {
+
 	if len(packageBackupInfo) == 0 {
 		log.Debug("Not update-packages to restore.")
-		return
+		return nil
 	}
 
 	for _, info := range packageBackupInfo {
@@ -183,7 +184,11 @@ func RollbackUpdatePackages(fileSystem afero.Fs, packageBackupInfo []UpdateAttem
 		if err1 == nil {
 			err1 = fileSystem.RemoveAll(info.ActivePackageDirectory)
 			if err1 != nil {
-				log.Warn(err1)
+				log.WithFields(log.Fields{
+					"package": info.Package,
+					"problem_directory": info.ActivePackageDirectory,
+				}).Warn("could not delete directory during package rollback")
+				return err1
 			}
 		}
 
@@ -192,9 +197,13 @@ func RollbackUpdatePackages(fileSystem afero.Fs, packageBackupInfo []UpdateAttem
 		if err2 != nil {
 			log.WithFields(log.Fields{
 				"pkg":         info.Package,
-			}).Warn("could not rollback package. Package will need reinstallation.", err2)
+			}).Warn("could not rollback package -- package will need reinstallation.")
+			return err2
 		}
+
 	}
+
+	return nil
 }
 
 // UpdateAttempt ...

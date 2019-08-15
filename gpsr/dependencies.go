@@ -133,3 +133,11 @@ func (ip *InstallPlan) Pack(pkgNexus *cran.PkgNexus) {
 	ip.PackageDownloads = toDl
 	//return toDl
 }
+
+func (ip *InstallPlan) GetAllPackages() []string {
+	toInstall := ip.StartingPackages
+	for depsList := range ip.DepDb {
+		toInstall = append(toInstall, depsList)
+	}
+	return toInstall
+}

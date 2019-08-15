@@ -104,7 +104,12 @@ func rInstall(cmd *cobra.Command, args []string) error {
 
 	//If anything went wrong during the installation, rollback the environment.
 	if err != nil {
-		rollbackPackageEnvironment(fs, installPlan, packageUpdateAttempts)
+		errRollback := rollbackPackageEnvironment(fs, installPlan, packageUpdateAttempts)
+		if errRollback != nil {
+			log.WithFields(log.Fields{
+
+			}).Error("failed to reset package environment after bad installation. Your package Library will be in a corrupt state. It is recommended you delete your Library and reinstall all packages.")
+		}
 	}
 
 	log.Info("duration:", time.Since(startTime))
@@ -116,25 +121,25 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func rollbackPackageEnvironment(fileSystem afero.Fs, installPlan gpsr.InstallPlan, packageUpdateAttempts []pacman.UpdateAttempt) {
-	//reset packages
-	log.Info("Resetting package environment")
+func rollbackPackageEnvironment(fileSystem afero.Fs, installPlan gpsr.InstallPlan, packageUpdateAttempts []pacman.UpdateAttempt) error {
 
-	// Determine which packages were to be installed.
-	// Perhaps we should put this in a single list in the installPlan rather than deriving it?
-	toInstall := installPlan.StartingPackages
-	for depsList := range installPlan.DepDb {
-		toInstall = append(toInstall, depsList)
-	}
+	//reset packages
+	log.Trace("Resetting package environment")
+
+	toInstall := installPlan.GetAllPackages()
 
 	for _, pkg := range toInstall {
 		//Filter out the packages that were already installed -- we don't want to touch those, they shouldn't have changed.
 		_, found := installPlan.InstalledPackages[pkg]
 		if !found {
 			//Remove packages that were installed during this run.
-			err := fileSystem.RemoveAll(filepath.Join(cfg.Library, pkg))
-			if err != nil {
-				log.Warn(err)
+			err1 := fileSystem.RemoveAll(filepath.Join(cfg.Library, pkg))
+			if err1 != nil {
+				log.WithFields(log.Fields{
+					"library": cfg.Library,
+					"package": pkg,
+				}).Warn("failed to remove package during rollback", err1)
+				return err1
 			}
 		}
 	}
@@ -142,8 +147,13 @@ func rollbackPackageEnvironment(fileSystem afero.Fs, installPlan gpsr.InstallPla
 	//Rollback updated packages -- we have to do this differently than the rest, because updated packages need to be
 	//restored from backups.
 	if cfg.Update {
-		pacman.RollbackUpdatePackages(fileSystem, packageUpdateAttempts)
+		err2 := pacman.RollbackUpdatePackages(fileSystem, packageUpdateAttempts)
+		if err2 != nil {
+			return err2
+		}
 	}
+
+	return nil
 }
 
 func initInstallLog() {
