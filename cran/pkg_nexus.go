@@ -68,14 +68,22 @@ func (pkgNexus *PkgNexus) SetPackageRepo(pkg string, repo string) error {
 // SetPackageType sets the package type (source/binary) for installation
 func (pkgNexus *PkgNexus) SetPackageType(pkg string, t string) error {
 	cfg := pkgNexus.Config.Packages[pkg]
+	err := setType(&cfg, t)
+	if err != nil {
+		return err
+	}
+	pkgNexus.Config.Packages[pkg] = cfg
+	return nil
+}
+
+func setType(cfg *PkgConfig, t string) error {
 	if strings.EqualFold(t, "source") {
 		cfg.Type = Source
 	} else if strings.EqualFold(t, "binary") {
 		cfg.Type = Binary
 	} else {
-		return fmt.Errorf("invalid source type: %s for pkg: %s", t, pkg)
+		return fmt.Errorf("invalid source type: %s", t)
 	}
-	pkgNexus.Config.Packages[pkg] = cfg
 	return nil
 }
 
