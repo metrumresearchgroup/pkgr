@@ -89,7 +89,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 
 	// Process any customizations set in the yaml config file for individual packages.
 	// Set ENV values in rSettings
-	configlib.SetCustomizations(cfg, &rSettings)
+	rSettings = configlib.SetCustomizations(cfg, rSettings)
 
 	//
 	// Install the packages
