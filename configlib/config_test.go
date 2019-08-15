@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/metrumresearchgroup/pkgr/cran"
+	"github.com/metrumresearchgroup/pkgr/rcmd"
 	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -200,5 +201,39 @@ func TestGetLibraryPath(t *testing.T) {
 		}
 		library := getLibraryPath(tt.lftype, "myRpath", rv, "apple", "original")
 		assert.Equal(t, tt.expected, library, fmt.Sprintf("Fail:%s", tt.expected))
+	}
+}
+
+func TestSetCustomizations(t *testing.T) {
+	tests := []struct {
+		pkg   string
+		name  string
+		value string
+	}{
+		{
+			pkg:   "data.table",
+			name:  "R_MAKEVARS_USER",
+			value: "~/.R/Makevars_data.table",
+		},
+		{
+			pkg:   "boo",
+			name:  "foo",
+			value: "soo",
+		},
+	}
+	for _, tt := range tests {
+		var cfg PkgrConfig
+		NewConfig(&cfg)
+		cfg.Customizations.Packages = map[string]PkgConfig{
+			tt.pkg: PkgConfig{
+				Env: map[string]string{
+					tt.name: tt.value,
+				},
+			},
+		}
+		var rs rcmd.RSettings
+		rs.PkgEnvVars = make(map[string]map[string]string)
+		SetCustomizations(cfg, &rs)
+		assert.Equal(t, tt.value, rs.PkgEnvVars[tt.pkg][tt.name], fmt.Sprintf("Fail to get: %s", tt.value))
 	}
 }
