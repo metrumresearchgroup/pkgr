@@ -233,7 +233,7 @@ func TestSetCustomizations(t *testing.T) {
 		}
 		var rs rcmd.RSettings
 		rs.PkgEnvVars = make(map[string]map[string]string)
-		rs2 := SetCustomizations(cfg, rs)
+		rs2 := SetCustomizations(rs, cfg)
 		assert.Equal(t, tt.value, rs2.PkgEnvVars[tt.pkg][tt.name], fmt.Sprintf("Fail to get: %s", tt.value))
 	}
 }

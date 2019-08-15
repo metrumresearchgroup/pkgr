@@ -206,7 +206,7 @@ func remove(ymlfile string, packageName string) error {
 }
 
 // SetCustomizations ... set ENV values in Rsettings
-func SetCustomizations(cfg PkgrConfig, rSettings rcmd.RSettings) rcmd.RSettings {
+func SetCustomizations(rSettings rcmd.RSettings, cfg PkgrConfig) rcmd.RSettings {
 	pkgCustomizations := cfg.Customizations.Packages
 	for n, v := range pkgCustomizations {
 		if v.Env != nil {
