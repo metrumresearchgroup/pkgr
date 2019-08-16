@@ -173,9 +173,10 @@ func CleanUpdateBackups(fileSystem afero.Fs, packageBackupInfo []UpdateAttempt) 
 
 	for _, info := range packageBackupInfo {
 
-		_, err1 := fileSystem.Stat(info.BackupPackageDirectory) // Checking existence
-		if err1 == nil {
-			err1 = fileSystem.RemoveAll(info.BackupPackageDirectory)
+		backupExists, _ := afero.Exists(fileSystem, info.BackupPackageDirectory)
+		//_, err1 := fileSystem.Stat(info.BackupPackageDirectory) // Checking existence
+		if backupExists {
+			err1 := fileSystem.RemoveAll(info.BackupPackageDirectory)
 			if err1 != nil {
 				log.WithFields(log.Fields{
 					"package":           info.Package,

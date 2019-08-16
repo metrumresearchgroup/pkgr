@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 )
 
+// RollbackPackageEnvironment "executes" the given RollbackPlan, thereby resetting the environment to the state it was in before rbp.InstallPlan was applied.
 func RollbackPackageEnvironment(fileSystem afero.Fs, rbp RollbackPlan) error {
 
 	//reset packages
