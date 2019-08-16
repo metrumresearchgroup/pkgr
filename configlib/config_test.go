@@ -239,18 +239,6 @@ func TestSetCustomizations(t *testing.T) {
 	}
 }
 
-// setCfgCustomizations(cfg PkgrConfig, dependencyConfigurations gpsr.InstallDeps)
-
-func TestSetCfgCustomizations2(t *testing.T) {
-	var cfg PkgrConfig
-	NewConfig(&cfg)
-	dependencyConfigurations := gpsr.NewDefaultInstallDeps()
-
-	cfg.Suggests = true
-	setCfgCustomizations(cfg, dependencyConfigurations)
-
-}
-
 func TestSetCfgCustomizations(t *testing.T) {
 	tests := []struct {
 		pkg string
