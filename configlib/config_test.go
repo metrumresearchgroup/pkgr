@@ -264,24 +264,95 @@ func TestSetCfgCustomizations(t *testing.T) {
 	}
 }
 func TestSetViperCustomizations(t *testing.T) {
-	dependencyConfigurations := gpsr.NewDefaultInstallDeps()
-	var cfg PkgrConfig
-	NewConfig(&cfg)
-
-	var urls = []cran.RepoURL{
-		cran.RepoURL{
-			Name: "CRAN_2018_11_11",
-			URL:  "https://cran.microsoft.com/snapshot/2018-11-11",
+	tests := []struct {
+		pkg      string
+		repo     string
+		suggests bool
+		stype    string
+		source   cran.SourceType
+	}{
+		{
+			pkg:      "pillar",
+			repo:     "CRAN2",
+			suggests: false,
+			stype:    "source",
+			source:   cran.Source,
 		},
-		cran.RepoURL{
-			Name: "CRAN_2018_11_12",
-			URL:  "https://cran.microsoft.com/snapshot/2018-11-12",
+		{
+			pkg:      "R6",
+			repo:     "CRAN",
+			suggests: true,
+			stype:    "binary",
+			source:   cran.Binary,
 		},
 	}
 	var installConfig = cran.InstallConfig{
 		Packages: map[string]cran.PkgConfig{},
 	}
-	pkgNexus, _ := cran.NewPkgDb(urls, cran.Source, &installConfig, cran.RVersion{})
-	pkgSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
-	setViperCustomizations(cfg, pkgSettings, dependencyConfigurations, pkgNexus)
+
+	for _, tt := range tests {
+		var cfg PkgrConfig
+		NewConfig(&cfg)
+		cfg.Customizations.Packages = map[string]PkgConfig{
+			tt.pkg: PkgConfig{
+				Env: map[string]string{
+					"": "",
+				},
+				Repo:     tt.repo,
+				Type:     tt.stype,
+				Suggests: tt.suggests,
+			},
+		}
+		var urls = []cran.RepoURL{
+			cran.RepoURL{
+				Name: tt.repo,
+				URL:  "https://cran.microsoft.com/snapshot/2018-11-11",
+			},
+		}
+		pkgNexus, _ := cran.NewPkgDb(urls, cran.Source, &installConfig, cran.RVersion{})
+		dependencyConfigurations := gpsr.NewDefaultInstallDeps()
+
+		// viper-load the yml
+		viper.Reset()
+		viper.SetConfigName("pkgr")
+		ymlfile := "../integration_tests/customization"
+		viper.AddConfigPath(ymlfile)
+		err := viper.ReadInConfig()
+		assert.Equal(t, nil, err, "Error reading yml file")
+		pkgSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
+
+		// call the function to test
+		setViperCustomizations(cfg, pkgSettings, dependencyConfigurations, pkgNexus)
+
+		val := getCustomizationValue("Type", pkgSettings, tt.pkg)
+		assert.Equal(t, tt.stype, val, fmt.Sprintf("Error setting type %s for pkg %s", tt.stype, tt.pkg))
+		assert.Equal(t, tt.source, pkgNexus.Config.Packages[tt.pkg].Type, fmt.Sprintf("Error setting type %s for pkg %s", tt.stype, tt.pkg))
+
+		// Repo
+		val = getCustomizationValue("Repo", pkgSettings, tt.pkg)
+		assert.Equal(t, tt.repo, val, fmt.Sprintf("Error setting repo %s for pkg %s", tt.repo, tt.pkg))
+		assert.Equal(t, tt.repo, pkgNexus.Config.Packages[tt.pkg].Repo.Name, fmt.Sprintf("Error setting repo %s for pkg %s", tt.repo, tt.pkg))
+
+		// Suggests
+		pkgDepTypes, found := dependencyConfigurations.Deps[tt.pkg]
+		assert.Equal(t, true, found, fmt.Sprintf("Deps not found:%s", tt.pkg))
+		assert.Equal(t, tt.suggests, pkgDepTypes.Suggests, fmt.Sprintf("Suggests error for pkg %s", tt.pkg))
+		val = getCustomizationValue("Suggests", pkgSettings, tt.pkg)
+		assert.Equal(t, tt.suggests, val, fmt.Sprintf("Suggests error for pkg %s", tt.pkg))
+	}
+}
+
+func getCustomizationValue(key string, elems []interface{}, elem string) interface{} {
+	for _, v := range elems {
+		for k, iv := range v.(map[interface{}]interface{}) {
+			if k == elem {
+				for val, k2 := range iv.(map[interface{}]interface{}) {
+					if val == key {
+						return k2
+					}
+				}
+			}
+		}
+	}
+	return ""
 }
