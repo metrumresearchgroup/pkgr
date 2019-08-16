@@ -9,6 +9,7 @@ import (
 	"github.com/thoas/go-funk"
 )
 
+// RollbackPlan maintains information about what's being changed on an install, which it can use to "undo" the application of an InstallPlan.
 type RollbackPlan struct {
 	AllPackages []string
 	NewPackages []string
@@ -17,10 +18,13 @@ type RollbackPlan struct {
 	Library string
 }
 
-//Constructor
+// CreateRollbackPlan creates a RollbackPlan to track changes to the package environment and undo those changes if necessary.
 func CreateRollbackPlan (library string, installPlan gpsr.InstallPlan, preinstalledPackages map[string]desc.Desc) RollbackPlan {
 	ap := installPlan.GetAllPackages()
-	np := DiscernNewPackages(installPlan.GetAllPackages(), preinstalledPackages)
+
+	// We need to determine which packages are both "new" AND part of the installPlan, otherwise we end up
+	// changing miscellaneous packages.
+	np := discernNewPackages(ap, preinstalledPackages)
 	return RollbackPlan {
 			AllPackages: ap,
 			NewPackages: np,
@@ -29,7 +33,7 @@ func CreateRollbackPlan (library string, installPlan gpsr.InstallPlan, preinstal
 		}
 }
 
-
+// PreparePackagesForUpdate backs up outdated packages in the library by renaming them, thus making space for the updated versions to install.
 func (rp *RollbackPlan) PreparePackagesForUpdate(fs afero.Fs, library string) {
 
 	//InstallPlan is aware of _all_ preinstalled packages, even if they're not in pkgr.yml. We don't want to touch
@@ -47,8 +51,9 @@ func (rp *RollbackPlan) PreparePackagesForUpdate(fs afero.Fs, library string) {
 	rp.UpdateRollbacks = updateAttempts
 }
 
-func DiscernNewPackages(toInstallPackageNames []string, preinstalledPackages map[string]desc.Desc) []string {
-	newPackages := make([]string, 0)
+// Helper function to determine which packages out of a list are not already installed. Used to determine which packages pkgr specifically will be installing fresh.
+func discernNewPackages(toInstallPackageNames []string, preinstalledPackages map[string]desc.Desc) []string {
+	var newPackages []string
 
 	for _, name := range toInstallPackageNames {
 		_, found := preinstalledPackages[name]

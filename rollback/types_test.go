@@ -33,7 +33,7 @@ func (suite *TypesTestSuite) TestDiscernNewPackages_ToInstallCanOutnumberPreinst
 	preinstalledPackagesFixture["crayon"] = crayon
 	preinstalledPackagesFixture["R6"] = r6
 
-	actual := DiscernNewPackages(toInstallFixture, preinstalledPackagesFixture)
+	actual := discernNewPackages(toInstallFixture, preinstalledPackagesFixture)
 
 	suite.Equal(1, len(actual))
 	suite.Equal("shiny", actual[0])
@@ -59,7 +59,7 @@ func (suite *TypesTestSuite) TestDiscernNewPackages_AllPackagesPreinstalled() {
 	preinstalledPackagesFixture["crayon"] = crayon
 	preinstalledPackagesFixture["R6"] = r6
 
-	actual := DiscernNewPackages(toInstallFixture, preinstalledPackagesFixture)
+	actual := discernNewPackages(toInstallFixture, preinstalledPackagesFixture)
 
 	suite.Equal(0, len(actual))
 }
@@ -76,7 +76,7 @@ func (suite *TypesTestSuite) TestDiscernNewPackages_SomePackagesPreinstalled() {
 	preinstalledPackagesFixture := make(map[string]desc.Desc)
 	preinstalledPackagesFixture["crayon"] = crayon
 
-	actual := DiscernNewPackages(toInstallFixture, preinstalledPackagesFixture)
+	actual := discernNewPackages(toInstallFixture, preinstalledPackagesFixture)
 
 	suite.Equal(1, len(actual))
 	suite.Equal("R6", actual[0])
@@ -94,7 +94,7 @@ func (suite *TypesTestSuite) TestDiscernNewPackages_SomePackagesPreinstalled2() 
 	preinstalledPackagesFixture := make(map[string]desc.Desc)
 	preinstalledPackagesFixture["crayon"] = crayon
 
-	actual := DiscernNewPackages(toInstallFixture, preinstalledPackagesFixture)
+	actual := discernNewPackages(toInstallFixture, preinstalledPackagesFixture)
 
 	suite.Equal(2, len(actual))
 	suite.Equal("R6", actual[0])
@@ -121,7 +121,7 @@ func (suite *TypesTestSuite) TestDiscernNewPackages_PackagesAreCaseSensitive() {
 	preinstalledPackagesFixture["CRAYON"] = crayon
 	preinstalledPackagesFixture["R6"] = r6
 
-	actual := DiscernNewPackages(toInstallFixture, preinstalledPackagesFixture)
+	actual := discernNewPackages(toInstallFixture, preinstalledPackagesFixture)
 
 	suite.Equal(1, len(actual))
 	suite.Equal("crayon", actual[0]) //"crayon" is considered a new package because all we can see is "CRAYON"
