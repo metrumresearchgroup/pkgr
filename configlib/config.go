@@ -226,7 +226,6 @@ func SetPlanCustomizations(cfg PkgrConfig, dependencyConfigurations gpsr.Install
 
 func setCfgCustomizations(cfg PkgrConfig, dependencyConfigurations gpsr.InstallDeps) {
 	if cfg.Suggests {
-		log.Info("SetPlanCustomizations suggests")
 		for _, pkg := range cfg.Packages {
 			// set all top level packages to install suggests
 			dp := dependencyConfigurations.Default

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/metrumresearchgroup/pkgr/cran"
+	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
 	"github.com/spf13/afero"
 	"github.com/spf13/viper"
@@ -235,5 +236,42 @@ func TestSetCustomizations(t *testing.T) {
 		rs.PkgEnvVars = make(map[string]map[string]string)
 		rs2 := SetCustomizations(rs, cfg)
 		assert.Equal(t, tt.value, rs2.PkgEnvVars[tt.pkg][tt.name], fmt.Sprintf("Fail to get: %s", tt.value))
+	}
+}
+
+// setCfgCustomizations(cfg PkgrConfig, dependencyConfigurations gpsr.InstallDeps)
+
+func TestSetCfgCustomizations2(t *testing.T) {
+	var cfg PkgrConfig
+	NewConfig(&cfg)
+	dependencyConfigurations := gpsr.NewDefaultInstallDeps()
+
+	cfg.Suggests = true
+	setCfgCustomizations(cfg, dependencyConfigurations)
+
+}
+
+func TestSetCfgCustomizations(t *testing.T) {
+	tests := []struct {
+		pkg string
+	}{
+		{
+			pkg: "data.table",
+		},
+		{
+			pkg: "boo",
+		},
+	}
+	for _, tt := range tests {
+		dependencyConfigurations := gpsr.NewDefaultInstallDeps()
+		var cfg PkgrConfig
+		NewConfig(&cfg)
+		cfg.Suggests = true
+		cfg.Packages = []string{
+			tt.pkg,
+		}
+		setCfgCustomizations(cfg, dependencyConfigurations)
+		_, found := dependencyConfigurations.Deps[tt.pkg]
+		assert.Equal(t, true, found, fmt.Sprintf("Fail to get: %s", tt.pkg))
 	}
 }
