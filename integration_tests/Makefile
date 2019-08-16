@@ -10,7 +10,7 @@ TEST_HOME=${PWD}
 install:
 	cd ${BUILD_HOME}; go install ${LDFLAGS}
 
-test-setup: test-mixed-source-reset test-simple-reset test-logging-config-reset test-outdated-pkgs-reset test-outdated-pkgs-stress-reset test-repo-order-reset test-repo-local-reset test-repo-local-and-remote-reset test-simple-suggests-reset install
+test-setup: test-mixed-source-reset test-simple-reset test-logging-config-reset test-outdated-pkgs-reset test-outdated-pkgs-stress-reset test-repo-order-reset test-repo-local-reset test-repo-local-and-remote-reset test-simple-suggests-reset test-rollback-reset install
 
 
 test-mixed-source-reset:

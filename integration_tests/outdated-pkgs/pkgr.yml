@@ -1,8 +1,8 @@
 Version: 1
 # top level packages
 Packages:
-  #- R6
-  #- pillar
+  - R6
+  - pillar
   - Matrix
 
 Update: true
