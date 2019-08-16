@@ -101,6 +101,7 @@ func (suite *TypesTestSuite) TestDiscernNewPackages_SomePackagesPreinstalled2() 
 	suite.Equal("RColorBrewer", actual[1])
 }
 
+//Could be problematic depending on the operating system -- I don't think it will come up, but we should be aware of this.
 func (suite *TypesTestSuite) TestDiscernNewPackages_PackagesAreCaseSensitive() {
 	crayon := desc.Desc{
 		Package:    "CRAYON",
