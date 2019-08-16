@@ -4,7 +4,8 @@ Packages:
   - rmarkdown
   - shiny
   - devtools
-  - mrgsolve
+  - pmplots
+  #- mrgsolve
 
 # any repositories, order matters
 Repos:
@@ -23,7 +24,12 @@ Customizations:
   Packages:
     - devtools:
         Type: source
-    - mrgsolve:
+    - pmplots:
         Type: source
     - shiny:
         Repo: CRAN
+  Repos:
+    - CRAN-Micro:
+        Type: source
+    - r_validated:
+        Type: source
