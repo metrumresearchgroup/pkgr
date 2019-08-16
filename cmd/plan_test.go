@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/metrumresearchgroup/pkgr/testhelper"
 
 	"github.com/metrumresearchgroup/pkgr/desc"
 	"github.com/metrumresearchgroup/pkgr/pacman"
@@ -35,7 +36,7 @@ func InitializeTestEnvironment(fileSystem afero.Fs, goldenSet, testName string) 
 	testWorkDir := filepath.Join("testsite", "working", testName)
 	fileSystem.MkdirAll(testWorkDir, 0755)
 
-	err := pacman.CopyDir(fileSystem, goldenSetPath, testWorkDir)
+	err := testhelper.CopyDir(fileSystem, goldenSetPath, testWorkDir)
 
 	if err != nil {
 		panic(err)

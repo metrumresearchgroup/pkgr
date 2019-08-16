@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/metrumresearchgroup/pkgr/rollback"
 
 	"github.com/metrumresearchgroup/pkgr/desc"
 	"github.com/metrumresearchgroup/pkgr/pacman"
@@ -59,7 +60,7 @@ func plan(cmd *cobra.Command, args []string) error {
 	rVersion := rcmd.GetRVersion(&rs)
 	log.Infoln("R Version " + rVersion.ToFullString())
 	log.Debugln("OS Platform " + rs.Platform)
-	_, ip := planInstall(rVersion, true)
+	_, ip, _ := planInstall(rVersion, true)
 	if viper.GetBool("show-deps") {
 		for pkg, deps := range ip.DepDb {
 			fmt.Println("-----------  ", pkg, "   ------------")
@@ -69,13 +70,14 @@ func plan(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.InstallPlan) {
+func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.InstallPlan, rollback.RollbackPlan) {
 	startTime := time.Now()
 
 	installedPackages := pacman.GetPriorInstalledPackages(fs, cfg.Library)
+	installedPackageNames := extractNamesFromDesc(installedPackages)
 	log.WithField("count", len(installedPackages)).Info("found installed packages")
-
 	whereInstalledFrom := pacman.GetInstallers(installedPackages)
+
 	notPkgr := whereInstalledFrom.NotFromPkgr()
 	if len(notPkgr) > 0 {
 		// TODO: should this say "prior installed packages" not ...
@@ -169,24 +171,21 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		if exitOnMissing {
 			os.Exit(1)
 		} else {
-			return pkgNexus, gpsr.InstallPlan{}
+			return pkgNexus, gpsr.InstallPlan{}, rollback.RollbackPlan{}
 		}
 	}
 	logUserPackageRepos(availableUserPackages.Packages)
-	installPlan, err := gpsr.ResolveInstallationReqs(cfg.Packages, dependencyConfigurations, pkgNexus)
+	installPlan, err := gpsr.ResolveInstallationReqs(cfg.Packages, installedPackages, dependencyConfigurations, pkgNexus)
+	rollbackPlan := rollback.CreateRollbackPlan(cfg.Library, installPlan, installedPackages)
+
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
 	}
 	logDependencyRepos(installPlan.PackageDownloads)
 
-	pkgs := installPlan.StartingPackages
-	for pkg := range installPlan.DepDb {
-		pkgs = append(pkgs, pkg)
-	}
-	installedPackageNames := getInstalledPackageNames(installedPackages)
+	pkgs := installPlan.GetAllPackages()
 
-	installPlan.OutdatedPackages = pacman.GetOutdatedPackages(installedPackages, pkgNexus.GetPackages(installedPackageNames).Packages)
 	pkgsToUpdateCount := 0
 	for _, p := range installPlan.OutdatedPackages {
 		updateLogFields := log.Fields{
@@ -225,7 +224,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 
 	log.WithFields(log.Fields{
 		"to_install":   toInstall,
-		"could_update": pkgsToUpdateCount,
+		"to_update": pkgsToUpdateCount,
 	}).Info("package installation plan")
 
 	if toInstall > 0 && toInstall != totalPackagesRequired {
@@ -244,15 +243,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	}
 
 	log.Infoln("resolution time", time.Since(startTime))
-	return pkgNexus, installPlan
-}
-
-func getInstalledPackageNames(installedPackages map[string]desc.Desc) []string {
-	var installedPackageNames []string
-	for key := range installedPackages {
-		installedPackageNames = append(installedPackageNames, key)
-	}
-	return installedPackageNames
+	return pkgNexus, installPlan, rollbackPlan
 }
 
 func logUserPackageRepos(packageDownloads []cran.PkgDl) {
@@ -281,4 +272,12 @@ func logDependencyRepos(dependencyDownloads []cran.PkgDl) {
 			}).Debug("package repository set")
 		}
 	}
+}
+
+func extractNamesFromDesc(installedPackages map[string]desc.Desc) []string {
+	var installedPackageNames []string
+	for key := range installedPackages {
+		installedPackageNames = append(installedPackageNames, key)
+	}
+	return installedPackageNames
 }

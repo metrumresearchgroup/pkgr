@@ -2,12 +2,14 @@ package gpsr
 
 import (
 	"fmt"
+	"github.com/metrumresearchgroup/pkgr/desc"
+	"github.com/metrumresearchgroup/pkgr/pacman"
 
 	"github.com/metrumresearchgroup/pkgr/cran"
 )
 
 // ResolveInstallationReqs resolves all the installation requirements
-func ResolveInstallationReqs(pkgs []string, dependencyConfigs InstallDeps, pkgNexus *cran.PkgNexus) (InstallPlan, error) {
+func ResolveInstallationReqs(pkgs []string, preinstalledPkgs map[string]desc.Desc, dependencyConfigs InstallDeps, pkgNexus *cran.PkgNexus) (InstallPlan, error) {
 
 	workingGraph := NewGraph()
 	defaultDependencyConfigs := NewDefaultInstallDeps()
@@ -59,8 +61,24 @@ func ResolveInstallationReqs(pkgs []string, dependencyConfigs InstallDeps, pkgNe
 			depDb[p] = allDeps
 		}
 	}
-	installPlan := InstallPlan{StartingPackages: resolved[0],
-		DepDb: depDb}
+
+
+	outdatedPackages := pacman.GetOutdatedPackages(preinstalledPkgs, pkgNexus.GetPackages(extractNamesFromDesc(preinstalledPkgs)).Packages)
+
+	installPlan := InstallPlan{
+		StartingPackages: resolved[0],
+		DepDb: depDb,
+		InstalledPackages: preinstalledPkgs,
+		OutdatedPackages: outdatedPackages,
+	}
 	installPlan.Pack(pkgNexus)
 	return installPlan, nil
+}
+
+func extractNamesFromDesc(installedPackages map[string]desc.Desc) []string {
+	var installedPackageNames []string
+	for key := range installedPackages {
+		installedPackageNames = append(installedPackageNames, key)
+	}
+	return installedPackageNames
 }

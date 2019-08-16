@@ -1,9 +1,9 @@
 # simple
 
-## Description
+ ## Description
 Environment to help test basic pkgr functionality, such as the `plan`, `install`, `inspect --deps`
 
-## Expected Behaviors
+ ## Expected Behaviors
 * `pkgr plan` will indicate that repositories have been set for packages "R6" and "pillar".
 * `pkgr install` will install the following packages:
   - R6 (**user package**)
@@ -31,4 +31,3 @@ Environment to help test basic pkgr functionality, such as the `plan`, `install`
   ]
 }
 ```
-*

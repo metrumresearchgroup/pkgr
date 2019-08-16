@@ -15,6 +15,8 @@
 package cmd
 
 import (
+	"github.com/metrumresearchgroup/pkgr/pacman"
+	"github.com/metrumresearchgroup/pkgr/rollback"
 	"path/filepath"
 	"time"
 
@@ -22,7 +24,6 @@ import (
 
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/logger"
-	"github.com/metrumresearchgroup/pkgr/pacman"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -55,13 +56,11 @@ func rInstall(cmd *cobra.Command, args []string) error {
 
 	// Get master object containing the packages available in each repository (pkgNexus),
 	//  as well as a master install plan to guide our process.
-	_, installPlan := planInstall(rVersion, true)
+	_, installPlan, rollbackPlan := planInstall(rVersion, true)
 
-	//Prepare our environment to update outdated packages if the "--update" flag is set.
-	var packageUpdateAttempts []pacman.UpdateAttempt
 	if viper.GetBool("update") {
 		log.Info("update argument passed. staging packages for update...")
-		packageUpdateAttempts = pacman.PreparePackagesForUpdate(fs, cfg.Library, installPlan.OutdatedPackages)
+		rollbackPlan.PreparePackagesForUpdate(fs, cfg.Library)
 	}
 
 	// Create a list of package download objects using our install plan and our "nexus" object.
@@ -99,10 +98,17 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	// Install the packages
 	//
 	err = rcmd.InstallPackagePlan(fs, installPlan, pkgMap, packageCache, pkgInstallArgs, rSettings, rcmd.ExecSettings{PkgrVersion: VERSION}, nworkers)
-	// After package installation, fix any problems that occurred during reinstallation of
-	//  packages that were to be updated.
-	if cfg.Update {
-		pacman.RestoreUnupdatedPackages(fs, packageUpdateAttempts)
+
+	//If anything went wrong during the installation, rollback the environment.
+	if err != nil {
+		errRollback := rollback.RollbackPackageEnvironment(fs, rollbackPlan)
+		if errRollback != nil {
+			log.WithFields(log.Fields{
+
+			}).Error("failed to reset package environment after bad installation. Your package Library will be in a corrupt state. It is recommended you delete your Library and reinstall all packages.")
+		}
+	} else {
+		pacman.CleanUpdateBackups(fs, rollbackPlan.UpdateRollbacks)
 	}
 
 	log.Info("duration:", time.Since(startTime))
@@ -113,6 +119,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 
 	return nil
 }
+
 
 func initInstallLog() {
 	//Init install-specific log, if one has been set. This overwrites the default log.
