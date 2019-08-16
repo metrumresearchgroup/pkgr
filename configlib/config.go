@@ -7,7 +7,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/metrumresearchgroup/pkgr-work/feature_lockfile-cfg/pkgr/configlib"
 	"github.com/metrumresearchgroup/pkgr/cran"
+	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
 	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
@@ -214,4 +216,51 @@ func SetCustomizations(rSettings rcmd.RSettings, cfg PkgrConfig) rcmd.RSettings 
 		}
 	}
 	return rSettings
+}
+
+// SetPlanCustomizations ...
+func SetPlanCustomizations(cfg PkgrConfig, dependencyConfigurations gpsr.InstallDeps, pkgNexus *cran.PkgNexus) {
+	if cfg.Suggests {
+		log.Info("SetPlanCustomizations suggests")
+		for _, pkg := range cfg.Packages {
+			// set all top level packages to install suggests
+			dp := dependencyConfigurations.Default
+			dp.Suggests = true
+			dependencyConfigurations.Deps[pkg] = dp
+		}
+	}
+	if viper.Sub("Customizations") != nil && viper.Sub("Customizations").AllSettings()["packages"] != nil {
+		log.Info("SetPlanCustomizations viper")
+		pkgSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
+		//repoSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
+
+		for pkg, v := range cfg.Customizations.Packages {
+			if configlib.IsCustomizationSet("Suggests", pkgSettings, pkg) {
+				pkgDepTypes := dependencyConfigurations.Default
+				pkgDepTypes.Suggests = v.Suggests
+				dependencyConfigurations.Deps[pkg] = pkgDepTypes
+				log.Info("SetPlanCustomizations viper Suggests ")
+			}
+			if configlib.IsCustomizationSet("Repo", pkgSettings, pkg) {
+				err := pkgNexus.SetPackageRepo(pkg, v.Repo)
+				if err != nil {
+					log.WithFields(log.Fields{
+						"pkg":  pkg,
+						"repo": v.Repo,
+					}).Fatal("error finding custom repo to set")
+				}
+				log.Info("SetPlanCustomizations viper Repo ")
+			}
+			if configlib.IsCustomizationSet("Type", pkgSettings, pkg) {
+				err := pkgNexus.SetPackageType(pkg, v.Type)
+				if err != nil {
+					log.WithFields(log.Fields{
+						"pkg":  pkg,
+						"repo": v.Repo,
+					}).Fatal("error finding custom repo to set")
+				}
+				log.Info("SetPlanCustomizations viper Type ")
+			}
+		}
+	}
 }

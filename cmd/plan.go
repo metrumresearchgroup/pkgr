@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/metrumresearchgroup/pkgr/rollback"
 
 	"github.com/metrumresearchgroup/pkgr/desc"
@@ -111,46 +112,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	}
 
 	dependencyConfigurations := gpsr.NewDefaultInstallDeps()
-
-	if cfg.Suggests {
-		for _, pkg := range cfg.Packages {
-			// set all top level packages to install suggests
-			dp := dependencyConfigurations.Default
-			dp.Suggests = true
-			dependencyConfigurations.Deps[pkg] = dp
-		}
-	}
-	if viper.Sub("Customizations") != nil && viper.Sub("Customizations").AllSettings()["packages"] != nil {
-
-		pkgSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
-		//repoSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
-
-		for pkg, v := range cfg.Customizations.Packages {
-			if configlib.IsCustomizationSet("Suggests", pkgSettings, pkg) {
-				pkgDepTypes := dependencyConfigurations.Default
-				pkgDepTypes.Suggests = v.Suggests
-				dependencyConfigurations.Deps[pkg] = pkgDepTypes
-			}
-			if configlib.IsCustomizationSet("Repo", pkgSettings, pkg) {
-				err := pkgNexus.SetPackageRepo(pkg, v.Repo)
-				if err != nil {
-					log.WithFields(log.Fields{
-						"pkg":  pkg,
-						"repo": v.Repo,
-					}).Fatal("error finding custom repo to set")
-				}
-			}
-			if configlib.IsCustomizationSet("Type", pkgSettings, pkg) {
-				err := pkgNexus.SetPackageType(pkg, v.Type)
-				if err != nil {
-					log.WithFields(log.Fields{
-						"pkg":  pkg,
-						"repo": v.Repo,
-					}).Fatal("error finding custom repo to set")
-				}
-			}
-		}
-	}
+	configlib.SetPlanCustomizations(cfg, dependencyConfigurations, pkgNexus)
 
 	availableUserPackages := pkgNexus.GetPackages(cfg.Packages)
 	if len(availableUserPackages.Missing) > 0 {
@@ -223,8 +185,8 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	log.WithFields(fields).Info("package installation sources")
 
 	log.WithFields(log.Fields{
-		"to_install":   toInstall,
-		"to_update": pkgsToUpdateCount,
+		"to_install": toInstall,
+		"to_update":  pkgsToUpdateCount,
 	}).Info("package installation plan")
 
 	if toInstall > 0 && toInstall != totalPackagesRequired {
