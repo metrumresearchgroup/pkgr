@@ -220,8 +220,13 @@ func SetCustomizations(rSettings rcmd.RSettings, cfg PkgrConfig) rcmd.RSettings 
 
 // SetPlanCustomizations ...
 func SetPlanCustomizations(cfg PkgrConfig, dependencyConfigurations gpsr.InstallDeps, pkgNexus *cran.PkgNexus) {
+
 	setCfgCustomizations(cfg, dependencyConfigurations)
-	setViperCustomizations(cfg, dependencyConfigurations, pkgNexus)
+
+	if viper.Sub("Customizations") != nil && viper.Sub("Customizations").AllSettings()["packages"] != nil {
+		pkgSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
+		setViperCustomizations(cfg, pkgSettings, dependencyConfigurations, pkgNexus)
+	}
 }
 
 func setCfgCustomizations(cfg PkgrConfig, dependencyConfigurations gpsr.InstallDeps) {
@@ -235,37 +240,29 @@ func setCfgCustomizations(cfg PkgrConfig, dependencyConfigurations gpsr.InstallD
 	}
 }
 
-func setViperCustomizations(cfg PkgrConfig, dependencyConfigurations gpsr.InstallDeps, pkgNexus *cran.PkgNexus) {
-	if viper.Sub("Customizations") != nil && viper.Sub("Customizations").AllSettings()["packages"] != nil {
-		log.Info("SetPlanCustomizations viper")
-		pkgSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
-
-		for pkg, v := range cfg.Customizations.Packages {
-			if configlib.IsCustomizationSet("Suggests", pkgSettings, pkg) {
-				pkgDepTypes := dependencyConfigurations.Default
-				pkgDepTypes.Suggests = v.Suggests
-				dependencyConfigurations.Deps[pkg] = pkgDepTypes
-				log.Info("SetPlanCustomizations viper Suggests ")
+func setViperCustomizations(cfg PkgrConfig, pkgSettings []interface{}, dependencyConfigurations gpsr.InstallDeps, pkgNexus *cran.PkgNexus) {
+	for pkg, v := range cfg.Customizations.Packages {
+		if configlib.IsCustomizationSet("Suggests", pkgSettings, pkg) {
+			pkgDepTypes := dependencyConfigurations.Default
+			pkgDepTypes.Suggests = v.Suggests
+			dependencyConfigurations.Deps[pkg] = pkgDepTypes
+		}
+		if configlib.IsCustomizationSet("Repo", pkgSettings, pkg) {
+			err := pkgNexus.SetPackageRepo(pkg, v.Repo)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"pkg":  pkg,
+					"repo": v.Repo,
+				}).Fatal("error finding custom repo to set")
 			}
-			if configlib.IsCustomizationSet("Repo", pkgSettings, pkg) {
-				err := pkgNexus.SetPackageRepo(pkg, v.Repo)
-				if err != nil {
-					log.WithFields(log.Fields{
-						"pkg":  pkg,
-						"repo": v.Repo,
-					}).Fatal("error finding custom repo to set")
-				}
-				log.Info("SetPlanCustomizations viper Repo ")
-			}
-			if configlib.IsCustomizationSet("Type", pkgSettings, pkg) {
-				err := pkgNexus.SetPackageType(pkg, v.Type)
-				if err != nil {
-					log.WithFields(log.Fields{
-						"pkg":  pkg,
-						"repo": v.Repo,
-					}).Fatal("error finding custom repo to set")
-				}
-				log.Info("SetPlanCustomizations viper Type ")
+		}
+		if configlib.IsCustomizationSet("Type", pkgSettings, pkg) {
+			err := pkgNexus.SetPackageType(pkg, v.Type)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"pkg":  pkg,
+					"repo": v.Repo,
+				}).Fatal("error finding custom repo to set")
 			}
 		}
 	}

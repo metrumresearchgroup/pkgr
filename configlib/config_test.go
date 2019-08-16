@@ -263,3 +263,25 @@ func TestSetCfgCustomizations(t *testing.T) {
 		assert.Equal(t, true, found, fmt.Sprintf("Fail to get: %s", tt.pkg))
 	}
 }
+func TestSetViperCustomizations(t *testing.T) {
+	dependencyConfigurations := gpsr.NewDefaultInstallDeps()
+	var cfg PkgrConfig
+	NewConfig(&cfg)
+
+	var urls = []cran.RepoURL{
+		cran.RepoURL{
+			Name: "CRAN_2018_11_11",
+			URL:  "https://cran.microsoft.com/snapshot/2018-11-11",
+		},
+		cran.RepoURL{
+			Name: "CRAN_2018_11_12",
+			URL:  "https://cran.microsoft.com/snapshot/2018-11-12",
+		},
+	}
+	var installConfig = cran.InstallConfig{
+		Packages: map[string]cran.PkgConfig{},
+	}
+	pkgNexus, _ := cran.NewPkgDb(urls, cran.Source, &installConfig, cran.RVersion{})
+	pkgSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
+	setViperCustomizations(cfg, pkgSettings, dependencyConfigurations, pkgNexus)
+}
