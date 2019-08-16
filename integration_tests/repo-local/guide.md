@@ -3,6 +3,9 @@
 ## Description
 Environment to help test that pkgr can install packages from local repositories.
 
+## Special setup
+Change the path of the miniCRAN Repo in `pkgr.yml` to the correct path for your system.
+
 ## Expected Behaviors
 * `pkgr plan` will indicate that packages will be pulled from miniCRAN
 * `pkgr install` will complete successfully. pkgr install should have the following output:
