@@ -75,8 +75,8 @@ func (suite *OperationsTestSuite) TestRollbackPackageEnvironment_DeletesMultiple
 
 	RollbackPackageEnvironment(suite.FileSystem, rbpFixture)
 
-	suite.True(afero.DirExists(suite.FileSystem, filepath.Join(suite.FilePrefix, "test-library", "R6")))
-	suite.True(afero.DirExists(suite.FileSystem, filepath.Join(suite.FilePrefix, "test-library", "crayon")))
+	suite.False(afero.DirExists(suite.FileSystem, filepath.Join(suite.FilePrefix, "test-library", "R6")))
+	suite.False(afero.DirExists(suite.FileSystem, filepath.Join(suite.FilePrefix, "test-library", "crayon")))
 }
 
 func (suite *OperationsTestSuite) TestRollbackPackageEnvironment_HandlesEmptyListOfPackages() {
