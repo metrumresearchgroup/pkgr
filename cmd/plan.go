@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/metrumresearchgroup/pkgr/rollback"
 
 	"github.com/metrumresearchgroup/pkgr/desc"
 	"github.com/metrumresearchgroup/pkgr/pacman"
@@ -59,7 +60,7 @@ func plan(cmd *cobra.Command, args []string) error {
 	rVersion := rcmd.GetRVersion(&rs)
 	log.Infoln("R Version " + rVersion.ToFullString())
 	log.Debugln("OS Platform " + rs.Platform)
-	_, ip := planInstall(rVersion, true)
+	_, ip, _ := planInstall(rVersion, true)
 	if viper.GetBool("show-deps") {
 		for pkg, deps := range ip.DepDb {
 			fmt.Println("-----------  ", pkg, "   ------------")
@@ -69,7 +70,7 @@ func plan(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.InstallPlan) {
+func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.InstallPlan, rollback.RollbackPlan) {
 	startTime := time.Now()
 
 	installedPackages := pacman.GetPriorInstalledPackages(fs, cfg.Library)
@@ -170,11 +171,13 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		if exitOnMissing {
 			os.Exit(1)
 		} else {
-			return pkgNexus, gpsr.InstallPlan{}
+			return pkgNexus, gpsr.InstallPlan{}, rollback.RollbackPlan{}
 		}
 	}
 	logUserPackageRepos(availableUserPackages.Packages)
-	installPlan, err := gpsr.ResolveInstallationReqs(cfg.Packages,installedPackages, dependencyConfigurations, pkgNexus)
+	installPlan, err := gpsr.ResolveInstallationReqs(cfg.Packages, installedPackages, dependencyConfigurations, pkgNexus)
+	rollbackPlan := rollback.CreateRollbackPlan(cfg.Library, installPlan, installedPackages)
+
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
@@ -240,7 +243,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	}
 
 	log.Infoln("resolution time", time.Since(startTime))
-	return pkgNexus, installPlan
+	return pkgNexus, installPlan, rollbackPlan
 }
 
 func logUserPackageRepos(packageDownloads []cran.PkgDl) {

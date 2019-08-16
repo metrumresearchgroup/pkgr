@@ -165,6 +165,30 @@ func tagOldInstallation(fileSystem afero.Fs, libraryPath string, outdatedPackage
 	}
 }
 
+func CleanUpdateBackups(fileSystem afero.Fs, packageBackupInfo []UpdateAttempt) error {
+	if len(packageBackupInfo) == 0 {
+		log.Debug("Not update-packages to restore.")
+		return nil
+	}
+
+	for _, info := range packageBackupInfo {
+
+		_, err1 := fileSystem.Stat(info.BackupPackageDirectory) // Checking existence
+		if err1 == nil {
+			err1 = fileSystem.RemoveAll(info.BackupPackageDirectory)
+			if err1 != nil {
+				log.WithFields(log.Fields{
+					"package":           info.Package,
+					"problem_directory": info.BackupPackageDirectory,
+				}).Warn("could not delete directory during cleanup")
+				return err1
+			}
+		}
+	}
+
+	return nil
+}
+
 func RollbackUpdatePackages(fileSystem afero.Fs, packageBackupInfo []UpdateAttempt) error {
 
 	if len(packageBackupInfo) == 0 {

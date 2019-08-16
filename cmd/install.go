@@ -15,8 +15,8 @@
 package cmd
 
 import (
-	"github.com/metrumresearchgroup/pkgr/gpsr"
-	"github.com/spf13/afero"
+	"github.com/metrumresearchgroup/pkgr/pacman"
+	"github.com/metrumresearchgroup/pkgr/rollback"
 	"path/filepath"
 	"time"
 
@@ -25,7 +25,6 @@ import (
 	"github.com/metrumresearchgroup/pkgr/configlib"
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/logger"
-	"github.com/metrumresearchgroup/pkgr/pacman"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -58,13 +57,11 @@ func rInstall(cmd *cobra.Command, args []string) error {
 
 	// Get master object containing the packages available in each repository (pkgNexus),
 	//  as well as a master install plan to guide our process.
-	_, installPlan := planInstall(rVersion, true)
+	_, installPlan, rollbackPlan := planInstall(rVersion, true)
 
-	//Prepare our environment to update outdated packages if the "--update" flag is set.
-	var packageUpdateAttempts []pacman.UpdateAttempt
 	if viper.GetBool("update") {
 		log.Info("update argument passed. staging packages for update...")
-		packageUpdateAttempts = pacman.PreparePackagesForUpdate(fs, cfg.Library, installPlan.OutdatedPackages)
+		rollbackPlan.PreparePackagesForUpdate(fs, cfg.Library)
 	}
 
 	// Create a list of package download objects using our install plan and our "nexus" object.
@@ -100,12 +97,14 @@ func rInstall(cmd *cobra.Command, args []string) error {
 
 	//If anything went wrong during the installation, rollback the environment.
 	if err != nil {
-		errRollback := rollbackPackageEnvironment(fs, installPlan, packageUpdateAttempts)
+		errRollback := rollback.RollbackPackageEnvironment(fs, rollbackPlan)
 		if errRollback != nil {
 			log.WithFields(log.Fields{
 
 			}).Error("failed to reset package environment after bad installation. Your package Library will be in a corrupt state. It is recommended you delete your Library and reinstall all packages.")
 		}
+	} else {
+		pacman.CleanUpdateBackups(fs, rollbackPlan.UpdateRollbacks)
 	}
 
 	log.Info("duration:", time.Since(startTime))
@@ -117,40 +116,6 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func rollbackPackageEnvironment(fileSystem afero.Fs, installPlan gpsr.InstallPlan, packageUpdateAttempts []pacman.UpdateAttempt) error {
-
-	//reset packages
-	log.Trace("Resetting package environment")
-
-	toInstall := installPlan.GetAllPackages()
-
-	for _, pkg := range toInstall {
-		//Filter out the packages that were already installed -- we don't want to touch those, they shouldn't have changed.
-		_, found := installPlan.InstalledPackages[pkg]
-		if !found {
-			//Remove packages that were installed during this run.
-			err1 := fileSystem.RemoveAll(filepath.Join(cfg.Library, pkg))
-			if err1 != nil {
-				log.WithFields(log.Fields{
-					"library": cfg.Library,
-					"package": pkg,
-				}).Warn("failed to remove package during rollback", err1)
-				return err1
-			}
-		}
-	}
-
-	//Rollback updated packages -- we have to do this differently than the rest, because updated packages need to be
-	//restored from backups.
-	if cfg.Update {
-		err2 := pacman.RollbackUpdatePackages(fileSystem, packageUpdateAttempts)
-		if err2 != nil {
-			return err2
-		}
-	}
-
-	return nil
-}
 
 func initInstallLog() {
 	//Init install-specific log, if one has been set. This overwrites the default log.
