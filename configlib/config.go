@@ -220,6 +220,11 @@ func SetCustomizations(rSettings rcmd.RSettings, cfg PkgrConfig) rcmd.RSettings 
 
 // SetPlanCustomizations ...
 func SetPlanCustomizations(cfg PkgrConfig, dependencyConfigurations gpsr.InstallDeps, pkgNexus *cran.PkgNexus) {
+	setCfgCustomizations(cfg, dependencyConfigurations)
+	setViperCustomizations(cfg, dependencyConfigurations, pkgNexus)
+}
+
+func setCfgCustomizations(cfg PkgrConfig, dependencyConfigurations gpsr.InstallDeps) {
 	if cfg.Suggests {
 		log.Info("SetPlanCustomizations suggests")
 		for _, pkg := range cfg.Packages {
@@ -229,10 +234,12 @@ func SetPlanCustomizations(cfg PkgrConfig, dependencyConfigurations gpsr.Install
 			dependencyConfigurations.Deps[pkg] = dp
 		}
 	}
+}
+
+func setViperCustomizations(cfg PkgrConfig, dependencyConfigurations gpsr.InstallDeps, pkgNexus *cran.PkgNexus) {
 	if viper.Sub("Customizations") != nil && viper.Sub("Customizations").AllSettings()["packages"] != nil {
 		log.Info("SetPlanCustomizations viper")
 		pkgSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
-		//repoSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
 
 		for pkg, v := range cfg.Customizations.Packages {
 			if configlib.IsCustomizationSet("Suggests", pkgSettings, pkg) {
