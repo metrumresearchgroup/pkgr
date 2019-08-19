@@ -312,14 +312,16 @@ func TestSetViperCustomizations(t *testing.T) {
 		pkgNexus, _ := cran.NewPkgDb(urls, cran.Source, &installConfig, cran.RVersion{})
 		dependencyConfigurations := gpsr.NewDefaultInstallDeps()
 
-		// viper-load the yml
-		viper.Reset()
-		viper.SetConfigName("pkgr")
-		ymlfile := "../integration_tests/customization"
-		viper.AddConfigPath(ymlfile)
-		err := viper.ReadInConfig()
-		assert.Equal(t, nil, err, "Error reading yml file")
-		pkgSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
+		// build pkgSettings, normally read from the yml file via viper
+		var pkgSettings = []interface{}{
+			map[interface{}]interface{}{
+				tt.pkg: map[interface{}]interface{}{
+					"Suggests": tt.suggests,
+					"Repo":     tt.repo,
+					"Type":     tt.stype,
+				},
+			},
+		}
 
 		// call the function to test
 		setViperCustomizations(cfg, pkgSettings, dependencyConfigurations, pkgNexus)
