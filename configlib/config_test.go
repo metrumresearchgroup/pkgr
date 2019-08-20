@@ -312,7 +312,7 @@ func TestSetViperCustomizations(t *testing.T) {
 		pkgNexus, _ := cran.NewPkgDb(urls, cran.Source, &installConfig, cran.RVersion{})
 		dependencyConfigurations := gpsr.NewDefaultInstallDeps()
 
-		// build pkgSettings, normally read from the yml file via viper
+		// build pkgSettings, normally read from the yml file, via viper
 		var pkgSettings = []interface{}{
 			map[interface{}]interface{}{
 				tt.pkg: map[interface{}]interface{}{
@@ -357,4 +357,112 @@ func getCustomizationValue(key string, elems []interface{}, elem string) interfa
 		}
 	}
 	return ""
+}
+
+//type PkgSettingsMap map[string]PkgConfig
+
+func buildPkgSetings() PkgSettingsMap {
+	return PkgSettingsMap{
+		"pillar": PkgConfig{
+			Suggests: false,
+			Repo:     "CRAN2",
+			Type:     "source",
+		},
+		"R6": PkgConfig{
+			Suggests: true,
+			Repo:     "CRAN",
+			Type:     "binary",
+		},
+	}
+}
+
+// compare pkgSettings map to viper interface (2 functions)
+// pkgNexus should be the same
+func TestSetViperCustomizations2(t *testing.T) {
+	tests := []struct {
+		pkg      string
+		repo     string
+		suggests bool
+		stype    string
+		source   cran.SourceType
+	}{
+		{
+			pkg:      "pillar",
+			repo:     "CRAN2",
+			suggests: false,
+			stype:    "source",
+			source:   cran.Source,
+		},
+		{
+			pkg:      "R6",
+			repo:     "CRAN",
+			suggests: true,
+			stype:    "binary",
+			source:   cran.Binary,
+		},
+	}
+	var installConfig = cran.InstallConfig{
+		Packages: map[string]cran.PkgConfig{},
+	}
+
+	for _, tt := range tests {
+		var cfg PkgrConfig
+		NewConfig(&cfg)
+		cfg.Customizations.Packages = map[string]PkgConfig{
+			tt.pkg: PkgConfig{
+				Env: map[string]string{
+					"": "",
+				},
+				Repo:     tt.repo,
+				Type:     tt.stype,
+				Suggests: tt.suggests,
+			},
+		}
+		var urls = []cran.RepoURL{
+			cran.RepoURL{
+				Name: tt.repo,
+				URL:  "https://cran.microsoft.com/snapshot/2018-11-11",
+			},
+		}
+		pkgNexus, _ := cran.NewPkgDb(urls, cran.Source, &installConfig, cran.RVersion{})
+		pkgNexus2, _ := cran.NewPkgDb(urls, cran.Source, &installConfig, cran.RVersion{})
+		dependencyConfigurations := gpsr.NewDefaultInstallDeps()
+		dependencyConfigurations2 := gpsr.NewDefaultInstallDeps()
+
+		viper.Reset()
+		viper.SetConfigName("pkgr")
+		ymlfile := "../integration_tests/customization"
+		viper.AddConfigPath(ymlfile)
+		err := viper.ReadInConfig()
+		assert.Equal(t, nil, err, "Error reading yml file")
+		pkgSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
+		setViperCustomizations(cfg, pkgSettings, dependencyConfigurations, pkgNexus)
+
+		pkgSettings2 := PkgSettingsMap{
+			"pillar": PkgConfig{
+				Suggests: false,
+				Repo:     "CRAN2",
+				Type:     "source",
+			},
+			"R6": PkgConfig{
+				Suggests: true,
+				Repo:     "CRAN",
+				Type:     "binary",
+			},
+		}
+		setViperCustomizations2(cfg, pkgSettings2, dependencyConfigurations2, pkgNexus2)
+
+		assert.Equal(t, pkgNexus2.Config.Packages[tt.pkg].Type, pkgNexus.Config.Packages[tt.pkg].Type, fmt.Sprintf("Error setting type %s for pkg %s", tt.stype, tt.pkg))
+		assert.Equal(t, pkgNexus2.Config.Packages[tt.pkg].Repo.Name, pkgNexus.Config.Packages[tt.pkg].Repo.Name, fmt.Sprintf("Error setting repo %s for pkg %s", tt.repo, tt.pkg))
+
+		pkgDepTypes, found := dependencyConfigurations.Deps[tt.pkg]
+		assert.Equal(t, true, found, fmt.Sprintf("Deps not found:%s", tt.pkg))
+		pkgDepTypes2, found2 := dependencyConfigurations.Deps[tt.pkg]
+		assert.Equal(t, true, found2, fmt.Sprintf("Deps2 not found:%s", tt.pkg))
+		assert.Equal(t, pkgDepTypes2.Suggests, pkgDepTypes.Suggests, fmt.Sprintf("Suggests error for pkg %s", tt.pkg))
+
+		val := getCustomizationValue("Suggests", pkgSettings, tt.pkg)
+		val2 := pkgSettings2[tt.pkg].Suggests
+		assert.Equal(t, val2, val, fmt.Sprintf("Suggests error for pkg %s", tt.pkg))
+	}
 }

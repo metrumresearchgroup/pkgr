@@ -8,6 +8,9 @@ type PkgConfig struct {
 	Type     string            `yaml:"Type,omitempty"`
 }
 
+// PkgSettingsMap ...
+type PkgSettingsMap map[string]PkgConfig
+
 // RepoConfig provides information about custom repository settings
 type RepoConfig struct {
 	//Suggests bool

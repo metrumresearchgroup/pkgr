@@ -267,3 +267,31 @@ func setViperCustomizations(cfg PkgrConfig, pkgSettings []interface{}, dependenc
 		}
 	}
 }
+
+func setViperCustomizations2(cfg PkgrConfig, pkgSettings PkgSettingsMap, dependencyConfigurations gpsr.InstallDeps, pkgNexus *cran.PkgNexus) {
+	for pkg, v := range cfg.Customizations.Packages {
+		if pkgSettings[pkg].Suggests {
+			pkgDepTypes := dependencyConfigurations.Default
+			pkgDepTypes.Suggests = v.Suggests
+			dependencyConfigurations.Deps[pkg] = pkgDepTypes
+		}
+		if len(pkgSettings[pkg].Repo) > 0 {
+			err := pkgNexus.SetPackageRepo(pkg, v.Repo)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"pkg":  pkg,
+					"repo": v.Repo,
+				}).Fatal("error finding custom repo to set")
+			}
+		}
+		if len(pkgSettings[pkg].Type) > 0 {
+			err := pkgNexus.SetPackageType(pkg, v.Type)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"pkg":  pkg,
+					"repo": v.Repo,
+				}).Fatal("error finding custom repo to set")
+			}
+		}
+	}
+}
