@@ -1,9 +1,5 @@
 # pkgr
 
-[![asciicast](https://asciinema.org/a/wgcPBvCMtEwhpdW793MBjgSi2.svg)](https://asciinema.org/a/wgcPBvCMtEwhpdW793MBjgSi2)
-
-# THIS IS CURRENTLY A WIP, however is getting close for user testing. Check back soon for more comprehensive user docs
-
 # What is pkgr?
 
 `pkgr` is a rethinking of the way packages are managed in R. Namely, it embraces
@@ -31,6 +27,10 @@ do behaviors well. For example, rather than just having plyr, we now use dplyr+p
 the same set of responsibilities (dealing with dataframes + dealing with other list/vector objects in an iterative way).
 As such, it is becoming increasingly difficult to manage the _set_ of packages in a transparent and robust
 way.
+
+## pkgr in action
+
+[![asciicast](https://asciinema.org/a/wgcPBvCMtEwhpdW793MBjgSi2.svg)](https://asciinema.org/a/wgcPBvCMtEwhpdW793MBjgSi2)
 
 # Getting Started
 
@@ -217,11 +217,3 @@ Pkgr solves these issues by:
   - Providing timely error messages and halting the installation process immediately when something goes wrong during the
   installation process (such as a package not being available, a repository being unreachable, etc.)
 
-
-# More info to come as we progress!
-
-As we continue development, we intend to answer the questions:
-- How does pkgr integrate with [Packrat](https://rstudio.github.io/packrat/)?
-- How does pkgr integrate with [RStudio Package Manager](https://www.rstudio.com/products/package-manager/)?
-- How much faster is pkgr than its peers (such as install.packages)?
-- What are some of the downsides of pkgr?
