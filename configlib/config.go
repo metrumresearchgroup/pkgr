@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/metrumresearchgroup/pkgr-work/feature_lockfile-cfg/pkgr/configlib"
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
@@ -242,12 +241,12 @@ func setCfgCustomizations(cfg PkgrConfig, dependencyConfigurations *gpsr.Install
 
 func setViperCustomizations(cfg PkgrConfig, pkgSettings []interface{}, dependencyConfigurations gpsr.InstallDeps, pkgNexus *cran.PkgNexus) {
 	for pkg, v := range cfg.Customizations.Packages {
-		if configlib.IsCustomizationSet("Suggests", pkgSettings, pkg) {
+		if IsCustomizationSet("Suggests", pkgSettings, pkg) {
 			pkgDepTypes := dependencyConfigurations.Default
 			pkgDepTypes.Suggests = v.Suggests
 			dependencyConfigurations.Deps[pkg] = pkgDepTypes
 		}
-		if configlib.IsCustomizationSet("Repo", pkgSettings, pkg) {
+		if IsCustomizationSet("Repo", pkgSettings, pkg) {
 			err := pkgNexus.SetPackageRepo(pkg, v.Repo)
 			if err != nil {
 				log.WithFields(log.Fields{
@@ -256,35 +255,7 @@ func setViperCustomizations(cfg PkgrConfig, pkgSettings []interface{}, dependenc
 				}).Fatal("error finding custom repo to set")
 			}
 		}
-		if configlib.IsCustomizationSet("Type", pkgSettings, pkg) {
-			err := pkgNexus.SetPackageType(pkg, v.Type)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"pkg":  pkg,
-					"repo": v.Repo,
-				}).Fatal("error finding custom repo to set")
-			}
-		}
-	}
-}
-
-func setViperCustomizations2(cfg PkgrConfig, pkgSettings PkgSettingsMap, dependencyConfigurations gpsr.InstallDeps, pkgNexus *cran.PkgNexus) {
-	for pkg, v := range cfg.Customizations.Packages {
-		if pkgSettings[pkg].Suggests {
-			pkgDepTypes := dependencyConfigurations.Default
-			pkgDepTypes.Suggests = v.Suggests
-			dependencyConfigurations.Deps[pkg] = pkgDepTypes
-		}
-		if len(pkgSettings[pkg].Repo) > 0 {
-			err := pkgNexus.SetPackageRepo(pkg, v.Repo)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"pkg":  pkg,
-					"repo": v.Repo,
-				}).Fatal("error finding custom repo to set")
-			}
-		}
-		if len(pkgSettings[pkg].Type) > 0 {
+		if IsCustomizationSet("Type", pkgSettings, pkg) {
 			err := pkgNexus.SetPackageType(pkg, v.Type)
 			if err != nil {
 				log.WithFields(log.Fields{
