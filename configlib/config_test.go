@@ -258,9 +258,10 @@ func TestSetCfgCustomizations(t *testing.T) {
 		cfg.Packages = []string{
 			tt.pkg,
 		}
-		setCfgCustomizations(cfg, dependencyConfigurations)
+		setCfgCustomizations(cfg, &dependencyConfigurations)
 		_, found := dependencyConfigurations.Deps[tt.pkg]
 		assert.Equal(t, true, found, fmt.Sprintf("Fail to get: %s", tt.pkg))
+		assert.Equal(t, cfg.Suggests, dependencyConfigurations.Deps[tt.pkg].Suggests, fmt.Sprintf("Suggest not correct: %s", tt.pkg))
 	}
 }
 func TestSetViperCustomizations(t *testing.T) {
