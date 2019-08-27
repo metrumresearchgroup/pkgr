@@ -1,7 +1,5 @@
 package packrat
 
-import "github.com/metrumresearchgroup/pkgr/gpsr"
-
 // NewLockFileDb initializes a new lockfile
 func NewLockFileDb() *LockFileDb {
 	return &LockFileDb{
@@ -39,17 +37,17 @@ func (ldb LockFileDb) GetPackageReqs(pkg string) (bool, PackageReqs) {
 }
 
 // SolveLockfile provides a solution give a lockfile spec
-func SolveLockfile(ldb LockFileDb) ([][]string, error) {
-	workingGraph := gpsr.NewGraph()
+// func SolveLockfile(ldb LockFileDb) ([][]string, error) {
+// 	workingGraph := gpsr.NewGraph()
 
-	for _, p := range ldb.CRANlike {
-		workingGraph[p.Package] = gpsr.NewNode(p.Package, p.Requires)
-	}
-	for _, p := range ldb.Github {
-		workingGraph[p.Reqs.Package] = gpsr.NewNode(p.Reqs.Package, p.Reqs.Requires)
-	}
+// 	for _, p := range ldb.CRANlike {
+// 		workingGraph[p.Package] = gpsr.NewNode(p.Package, p.Requires)
+// 	}
+// 	for _, p := range ldb.Github {
+// 		workingGraph[p.Reqs.Package] = gpsr.NewNode(p.Reqs.Package, p.Reqs.Requires)
+// 	}
 
-	resolved, err := gpsr.ResolveGraph(workingGraph)
+// 	resolved, err := gpsr.ResolveGraph(workingGraph)
 
-	return resolved, err
-}
+// 	return resolved, err
+// }
