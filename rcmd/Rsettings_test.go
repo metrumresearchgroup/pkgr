@@ -2,6 +2,7 @@ package rcmd
 
 import (
 	"fmt"
+	"runtime"
 	"testing"
 
 	"github.com/metrumresearchgroup/pkgr/cran"
@@ -49,21 +50,21 @@ func TestParseVersionData(t *testing.T) {
 		message  string
 	}{
 		{
-			data: []byte(`R version 3.5.3 (2019-03-11) -- "Great Truth"
-Copyright (C) 2019 The R Foundation for Statistical Computing
-Platform: x86_64-apple-darwin15.6.0 (64-bit)
-
-R is free software and comes with ABSOLUTELY NO WARRANTY.
-You are welcome to redistribute it under the terms of the
-GNU General Public License versions 2 or 3.
-For more information about these matters see
-http://www.gnu.org/licenses/.
+			data: []byte(`R version 3.6.0 (2019-04-26) -- "Planting of a Tree"
+			Copyright (C) 2019 The R Foundation for Statistical Computing
+			Platform: x86_64-apple-darwin15.6.0 (64-bit)
+			
+			R is free software and comes with ABSOLUTELY NO WARRANTY.
+			You are welcome to redistribute it under the terms of the
+			GNU General Public License versions 2 or 3.
+			For more information about these matters see
+			https://www.gnu.org/licenses/.
 
 `),
 			version: cran.RVersion{
 				Major: 3,
-				Minor: 5,
-				Patch: 3,
+				Minor: 6,
+				Patch: 0,
 			},
 			platform: "x86_64-apple-darwin15.6.0",
 			message:  "darwin test",
@@ -146,14 +147,6 @@ func TestRMethod(t *testing.T) {
 			expected: `R.exe`,
 			message:  "windows - R without extension",
 		},
-		// filepath.Clean does not remove trailing \ on mac.
-		// maybe it works on windows
-		// {
-		// 	rpath:    `C:\Program Files\R\R-3.5.2\bin\i386\R.exe\`,
-		// 	platform: "windows",
-		// 	expected: `C:\Program Files\R\R-3.5.2\bin\i386\R.exe`,
-		// 	message:  "windows - full Rpath",
-		// },
 		{
 			rpath:    "",
 			platform: "darwin",
@@ -172,23 +165,25 @@ func TestRMethod(t *testing.T) {
 			expected: "/usr/local/bin/R",
 			message:  "darwin: full Rpath, trailing /",
 		},
-		{
-			rpath:    "/R",
-			platform: "darwin",
-			expected: "/R",
-			message:  "darwin: full Rpath, root R /",
-		},
-		{
-			rpath:    "/R/",
-			platform: "darwin",
-			expected: "/R",
-			message:  "darwin: full Rpath, root R / with trailing /",
-		},
+		// {
+		// 	rpath:    "/R",
+		// 	platform: "darwin",
+		// 	expected: "/R",
+		// 	message:  "darwin: full Rpath, root R /",
+		// },
+		// {
+		// 	rpath:    "/R/",
+		// 	platform: "darwin",
+		// 	expected: "/R",
+		// 	message:  "darwin: full Rpath, root R / with trailing /",
+		// },
 		// TODO: linux tests
 	}
 	for _, tt := range rTests {
-		rs := NewRSettings(tt.rpath)
-		r := rs.R(tt.platform)
-		assert.Equal(t, tt.expected, r, fmt.Sprintf("R not equal to <%s>. %s", tt.expected, tt.message))
+		if tt.platform == runtime.GOOS {
+			rs := NewRSettings(tt.rpath)
+			r := rs.R(tt.platform)
+			assert.Equal(t, tt.expected, r, fmt.Sprintf("R not equal to <%s>. %s", tt.expected, tt.message))
+		}
 	}
 }
