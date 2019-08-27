@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/metrumresearchgroup/pkgr/cran"
@@ -21,54 +24,56 @@ func TestAddRemovePackage(t *testing.T) {
 		packageName string
 	}{
 		{
-			fileName:    "../integration_tests/simple/pkgr.yml",
+			fileName:    "simple",
 			packageName: "packageTestName",
 		},
 		{
-			fileName:    "../integration_tests/simple-suggests/pkgr.yml",
+			fileName:    "simple-suggests",
 			packageName: "packageTestName",
 		},
 		{
-			fileName:    "../integration_tests/mixed-source/pkgr.yml",
+			fileName:    "mixed-source",
 			packageName: "packageTestName",
 		},
 		{
-			fileName:    "../integration_tests/outdated-pkgs/pkgr.yml",
+			fileName:    "outdated-pkgs",
 			packageName: "packageTestName",
 		},
 		{
-			fileName:    "../integration_tests/outdated-pkgs-no-update/pkgr.yml",
+			fileName:    "outdated-pkgs-no-update",
 			packageName: "packageTestName",
 		},
 		{
-			fileName:    "../integration_tests/repo-order/pkgr.yml",
+			fileName:    "repo-order",
 			packageName: "packageTestName",
 		},
 	}
 
 	appFS := afero.NewOsFs()
 	for _, tt := range tests {
-		b, _ := afero.Exists(appFS, tt.fileName)
-		assert.Equal(t, true, b, fmt.Sprintf("yml file not found:%s", tt.fileName))
+		fileName := filepath.Join(getTestFolder(t, tt.fileName), "pkgr.yml")
 
-		ymlStart, _ := afero.ReadFile(appFS, tt.fileName)
+		b, _ := afero.Exists(appFS, fileName)
+		assert.Equal(t, true, b, fmt.Sprintf("yml file not found:%s", fileName))
 
-		add(tt.fileName, tt.packageName)
-		b, _ = afero.FileContainsBytes(appFS, tt.fileName, []byte(tt.packageName))
-		assert.Equal(t, true, b, fmt.Sprintf("Package not added:%s", tt.fileName))
+		ymlStart, _ := afero.ReadFile(appFS, fileName)
 
-		remove(tt.fileName, tt.packageName)
-		b, _ = afero.FileContainsBytes(appFS, tt.fileName, []byte(tt.packageName))
-		assert.Equal(t, false, b, fmt.Sprintf("Package not removed:%s", tt.fileName))
+		add(fileName, tt.packageName)
+		b, _ = afero.FileContainsBytes(appFS, fileName, []byte(tt.packageName))
+		assert.Equal(t, true, b, fmt.Sprintf("Package not added:%s", fileName))
 
-		ymlEnd, _ := afero.ReadFile(appFS, tt.fileName)
+		remove(fileName, tt.packageName)
+		b, _ = afero.FileContainsBytes(appFS, fileName, []byte(tt.packageName))
+		assert.Equal(t, false, b, fmt.Sprintf("Package not removed:%s", fileName))
+
+		ymlEnd, _ := afero.ReadFile(appFS, fileName)
 		b = equal(ymlStart, ymlEnd, false)
-		assert.Equal(t, true, b, fmt.Sprintf("Start and End yml files differ:%s", tt.fileName))
+		assert.Equal(t, true, b, fmt.Sprintf("Start and End yml files differ:%s", fileName))
 
 		// put file back for Git
-		fi, _ := os.Stat(tt.fileName)
-		err := afero.WriteFile(appFS, tt.fileName, ymlStart, fi.Mode())
-		assert.Equal(t, nil, err, fmt.Sprintf("Error writing file back to original state:%s", tt.fileName))
+		fi, _ := os.Stat(fileName)
+		err := afero.WriteFile(appFS, fileName, ymlStart, fi.Mode())
+		assert.Equal(t, nil, err, fmt.Sprintf("Error writing file back to original state:%s", fileName))
 	}
 }
 
@@ -141,14 +146,14 @@ func TestNewConfigPackrat(t *testing.T) {
 		message  string
 	}{
 		{
-			folder:   "../integration_tests/packrat-library",
+			folder:   "packrat-library",
 			expected: "packrat",
 			message:  "packrat exists",
 		},
 	}
 	for _, tt := range tests {
 		var cfg PkgrConfig
-		_ = os.Chdir(tt.folder)
+		_ = os.Chdir(getTestFolder(t, tt.folder))
 		_ = LoadConfigFromPath(viper.GetString("config"))
 		NewConfig(&cfg)
 		assert.Equal(t, tt.expected, cfg.Lockfile.Type, fmt.Sprintf("Fail:%s", tt.message))
@@ -162,14 +167,14 @@ func TestNewConfigNoPackrat(t *testing.T) {
 		message  string
 	}{
 		{
-			folder:   "../integration_tests/simple",
+			folder:   "simple",
 			expected: "",
 			message:  "packrat does not exist",
 		},
 	}
 	for _, tt := range tests {
 		var cfg PkgrConfig
-		_ = os.Chdir(tt.folder)
+		_ = os.Chdir(getTestFolder(t, tt.folder))
 		_ = LoadConfigFromPath(viper.GetString("config"))
 		NewConfig(&cfg)
 		assert.Equal(t, tt.expected, cfg.Lockfile.Type, fmt.Sprintf("Fail:%s", tt.message))
@@ -417,8 +422,9 @@ func TestSetViperCustomizations2(t *testing.T) {
 
 		viper.Reset()
 		viper.SetConfigName("pkgr")
-		ymlfile := "../integration_tests/customization"
+		ymlfile := getTestFolder(t, "customization")
 		viper.AddConfigPath(ymlfile)
+
 		err := viper.ReadInConfig()
 		assert.Equal(t, nil, err, "Error reading yml file")
 		pkgSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
@@ -510,7 +516,9 @@ func TestSetPkgConfig(t *testing.T) {
 
 		viper.Reset()
 		viper.SetConfigName("pkgr")
-		ymlfile := "../integration_tests/customization"
+
+		ymlfile := getTestFolder(t, "customization")
+
 		viper.AddConfigPath(ymlfile)
 		err := viper.ReadInConfig()
 		assert.Equal(t, nil, err, "Error reading yml file")
@@ -588,4 +596,10 @@ func setViperCustomizations2(cfg PkgrConfig, pkgSettings PkgSettingsMap, depende
 			}
 		}
 	}
+}
+
+func getTestFolder(t *testing.T, folder string) string {
+	_, filename, _, _ := runtime.Caller(0)
+	sa := strings.SplitAfter(filename, "/pkgr/")
+	return filepath.Join(filepath.Dir(sa[0]), "integration_tests", folder)
 }

@@ -10,7 +10,6 @@ import (
 )
 
 func TestAppendGraph(t *testing.T) {
-
 	workingGraph := NewGraph()
 	dependencyConfigurations := NewDefaultInstallDeps()
 	var pkgDesc = desc.Desc{
@@ -39,7 +38,7 @@ func TestAppendGraph(t *testing.T) {
 	// call the function to test
 	appendToGraph(workingGraph, pkgDesc, dependencyConfigurations, pkgNexus)
 
-	// brew is a a dep of roxygen2
+	// brew is a dep of roxygen2
 	m := workingGraph["roxygen2"]
 	assert.NotEqual(t, nil, m, fmt.Sprintf("Graph Error"))
 
