@@ -16,7 +16,6 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/metrumresearchgroup/pkgr/rollback"
 
 	"github.com/metrumresearchgroup/pkgr/rollback"
 
