@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/metrumresearchgroup/pkgr/cran"
+	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
 	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
@@ -203,4 +204,65 @@ func remove(ymlfile string, packageName string) error {
 		return err
 	}
 	return nil
+}
+
+// SetCustomizations ... set ENV values in Rsettings
+func SetCustomizations(rSettings rcmd.RSettings, cfg PkgrConfig) rcmd.RSettings {
+	pkgCustomizations := cfg.Customizations.Packages
+	for n, v := range pkgCustomizations {
+		if v.Env != nil {
+			rSettings.PkgEnvVars[n] = v.Env
+		}
+	}
+	return rSettings
+}
+
+// SetPlanCustomizations ...
+func SetPlanCustomizations(cfg PkgrConfig, dependencyConfigurations gpsr.InstallDeps, pkgNexus *cran.PkgNexus) {
+
+	setCfgCustomizations(cfg, &dependencyConfigurations)
+
+	if viper.Sub("Customizations") != nil && viper.Sub("Customizations").AllSettings()["packages"] != nil {
+		pkgSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
+		setViperCustomizations(cfg, pkgSettings, dependencyConfigurations, pkgNexus)
+	}
+}
+
+func setCfgCustomizations(cfg PkgrConfig, dependencyConfigurations *gpsr.InstallDeps) {
+	if cfg.Suggests {
+		for _, pkg := range cfg.Packages {
+			// set all top level packages to install suggests
+			dp := dependencyConfigurations.Default
+			dp.Suggests = true
+			dependencyConfigurations.Deps[pkg] = dp
+		}
+	}
+}
+
+func setViperCustomizations(cfg PkgrConfig, pkgSettings []interface{}, dependencyConfigurations gpsr.InstallDeps, pkgNexus *cran.PkgNexus) {
+	for pkg, v := range cfg.Customizations.Packages {
+		if IsCustomizationSet("Suggests", pkgSettings, pkg) {
+			pkgDepTypes := dependencyConfigurations.Default
+			pkgDepTypes.Suggests = v.Suggests
+			dependencyConfigurations.Deps[pkg] = pkgDepTypes
+		}
+		if IsCustomizationSet("Repo", pkgSettings, pkg) {
+			err := pkgNexus.SetPackageRepo(pkg, v.Repo)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"pkg":  pkg,
+					"repo": v.Repo,
+				}).Fatal("error finding custom repo to set")
+			}
+		}
+		if IsCustomizationSet("Type", pkgSettings, pkg) {
+			err := pkgNexus.SetPackageType(pkg, v.Type)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"pkg":  pkg,
+					"repo": v.Repo,
+				}).Fatal("error finding custom repo to set")
+			}
+		}
+	}
 }

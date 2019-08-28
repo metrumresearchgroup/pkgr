@@ -22,6 +22,7 @@ import (
 
 	"github.com/spf13/viper"
 
+	"github.com/metrumresearchgroup/pkgr/configlib"
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/logger"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
@@ -35,7 +36,7 @@ var installCmd = &cobra.Command{
 	Short: "install a package",
 	Long: `
 	install a package
- `,
+`,
 	RunE: rInstall,
 }
 
@@ -86,13 +87,8 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	nworkers := getWorkerCount()
 
 	// Process any customizations set in the yaml config file for individual packages.
-	// TODO: Refactor this into its own method.
-	pkgCustomizations := cfg.Customizations.Packages
-	for n, v := range pkgCustomizations {
-		if v.Env != nil {
-			rSettings.PkgEnvVars[n] = v.Env
-		}
-	}
+	// Set ENV values in rSettings
+	rSettings = configlib.SetCustomizations(rSettings, cfg)
 
 	//
 	// Install the packages
