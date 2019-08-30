@@ -1,9 +1,6 @@
 package rcmd
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/spf13/afero"
 )
@@ -103,32 +100,4 @@ type Nvp struct {
 // NvpList is a slice of Nvp. The slice maintains consistent ordering of the Nvp objects
 type NvpList struct {
 	Pairs []Nvp `json:"global_env_vars_pairs,omitempty"`
-}
-
-// Append a name and value pair to the list as an Nvp object
-func (list *NvpList) Append(name, value string) {
-	list.Pairs = append(list.Pairs, Nvp{Name: strings.Trim(name, " "), Value: strings.Trim(value, " ")})
-}
-
-// AppendNvp append a string of name=value pair to the list as an Nvp object
-func (list *NvpList) AppendNvp(nvp string) {
-	b := strings.Split(nvp, "=")
-	if len(b) == 2 {
-		list.Append(b[0], b[1])
-	}
-}
-
-// Get a value by name
-func (list *NvpList) Get(name string) (value string, exists bool) {
-	for _, pair := range list.Pairs {
-		if name == pair.Name {
-			return pair.Value, true
-		}
-	}
-	return "", false
-}
-
-// GetString returns a string as name=value
-func (nvp *Nvp) GetString(name string) (value string) {
-	return fmt.Sprintf("%s=%s", nvp.Name, nvp.Value)
 }
