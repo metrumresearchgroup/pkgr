@@ -443,6 +443,7 @@ func InstallPackagePlan(
 					bpath := filepath.Join(
 						bdir,
 						filepath.Base(iu.BinaryPath),
+						rs.Version.ToString(),
 					)
 					_, err := goutils.Copy(iu.BinaryPath, bpath)
 					log.WithFields(log.Fields{"from": iu.BinaryPath, "to": bpath}).Trace("copied binary")
