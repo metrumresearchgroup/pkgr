@@ -23,7 +23,7 @@ type RSettings struct {
 	Version       cran.RVersion                `json:"r_version,omitempty"`
 	LibPaths      []string                     `json:"lib_paths,omitempty"`
 	Rpath         string                       `json:"rpath,omitempty"`
-	GlobalEnvVars map[string]string            `json:"global_env_vars,omitempty"`
+	GlobalEnvVars NvpList                      `json:"global_env_vars,omitempty"`
 	PkgEnvVars    map[string]map[string]string `json:"pkg_env_vars,omitempty"`
 	Platform      string                       `json:"platform,omitempty"`
 }
@@ -90,4 +90,15 @@ type InstallQueue struct {
 	WorkQueue   chan InstallRequest
 	UpdateQueue chan InstallUpdate
 	Workers     []Worker
+}
+
+// Nvp name-value pair, each of type string
+type Nvp struct {
+	Name  string `json:"global_env_vars_name,omitempty"`
+	Value string `json:"global_env_vars_value,omitempty"`
+}
+
+// NvpList is a slice of Nvp. The slice maintains consistent ordering of the Nvp objects
+type NvpList struct {
+	Pairs []Nvp `json:"global_env_vars_pairs,omitempty"`
 }

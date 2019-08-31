@@ -15,7 +15,7 @@ import (
 // NewRSettings initializes RSettings
 func NewRSettings(rPath string) RSettings {
 	rs := RSettings{
-		GlobalEnvVars: make(map[string]string),
+		GlobalEnvVars: NvpList{},
 		PkgEnvVars:    make(map[string]map[string]string),
 		Rpath:         rPath,
 	}
