@@ -16,10 +16,11 @@ package cmd
 
 import (
 	"errors"
-	"github.com/spf13/afero"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/spf13/afero"
 
 	"github.com/dpastoor/goutils"
 	log "github.com/sirupsen/logrus"
@@ -105,6 +106,7 @@ func deleteCacheSubfolders(fs afero.Fs, repos []string, subfolder string, cacheD
 
 	//Filesystem object for the cache directory
 	cacheDirFsObject, err := fs.Open(cacheDirectory)
+	defer cacheDirFsObject.Close()
 	if err != nil {
 		return err
 	}
@@ -148,10 +150,10 @@ func deleteCacheSubfolders(fs afero.Fs, repos []string, subfolder string, cacheD
 					)
 
 					log.WithFields(log.Fields{
-						"repoToClear":             repoToClear,
+						"repoToClear":     repoToClear,
 						"repoFolder Name": repoFolder,
-						"subfolder":               subfolder,
-						"subfolder path":          subfolderPath,
+						"subfolder":       subfolder,
+						"subfolder path":  subfolderPath,
 					}).Trace("match found")
 
 					err = fs.RemoveAll(subfolderPath)
