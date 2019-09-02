@@ -1,9 +1,5 @@
 # pkgr
 
-[![asciicast](https://asciinema.org/a/wgcPBvCMtEwhpdW793MBjgSi2.svg)](https://asciinema.org/a/wgcPBvCMtEwhpdW793MBjgSi2)
-
-# THIS IS CURRENTLY A WIP, however is getting close for user testing. Check back soon for more comprehensive user docs
-
 # What is pkgr?
 
 `pkgr` is a rethinking of the way packages are managed in R. Namely, it embraces
@@ -32,6 +28,10 @@ the same set of responsibilities (dealing with dataframes + dealing with other l
 As such, it is becoming increasingly difficult to manage the _set_ of packages in a transparent and robust
 way.
 
+## pkgr in action
+
+[![asciicast](https://asciinema.org/a/wgcPBvCMtEwhpdW793MBjgSi2.svg)](https://asciinema.org/a/wgcPBvCMtEwhpdW793MBjgSi2)
+
 # Getting Started
 
 ### OSX Installation
@@ -48,11 +48,23 @@ brew install pkgr
 To install pkgr on Linux systems, use the following commands:
 
 ```
-sudo wget https://github.com/metrumresearchgroup/pkgr/releases/download/v0.2.0-alpha.2-1/pkgr_0.2.0-alpha.2-1_linux_amd64.tar.gz -O /tmp/pkgr.tar.gz
+sudo wget https://github.com/metrumresearchgroup/pkgr/releases/download/v0.5.0-beta.3/pkgr_0.5.0-beta.3_linux_amd64.tar.gz -O /tmp/pkgr.tar.gz
 sudo tar xzf /tmp/pkgr.tar.gz pkgr
 sudo mv pkgr /usr/local/bin/pkgr
 sudo chmod +x /usr/local/bin/pkgr
 ```
+
+### Windows installation
+
+Pkgr for Windows is supported, but we have not yet published on a Windows-compatible package manager like Chocolatey. For now, follow the steps below to install on Windows:
+
+- Navigate to the [latest release on GitHub](https://github.com/metrumresearchgroup/pkgr/releases/latest)
+- Download the windows tarball
+  ![windows_tarball](/docs/images/windows_tarball_picture.png)
+- Extract the contents of the windows tarball using a utility such as [7zip](https://www.7-zip.org/).
+  - If using 7zip, you may need to extract "twice" (once for the gzip layer, once for the tar layer). Ultimately, you're trying to pull out the `pkgr.exe` file.
+  - The destination folder should be on your Windows PATH. You may need to [modify your Windows PATH environment variable](https://www.architectryan.com/2018/03/17/add-to-the-path-on-windows-10/) to make this happen.
+  - If you do not already have a preferred way of accomplishing the above, we suggest creating a folder called "apps" in your home directory, then adding the "apps" directory to your PATH. From there, simply make sure that the `pkgr.exe` file from the tarball ends up in your "apps/" directory.
 
 # How it works
 
@@ -89,8 +101,9 @@ Library: "path/to/install/library"
 
 # package specific customizations
 Customizations:
-  - tidyverse:
-      Suggests: true
+  Packages:
+    - tidyverse:
+        Suggests: true
 ```
 
 When you run `pkgr install` with this as your _pkgr.yml_ file, pkgr will download and
@@ -134,8 +147,9 @@ Logging:
   overwrite: true
 
 Customizations:
-  - devtools:
-      Type: source
+  Packages:
+    - devtools:
+        Type: source
 ```
 
 With this customization in your config file, pkgr will install from sources for devtools.
@@ -182,7 +196,7 @@ Logging:
 
 # Pkgr and [Packrat](https://rstudio.github.io/packrat/)
 
-**Pkgr is not a replacement for Packrat -- Pkgr is complementary to Packrat**. 
+**Pkgr is not a replacement for Packrat -- Pkgr is complementary to Packrat**.
 
 Packrat is a tool to capture the state
 of your R environment and isolate it from outside modification.
@@ -200,14 +214,6 @@ Pkgr solves these issues by:
   - Installing packages quickly in parallelized layers (determined by the dependency tree)
   - Allowing users to control things like what repo a given package is retrieved from and what Makevars it is built with
   - Showing users a holistic view of their R Environment (`pkgr inspect --deps --tree`) and how that environment would be changed on another install (`pkgr plan`)
-  - Providing timely error messages and halting the installation process immediately when something goes wrong during the 
+  - Providing timely error messages and halting the installation process immediately when something goes wrong during the
   installation process (such as a package not being available, a repository being unreachable, etc.)
-  
 
-# More info to come as we progress!
-
-As we continue development, we intend to answer the questions:
-- How does pkgr integrate with [Packrat](https://rstudio.github.io/packrat/)?
-- How does pkgr integrate with [RStudio Package Manager](https://www.rstudio.com/products/package-manager/)?
-- How much faster is pkgr than its peers (such as install.packages)?
-- What are some of the downsides of pkgr?
