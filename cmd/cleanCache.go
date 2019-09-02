@@ -20,6 +20,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/spf13/afero"
+
 	"github.com/dpastoor/goutils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -60,7 +62,13 @@ func cache(cmd *cobra.Command, args []string) error {
 
 func cleanCacheFolders() error {
 	cachePath := userCache(cfg.Cache)
-	repos := strings.Split(reposToClear, ",")
+	var repos []string // make empty
+	if reposToClear != "ALL" {
+		repos = strings.Split(reposToClear, ",")
+		if len(repos) == 0 {
+			return errors.New("default 'repos' argument overridden but no repos provided. Please list repos in comma-separated list with no spaces")
+		}
+	}
 
 	log.WithFields(log.Fields{
 		"repos argument": reposToClear,
@@ -70,17 +78,17 @@ func cleanCacheFolders() error {
 
 	if !srcOnly && !binariesOnly {
 		log.Info("clearing source and binary files from the cache")
-		deleteAllCacheSubfolders(repos, cachePath)
+		deleteAllCacheSubfolders(fs, repos, cachePath)
 	} else if srcOnly && binariesOnly {
 		err := errors.New("invalid argument combination -- cannot combine srcOnly and binaryOnly flags")
 		log.Error(err)
 		return err
 	} else if srcOnly {
 		log.Info("clearing source files only from the cache")
-		deleteCacheSubfolders(repos, "src", cachePath)
+		deleteCacheSubfolders(fs, repos, "src", cachePath)
 	} else if binariesOnly {
 		log.Info("clearing binary files only from the cache")
-		deleteCacheSubfolders(repos, "binary", cachePath)
+		deleteCacheSubfolders(fs, repos, "binary", cachePath)
 	} else {
 		return errors.New("'what? that's impossible! my logic is flawless!'")
 	}
@@ -88,62 +96,78 @@ func cleanCacheFolders() error {
 	return nil
 }
 
-func deleteAllCacheSubfolders(repos []string, cacheDirectory string) {
-	deleteCacheSubfolders(repos, "src", cacheDirectory)
-	deleteCacheSubfolders(repos, "binary", cacheDirectory)
+func deleteAllCacheSubfolders(fs afero.Fs, repos []string, cacheDirectory string) {
+	deleteCacheSubfolders(fs, repos, "src", cacheDirectory)
+	deleteCacheSubfolders(fs, repos, "binary", cacheDirectory)
 }
 
-func deleteCacheSubfolders(repos []string, subfolder string, cacheDirectory string) error {
+func deleteCacheSubfolders(fs afero.Fs, repos []string, subfolder string, cacheDirectory string) error {
 	var err error
 
+	//Filesystem object for the cache directory
 	cacheDirFsObject, err := fs.Open(cacheDirectory)
+	defer cacheDirFsObject.Close()
 	if err != nil {
 		return err
 	}
 
-	fileInfo, _ := cacheDirFsObject.Readdir(0)
-	repoFolderFsObjects := goutils.ListDirNames(fileInfo)
+	//File info object, I guess I needed this
+	cacheDirObject, _ := cacheDirFsObject.Readdir(0)
+	repoFolderNames := goutils.ListDirNames(cacheDirObject)
 
-	log.WithFields(log.Fields{
-		"repos argument": reposToClear,
-		"repos parsed":   sliceToString(repos),
-		"cache dir":      cacheDirectory,
-	}).Trace("cleaning cache")
-
-	if repos == nil || len(repos) == 0 || reposToClear == "ALL" {
-		for _, repoFolderFsObject := range repoFolderFsObjects {
+	if repos == nil || len(repos) == 0 {
+		for _, repoFolder := range repoFolderNames {
 			subfolderPath := filepath.Join(
 				cacheDirectory,
-				repoFolderFsObject,
+				repoFolder,
 				subfolder,
 			)
 			err = fs.RemoveAll(subfolderPath)
 			if err != nil {
 				log.Error(err)
 			}
+
+			absoluteRepoPath, _ := filepath.Abs(filepath.Join(cacheDirectory, repoFolder))
+			dirIsEmpty, _ := afero.IsEmpty(fs, absoluteRepoPath)
+			if dirIsEmpty {
+				err = fs.Remove(absoluteRepoPath)
+				if err != nil {
+					log.Error(err)
+				}
+			}
+
 		}
 	} else {
 		for _, repoToClear := range repos {
-			for _, repoFolderFsObject := range repoFolderFsObjects {
+			for _, repoFolder := range repoFolderNames {
 
-				if repoToClear == repoFolderFsObject {
+				if repoToClear == repoFolder {
 
 					subfolderPath := filepath.Join(
 						cacheDirectory,
-						repoFolderFsObject,
+						repoFolder,
 						subfolder,
 					)
 
 					log.WithFields(log.Fields{
-						"repoToClear":             repoToClear,
-						"repoFolderFsObject Name": repoFolderFsObject,
-						"subfolder":               subfolder,
-						"subfolder path":          subfolderPath,
+						"repoToClear":     repoToClear,
+						"repoFolder Name": repoFolder,
+						"subfolder":       subfolder,
+						"subfolder path":  subfolderPath,
 					}).Trace("match found")
 
 					err = fs.RemoveAll(subfolderPath)
 					if err != nil {
 						log.Error(err)
+					}
+
+					absoluteRepoPath, _ := filepath.Abs(filepath.Join(cacheDirectory, repoFolder))
+					dirIsEmpty, _ := afero.IsEmpty(fs, absoluteRepoPath)
+					if dirIsEmpty {
+						err = fs.Remove(absoluteRepoPath)
+						if err != nil {
+							log.Error(err)
+						}
 					}
 				}
 			}
