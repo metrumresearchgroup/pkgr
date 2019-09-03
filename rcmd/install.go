@@ -1,6 +1,7 @@
 package rcmd
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -70,7 +71,8 @@ func Install(
 	tbp string, // tarball path
 	args InstallArgs,
 	rs RSettings,
-	es ExecSettings) (CmdResult, error) {
+	es ExecSettings,
+	ir InstallRequest) (CmdResult, error) {
 	rdir := es.WorkDir
 	if rdir == "" {
 		rdir, _ = os.Getwd()
@@ -164,6 +166,9 @@ func Install(
 			}
 		}
 	} else {
+		// update DESCRIPTION file with pkgr metadata
+		writeDescriptionInfo(ir, args)
+
 		// success, exitCode should be 0 if go is ok
 		ws := cmd.ProcessState.Sys().(syscall.WaitStatus)
 		exitCode = ws.ExitStatus()
@@ -261,7 +266,8 @@ func InstallThroughBinary(
 			ir.Metadata.Path,
 			ir.InstallArgs,
 			ir.RSettings,
-			ir.ExecSettings)
+			ir.ExecSettings,
+			ir)
 		// don't pass binaryball path back since already in cache
 		return res, "", err
 	}
@@ -315,7 +321,8 @@ func InstallThroughBinary(
 		ir.Metadata.Path,
 		ir.InstallArgs,
 		ir.RSettings,
-		ir.ExecSettings)
+		ir.ExecSettings,
+		ir)
 	installPath := filepath.Join(tmpdir, ir.Package)
 	de, _ := afero.DirExists(fs, installPath)
 	if de {
@@ -355,7 +362,8 @@ func InstallThroughBinary(
 			binaryBall,
 			ib,
 			ir.RSettings,
-			ir.ExecSettings)
+			ir.ExecSettings,
+			ir)
 		return res, binaryBall, err
 	}
 	return res, "", err
@@ -434,6 +442,7 @@ func InstallPackagePlan(
 					os.Mkdir(bdir, 0777)
 					bpath := filepath.Join(
 						bdir,
+						rs.Version.ToString(),
 						filepath.Base(iu.BinaryPath),
 					)
 					_, err := goutils.Copy(iu.BinaryPath, bpath)
@@ -498,9 +507,58 @@ func InstallPackagePlan(
 			log.Errorf("did not install %s", pkg)
 		}
 	}
+
 	if anyFailed {
 		log.Errorf("installation failed for packages: %s", strings.Join(failedPkgs, ", "))
 		return fmt.Errorf("failed installation for packages: %s", strings.Join(failedPkgs, ", "))
 	}
 	return nil
+}
+
+func writeDescriptionInfo(ir InstallRequest, ia InstallArgs) {
+	_, err := updateDescriptionInfo(
+		filepath.Join(ia.Library, ir.Package, "DESCRIPTION"),
+		ir.ExecSettings.PkgrVersion,
+		ir.Metadata.Metadata.Config.Type.String(),
+		ir.Metadata.Metadata.Config.Repo.URL,
+		ir.Metadata.Metadata.Config.Repo.Name,
+		true)
+
+	if err != nil {
+		log.Warn(fmt.Sprintf("DESCRIPTION file error:%s", err))
+	}
+}
+
+func updateDescriptionInfo(filename, version, installType, repoURL, repo string, writeFile bool) ([]byte, error) {
+	var update []byte
+	fs := afero.NewOsFs()
+	file, err := fs.Open(filename)
+
+	if err == nil {
+		defer file.Close()
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if len(strings.Trim(line, " ")) == 0 {
+				continue
+			}
+			if strings.Contains(line, string("Repository:")) && !strings.Contains(line, repo) {
+				line = line + " " + repo
+			}
+			update = append(update, []byte(line)...)
+			update = append(update, []byte("\n")...)
+		}
+		update = append(update, []byte("PkgrVersion: "+version+"\n")...)
+		update = append(update, []byte("PkgrInstallType: "+installType+"\n")...)
+		update = append(update, []byte("PkgrRepositoryURL: "+repoURL+"\n")...)
+
+		if writeFile {
+			fi, _ := os.Stat(filename)
+			err = afero.WriteFile(fs, filename, update, fi.Mode())
+			if err != nil {
+				log.Warn(fmt.Sprintf("Error updating DESCRIPTION file:%s", err))
+			}
+		}
+	}
+	return update, err
 }

@@ -83,21 +83,16 @@ func removePackageDatabases(pkgdbsToClear []string, cfg configlib.PkgrConfig) er
 	var lastErr error
 
 	rs := rcmd.NewRSettings(cfg.RPath)
-	rVersion := rcmd.GetRVersion(&rs)
 
-	pkgNexus, _ := planInstall(rVersion)
+	pkgNexus, _, _ := planInstall(rs.Version, false)
 	repoDatabases := pkgNexus.Db
 
 	for _, dbToClear := range pkgdbsToClear {
 		for _, repoDatabase := range repoDatabases {
 			if repoDatabase.Repo.Name == dbToClear {
 				log.WithField("dbToClear", dbToClear).Trace("clearing pkgdb from cache")
-				rs := rcmd.NewRSettings(cfg.RPath)
-				rVersion := rcmd.GetRVersion(&rs)
-				filepathToRemove := repoDatabase.GetRepoDbCacheFilePath(rVersion.ToFullString())
-
+				filepathToRemove := repoDatabase.GetRepoDbCacheFilePath(rs.Version.ToFullString())
 				_, err = fs.Stat(filepathToRemove)
-
 				if err != nil {
 					lastErr = err
 					log.WithField("file", filepathToRemove).Warn("could not find file for removal")

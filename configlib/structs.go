@@ -8,6 +8,9 @@ type PkgConfig struct {
 	Type     string            `yaml:"Type,omitempty"`
 }
 
+// PkgSettingsMap ...
+type PkgSettingsMap map[string]PkgConfig
+
 // RepoConfig provides information about custom repository settings
 type RepoConfig struct {
 	//Suggests bool
@@ -28,6 +31,11 @@ type Customizations struct {
 	Repos    map[string]RepoConfig `yaml:"Repos,omitempty"`
 }
 
+// Lockfile struct hold values for packrat lockfile support
+type Lockfile struct {
+	Type string `yaml:"Type,omitempty"`
+}
+
 // PkgrConfig provides a struct for all pkgr related configuration
 type PkgrConfig struct {
 	Version        int                 `yaml:"Version,omitempty"`
@@ -42,4 +50,5 @@ type PkgrConfig struct {
 	Cache          string              `yaml:"Cache,omitempty"`
 	Logging        LogConfig           `yaml:"Logging,omitempty"`
 	Update         bool                `yaml:"Update,omitempty"`
+	Lockfile       Lockfile            `yaml:"Lockfile,omitempty"`
 }

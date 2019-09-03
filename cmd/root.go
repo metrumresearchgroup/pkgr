@@ -27,8 +27,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-// VERSION is the current pkc version
-var VERSION = "0.4.0-alpha"
+// VERSION is the current pkgr version
+var VERSION = "0.5.0-rc.1"
 
 var fs afero.Fs
 var cfg configlib.PkgrConfig
@@ -105,7 +105,7 @@ func initConfig() {
 	if viper.GetBool("debug") {
 		viper.Debug()
 	}
-	_ = viper.Unmarshal(&cfg)
+	configlib.NewConfig(&cfg)
 
 	configFilePath, _ := filepath.Abs(viper.ConfigFileUsed())
 	cwd, _ := os.Getwd()

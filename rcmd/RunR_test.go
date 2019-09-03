@@ -25,14 +25,12 @@ func TestRunRBatch(t *testing.T) {
 			name: "Test R Version",
 			args: args{
 				fs: afero.NewOsFs(),
-				rs: RSettings{
-					Rpath: "/usr/local/bin/R",
-				},
+				rs: NewRSettings(""),
 				cmdArgs: []string{
 					"--version",
 				},
 			},
-			want: []byte(`R version 3.5.3 (2019-03-11) -- "Great Truth"
+			want: []byte(`R version 3.6.0 (2019-04-26) -- "Planting of a Tree"
 Copyright (C) 2019 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin15.6.0 (64-bit)
 
@@ -40,7 +38,7 @@ R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under the terms of the
 GNU General Public License versions 2 or 3.
 For more information about these matters see
-http://www.gnu.org/licenses/.
+https://www.gnu.org/licenses/.
 
 `),
 			wantErr: false,

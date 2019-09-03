@@ -17,6 +17,8 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/metrumresearchgroup/pkgr/rollback"
+
 	"github.com/metrumresearchgroup/pkgr/desc"
 	"github.com/metrumresearchgroup/pkgr/pacman"
 
@@ -34,6 +36,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	funk "github.com/thoas/go-funk"
 )
 
 // planCmd shows the install plan
@@ -57,8 +60,8 @@ func plan(cmd *cobra.Command, args []string) error {
 	rs := rcmd.NewRSettings(cfg.RPath)
 	rVersion := rcmd.GetRVersion(&rs)
 	log.Infoln("R Version " + rVersion.ToFullString())
-	log.Infoln("OS Platform " + rs.Platform)
-	_, ip := planInstall(rVersion)
+	log.Debugln("OS Platform " + rs.Platform)
+	_, ip, _ := planInstall(rVersion, true)
 	if viper.GetBool("show-deps") {
 		for pkg, deps := range ip.DepDb {
 			fmt.Println("-----------  ", pkg, "   ------------")
@@ -68,12 +71,21 @@ func plan(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
+func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.InstallPlan, rollback.RollbackPlan) {
 	startTime := time.Now()
 
 	installedPackages := pacman.GetPriorInstalledPackages(fs, cfg.Library)
+	installedPackageNames := extractNamesFromDesc(installedPackages)
 	log.WithField("count", len(installedPackages)).Info("found installed packages")
+	whereInstalledFrom := pacman.GetInstallers(installedPackages)
 
+	notPkgr := whereInstalledFrom.NotFromPkgr()
+	if len(notPkgr) > 0 {
+		// TODO: should this say "prior installed packages" not ...
+		log.WithFields(log.Fields{
+			"packages": notPkgr,
+		}).Warn("Packages not installed by pkgr")
+	}
 	var repos []cran.RepoURL
 	for _, r := range cfg.Repos {
 		for nm, url := range r {
@@ -94,52 +106,13 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 	if err != nil {
 		log.Panicln("error getting pkgdb ", err)
 	}
-	log.Infoln("Default package type: ", st.String())
+	log.Infoln("Default package installation type: ", st.String())
 	for _, db := range pkgNexus.Db {
 		log.Infoln(fmt.Sprintf("%v:%v (binary:source) packages available in for %s from %s", len(db.DescriptionsBySourceType[st]), len(db.DescriptionsBySourceType[cran.Source]), db.Repo.Name, db.Repo.URL))
 	}
 
 	dependencyConfigurations := gpsr.NewDefaultInstallDeps()
-
-	if cfg.Suggests {
-		for _, pkg := range cfg.Packages {
-			// set all top level packages to install suggests
-			dp := dependencyConfigurations.Default
-			dp.Suggests = true
-			dependencyConfigurations.Deps[pkg] = dp
-		}
-	}
-	if viper.Sub("Customizations") != nil && viper.Sub("Customizations").AllSettings()["packages"] != nil {
-
-		pkgSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
-		//repoSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
-
-		for pkg, v := range cfg.Customizations.Packages {
-			if configlib.IsCustomizationSet("Suggests", pkgSettings, pkg) {
-				pkgDepTypes := dependencyConfigurations.Default
-				pkgDepTypes.Suggests = v.Suggests
-				dependencyConfigurations.Deps[pkg] = pkgDepTypes
-			}
-			if configlib.IsCustomizationSet("Repo", pkgSettings, pkg) {
-				err := pkgNexus.SetPackageRepo(pkg, v.Repo)
-				if err != nil {
-					log.WithFields(log.Fields{
-						"pkg":  pkg,
-						"repo": v.Repo,
-					}).Fatal("error finding custom repo to set")
-				}
-			}
-			if configlib.IsCustomizationSet("Type", pkgSettings, pkg) {
-				err := pkgNexus.SetPackageType(pkg, v.Type)
-				if err != nil {
-					log.WithFields(log.Fields{
-						"pkg":  pkg,
-						"repo": v.Repo,
-					}).Fatal("error finding custom repo to set")
-				}
-			}
-		}
-	}
+	configlib.SetPlanCustomizations(cfg, dependencyConfigurations, pkgNexus)
 
 	availableUserPackages := pkgNexus.GetPackages(cfg.Packages)
 	if len(availableUserPackages.Missing) > 0 {
@@ -157,24 +130,24 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 		for _, mp := range availableUserPackages.Missing {
 			log.Warnln("did you mean one of: ", model.Suggestions(mp, false))
 		}
-		os.Exit(1)
+		if exitOnMissing {
+			os.Exit(1)
+		} else {
+			return pkgNexus, gpsr.InstallPlan{}, rollback.RollbackPlan{}
+		}
 	}
 	logUserPackageRepos(availableUserPackages.Packages)
-	installPlan, err := gpsr.ResolveInstallationReqs(cfg.Packages, dependencyConfigurations, pkgNexus)
+	installPlan, err := gpsr.ResolveInstallationReqs(cfg.Packages, installedPackages, dependencyConfigurations, pkgNexus)
+	rollbackPlan := rollback.CreateRollbackPlan(cfg.Library, installPlan, installedPackages)
+
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
 	}
 	logDependencyRepos(installPlan.PackageDownloads)
 
-	pkgs := installPlan.StartingPackages
-	for pkg := range installPlan.DepDb {
-		pkgs = append(pkgs, pkg)
-	}
+	pkgs := installPlan.GetAllPackages()
 
-	installedPackageNames := getInstalledPackageNames(installedPackages)
-
-	installPlan.OutdatedPackages = pacman.GetOutdatedPackages(installedPackages, pkgNexus.GetPackages(installedPackageNames).Packages)
 	pkgsToUpdateCount := 0
 	for _, p := range installPlan.OutdatedPackages {
 		updateLogFields := log.Fields{
@@ -191,28 +164,48 @@ func planInstall(rv cran.RVersion) (*cran.PkgNexus, gpsr.InstallPlan) {
 
 	}
 
-	totalPackagesRequired := len(installPlan.StartingPackages) + len(installPlan.DepDb)
+	totalPackagesRequired := len(pkgs)
+	toInstall := totalPackagesRequired - len(whereInstalledFrom.FromPkgr())
 	log.WithFields(log.Fields{
 		"total_packages_required": totalPackagesRequired,
 		"installed":               len(installedPackages),
 		"outdated":                len(installPlan.OutdatedPackages),
+		"not_from_pkgr":           len(whereInstalledFrom.NotFromPkgr()),
 	}).Info("package installation status")
 
+	installSources := make(map[string]int)
+	for _, pkgdl := range installPlan.PackageDownloads {
+		_, rn := pkgdl.PkgAndRepoNames()
+		installSources[rn]++
+	}
+	fields := make(log.Fields)
+	for k, v := range installSources {
+		fields[k] = v
+	}
+	log.WithFields(fields).Info("package installation sources")
+
 	log.WithFields(log.Fields{
-		"to_install": totalPackagesRequired - len(installedPackages),
+		"to_install": toInstall,
 		"to_update":  pkgsToUpdateCount,
-	}).Info("package installation targets")
+	}).Info("package installation plan")
+
+	if toInstall > 0 && toInstall != totalPackagesRequired {
+		// log which packages to install, but only if doing an incremental install
+		for _, pn := range pkgs {
+			if !funk.ContainsString(installedPackageNames, pn) {
+				pkgDesc, cfg, _ := pkgNexus.GetPackage(pn)
+				log.WithFields(log.Fields{
+					"package": pkgDesc.Package,
+					"version": pkgDesc.Version,
+					"repo":    cfg.Repo.Name,
+					"type":    cfg.Type,
+				}).Info("to install")
+			}
+		}
+	}
 
 	log.Infoln("resolution time", time.Since(startTime))
-	return pkgNexus, installPlan
-}
-
-func getInstalledPackageNames(installedPackages map[string]desc.Desc) []string {
-	var installedPackageNames []string
-	for key := range installedPackages {
-		installedPackageNames = append(installedPackageNames, key)
-	}
-	return installedPackageNames
+	return pkgNexus, installPlan, rollbackPlan
 }
 
 func logUserPackageRepos(packageDownloads []cran.PkgDl) {
@@ -223,7 +216,7 @@ func logUserPackageRepos(packageDownloads []cran.PkgDl) {
 			"type":         pkg.Config.Type,
 			"version":      pkg.Package.Version,
 			"relationship": "user package",
-		}).Info("package repository set")
+		}).Debug("package repository set")
 	}
 }
 
@@ -241,4 +234,12 @@ func logDependencyRepos(dependencyDownloads []cran.PkgDl) {
 			}).Debug("package repository set")
 		}
 	}
+}
+
+func extractNamesFromDesc(installedPackages map[string]desc.Desc) []string {
+	var installedPackageNames []string
+	for key := range installedPackages {
+		installedPackageNames = append(installedPackageNames, key)
+	}
+	return installedPackageNames
 }

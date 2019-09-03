@@ -20,6 +20,7 @@ import (
 	"github.com/metrumresearchgroup/pkgr/logger"
 
 	"github.com/metrumresearchgroup/pkgr/gpsr"
+	"github.com/metrumresearchgroup/pkgr/pacman"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
 	"github.com/spf13/cobra"
 	"github.com/xlab/treeprint"
@@ -39,6 +40,7 @@ var reverse bool
 var showDeps bool
 var toJSON bool
 var tree bool
+var installedFrom bool
 
 func recurseDeps(pkg string, ddb gpsr.InstallPlan, t treeprint.Tree) {
 	pkgDeps := ddb.DepDb[pkg]
@@ -58,9 +60,15 @@ func inspect(cmd *cobra.Command, args []string) error {
 		// this should suppress all logging from the planning
 		logger.SetLogLevel("fatal")
 	}
+
+	if installedFrom {
+		printInstalledFromPackages()
+		return nil
+	}
+
 	rs := rcmd.NewRSettings(cfg.RPath)
 	rVersion := rcmd.GetRVersion(&rs)
-	_, ip := planInstall(rVersion)
+	_, ip, _ := planInstall(rVersion, true)
 	if showDeps {
 		var allDeps map[string][]string
 		keepDeps := make(map[string][]string)
@@ -94,11 +102,16 @@ func printDeps(deps map[string][]string, tree bool, ip gpsr.InstallPlan) {
 	}
 }
 
+func printInstalledFromPackages() {
+	prettyPrint(pacman.GetPackagesByInstalledFrom(fs, cfg.Library))
+}
+
 func init() {
 	inspectCmd.Flags().BoolVar(&showDeps, "deps", false, "show dependency tree")
 	inspectCmd.Flags().BoolVar(&reverse, "reverse", false, "show reverse dependencies")
 	inspectCmd.Flags().BoolVar(&tree, "tree", false, "show full recursive dependency tree")
 	inspectCmd.Flags().BoolVar(&toJSON, "json", false, "output as clean json")
+	inspectCmd.Flags().BoolVar(&installedFrom, "installed-from", false, "show package installation source")
 
 	RootCmd.AddCommand(inspectCmd)
 }

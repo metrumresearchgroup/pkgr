@@ -8,11 +8,11 @@ import (
 	"github.com/dpastoor/goutils"
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/desc"
-	"github.com/metrumresearchgroup/pkgr/gpsr"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
 
+// GetPriorInstalledPackages ...
 func GetPriorInstalledPackages(fileSystem afero.Fs, libraryPath string) map[string]desc.Desc {
 	installed := make(map[string]desc.Desc)
 	installedLibrary, err := fileSystem.Open(libraryPath)
@@ -47,6 +47,43 @@ func GetPriorInstalledPackages(fileSystem afero.Fs, libraryPath string) map[stri
 	return installed
 }
 
+// GetInstallers returns the installers for the installed packages
+func GetInstallers(ip map[string]desc.Desc) InstalledFromPkgs {
+	var pkgr, packrat, unknown []string
+	for k, v := range ip {
+		if v.PkgrVersion == "" {
+			packrat = append(packrat, k)
+		} else {
+			pkgr = append(pkgr, k)
+		}
+	}
+	return InstalledFromPkgs{
+		Pkgr:    pkgr,
+		Packrat: packrat,
+		Unknown: unknown,
+	}
+
+}
+
+// GetPackagesByInstalledFrom returns InstalledFromPkgs structure
+// single location where business rule of "not pkgr" is applied
+func GetPackagesByInstalledFrom(fileSystem afero.Fs, libraryPath string) InstalledFromPkgs {
+	var pkgr, packrat, unknown []string
+	ip := GetPriorInstalledPackages(fileSystem, libraryPath)
+	for k, v := range ip {
+		if v.PkgrVersion == "" {
+			packrat = append(packrat, k)
+		} else {
+			pkgr = append(pkgr, k)
+		}
+	}
+	return InstalledFromPkgs{
+		Pkgr:    pkgr,
+		Packrat: packrat,
+		Unknown: unknown,
+	}
+}
+
 func scanInstalledPackage(
 	descriptionFilePath string, fileSystem afero.Fs) (desc.Desc, error) {
 
@@ -71,8 +108,9 @@ func scanInstalledPackage(
 	return installedPackage, nil
 }
 
-func GetOutdatedPackages(installed map[string]desc.Desc, availablePackages []cran.PkgDl) []gpsr.OutdatedPackage {
-	var outdatedPackages []gpsr.OutdatedPackage
+// GetOutdatedPackages returns a list of outdated packages
+func GetOutdatedPackages(installed map[string]desc.Desc, availablePackages []cran.PkgDl) []cran.OutdatedPackage {
+	var outdatedPackages []cran.OutdatedPackage
 
 	for _, pkgDl := range availablePackages {
 
@@ -83,7 +121,7 @@ func GetOutdatedPackages(installed map[string]desc.Desc, availablePackages []cra
 
 			// If available version is later than currently installed version
 			if desc.CompareVersionStrings(availableVersion, installedPkg.Version) > 0 {
-				outdatedPackages = append(outdatedPackages, gpsr.OutdatedPackage{
+				outdatedPackages = append(outdatedPackages, cran.OutdatedPackage{
 					Package:    pkgName,
 					OldVersion: installed[pkgName].Version,
 					NewVersion: pkgDl.Package.Version,
@@ -94,7 +132,8 @@ func GetOutdatedPackages(installed map[string]desc.Desc, availablePackages []cra
 	return outdatedPackages
 }
 
-func PreparePackagesForUpdate(fileSystem afero.Fs, libraryPath string, outdatedPackages []gpsr.OutdatedPackage) []UpdateAttempt {
+// PreparePackagesForUpdate ...
+func PreparePackagesForUpdate(fileSystem afero.Fs, libraryPath string, outdatedPackages []cran.OutdatedPackage) []UpdateAttempt {
 	var updateAttempts []UpdateAttempt
 
 	//Tag each outdated pkg directory in library with "__OLD__"
@@ -105,11 +144,12 @@ func PreparePackagesForUpdate(fileSystem afero.Fs, libraryPath string, outdatedP
 	return updateAttempts
 }
 
-func tagOldInstallation(fileSystem afero.Fs, libraryPath string, outdatedPackage gpsr.OutdatedPackage) UpdateAttempt {
+func tagOldInstallation(fileSystem afero.Fs, libraryPath string, outdatedPackage cran.OutdatedPackage) UpdateAttempt {
 	packageDir := filepath.Join(libraryPath, outdatedPackage.Package)
 	taggedPackageDir := filepath.Join(libraryPath, "__OLD__"+outdatedPackage.Package)
 
-	err := RenameDirRecursive(fileSystem, packageDir, taggedPackageDir)
+	err := fileSystem.Rename(packageDir, taggedPackageDir)
+	//err := RenameDirRecursive(fileSystem, packageDir, taggedPackageDir)
 
 	if err != nil {
 		log.WithField("package dir", packageDir).Warn("error when backing up outdated package")
@@ -125,109 +165,101 @@ func tagOldInstallation(fileSystem afero.Fs, libraryPath string, outdatedPackage
 	}
 }
 
-func RestoreUnupdatedPackages(fileSystem afero.Fs, packageBackupInfo []UpdateAttempt) {
-
+func CleanUpdateBackups(fileSystem afero.Fs, packageBackupInfo []UpdateAttempt) error {
 	if len(packageBackupInfo) == 0 {
-		return
+		log.Debug("Not update-packages to restore.")
+		return nil
 	}
-
-	//libraryDirectoryFsObject, _ := fs.Open(libraryPath)
-	//packageFolderObjects, _ := libraryDirectoryFsObject.Readdir(0)
 
 	for _, info := range packageBackupInfo {
-		_, err := fileSystem.Stat(info.ActivePackageDirectory) //Checking existence
-		if err == nil {
 
-			fileSystem.RemoveAll(info.BackupPackageDirectory)
-
-			log.WithFields(log.Fields{
-				"pkg":         info.Package,
-				"old_version": info.OldVersion,
-				"new_version": info.NewVersion,
-			}).Info("successfully updated package")
-
-		} else {
-			log.WithFields(log.Fields{
-				"pkg":         info.Package,
-				"old_version": info.OldVersion,
-				"new_version": info.NewVersion,
-			}).Warn("could not update package, restoring last-installed version")
-			err := RenameDirRecursive(fileSystem, info.BackupPackageDirectory, info.ActivePackageDirectory)
-			if err != nil {
-				log.WithField("pkg", info.Package).Error(err)
+		backupExists, _ := afero.Exists(fileSystem, info.BackupPackageDirectory)
+		//_, err1 := fileSystem.Stat(info.BackupPackageDirectory) // Checking existence
+		if backupExists {
+			err1 := fileSystem.RemoveAll(info.BackupPackageDirectory)
+			if err1 != nil {
+				log.WithFields(log.Fields{
+					"package":           info.Package,
+					"problem_directory": info.BackupPackageDirectory,
+				}).Warn("could not delete directory during cleanup")
+				return err1
 			}
 		}
-	}
-}
-
-func RenameDirRecursive(fileSystem afero.Fs, oldPath string, newPath string) error {
-	err := CopyDir(fileSystem, oldPath, newPath)
-
-	if err != nil {
-		return err
-	}
-
-	err = fileSystem.RemoveAll(oldPath)
-	if err != nil {
-		return err
 	}
 
 	return nil
 }
 
-//TODO: Move into goutils.
-func CopyDir(fs afero.Fs, src string, dst string) error {
+func RollbackUpdatePackages(fileSystem afero.Fs, packageBackupInfo []UpdateAttempt) error {
 
-	err := fs.MkdirAll(dst, 0755)
-	if err != nil {
-		return err
+	if len(packageBackupInfo) == 0 {
+		log.Debug("Not update-packages to restore.")
+		return nil
 	}
 
-	openedDir, err := fs.Open(src)
-	if err != nil {
-		return err
-	}
+	for _, info := range packageBackupInfo {
 
-	directoryContents, err := openedDir.Readdir(0)
+		log.WithFields(log.Fields{
+			"pkg":         info.Package,
+			"rolling back to": info.OldVersion,
+			"failed to update to": info.NewVersion,
+		}).Warn("did not update package, restoring last-installed version")
 
-	if err != nil {
-		return err
-	}
-
-	for _, item := range directoryContents {
-		srcSubPath := filepath.Join(src, item.Name())
-		dstSubPath := filepath.Join(dst, item.Name())
-		if item.IsDir() {
-			fs.Mkdir(dstSubPath, item.Mode())
-			err := CopyDir(fs, srcSubPath, dstSubPath)
-			if err != nil {
-				return err
-			}
-		} else {
-			_, err := goutils.CopyFS(fs, srcSubPath, dstSubPath)
-			if err != nil {
-				fmt.Print("Received error: ")
-				fmt.Println(err)
-				return err
+		_, err1 := fileSystem.Stat(info.ActivePackageDirectory) // Checking existence
+		if err1 == nil {
+			err1 = fileSystem.RemoveAll(info.ActivePackageDirectory)
+			if err1 != nil {
+				log.WithFields(log.Fields{
+					"package": info.Package,
+					"problem_directory": info.ActivePackageDirectory,
+				}).Warn("could not delete directory during package rollback")
+				return err1
 			}
 		}
+
+		err2 := fileSystem.Rename(info.BackupPackageDirectory, info.ActivePackageDirectory)
+
+		if err2 != nil {
+			log.WithFields(log.Fields{
+				"pkg":         info.Package,
+			}).Warn("could not rollback package -- package will need reinstallation.")
+			return err2
+		}
+
 	}
+
 	return nil
 }
 
-func stringInSlice(s string, slice []string) bool {
-	for _, entry := range slice {
-		if s == entry {
-			return true
-		}
-	}
-	return false
-}
-
+// UpdateAttempt ...
 type UpdateAttempt struct {
 	Package                string
 	ActivePackageDirectory string
 	BackupPackageDirectory string
 	OldVersion             string
 	NewVersion             string
+}
+
+// InstalledFromPkgs ...
+type InstalledFromPkgs struct {
+	Pkgr    []string `json:"pkgr"`
+	Packrat []string `json:"packrat"`
+	Unknown []string `json:"unknown"`
+}
+
+// NotPkgr returns a list of packages not installed by Pkgr
+func (ip *InstalledFromPkgs) NotFromPkgr() []string {
+	var list []string
+	for _, p := range ip.Packrat {
+		list = append(list, p)
+	}
+	for _, p := range ip.Unknown {
+		list = append(list, p)
+	}
+	return list
+}
+
+// IsPkgr returns a list of packages installed by Pkgr
+func (ip *InstalledFromPkgs) FromPkgr() []string {
+	return ip.Pkgr
 }

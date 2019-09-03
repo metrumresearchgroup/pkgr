@@ -7,11 +7,49 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/metrumresearchgroup/pkgr/cran"
+	"github.com/metrumresearchgroup/pkgr/gpsr"
+	"github.com/metrumresearchgroup/pkgr/rcmd"
 	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 )
+
+// packrat uses R.version platform, which is not the same as the Platform
+// as printed in R --version, at least on windows
+func packratPlatform(p string) string {
+	switch p {
+	case "x86_64-w64-mingw32/x64":
+		return "x86_64-w64-mingw32"
+	default:
+		return p
+	}
+}
+
+// NewConfig initialize a PkgrConfig passed in by caller
+func NewConfig(cfg *PkgrConfig) {
+	_ = viper.Unmarshal(cfg)
+	if len(cfg.Library) == 0 {
+		rs := rcmd.NewRSettings(cfg.RPath)
+		rVersion := rcmd.GetRVersion(&rs)
+		cfg.Library = getLibraryPath(cfg.Lockfile.Type, cfg.RPath, rVersion, rs.Platform, cfg.Library)
+	}
+	return
+}
+
+func getLibraryPath(lockfileType string, rpath string, rversion cran.RVersion, platform string, library string) string {
+	switch lockfileType {
+	case "packrat":
+		library = filepath.Join("packrat", "lib", packratPlatform(platform), rversion.ToFullString())
+	case "renv":
+		s := fmt.Sprintf("R-%s", rversion.ToString())
+		library = filepath.Join("renv", "library", s, packratPlatform(platform))
+	case "pkgr":
+	default:
+	}
+	return library
+}
 
 // LoadConfigFromPath loads pkc configuration into the global Viper
 func LoadConfigFromPath(configFilename string) error {
@@ -23,13 +61,16 @@ func LoadConfigFromPath(configFilename string) error {
 	configFilename, _ = homedir.Expand(filepath.Clean(configFilename))
 	viper.SetConfigFile(configFilename)
 	b, err := ioutil.ReadFile(configFilename)
-	expb := []byte(os.ExpandEnv(string(b)))
-	err = viper.ReadConfig(bytes.NewReader(expb))
+	// panic if can't find or parse config as this could be explicit to user expectations
 	if err != nil {
 		// panic if can't find or parse config as this could be explicit to user expectations
 		if _, ok := err.(*os.PathError); ok {
 			panic(fmt.Errorf("could not find a config file at path: %s", configFilename))
 		}
+	}
+	expb := []byte(os.ExpandEnv(string(b)))
+	err = viper.ReadConfig(bytes.NewReader(expb))
+	if err != nil {
 		if _, ok := err.(viper.ConfigParseError); ok {
 			// found config file but couldn't parse it, should error
 			panic(fmt.Errorf("unable to parse config file with error (%s)", err))
@@ -163,4 +204,65 @@ func remove(ymlfile string, packageName string) error {
 		return err
 	}
 	return nil
+}
+
+// SetCustomizations ... set ENV values in Rsettings
+func SetCustomizations(rSettings rcmd.RSettings, cfg PkgrConfig) rcmd.RSettings {
+	pkgCustomizations := cfg.Customizations.Packages
+	for n, v := range pkgCustomizations {
+		if v.Env != nil {
+			rSettings.PkgEnvVars[n] = v.Env
+		}
+	}
+	return rSettings
+}
+
+// SetPlanCustomizations ...
+func SetPlanCustomizations(cfg PkgrConfig, dependencyConfigurations gpsr.InstallDeps, pkgNexus *cran.PkgNexus) {
+
+	setCfgCustomizations(cfg, &dependencyConfigurations)
+
+	if viper.Sub("Customizations") != nil && viper.Sub("Customizations").AllSettings()["packages"] != nil {
+		pkgSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
+		setViperCustomizations(cfg, pkgSettings, dependencyConfigurations, pkgNexus)
+	}
+}
+
+func setCfgCustomizations(cfg PkgrConfig, dependencyConfigurations *gpsr.InstallDeps) {
+	if cfg.Suggests {
+		for _, pkg := range cfg.Packages {
+			// set all top level packages to install suggests
+			dp := dependencyConfigurations.Default
+			dp.Suggests = true
+			dependencyConfigurations.Deps[pkg] = dp
+		}
+	}
+}
+
+func setViperCustomizations(cfg PkgrConfig, pkgSettings []interface{}, dependencyConfigurations gpsr.InstallDeps, pkgNexus *cran.PkgNexus) {
+	for pkg, v := range cfg.Customizations.Packages {
+		if IsCustomizationSet("Suggests", pkgSettings, pkg) {
+			pkgDepTypes := dependencyConfigurations.Default
+			pkgDepTypes.Suggests = v.Suggests
+			dependencyConfigurations.Deps[pkg] = pkgDepTypes
+		}
+		if IsCustomizationSet("Repo", pkgSettings, pkg) {
+			err := pkgNexus.SetPackageRepo(pkg, v.Repo)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"pkg":  pkg,
+					"repo": v.Repo,
+				}).Fatal("error finding custom repo to set")
+			}
+		}
+		if IsCustomizationSet("Type", pkgSettings, pkg) {
+			err := pkgNexus.SetPackageType(pkg, v.Type)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"pkg":  pkg,
+					"repo": v.Repo,
+				}).Fatal("error finding custom repo to set")
+			}
+		}
+	}
 }

@@ -1,12 +1,12 @@
 package pacman
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/dpastoor/goutils"
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/desc"
-	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/suite"
 )
@@ -14,10 +14,15 @@ import (
 type UtilsTestSuite struct {
 	suite.Suite
 	FileSystem afero.Fs
+	FileSystemOs afero.Fs
+	FilePrefix string
 }
 
 func (suite *UtilsTestSuite) SetupTest() {
 	suite.FileSystem = afero.NewMemMapFs()
+	suite.FileSystemOs = afero.NewOsFs()
+	suite.FileSystem.MkdirAll("testsite/working", 0755)
+	suite.FilePrefix = "testsite/working"
 }
 
 func (suite *UtilsTestSuite) TearDownTest() {
@@ -29,106 +34,55 @@ func TestUtilsTestSuite(t *testing.T) {
 	suite.Run(t, new(UtilsTestSuite))
 }
 
-func (suite *UtilsTestSuite) TestTagOldInstallation_CreatesBackup() {
-	_ = suite.FileSystem.MkdirAll("test-library/CatsAndOranges", 0755)
-	_, _ = suite.FileSystem.Create("test-library/CatsAndOranges/DESCRIPTION")
+// Have to use an OS filesystem for this because of this issue: https://github.com/spf13/afero/issues/141
+func (suite *UtilsTestSuite) TestRollbackUpdatePackages_RestoresWhenNoActiveInstallation() {
 
-	outdatedPackageFixture := gpsr.OutdatedPackage{
-		Package:    "CatsAndOranges",
-		NewVersion: "2",
-		OldVersion: "1",
-	}
-
-	tagOldInstallation(suite.FileSystem, "test-library", outdatedPackageFixture)
-
-	suite.True(afero.DirExists(suite.FileSystem, "test-library/__OLD__CatsAndOranges"))
-	suite.True(afero.Exists(suite.FileSystem, "test-library/__OLD__CatsAndOranges/DESCRIPTION"))
-	suite.False(afero.DirExists(suite.FileSystem, "test-library/CatsAndOranges"))
-	suite.False(afero.Exists(suite.FileSystem, "test-library/CatsAndOranges/DESCRIPTION"))
-}
-
-func (suite *UtilsTestSuite) TestRestoreUnupdatedPackages_RestoresWhenNoActiveInstallation() {
-	_ = suite.FileSystem.MkdirAll("test-library/__OLD__CatsAndOranges", 0755)
-	_, _ = suite.FileSystem.Create("test-library/__OLD__CatsAndOranges/DESCRIPTION")
+	_ = suite.FileSystemOs.MkdirAll(filepath.Join(suite.FilePrefix, "test-library", "__OLD__CatsAndOranges"), 0755)
+	_, _ = suite.FileSystemOs.Create(filepath.Join(suite.FilePrefix, "test-library", "__OLD__CatsAndOranges", "DESCRIPTION"))
 
 	updateAttemptFixture := []UpdateAttempt{
 		UpdateAttempt{
 			Package:                "CatsAndOranges",
-			BackupPackageDirectory: "test-library/__OLD__CatsAndOranges",
-			ActivePackageDirectory: "test-library/CatsAndOranges",
+			BackupPackageDirectory: filepath.Join(suite.FilePrefix, "test-library", "__OLD__CatsAndOranges"),
+			ActivePackageDirectory: filepath.Join(suite.FilePrefix, "test-library", "CatsAndOranges"),
 			NewVersion:             "2",
 			OldVersion:             "1",
 		},
 	}
-	restoreUnupdatedPackages(suite.FileSystem, updateAttemptFixture)
+	RollbackUpdatePackages(suite.FileSystemOs, updateAttemptFixture)
 
-	suite.True(afero.DirExists(suite.FileSystem, "test-library/CatsAndOranges"))
-	suite.True(afero.Exists(suite.FileSystem, "test-library/CatsAndOranges/DESCRIPTION"))
-	suite.False(afero.DirExists(suite.FileSystem, "test-library/__OLD__CatsAndOranges"))
-	suite.False(afero.Exists(suite.FileSystem, "test-library/__OLD__CatsAndOranges/DESCRIPTION"))
+	suite.True(afero.DirExists(suite.FileSystemOs, filepath.Join(suite.FilePrefix, "test-library", "CatsAndOranges")))
+	suite.True(afero.Exists(suite.FileSystemOs, filepath.Join(suite.FilePrefix, "test-library", "CatsAndOranges", "DESCRIPTION")))
+	suite.False(afero.DirExists(suite.FileSystemOs, filepath.Join(suite.FilePrefix, "test-library", "__OLD__CatsAndOranges")))
+	suite.False(afero.Exists(suite.FileSystemOs, filepath.Join(suite.FilePrefix, "test-library" ,"__OLD__CatsAndOranges","DESCRIPTION")))
 
 }
 
-func (suite *UtilsTestSuite) TestRestoreUnupdatedPackages_DoesNotRestoreWhenProperlyInstalled() {
-	_ = suite.FileSystem.MkdirAll("test-library/__OLD__CatsAndOranges", 0755)
-	_, _ = suite.FileSystem.Create("test-library/__OLD__CatsAndOranges/DESCRIPTION_OLD")
-	_ = suite.FileSystem.MkdirAll("test-library/CatsAndOranges", 0755)
-	_, _ = suite.FileSystem.Create("test-library/CatsAndOranges/DESCRIPTION")
+// Have to use an OS filesystem for this because of this issue: https://github.com/spf13/afero/issues/141
+func (suite *UtilsTestSuite) TestRollbackUpdatePackages_OverwritesFreshInstallation() {
+
+	_ = suite.FileSystemOs.MkdirAll(filepath.Join(suite.FilePrefix, "test-library", "CatsAndOranges"), 0755)
+	_, _ = suite.FileSystemOs.Create(filepath.Join(suite.FilePrefix, "test-library", "CatsAndOranges", "DESCRIPTION_New"))
+	_ = suite.FileSystemOs.MkdirAll(filepath.Join(suite.FilePrefix, "test-library", "__OLD__CatsAndOranges"), 0755)
+	_, _ = suite.FileSystemOs.Create(filepath.Join(suite.FilePrefix, "test-library", "__OLD__CatsAndOranges", "DESCRIPTION"))
 
 	updateAttemptFixture := []UpdateAttempt{
 		UpdateAttempt{
 			Package:                "CatsAndOranges",
-			BackupPackageDirectory: "test-library/__OLD__CatsAndOranges",
-			ActivePackageDirectory: "test-library/CatsAndOranges",
+			BackupPackageDirectory: filepath.Join(suite.FilePrefix, "test-library", "__OLD__CatsAndOranges"),
+			ActivePackageDirectory: filepath.Join(suite.FilePrefix, "test-library", "CatsAndOranges"),
 			NewVersion:             "2",
 			OldVersion:             "1",
 		},
 	}
-	restoreUnupdatedPackages(suite.FileSystem, updateAttemptFixture)
+	RollbackUpdatePackages(suite.FileSystemOs, updateAttemptFixture)
 
-	suite.True(afero.DirExists(suite.FileSystem, "test-library/CatsAndOranges"))
-	suite.True(afero.Exists(suite.FileSystem, "test-library/CatsAndOranges/DESCRIPTION"))
-	suite.False(afero.DirExists(suite.FileSystem, "test-library/__OLD__CatsAndOranges"))
-	suite.False(afero.Exists(suite.FileSystem, "test-library/__OLD__CatsAndOranges/DESCRIPTION_OLD"))
-	suite.False(afero.Exists(suite.FileSystem, "test-library/CatsAndOranges/DESCRIPTION_OLD"))
-}
+	suite.True(afero.DirExists(suite.FileSystemOs, filepath.Join(suite.FilePrefix, "test-library", "CatsAndOranges")))
+	suite.True(afero.Exists(suite.FileSystemOs, filepath.Join(suite.FilePrefix, "test-library", "CatsAndOranges", "DESCRIPTION")))
+	suite.False(afero.Exists(suite.FileSystemOs, filepath.Join(suite.FilePrefix, "test-library", "CatsAndOranges", "DESCRIPTION_New")))
+	suite.False(afero.DirExists(suite.FileSystemOs, filepath.Join(suite.FilePrefix, "test-library", "__OLD__CatsAndOranges")))
+	suite.False(afero.Exists(suite.FileSystemOs, filepath.Join(suite.FilePrefix, "test-library" ,"__OLD__CatsAndOranges","DESCRIPTION")))
 
-func (suite *UtilsTestSuite) TestRestoreUnupdatedPackages_RestoresOneAndAllowsAnother() {
-	_ = suite.FileSystem.MkdirAll("test-library/__OLD__CatsAndOranges", 0755)
-	_, _ = suite.FileSystem.Create("test-library/__OLD__CatsAndOranges/DESCRIPTION_OLD")
-	_ = suite.FileSystem.MkdirAll("test-library/__OLD__DogsAndBananas", 0755)
-	_, _ = suite.FileSystem.Create("test-library/__OLD__DogsAndBananas/DESCRIPTION_OLD")
-	_ = suite.FileSystem.MkdirAll("test-library/DogsAndBananas", 0755)
-	_, _ = suite.FileSystem.Create("test-library/DogsAndBananas/DESCRIPTION")
-
-	//_, _ = suite.FileSystem.Create("test-library/DogsAndBananas/DESCRIPTION_OLD")
-
-	updateAttemptFixture := []UpdateAttempt{
-		{
-			Package:                "CatsAndOranges", ///Not updated successfully
-			BackupPackageDirectory: "test-library/__OLD__CatsAndOranges",
-			ActivePackageDirectory: "test-library/CatsAndOranges",
-			NewVersion:             "2",
-			OldVersion:             "1",
-		}, {
-			Package:                "DogsAndBananas", ///Updated successfully
-			BackupPackageDirectory: "test-library/__OLD__DogsAndBananas",
-			ActivePackageDirectory: "test-library/DogsAndBananas",
-			NewVersion:             "1.5",
-			OldVersion:             "1.2",
-		},
-	}
-	restoreUnupdatedPackages(suite.FileSystem, updateAttemptFixture)
-
-	suite.True(afero.DirExists(suite.FileSystem, "test-library/CatsAndOranges"))
-	suite.True(afero.Exists(suite.FileSystem, "test-library/CatsAndOranges/DESCRIPTION_OLD"))
-	suite.True(afero.DirExists(suite.FileSystem, "test-library/DogsAndBananas"))
-	suite.True(afero.Exists(suite.FileSystem, "test-library/DogsAndBananas/DESCRIPTION"))
-	suite.False(afero.DirExists(suite.FileSystem, "test-library/__OLD__CatsAndOranges"))
-	suite.False(afero.Exists(suite.FileSystem, "test-library/__OLD__CatsAndOranges/DESCRIPTION_OLD"))
-	suite.False(afero.DirExists(suite.FileSystem, "test-library/__OLD__DogsAndBananas"))
-	suite.False(afero.Exists(suite.FileSystem, "test-library/__OLD__DogsAndBananas/DESCRIPTION_OLD"))
-	suite.False(afero.Exists(suite.FileSystem, "test-library/DogsAndBananas/DESCRIPTION_OLD"))
 }
 
 func (suite *UtilsTestSuite) TestScanInstalledPackage_ScansReleventFieldsForOutdatedComparison() {
@@ -240,19 +194,4 @@ func (suite *UtilsTestSuite) TestGetOutdatedPackages_DoesNotFlagOlderPackage() {
 	actualResults := GetOutdatedPackages(installedFixture, availablePackagesFixture)
 
 	suite.Equal(0, len(actualResults))
-}
-
-func (suite *UtilsTestSuite) TestStringInSlice_FindsStringInSlice() {
-	sliceFixture := []string{"Cats", "And", "Oranges"}
-	suite.True(stringInSlice("Cats", sliceFixture))
-}
-
-func (suite *UtilsTestSuite) TestStringInSlice_DoesNotFindStringNotInSlice() {
-	sliceFixture := []string{"Cats", "And", "Oranges"}
-	suite.False(stringInSlice("Orangutans", sliceFixture))
-}
-
-func (suite *UtilsTestSuite) TestStringInSlice_IsCaseSensitive() {
-	sliceFixture := []string{"Cats", "And", "Oranges"}
-	suite.False(stringInSlice("cats", sliceFixture))
 }

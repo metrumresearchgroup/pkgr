@@ -159,25 +159,37 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 	}
 
 	log.WithField("package", d.Package.Package).Info("downloading package ")
+	var from io.ReadCloser
+	if strings.HasPrefix(pkgdl, "http") {
+		resp, err := http.Get(pkgdl)
+		if resp.StatusCode != 200 {
+			log.WithFields(log.Fields{
+				"package":     d.Package.Package,
+				"url":         pkgdl,
+				"status":      resp.Status,
+				"status_code": resp.StatusCode,
+			}).Warn("bad server response")
+			b, _ := ioutil.ReadAll(resp.Body)
+			log.WithField("package", d.Package.Package).Println("body: ", string(b))
+			return Download{}, err
+		}
+		// TODO: the response will often be valid, but return like a server 404 or other error
+		if err != nil {
+			log.WithField("package", d.Package).Warn("error downloading package")
+			return Download{}, err
+		}
+		from = resp.Body
+		defer resp.Body.Close()
+	} else {
+		from, err = fs.Open(pkgdl)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"package": d.Package.Package,
+				"path":    pkgdl,
+			}).Fatal("missing package")
+		}
+	}
 
-	resp, err := http.Get(pkgdl)
-	if resp.StatusCode != 200 {
-		log.WithFields(log.Fields{
-			"package":     d.Package.Package,
-			"url":         pkgdl,
-			"status":      resp.Status,
-			"status_code": resp.StatusCode,
-		}).Warn("bad server response")
-		b, _ := ioutil.ReadAll(resp.Body)
-		log.WithField("package", d.Package.Package).Println("body: ", string(b))
-		return Download{}, err
-	}
-	// TODO: the response will often be valid, but return like a server 404 or other error
-	if err != nil {
-		log.WithField("package", d.Package).Warn("error downloading package")
-		return Download{}, err
-	}
-	defer resp.Body.Close()
 	file, err := fs.Create(dest)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -187,7 +199,7 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 		return Download{}, err
 	}
 	defer file.Close()
-	_, err = io.Copy(file, resp.Body)
+	size, err := io.Copy(file, from)
 	if err != nil {
 		return Download{}, err
 	}
@@ -196,6 +208,6 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 		Path:     dest,
 		New:      true,
 		Metadata: d,
-		Size:     resp.ContentLength,
+		Size:     size,
 	}, nil
 }

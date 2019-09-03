@@ -78,3 +78,10 @@ type RVersion struct {
 	Minor int
 	Patch int
 }
+
+type OutdatedPackage struct {
+	Package    string
+	OldVersion string
+	NewVersion string
+}
+
