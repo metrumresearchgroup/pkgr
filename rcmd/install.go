@@ -442,8 +442,8 @@ func InstallPackagePlan(
 					os.Mkdir(bdir, 0777)
 					bpath := filepath.Join(
 						bdir,
-						filepath.Base(iu.BinaryPath),
 						rs.Version.ToString(),
+						filepath.Base(iu.BinaryPath),
 					)
 					_, err := goutils.Copy(iu.BinaryPath, bpath)
 					log.WithFields(log.Fields{"from": iu.BinaryPath, "to": bpath}).Trace("copied binary")
