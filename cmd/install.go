@@ -15,10 +15,11 @@
 package cmd
 
 import (
-	"github.com/metrumresearchgroup/pkgr/pacman"
-	"github.com/metrumresearchgroup/pkgr/rollback"
 	"path/filepath"
 	"time"
+
+	"github.com/metrumresearchgroup/pkgr/pacman"
+	"github.com/metrumresearchgroup/pkgr/rollback"
 
 	"github.com/spf13/viper"
 
@@ -57,7 +58,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 
 	// Get master object containing the packages available in each repository (pkgNexus),
 	//  as well as a master install plan to guide our process.
-	_, installPlan, rollbackPlan := planInstall(rVersion, true)
+	_, installPlan, rollbackPlan := planInstall(rVersion, cran.DefaultType(), true)
 
 	if viper.GetBool("update") {
 		log.Info("update argument passed. staging packages for update...")
@@ -71,7 +72,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	packageCache := rcmd.NewPackageCache(userCache(cfg.Cache), false)
 
 	//Create a pkgMap object, which helps us with parallel downloads (?)
-	pkgMap, err := cran.DownloadPackages(fs, installPlan.PackageDownloads, packageCache.BaseDir, rVersion)
+	pkgMap, err := cran.DownloadPackages(fs, installPlan.PackageDownloads, packageCache.BaseDir, rVersion, true)
 	if err != nil {
 		log.Fatalf("error downloading packages: %s", err)
 	}
@@ -99,9 +100,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		errRollback := rollback.RollbackPackageEnvironment(fs, rollbackPlan)
 		if errRollback != nil {
-			log.WithFields(log.Fields{
-
-			}).Error("failed to reset package environment after bad installation. Your package Library will be in a corrupt state. It is recommended you delete your Library and reinstall all packages.")
+			log.WithFields(log.Fields{}).Error("failed to reset package environment after bad installation. Your package Library will be in a corrupt state. It is recommended you delete your Library and reinstall all packages.")
 		}
 	} else {
 		pacman.CleanUpdateBackups(fs, rollbackPlan.UpdateRollbacks)
@@ -115,7 +114,6 @@ func rInstall(cmd *cobra.Command, args []string) error {
 
 	return nil
 }
-
 
 func initInstallLog() {
 	//Init install-specific log, if one has been set. This overwrites the default log.

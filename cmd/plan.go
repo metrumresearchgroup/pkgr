@@ -61,7 +61,7 @@ func plan(cmd *cobra.Command, args []string) error {
 	rVersion := rcmd.GetRVersion(&rs)
 	log.Infoln("R Version " + rVersion.ToFullString())
 	log.Debugln("OS Platform " + rs.Platform)
-	_, ip, _ := planInstall(rVersion, true)
+	_, ip, _ := planInstall(rVersion, cran.DefaultType(), true)
 	if viper.GetBool("show-deps") {
 		for pkg, deps := range ip.DepDb {
 			fmt.Println("-----------  ", pkg, "   ------------")
@@ -71,7 +71,7 @@ func plan(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.InstallPlan, rollback.RollbackPlan) {
+func planInstall(rv cran.RVersion, st cran.SourceType, exitOnMissing bool) (*cran.PkgNexus, gpsr.InstallPlan, rollback.RollbackPlan) {
 	startTime := time.Now()
 
 	installedPackages := pacman.GetPriorInstalledPackages(fs, cfg.Library)
@@ -92,7 +92,6 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 			repos = append(repos, cran.RepoURL{Name: nm, URL: url})
 		}
 	}
-	st := cran.DefaultType()
 	cic := cran.NewInstallConfig()
 	for rn, val := range cfg.Customizations.Repos {
 		if strings.EqualFold(val.Type, "binary") {
