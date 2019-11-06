@@ -28,21 +28,35 @@ func userCache(pc string) string {
 	return pkgrCacheDir
 }
 
-func getWorkerCount() int {
+func GetWorkerCount() int {
+	return GetRestrictedWorkerCount(viper.GetInt("threads"), runtime.NumCPU())
+}
+
+// If user has not specified a thread count themselves, will limit the user to 8 threads max to avoid issues.
+func GetRestrictedWorkerCount(threadCount, numCpus int) int {
 	var nworkers int
-	if viper.GetInt("threads") < 1 {
-		nworkers = runtime.NumCPU()
+	if threadCount < 1 { // This indicates that the user has not specified a thread count, i.e. we're using the default thread count of "0".
+
+		workerCap := 8 // We have decided to cap this number at 8 unless the user requests otherwise. This is to prevent issues with cyclic Suggests installs.
+		if numCpus <= workerCap {
+			nworkers = numCpus
+		} else {
+			nworkers = workerCap
+		}
+
 		if nworkers > 2 {
 			nworkers = nworkers - 1
 		}
+
 	} else {
-		nworkers = viper.GetInt("threads")
-		if nworkers > runtime.NumCPU()+2 {
+		nworkers = threadCount
+		if nworkers > numCpus + 2 {
 			log.Warn("number of workers exceeds the number of threads on machine by at least 2, this may result in degraded performance")
 		}
 	}
 	return nworkers
 }
+
 func stringInSlice(s string, slice []string) bool {
 	for _, entry := range slice {
 		if s == entry {
