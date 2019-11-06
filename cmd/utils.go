@@ -43,11 +43,6 @@ func GetRestrictedWorkerCount(threadCount, numCpus int) int {
 		} else {
 			nworkers = workerCap
 		}
-
-		if nworkers > 2 {
-			nworkers = nworkers - 1
-		}
-
 	} else {
 		nworkers = threadCount
 		if nworkers > numCpus + 2 {
