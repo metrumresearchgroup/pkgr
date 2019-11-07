@@ -13,6 +13,19 @@ func RollbackPackageEnvironment(fileSystem afero.Fs, rbp RollbackPlan) error {
 	//reset packages
 	logrus.Trace("Resetting package environment")
 
+	if rbp.InstallPlan.CreateLibrary {
+		err0 := fileSystem.RemoveAll(rbp.Library)
+
+		if err0 != nil {
+			logrus.WithFields(logrus.Fields{
+				"library": rbp.Library,
+			}).Warn("failed to remove created library during rollback", err0)
+			return err0
+		}
+
+		return nil
+	}
+
 	for _, pkg := range rbp.NewPackages {
 		err1 := fileSystem.RemoveAll(filepath.Join(rbp.Library, pkg))
 		if err1 != nil {

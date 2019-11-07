@@ -60,6 +60,15 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	//  as well as a master install plan to guide our process.
 	_, installPlan, rollbackPlan := planInstall(rVersion, true)
 
+	if installPlan.CreateLibrary {
+		err := fs.MkdirAll(cfg.Library, 0755)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"library" : cfg.Library,
+			}).Fatal("could not create library directory")
+		}
+	}
+
 	if viper.GetBool("update") {
 		log.Info("update argument passed. staging packages for update...")
 		rollbackPlan.PreparePackagesForUpdate(fs, cfg.Library)

@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/spf13/afero"
 	"runtime"
 
 	"github.com/metrumresearchgroup/pkgr/rollback"
@@ -75,18 +76,32 @@ func plan(cmd *cobra.Command, args []string) error {
 func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.InstallPlan, rollback.RollbackPlan) {
 	startTime := time.Now()
 
-	installedPackages := pacman.GetPriorInstalledPackages(fs, cfg.Library)
-	installedPackageNames := extractNamesFromDesc(installedPackages)
-	log.WithField("count", len(installedPackages)).Info("found installed packages")
-	whereInstalledFrom := pacman.GetInstallers(installedPackages)
+	//Check library existence
+	libraryExists, _ := afero.DirExists(fs, cfg.Library)
+	var installedPackageNames []string
+	var installedPackages map[string]desc.Desc
+	var whereInstalledFrom pacman.InstalledFromPkgs
 
-	notPkgr := whereInstalledFrom.NotFromPkgr()
-	if len(notPkgr) > 0 {
-		// TODO: should this say "prior installed packages" not ...
+	if libraryExists {
+		installedPackages := pacman.GetPriorInstalledPackages(fs, cfg.Library)
+		installedPackageNames = extractNamesFromDesc(installedPackages)
+		log.WithField("count", len(installedPackages)).Info("found installed packages")
+		whereInstalledFrom := pacman.GetInstallers(installedPackages)
+		notPkgr := whereInstalledFrom.NotFromPkgr()
+		if len(notPkgr) > 0 {
+			// TODO: should this say "prior installed packages" not ...
+			log.WithFields(log.Fields{
+				"packages": notPkgr,
+			}).Warn("Packages not installed by pkgr")
+		}
+	} else {
 		log.WithFields(log.Fields{
-			"packages": notPkgr,
-		}).Warn("Packages not installed by pkgr")
+			"path": cfg.Library,
+		}).Info("Package Library will be created")
+		//fs.Create(cfg.Library)
+		//fs.Chmod(cfg.Library, 0755)
 	}
+
 	var repos []cran.RepoURL
 	for _, r := range cfg.Repos {
 		for nm, url := range r {
@@ -138,7 +153,12 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		}
 	}
 	logUserPackageRepos(availableUserPackages.Packages)
-	installPlan, err := gpsr.ResolveInstallationReqs(cfg.Packages, installedPackages, dependencyConfigurations, pkgNexus)
+	installPlan, err := gpsr.ResolveInstallationReqs(
+		libraryExists,
+		cfg.Packages,
+		installedPackages,
+		dependencyConfigurations,
+		pkgNexus)
 	rollbackPlan := rollback.CreateRollbackPlan(cfg.Library, installPlan, installedPackages)
 
 	if err != nil {

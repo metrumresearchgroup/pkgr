@@ -18,7 +18,7 @@ func GetPriorInstalledPackages(fileSystem afero.Fs, libraryPath string) map[stri
 	installedLibrary, err := fileSystem.Open(libraryPath)
 
 	if err != nil {
-		log.WithField("libraryPath", libraryPath).Fatal("package library not found at given library path")
+		log.WithField("libraryPath", libraryPath).Warn("package library not found at given library path")
 		return installed
 	}
 	defer installedLibrary.Close()

@@ -9,7 +9,7 @@ import (
 )
 
 // ResolveInstallationReqs resolves all the installation requirements
-func ResolveInstallationReqs(pkgs []string, preinstalledPkgs map[string]desc.Desc, dependencyConfigs InstallDeps, pkgNexus *cran.PkgNexus) (InstallPlan, error) {
+func ResolveInstallationReqs(libraryExists bool, pkgs []string, preinstalledPkgs map[string]desc.Desc, dependencyConfigs InstallDeps, pkgNexus *cran.PkgNexus) (InstallPlan, error) {
 
 	workingGraph := NewGraph()
 	defaultDependencyConfigs := NewDefaultInstallDeps()
@@ -70,6 +70,7 @@ func ResolveInstallationReqs(pkgs []string, preinstalledPkgs map[string]desc.Des
 		DepDb: depDb,
 		InstalledPackages: preinstalledPkgs,
 		OutdatedPackages: outdatedPackages,
+		CreateLibrary: !libraryExists,
 	}
 	installPlan.Pack(pkgNexus)
 	return installPlan, nil
