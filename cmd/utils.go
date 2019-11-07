@@ -1,12 +1,10 @@
 package cmd
 
 import (
+	"github.com/spf13/afero"
 	"os"
 	"path/filepath"
-	"runtime"
-
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 // returns the cache or sets to a cache dir
@@ -28,12 +26,8 @@ func userCache(pc string) string {
 	return pkgrCacheDir
 }
 
-func GetWorkerCount() int {
-	return GetRestrictedWorkerCount(viper.GetInt("threads"), runtime.NumCPU())
-}
-
 // If user has not specified a thread count themselves, will limit the user to 8 threads max to avoid issues.
-func GetRestrictedWorkerCount(threadCount, numCpus int) int {
+func getWorkerCount(threadCount, numCpus int) int {
 	var nworkers int
 	if threadCount < 1 { // This indicates that the user has not specified a thread count, i.e. we're using the default thread count of "0".
 
@@ -59,4 +53,9 @@ func stringInSlice(s string, slice []string) bool {
 		}
 	}
 	return false
+}
+
+func libraryExists(fileSystem afero.Fs, libraryPath string ) bool {
+	result, _ := afero.Exists(fileSystem, libraryPath)
+	return result
 }

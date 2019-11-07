@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"runtime"
 
 	"github.com/metrumresearchgroup/pkgr/rollback"
 
@@ -56,7 +57,7 @@ func init() {
 }
 
 func plan(cmd *cobra.Command, args []string) error {
-	log.Infof("Installation would launch %v workers\n", GetWorkerCount())
+	log.Infof("Installation would launch %v workers\n", getWorkerCount(viper.GetInt("threads"), runtime.NumCPU()))
 	rs := rcmd.NewRSettings(cfg.RPath)
 	rVersion := rcmd.GetRVersion(&rs)
 	log.Infoln("R Version " + rVersion.ToFullString())

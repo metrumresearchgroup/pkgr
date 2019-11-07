@@ -6,15 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//type UtilsTestSuite struct {
-//	suite.Suite
-//}
-//
-//func TestUtilsTestSuite(t *testing.T) {
-//	suite.Run(t, new(UtilsTestSuite))
-//}
-
-
 func TestGetRestrictedWorkerCount(t *testing.T) {
 
 	type testInput struct {
@@ -50,7 +41,6 @@ func TestGetRestrictedWorkerCount(t *testing.T) {
 
 func executeTestGetRestrictedWorkerCount(t *testing.T, context string, threads int, numCpus int, expectedOutput int) {
 	t.Log(fmt.Sprintf("context: %s", context))
-	actualResult := GetRestrictedWorkerCount(threads, numCpus)
-	assert.Equal(t, expectedOutput, actualResult)
-	t.Log("PASS")
+	actualResult := getWorkerCount(threads, numCpus)
+	assert.Equal(t, expectedOutput, actualResult, "context: " + context)
 }

@@ -18,6 +18,7 @@ import (
 	"github.com/metrumresearchgroup/pkgr/pacman"
 	"github.com/metrumresearchgroup/pkgr/rollback"
 	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/spf13/viper"
@@ -84,7 +85,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	// leave at least 1 thread open for coordination, given more than 2 threads available.
 	// if only 2 available, will let the OS hypervisor coordinate some else would drop the
 	// install time too much for the little bit of additional coordination going on.
-	nworkers := GetWorkerCount()
+	nworkers := getWorkerCount(viper.GetInt("threads"), runtime.NumCPU())
 
 	// Process any customizations set in the yaml config file for individual packages.
 	// Set ENV values in rSettings
