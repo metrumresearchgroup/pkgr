@@ -61,6 +61,12 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	_, installPlan, rollbackPlan := planInstall(rVersion, true)
 
 	if installPlan.CreateLibrary {
+		if cfg.Strict {
+			log.WithFields(log.Fields{
+				"library": cfg.Library,
+			}).Fatal("library directory must exist before running pkgr in strict mode -- halting execution")
+		}
+
 		err := fs.MkdirAll(cfg.Library, 0755)
 		if err != nil {
 			log.WithFields(log.Fields{

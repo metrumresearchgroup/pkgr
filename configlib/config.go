@@ -93,6 +93,7 @@ func loadDefaultSettings() {
 	// path to R on system, defaults to R in path
 	viper.SetDefault("rpath", "R")
 	viper.SetDefault("threads", 0)
+	viper.SetDefault("strict", false)
 }
 
 // IsCustomizationSet ...

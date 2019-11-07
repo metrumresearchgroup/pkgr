@@ -78,15 +78,22 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 
 	//Check library existence
 	libraryExists, _ := afero.DirExists(fs, cfg.Library)
+
+	if !libraryExists && cfg.Strict {
+		log.WithFields(log.Fields{
+			"library": cfg.Library,
+		}).Error("library directory must exist before running pkgr in strict mode")
+	}
+
 	var installedPackageNames []string
 	var installedPackages map[string]desc.Desc
 	var whereInstalledFrom pacman.InstalledFromPkgs
 
 	if libraryExists {
-		installedPackages := pacman.GetPriorInstalledPackages(fs, cfg.Library)
+		installedPackages = pacman.GetPriorInstalledPackages(fs, cfg.Library)
 		installedPackageNames = extractNamesFromDesc(installedPackages)
 		log.WithField("count", len(installedPackages)).Info("found installed packages")
-		whereInstalledFrom := pacman.GetInstallers(installedPackages)
+		whereInstalledFrom = pacman.GetInstallers(installedPackages)
 		notPkgr := whereInstalledFrom.NotFromPkgr()
 		if len(notPkgr) > 0 {
 			// TODO: should this say "prior installed packages" not ...
