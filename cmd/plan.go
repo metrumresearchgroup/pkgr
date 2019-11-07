@@ -193,7 +193,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	}
 
 	totalPackagesRequired := len(pkgs)
-	toInstall := totalPackagesRequired - len(whereInstalledFrom.FromPkgr())
+	toInstall := installPlan.GetNumPackagesToInstall(viper.GetBool("update"))
 	log.WithFields(log.Fields{
 		"total_packages_required": totalPackagesRequired,
 		"installed":               len(installedPackages),

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/spf13/viper"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -380,17 +381,30 @@ func InstallPackagePlan(
 	es ExecSettings,
 	ncpu int,
 ) error {
+
+	//var successCounter uint64
 	wg := sync.WaitGroup{}
+
 	startTime := time.Now()
+
 	// for now this will only be updated in the Update function
 	// however if it may be concurrently accessed should consider a syncmap implementation
 	installedPkgs := make(map[string]bool)
 	// if packages ID'd as ready to install signal so can push them only the queue
 	shouldInstall := make(chan string)
 	anyFailed := false
+
+	toInstall := plan.GetNumPackagesToInstall(viper.GetBool("update"))
+	//alreadyInstalled := len(plan.InstalledPackages)
+	packagesNeeded := toInstall //- alreadyInstalled
+	// numSuccesses := 0
+
 	iDeps := plan.InvertDependencies()
+
 	failedPkgs := []string{}
-	iq := NewInstallQueue(ncpu,
+
+	installQueue := NewInstallQueue(
+		ncpu,
 		InstallThroughBinary,
 		func(iu InstallUpdate) {
 			if iu.Err != nil {
@@ -406,11 +420,13 @@ func InstallPackagePlan(
 				log.WithFields(log.Fields{"binary": iu.BinaryPath, "src": pkg.Path}).Debug(iu.Package)
 
 				if iu.Result.ExitCode != -999 {
+					packagesNeeded = packagesNeeded - 1
 					log.WithFields(log.Fields{
 						"package": iu.Package,
-						"version": pkg.Metadata.Package.Version,
-						"repo":    pkg.Metadata.Config.Repo.Name,
-					}).Info("Successfully Installed")
+						"package version": pkg.Metadata.Package.Version,
+						"package repo":    pkg.Metadata.Config.Repo.Name,
+						"pkgs remaining": packagesNeeded,
+					}).Info("Successfully Installed.")
 				}
 				installedPkgs[iu.Package] = true
 				deps, exists := iDeps[iu.Package]
@@ -461,7 +477,8 @@ func InstallPackagePlan(
 				}
 			}
 			wg.Done()
-		})
+		}, // End anonymous function
+	) // End NewInstallQueue
 	go func(c chan string) {
 		requestedPkgs := make(map[string]bool)
 		for p := range c {
@@ -481,7 +498,7 @@ func InstallPackagePlan(
 			}
 			pkg, _ := dl.Get(p)
 			log.WithField("package", p).Trace("pushing installation to queue")
-			iq.Push(InstallRequest{
+			installQueue.Push(InstallRequest{
 				Package:      p,
 				Metadata:     pkg,
 				Cache:        pc,

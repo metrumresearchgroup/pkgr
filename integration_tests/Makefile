@@ -5,12 +5,12 @@ LDFLAGS=-ldflags "-X main.buildTime=${BUILD}"
 BUILD_HOME=${PWD}/../cmd/pkgr
 TEST_HOME=${PWD}
 
-.PHONY: install test-setup test-mixed-source-reset test-simple-reset test-threads-reset test-logging-config-reset test-outdated-pkgs-reset test-repo-order-reset test-repo-local-reset test-repo-local-and-remote-reset test-rollback-reset test-simple-suggests-reset test-rollback-reset test-create-library-reset test-strict-mode-reset 
+.PHONY: install test-setup test-mixed-source-reset test-simple-reset test-threads-reset test-logging-config-reset test-outdated-pkgs-reset test-repo-order-reset test-repo-local-reset test-repo-local-and-remote-reset test-rollback-reset test-simple-suggests-reset test-rollback-reset test-create-library-reset test-strict-mode-reset test-outdated-pkgs-no-update-reset
 
 install:
 	cd ${BUILD_HOME}; go install ${LDFLAGS}
 
-test-setup: test-mixed-source-reset test-simple-reset test-threads-reset test-logging-config-reset test-outdated-pkgs-reset test-outdated-pkgs-stress-reset test-repo-order-reset test-repo-local-reset test-repo-local-and-remote-reset test-simple-suggests-reset test-rollback-reset test-create-library-reset test-strict-mode-reset install
+test-setup: test-mixed-source-reset test-simple-reset test-threads-reset test-logging-config-reset test-outdated-pkgs-reset test-outdated-pkgs-stress-reset test-repo-order-reset test-repo-local-reset test-repo-local-and-remote-reset test-simple-suggests-reset test-rollback-reset test-create-library-reset test-strict-mode-reset test-outdated-pkgs-no-update-reset install
 
 
 test-mixed-source-reset:
@@ -47,6 +47,11 @@ test-outdated-pkgs-reset:
 	rm -rf ${TEST_HOME}/outdated-pkgs/test-library/
 	mkdir ${TEST_HOME}/outdated-pkgs/test-library
 	cp -r ${TEST_HOME}/outdated-pkgs/outdated-library/* ${TEST_HOME}/outdated-pkgs/test-library/
+
+test-outdated-pkgs-no-update-reset:
+	rm -rf ${TEST_HOME}/outdated-pkgs-no-update/test-library/
+	mkdir ${TEST_HOME}/outdated-pkgs-no-update/test-library
+	cp -r ${TEST_HOME}/outdated-pkgs-no-update/outdated-library/* ${TEST_HOME}/outdated-pkgs-no-update/test-library/
 
 test-outdated-pkgs-stress-reset:
 	rm -rf ${TEST_HOME}/outdated-pkgs-stress/test-library/
