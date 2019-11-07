@@ -65,7 +65,7 @@ func LoadConfigFromPath(configFilename string) error {
 	if err != nil {
 		// panic if can't find or parse config as this could be explicit to user expectations
 		if _, ok := err.(*os.PathError); ok {
-			panic(fmt.Errorf("could not find a config file at path: %s", configFilename))
+			log.Fatalf("could not find a config file at path: %s", configFilename)
 		}
 	}
 	expb := []byte(os.ExpandEnv(string(b)))
@@ -73,7 +73,7 @@ func LoadConfigFromPath(configFilename string) error {
 	if err != nil {
 		if _, ok := err.(viper.ConfigParseError); ok {
 			// found config file but couldn't parse it, should error
-			panic(fmt.Errorf("unable to parse config file with error (%s)", err))
+			log.Fatalf("unable to parse config file with error (%s)", err)
 		}
 		// maybe could be more loose on this later, but for now will require a config file
 		fmt.Println("Error with pkgr config file:")
