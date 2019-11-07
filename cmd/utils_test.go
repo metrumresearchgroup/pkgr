@@ -35,11 +35,11 @@ func TestGetRestrictedWorkerCount(t *testing.T) {
 	}
 
 	for _, test := range inputs {
-		executeTestGetRestrictedWorkerCount(t, test.context, test.threads, test.numCpus, test.expectedOutput)
+		executeTestGetWorkerCount(t, test.context, test.threads, test.numCpus, test.expectedOutput)
 	}
 }
 
-func executeTestGetRestrictedWorkerCount(t *testing.T, context string, threads int, numCpus int, expectedOutput int) {
+func executeTestGetWorkerCount(t *testing.T, context string, threads int, numCpus int, expectedOutput int) {
 	t.Log(fmt.Sprintf("context: %s", context))
 	actualResult := getWorkerCount(threads, numCpus)
 	assert.Equal(t, expectedOutput, actualResult, "context: " + context)
