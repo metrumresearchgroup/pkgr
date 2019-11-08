@@ -1,4 +1,5 @@
 # outdated-pkgs-no-update
+tags: pkg-update, pkg-outdated, command-flags
 
 ## Description
 

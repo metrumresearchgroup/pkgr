@@ -1,4 +1,5 @@
 # create-library
+tags: create-library
 
 ## Description
 Very simple pkgr environment meant to easily test that a library is created when

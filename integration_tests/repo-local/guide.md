@@ -1,4 +1,5 @@
 # repo-local
+tags: repo-local
 
 ## Description
 Environment to help test that pkgr can install packages from local repositories.

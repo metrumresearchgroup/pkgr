@@ -1,4 +1,5 @@
 # mixed-source
+tags: multi-repo, repo-customizations, pkg-customizations
 
 ## Description
 

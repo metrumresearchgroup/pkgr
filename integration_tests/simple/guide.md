@@ -1,5 +1,7 @@
 # simple
 
+tags: basic, sanity-check, dependencies, cache-system
+
  ## Description
 Environment to help test basic pkgr functionality, such as the `plan`, `install`, `inspect --deps`
 

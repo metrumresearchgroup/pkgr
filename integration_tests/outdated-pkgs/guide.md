@@ -1,4 +1,5 @@
 # outdated-pkgs
+tags: pkg-update, pkg-outdated
 
 ## Description
 
