@@ -143,7 +143,7 @@ func (ip *InstallPlan) GetAllPackages() []string {
 	return toInstall
 }
 
-func (ip *InstallPlan) GetNumPackagesToInstall(includeOutdated bool) int {
+func (ip *InstallPlan) GetNumPackagesToInstall() int {
 	requiredPackages := ip.GetAllPackages()
 
 
@@ -156,7 +156,7 @@ func (ip *InstallPlan) GetNumPackagesToInstall(includeOutdated bool) int {
 	}
 	toUpdate := 0
 	// Everything in OutdatedPackages should be required, otherwise pkgr wouldn't have checked for an updated version.
-	if includeOutdated {
+	if ip.Update {
 		toUpdate = len(ip.OutdatedPackages)
 	}
 	return len(requiredPackages) - installedRequired + toUpdate

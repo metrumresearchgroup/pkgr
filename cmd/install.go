@@ -97,9 +97,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	pkgInstallArgs.Library, _ = filepath.Abs(cfg.Library)
 
 	// Get the number of workers.
-	// leave at least 1 thread open for coordination, given more than 2 threads available.
-	// if only 2 available, will let the OS hypervisor coordinate some else would drop the
-	// install time too much for the little bit of additional coordination going on.
+	// Use number of user defined threads if set. Otherwise, use the number of CPUs (up to 8).
 	nworkers := getWorkerCount(viper.GetInt("threads"), runtime.NumCPU())
 
 	// Process any customizations set in the yaml config file for individual packages.

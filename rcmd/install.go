@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/spf13/viper"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -394,10 +393,7 @@ func InstallPackagePlan(
 	shouldInstall := make(chan string)
 	anyFailed := false
 
-	toInstall := plan.GetNumPackagesToInstall(viper.GetBool("update"))
-	//alreadyInstalled := len(plan.InstalledPackages)
-	packagesNeeded := toInstall //- alreadyInstalled
-	// numSuccesses := 0
+	packagesNeeded := plan.GetNumPackagesToInstall()
 
 	iDeps := plan.InvertDependencies()
 
@@ -423,9 +419,9 @@ func InstallPackagePlan(
 					packagesNeeded = packagesNeeded - 1
 					log.WithFields(log.Fields{
 						"package": iu.Package,
-						"package version": pkg.Metadata.Package.Version,
-						"package repo":    pkg.Metadata.Config.Repo.Name,
-						"pkgs remaining": packagesNeeded,
+						"version": pkg.Metadata.Package.Version,
+						"repo":    pkg.Metadata.Config.Repo.Name,
+						"remaining": packagesNeeded,
 					}).Info("Successfully Installed.")
 				}
 				installedPkgs[iu.Package] = true

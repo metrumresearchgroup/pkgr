@@ -19,7 +19,8 @@ func RollbackPackageEnvironment(fileSystem afero.Fs, rbp RollbackPlan) error {
 		if err0 != nil {
 			logrus.WithFields(logrus.Fields{
 				"library": rbp.Library,
-			}).Warn("failed to remove created library during rollback", err0)
+				"error": err0,
+			}).Warn("failed to remove created library during rollback")
 			return err0
 		}
 

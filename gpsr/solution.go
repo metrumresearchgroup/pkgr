@@ -9,7 +9,14 @@ import (
 )
 
 // ResolveInstallationReqs resolves all the installation requirements
-func ResolveInstallationReqs(libraryExists bool, pkgs []string, preinstalledPkgs map[string]desc.Desc, dependencyConfigs InstallDeps, pkgNexus *cran.PkgNexus) (InstallPlan, error) {
+func ResolveInstallationReqs(
+		pkgs []string,
+		preinstalledPkgs map[string]desc.Desc,
+		dependencyConfigs InstallDeps,
+		pkgNexus *cran.PkgNexus,
+		update bool,
+		libraryExists bool,
+	) (InstallPlan, error) {
 
 	workingGraph := NewGraph()
 	defaultDependencyConfigs := NewDefaultInstallDeps()
@@ -66,11 +73,12 @@ func ResolveInstallationReqs(libraryExists bool, pkgs []string, preinstalledPkgs
 	outdatedPackages := pacman.GetOutdatedPackages(preinstalledPkgs, pkgNexus.GetPackages(extractNamesFromDesc(preinstalledPkgs)).Packages)
 
 	installPlan := InstallPlan{
-		StartingPackages: resolved[0],
-		DepDb: depDb,
+		StartingPackages:  resolved[0],
+		DepDb:             depDb,
 		InstalledPackages: preinstalledPkgs,
-		OutdatedPackages: outdatedPackages,
-		CreateLibrary: !libraryExists,
+		OutdatedPackages:  outdatedPackages,
+		CreateLibrary:     !libraryExists,
+		Update:            update,
 	}
 	installPlan.Pack(pkgNexus)
 	return installPlan, nil

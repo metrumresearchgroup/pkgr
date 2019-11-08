@@ -77,7 +77,13 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	startTime := time.Now()
 
 	//Check library existence
-	libraryExists, _ := afero.DirExists(fs, cfg.Library)
+	libraryExists, err := afero.DirExists(fs, cfg.Library)
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"library": cfg.Library,
+		}).Debug("library directory does not exist")
+	}
 
 	if !libraryExists && cfg.Strict {
 		log.WithFields(log.Fields{
@@ -161,11 +167,12 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	}
 	logUserPackageRepos(availableUserPackages.Packages)
 	installPlan, err := gpsr.ResolveInstallationReqs(
-		libraryExists,
 		cfg.Packages,
 		installedPackages,
 		dependencyConfigurations,
-		pkgNexus)
+		pkgNexus,
+		cfg.Update,
+		libraryExists)
 	rollbackPlan := rollback.CreateRollbackPlan(cfg.Library, installPlan, installedPackages)
 
 	if err != nil {
@@ -189,11 +196,10 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		} else {
 			log.WithFields(updateLogFields).Warn("outdated package found")
 		}
-
 	}
 
 	totalPackagesRequired := len(pkgs)
-	toInstall := installPlan.GetNumPackagesToInstall(viper.GetBool("update"))
+	toInstall := installPlan.GetNumPackagesToInstall()
 	log.WithFields(log.Fields{
 		"total_packages_required": totalPackagesRequired,
 		"installed":               len(installedPackages),
