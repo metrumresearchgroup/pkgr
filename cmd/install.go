@@ -71,6 +71,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			log.WithFields(log.Fields{
 				"library" : cfg.Library,
+				"error" : err,
 			}).Fatal("could not create library directory")
 		}
 	}
