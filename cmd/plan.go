@@ -82,7 +82,8 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	if err != nil {
 		log.WithFields(log.Fields{
 			"library": cfg.Library,
-		}).Debug("library directory does not exist")
+			"error" : err,
+		}).Error("unexpected error when checking existence of library")
 	}
 
 	if !libraryExists && cfg.Strict {
