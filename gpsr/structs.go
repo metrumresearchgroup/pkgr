@@ -12,6 +12,8 @@ type InstallPlan struct {
 	PackageDownloads []cran.PkgDl
 	OutdatedPackages []cran.OutdatedPackage
 	InstalledPackages map[string]desc.Desc
+	CreateLibrary bool
+	Update bool
 }
 
 // PkgDeps contains which dependencies should be installed

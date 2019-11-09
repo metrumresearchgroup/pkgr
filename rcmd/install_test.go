@@ -39,6 +39,10 @@ func TestInstallArgs(t *testing.T) {
 	}
 }
 
+// ATTENTION:
+// This test is misconfigured, it shouldn't be pointing to the integration test folders as those folders are only valid
+// after make test-install has been run from the integration_tests folder.
+// This test might fail falsey depending on the current state of pkgr/integration_tests/simple/test-library
 func TestUpdateDcfFile(t *testing.T) {
 	var tests = []struct {
 		filename     string

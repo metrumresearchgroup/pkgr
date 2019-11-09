@@ -8,6 +8,6 @@ Packages:
 
 # any repositories, order matters
 Repos:
-  - CRAN: "https://cran.rstudio.com"
+  - CRAN: "https://cran.microsoft.com/snapshot/2019-11-01"
 
 Library: "test-library"

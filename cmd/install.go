@@ -18,6 +18,7 @@ import (
 	"github.com/metrumresearchgroup/pkgr/pacman"
 	"github.com/metrumresearchgroup/pkgr/rollback"
 	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/spf13/viper"
@@ -59,6 +60,22 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	//  as well as a master install plan to guide our process.
 	_, installPlan, rollbackPlan := planInstall(rVersion, true)
 
+	if installPlan.CreateLibrary {
+		if cfg.Strict {
+			log.WithFields(log.Fields{
+				"library": cfg.Library,
+			}).Fatal("library directory must exist before running pkgr in strict mode -- halting execution")
+		}
+
+		err := fs.MkdirAll(cfg.Library, 0755)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"library" : cfg.Library,
+				"error" : err,
+			}).Fatal("could not create library directory")
+		}
+	}
+
 	if viper.GetBool("update") {
 		log.Info("update argument passed. staging packages for update...")
 		rollbackPlan.PreparePackagesForUpdate(fs, cfg.Library)
@@ -81,10 +98,8 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	pkgInstallArgs.Library, _ = filepath.Abs(cfg.Library)
 
 	// Get the number of workers.
-	// leave at least 1 thread open for coordination, given more than 2 threads available.
-	// if only 2 available, will let the OS hypervisor coordinate some else would drop the
-	// install time too much for the little bit of additional coordination going on.
-	nworkers := getWorkerCount()
+	// Use number of user defined threads if set. Otherwise, use the number of CPUs (up to 8).
+	nworkers := getWorkerCount(viper.GetInt("threads"), runtime.NumCPU())
 
 	// Process any customizations set in the yaml config file for individual packages.
 	// Set ENV values in rSettings

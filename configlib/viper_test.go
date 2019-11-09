@@ -30,6 +30,10 @@ import (
 //         	            	Expected:[R6 pillar]
 //         	            	Actual:[abc shiny R6 pillar]
 
+// ATTENTION:
+// This test is misconfigured, it shouldn't be pointing to the integration test folders as those folders are only valid
+// after make test-install has been run from the integration_tests folder.
+// This test might fail falsey depending on the current state of pkgr/integration_tests/simple/test-library
 func TestViper(t *testing.T) {
 	tests := []struct {
 		ymlfolder string
