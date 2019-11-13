@@ -1,6 +1,6 @@
 # simple
 
-tags: basic, dependencies, cache-system, local-library, clean-cache, clean-pkgdb, inspect
+tags: basic, dependencies, cache-system, local-library, clean-cache, clean-pkgdb, inspect, install-type
 
  ## Description
 Environment to help test basic pkgr functionality, such as the `plan`, `install`, `inspect --deps`
@@ -24,7 +24,7 @@ Environment to help test basic pkgr functionality, such as the `plan`, `install`
   ]
 }
 ```
-3. `pkgr install` will install the following packages:
+3. `pkgr install` will install the following packages, using the system default to determine whether those packages are installed through source or binary:
   - R6 (**user package**)
   - pillar (**user package**)
   - rlang (dependency)
@@ -33,6 +33,7 @@ Environment to help test basic pkgr functionality, such as the `plan`, `install`
   - fansi (dependency)
   - assertthat (dependency)
   - crayon (dependency)
+
 4. After running `pkgr install`, you should see a pkgr cache-folder created in an appropriate temp directory. On Mac, for example, it might be `/Users/<user>/Library/Caches/pkgr`. Look in the install logs for a line such as: `INFO[0004] downloading required packages within directory   dir=/Users/johncarlos/Library/Caches/pkgr`
   - Inside the top-level pkgr cache folder, you should see at least two folders:
     - `CRAN-<HASH>`: Should contain `src` and `binary` subfolders that, after drilling down, contain the source and binary packages that were used to perform the installation.

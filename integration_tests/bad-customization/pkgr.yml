@@ -2,13 +2,14 @@ Version: 1
 # top level packages
 Packages:
   - R6
-  - pillar
 
 # any repositories, order matters
 Repos:
   - CRAN: "https://cran.microsoft.com/snapshot/2019-05-01"
 
+Library: "test-library"
 
-# Library: "test-library"
-Lockfile:
-  Type: renv
+Customizations:
+  Packages:
+    - R6:
+        Repo: DoesNotExist
