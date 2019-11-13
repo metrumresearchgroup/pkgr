@@ -1,6 +1,6 @@
 # simple
 
-tags: basic, sanity-check, dependencies, cache-system, local-library, clean-cache, clean-pkgdb
+tags: basic, dependencies, cache-system, local-library, clean-cache, clean-pkgdb, inspect
 
  ## Description
 Environment to help test basic pkgr functionality, such as the `plan`, `install`, `inspect --deps`

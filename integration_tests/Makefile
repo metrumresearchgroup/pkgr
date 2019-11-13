@@ -90,3 +90,6 @@ test-strict-mode-reset:
 test-misc-reset:
 	cd ${TEST_HOME}/misc; rm -rf test-library/
 	cd ${TEST_HOME}/misc; mkdir test-library/
+	cd ${TEST_HOME}/misc; rm -rf test-library2/
+	cd ${TEST_HOME}/misc; mkdir test-library2/
+	cd ${TEST_HOME}/misc; rm -rf localtmp
