@@ -9,6 +9,4 @@ Repos:
   - CRAN: "https://cran.microsoft.com/snapshot/2019-05-01"
 
 
-# Library: "test-library"
-Lockfile:
-  Type: renv
+Library: "test-library"

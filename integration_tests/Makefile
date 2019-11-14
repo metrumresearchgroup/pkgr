@@ -95,5 +95,5 @@ test-misc-reset:
 	cd ${TEST_HOME}/misc; rm -rf localtmp
 
 test-bad-customizations-reset:
-	rm -rf ${TEST_HOME}/bad-customizations/test-library/
-	mkdir ${TEST_HOME}/bad-customizations/test-library
+	rm -rf ${TEST_HOME}/bad-customization/test-library/
+	mkdir ${TEST_HOME}/bad-customization/test-library
