@@ -542,36 +542,90 @@ func writeDescriptionInfo(ir InstallRequest, ia InstallArgs) {
 	}
 }
 
-func updateDescriptionInfo(filename, version, installType, repoURL, repo string, writeFile bool) ([]byte, error) {
-	var update []byte
+func updateDescriptionInfo(filename, version, installType, repoURL, repo string, writeFile bool) ([]string, error) {
 	fs := afero.NewOsFs()
 	file, err := fs.Open(filename)
 
-	if err == nil {
-		defer file.Close()
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			line := scanner.Text()
-			if len(strings.Trim(line, " ")) == 0 {
-				continue
-			}
-			if strings.Contains(line, string("Repository:")) && !strings.Contains(line, repo) {
-				line = line + " " + repo
-			}
-			update = append(update, []byte(line)...)
-			update = append(update, []byte("\n")...)
-		}
-		update = append(update, []byte("PkgrVersion: "+version+"\n")...)
-		update = append(update, []byte("PkgrInstallType: "+installType+"\n")...)
-		update = append(update, []byte("PkgrRepositoryURL: "+repoURL+"\n")...)
+	var descriptionLines []string
 
-		if writeFile {
-			fi, _ := os.Stat(filename)
-			err = afero.WriteFile(fs, filename, update, fi.Mode())
-			if err != nil {
-				log.Warn(fmt.Sprintf("Error updating DESCRIPTION file:%s", err))
-			}
+	if err != nil {
+		return nil, err
+	}
+
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		descriptionLines = append(descriptionLines, line)
+	}
+	descriptionFinal := updateDescriptionInfoByLines(descriptionLines, version, installType, repoURL, repo)
+
+	err = writeUpdatedDescriptionFile(fs, filename, descriptionFinal)
+
+	return descriptionFinal, err
+}
+
+func writeUpdatedDescriptionFile(fs afero.Fs, filename string, update []string) error {
+
+	fileObj, err := fs.OpenFile(filename, os.O_WRONLY,0755)
+	defer fileObj.Close()
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"filename" : filename,
+		}).Error("could not update DESCRIPTION file", err)
+		return err
+	}
+	writer := bufio.NewWriter(fileObj)
+
+	for _, line := range update {
+		_, err := writer.WriteString(line)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"filename" : filename,
+				"line" : line,
+			}).Error("problem inserting line into DESCRIPTION file", err)
+			return err
 		}
 	}
-	return update, err
+	err = writer.Flush()
+	if err != nil {
+		log.WithFields(log.Fields{
+			"filename" : filename,
+		}).Error("could not update DESCRIPTION file", err)
+		return err
+	}
+
+	return nil
+	//
+	//fi, _ := os.Stat(filename)
+	//err := afero.WriteFile(fs, filename, update, fi.Mode())
+	//if err != nil {
+	//	log.Warn(fmt.Sprintf("Error updating DESCRIPTION file:%s", err))
+	//}
+	//return err
+}
+
+func updateDescriptionInfoByLines(lines []string, version, installType, repoURL, repo string) []string {
+
+	var newLines []string
+	for _, line := range lines {
+		//log.Info("Starting repo: " + repo)
+		if strings.Contains(line, string("Repository:")) && !strings.Contains(line, repo) {
+			//log.Info("Got where we needed.")
+			originalRepo := strings.Trim(strings.Split(line, ":")[1], " ")
+			newLines = append(newLines, "OriginalRepository: " + originalRepo)
+			line = "Repository: " + repo
+		}
+		newLines = append(newLines, line)
+		// update = append(update, []byte(line)...)
+		// update = append(update, []byte("\n")...)
+	}
+
+	newLines = append(newLines, "PkgrVersion: "+version)
+	newLines = append(newLines, "PkgrInstallType: "+installType)
+	newLines = append(newLines, "PkgrRepositoryURL: "+repoURL)
+
+	return newLines
 }
