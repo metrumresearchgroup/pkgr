@@ -534,15 +534,16 @@ func writeDescriptionInfo(ir InstallRequest, ia InstallArgs) {
 		ir.ExecSettings.PkgrVersion,
 		ir.Metadata.Metadata.Config.Type.String(),
 		ir.Metadata.Metadata.Config.Repo.URL,
-		ir.Metadata.Metadata.Config.Repo.Name,
-		true)
+		ir.Metadata.Metadata.Config.Repo.Name)
 
 	if err != nil {
 		log.Warn(fmt.Sprintf("DESCRIPTION file error:%s", err))
 	}
 }
 
-func updateDescriptionInfo(filename, version, installType, repoURL, repo string, writeFile bool) ([]string, error) {
+// function to apply relevant changes to DESCRIPTION file (if applicable) and ultimately write out the updated
+// DESCRIPTION file.
+func updateDescriptionInfo(filename, version, installType, repoURL, repo string) ([]string, error) {
 	fs := afero.NewOsFs()
 	file, err := fs.Open(filename)
 
@@ -566,6 +567,7 @@ func updateDescriptionInfo(filename, version, installType, repoURL, repo string,
 	return descriptionFinal, err
 }
 
+// writes a slice of strings out to a file. Adds newline characters to the end of the each line.
 func writeUpdatedDescriptionFile(fs afero.Fs, filename string, update []string) error {
 
 	fileObj, err := fs.OpenFile(filename, os.O_WRONLY,0755)
@@ -579,12 +581,14 @@ func writeUpdatedDescriptionFile(fs afero.Fs, filename string, update []string) 
 	}
 	writer := bufio.NewWriter(fileObj)
 
+	newlineChar := getEOLcharacter()
 	for _, line := range update {
-		_, err := writer.WriteString(line)
+		lineWithEOL := line + newlineChar
+		_, err := writer.WriteString(lineWithEOL)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"filename" : filename,
-				"line" : line,
+				"line" : lineWithEOL,
 			}).Error("problem inserting line into DESCRIPTION file", err)
 			return err
 		}
@@ -607,11 +611,22 @@ func writeUpdatedDescriptionFile(fs afero.Fs, filename string, update []string) 
 	//return err
 }
 
+// takes a string slice of lines (without line-endings) representing a DESCRIPTION file and uses
+// provided parameters to make appropriate updates to that description file.
+// returns the updated string slice, still without new-line characters.
 func updateDescriptionInfoByLines(lines []string, version, installType, repoURL, repo string) []string {
 
 	var newLines []string
 	for _, line := range lines {
 		//log.Info("Starting repo: " + repo)
+
+		// Don't add these lines to final set, if they exist. This way, we can add/"overwrite" them at the end.
+		if strings.Contains(line, "PkgrVersion:") ||
+			strings.Contains(line, "PkgrInstallType:") ||
+			strings.Contains(line, "PkgrRepositoryURL") {
+			continue
+		}
+
 		if strings.Contains(line, string("Repository:")) && !strings.Contains(line, repo) {
 			//log.Info("Got where we needed.")
 			originalRepo := strings.Trim(strings.Split(line, ":")[1], " ")
@@ -619,8 +634,6 @@ func updateDescriptionInfoByLines(lines []string, version, installType, repoURL,
 			line = "Repository: " + repo
 		}
 		newLines = append(newLines, line)
-		// update = append(update, []byte(line)...)
-		// update = append(update, []byte("\n")...)
 	}
 
 	newLines = append(newLines, "PkgrVersion: "+version)
@@ -628,4 +641,16 @@ func updateDescriptionInfoByLines(lines []string, version, installType, repoURL,
 	newLines = append(newLines, "PkgrRepositoryURL: "+repoURL)
 
 	return newLines
+}
+
+// function to inspect the current operating system and attempt to determine appropriate line-endings.
+// if Windows, returns "\r\n". Otherwise, returns "\n".
+func getEOLcharacter() string {
+	if runtime.GOOS == "windows" {
+		// log.Trace("using Windows-style line endings (\\r\\n)")
+		return "\r\n"
+	} else {
+		// log.Trace("using Unix-style line endings (\\n)")
+		return "\n"
+	}
 }
