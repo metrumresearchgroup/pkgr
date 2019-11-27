@@ -2,8 +2,8 @@ package rcmd
 
 import (
 	"fmt"
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestInstallArgs(t *testing.T) {
@@ -35,97 +35,6 @@ func TestInstallArgs(t *testing.T) {
 		assert.Equal(tt.expected, actual, fmt.Sprintf("test num: %v", i+1))
 	}
 }
-
-//func TestUpdateDescriptionInfoByLines(t *testing.T) {
-//	var tests = []struct {
-//		filename     			string
-//		version      			string
-//		installType  			string
-//		repoURL      			string
-//		repo         			string
-//		expectedRepo			string
-//		expectedOriginalRepo	string
-//		message      			string
-//	}{
-//		{
-//			filename:     "testsite/golden/simple/test-library/R6/Description",
-//			version:      "version",
-//			installType:  "binary",
-//			repoURL:      "myURL",
-//			repo:         "CRAN",
-//			expectedRepo: "CRAN",
-//			expectedOriginalRepo: "",
-//			message:      "R6 test",
-//		},
-//		{
-//			filename:     "testsite/golden/simple/test-library/pillar/Description",
-//			version:      "1.2.3",
-//			installType:  "binary",
-//			repoURL:      "www.myURL.com",
-//			repo:         "AlCran_Mandragoran",
-//			expectedRepo: "AlCran_Mandragoran",
-//			expectedOriginalRepo: "CRAN",
-//			message:      "pillar test",
-//		},
-//	}
-//
-//	for tt := range tests {
-//		result := updateDescriptionInfoByLines()
-//	}
-//}
-
-//func TestUpdateDcfFile(t *testing.T) {
-//	var tests = []struct {
-//		filename     			string
-//		version      			string
-//		installType  			string
-//		repoURL      			string
-//		repo         			string
-//		expectedRepo			string
-//		expectedOriginalRepo	string
-//		message      			string
-//	}{
-//		{
-//			filename:     "testsite/golden/simple/test-library/R6/Description",
-//			version:      "version",
-//			installType:  "binary",
-//			repoURL:      "myURL",
-//			repo:         "CRAN",
-//			expectedRepo: "CRAN",
-//			expectedOriginalRepo: "",
-//			message:      "R6 test",
-//		},
-//		{
-//			filename:     "testsite/golden/simple/test-library/pillar/Description",
-//			version:      "1.2.3",
-//			installType:  "binary",
-//			repoURL:      "www.myURL.com",
-//			repo:         "AlCran_Mandragoran",
-//			expectedRepo: "AlCran_Mandragoran",
-//			expectedOriginalRepo: "CRAN",
-//			message:      "pillar test",
-//		},
-//	}
-//
-//	for _, tt := range tests {
-//
-//		dcf, err := updateDescriptionInfo(tt.filename, tt.version, tt.installType, tt.repoURL, tt.repo)
-//
-//		var dcfBytes [][]byte
-//		for _, s := range dcf {
-//			dcfBytes = append(dcfBytes, []byte(s))
-//		}
-//
-//		installedPackage, _ := desc.ParseDesc((dcf))
-//
-//		assert.Equal(t, nil, err, fmt.Sprintf("Error: %s", err))
-//		assert.Equal(t, tt.expectedRepo, installedPackage.Repository, fmt.Sprintf("Failed: %s", tt.message))
-//		assert.Equal(t, tt.version, installedPackage.PkgrVersion, fmt.Sprintf("Failed: %s", tt.message))
-//		assert.Equal(t, tt.repoURL, installedPackage.PkgrRepositoryURL, fmt.Sprintf("Failed: %s", tt.message))
-//		assert.Equal(t, tt.installType, installedPackage.PkgrInstallType, fmt.Sprintf("Failed: %s", tt.message))
-//		assert.Equal(t, tt.expectedOriginalRepo, installedPackage.OriginalRepository, fmt.Sprintf("Failed: %s", tt.message))
-//	}
-//}
 
 func TestUpdateDescriptionInfoByLines_RepoUpdated(t *testing.T) {
 	tests := map[string]struct{
