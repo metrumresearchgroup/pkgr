@@ -1,7 +1,6 @@
 package rcmd
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -167,7 +166,7 @@ func Install(
 		}
 	} else {
 		// update DESCRIPTION file with pkgr metadata
-		writeDescriptionInfo(ir, args)
+		writeDescriptionInfo(fs, ir, args)
 
 		// success, exitCode should be 0 if go is ok
 		ws := cmd.ProcessState.Sys().(syscall.WaitStatus)
@@ -528,8 +527,9 @@ func InstallPackagePlan(
 	return nil
 }
 
-func writeDescriptionInfo(ir InstallRequest, ia InstallArgs) {
+func writeDescriptionInfo(fs afero.Fs, ir InstallRequest, ia InstallArgs) {
 	_, err := updateDescriptionInfo(
+		fs,
 		filepath.Join(ia.Library, ir.Package, "DESCRIPTION"),
 		ir.ExecSettings.PkgrVersion,
 		ir.Metadata.Metadata.Config.Type.String(),
@@ -543,25 +543,12 @@ func writeDescriptionInfo(ir InstallRequest, ia InstallArgs) {
 
 // function to apply relevant changes to DESCRIPTION file (if applicable) and ultimately write out the updated
 // DESCRIPTION file.
-func updateDescriptionInfo(filename, version, installType, repoURL, repo string) ([]string, error) {
-	fs := afero.NewOsFs()
-	file, err := fs.Open(filename)
-
-	var descriptionLines []string
-
+func updateDescriptionInfo(fs afero.Fs, filename, version, installType, repoURL, repo string) ([]string, error) {
+	descriptionLines, err := goutils.ReadLinesFS(fs, filename)
 	if err != nil {
 		return nil, err
 	}
-
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-		descriptionLines = append(descriptionLines, line)
-	}
 	descriptionFinal := updateDescriptionInfoByLines(descriptionLines, version, installType, repoURL, repo)
-
 	err = writeUpdatedDescriptionFile(fs, filename, descriptionFinal)
 
 	return descriptionFinal, err
@@ -569,31 +556,8 @@ func updateDescriptionInfo(filename, version, installType, repoURL, repo string)
 
 // writes a slice of strings out to a file. Adds newline characters to the end of the each line.
 func writeUpdatedDescriptionFile(fs afero.Fs, filename string, update []string) error {
+	err := goutils.WriteLinesFS(fs, update, filename)
 
-	fileObj, err := fs.OpenFile(filename, os.O_WRONLY,0755)
-	defer fileObj.Close()
-
-	if err != nil {
-		log.WithFields(log.Fields{
-			"filename" : filename,
-		}).Error("could not update DESCRIPTION file", err)
-		return err
-	}
-	writer := bufio.NewWriter(fileObj)
-
-	newlineChar := getEOLcharacter()
-	for _, line := range update {
-		lineWithEOL := line + newlineChar
-		_, err := writer.WriteString(lineWithEOL)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"filename" : filename,
-				"line" : lineWithEOL,
-			}).Error("problem inserting line into DESCRIPTION file", err)
-			return err
-		}
-	}
-	err = writer.Flush()
 	if err != nil {
 		log.WithFields(log.Fields{
 			"filename" : filename,
@@ -602,13 +566,6 @@ func writeUpdatedDescriptionFile(fs afero.Fs, filename string, update []string) 
 	}
 
 	return nil
-	//
-	//fi, _ := os.Stat(filename)
-	//err := afero.WriteFile(fs, filename, update, fi.Mode())
-	//if err != nil {
-	//	log.Warn(fmt.Sprintf("Error updating DESCRIPTION file:%s", err))
-	//}
-	//return err
 }
 
 // takes a string slice of lines (without line-endings) representing a DESCRIPTION file and uses
@@ -641,16 +598,4 @@ func updateDescriptionInfoByLines(lines []string, version, installType, repoURL,
 	newLines = append(newLines, "PkgrRepositoryURL: "+repoURL)
 
 	return newLines
-}
-
-// function to inspect the current operating system and attempt to determine appropriate line-endings.
-// if Windows, returns "\r\n". Otherwise, returns "\n".
-func getEOLcharacter() string {
-	if runtime.GOOS == "windows" {
-		// log.Trace("using Windows-style line endings (\\r\\n)")
-		return "\r\n"
-	} else {
-		// log.Trace("using Unix-style line endings (\\n)")
-		return "\n"
-	}
 }

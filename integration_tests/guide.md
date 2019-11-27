@@ -1,5 +1,7 @@
 # integration-tests
 
+tags: na
+
 ## Description
 The directories here contain sample `pkgr.yml` files that are already setup to
 provide common use-cases of pkgr. You can find more details in the `guide.md`
