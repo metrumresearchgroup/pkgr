@@ -143,7 +143,6 @@ func TestUpdateDescriptionInfoByLines_RepoUpdated(t *testing.T) {
 			repo: "AlCRAN_Mandragoran",
 		},
 	}
-	fmt.Println(tests["test1"])
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			results := updateDescriptionInfoByLines(test.startingLines, test.version, test.installType, test.repoURL, test.repo)
@@ -220,7 +219,6 @@ func TestUpdateDescriptionInfoByLines_RepoTheSame(t *testing.T) {
 			repo: "CRAN",
 		},
 	}
-	fmt.Println(tests["test1"])
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			results := updateDescriptionInfoByLines(test.startingLines, test.version, test.installType, test.repoURL, test.repo)
