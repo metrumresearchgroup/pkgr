@@ -7,7 +7,7 @@ Environment to help test miscellaneous pkgr functionality such as idempotence.
 
 ## Test steps
 
-### Test 1: tags: idempotence
+### Test 1: tests: idempotence
 1. Run `pkgr install`
 2. `pkgr install` will install the following packages to `test-library`:
   - R6 (**user package**)
@@ -22,7 +22,7 @@ Environment to help test miscellaneous pkgr functionality such as idempotence.
 3. Run `pkgr install` install again.
 4. Verify that the environment looks the same as it did in step 2 (this tests pkgr for idempotence)
 
-### Test 2: tags: cache-partial, cache-extraneous
+### Test 2: tests: cache-partial, cache-extraneous
 1. Remove all items from your system's pkgdb folder (on Mac, it should be `/Users/<user>/Library/Caches/pkgr/r_packagedb_caches`)
 2. Run `pkgr install` (this ensures that the irrelevant entries are added to the cache.) Make a note of what is created in your system's pkgdb folder.
 3. Run `pkgr install --config=pkgr2.yml`

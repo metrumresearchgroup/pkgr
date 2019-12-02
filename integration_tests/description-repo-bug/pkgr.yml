@@ -1,0 +1,14 @@
+Version: 1
+# top level packages
+Packages:
+  - R6
+
+# Update: true
+
+# any repositories, order matters
+Repos:
+  - CRAND_ALTHOR: "https://cran.microsoft.com/snapshot/2019-08-14"
+
+Update: true
+
+Library: "test-library"
