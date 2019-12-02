@@ -6,8 +6,8 @@ tags: basic, dependencies, cache-system, local-library, clean-cache, clean-pkgdb
 Environment to help test basic pkgr functionality, such as the `plan`, `install`, `inspect --deps`
 
  ## Expected Behaviors
-1. `pkgr plan` will indicate that repositories have been set for packages "R6" and "pillar".
-2. `pkgr inspect --deps` will print the following object:
+1. `pkgr plan --loglevel debug` will indicate that repositories have been set for packages "R6" and "pillar", as well as their dependencies.
+2. `pkgr inspect --deps` will print the following object (order does not matter as long as everything is nested the same way):
 ```
   {
   "cli": [
@@ -34,7 +34,7 @@ Environment to help test basic pkgr functionality, such as the `plan`, `install`
   - assertthat (dependency)
   - crayon (dependency)
 
-4. After running `pkgr install`, you should see a pkgr cache-folder created in an appropriate temp directory. On Mac, for example, it might be `/Users/<user>/Library/Caches/pkgr`. Look in the install logs for a line such as: `INFO[0004] downloading required packages within directory   dir=/Users/johncarlos/Library/Caches/pkgr`
+4. After running `pkgr install`, you should see a pkgr cache-folder created in an appropriate temp directory. On Mac, for example, it might be `/Users/<user>/Library/Caches/pkgr`. If you can't find it, look in the install logs for a line such as: `INFO[0004] downloading required packages within directory   dir=/Users/johncarlos/Library/Caches/pkgr` to help figure out where you computer has made a cache.
   - Inside the top-level pkgr cache folder, you should see at least two folders:
     - `CRAN-<HASH>`: Should contain `src` and `binary` subfolders that, after drilling down, contain the source and binary packages that were used to perform the installation.
     - `r_packagedb_caches`:  Should contain a file with a hashed name. This file is the parsed PACKAGES information from one of the repos used during installation.

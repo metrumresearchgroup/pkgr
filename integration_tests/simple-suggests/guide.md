@@ -11,7 +11,7 @@ Environment to help test the "Suggests" field in a pkgr.yml file. This environme
 
 * `pkgr plan` should indicate that ~40 packages need to be installed.
 * `pkgr install` should install all of the same packages as [simple](../simple/guide.md), plus ~32 other packages.
-*  `pkgr inspect --deps` should return a large object that reflects the "Suggested" packages for R6 and pillar.
+*  `pkgr inspect --deps` should return a large object that reflects the "Suggested" packages for R6 and pillar. Order does not matter as long as elements are placed in the correct groups.
 
 ```
 {
