@@ -1,4 +1,5 @@
 # threads
+tags: thread-count
 
 ## Description
 Very simple pkgr environment meant to easily test the `threads` setting in pkgr.yml.

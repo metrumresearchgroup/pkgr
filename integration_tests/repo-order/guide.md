@@ -1,4 +1,5 @@
 # repo-order
+tags: repo-order
 
 ## Description
 Environment to demonstrate that packages will be sourced from repositories in the order

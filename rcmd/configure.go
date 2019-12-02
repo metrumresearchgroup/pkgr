@@ -14,6 +14,13 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 	envList := NvpList{}
 	envVars := []string{}
 
+	for _, p := range rs.GlobalEnvVars.Pairs {
+		_, exists := envList.Get(p.Name)
+		if !exists {
+			envList.Append(p.Name, p.Value)
+		}
+	}
+
 	pkgEnv, hasCustomEnv := rs.PkgEnvVars[pkg]
 	if hasCustomEnv {
 		// not sure if this is needed when logging maps but for simple json want a single string
@@ -22,24 +29,18 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 			envList.Append(k, v)
 		}
 		log.WithFields(log.Fields{
-			"envs":    envVars,
+			"envs":    pkgEnv,
 			"package": pkg,
 		}).Trace("Custom Environment Variables")
 	}
 
-	for _, p := range rs.GlobalEnvVars.Pairs {
-		_, exists := envList.Get(p.Name)
-		if !exists {
-			envList.Append(p.Name, p.Value)
-		}
-	}
 	// system env vars generally
 	for _, ev := range sysEnvVars {
 		evs := strings.SplitN(ev, "=", 2)
 		if len(evs) > 1 && evs[1] != "" {
 
 			// we don't want to track the order of these anyway since they should take priority in the end
-			// R_LIBS_USER takes precidence over R_LIBS_SITE
+			// R_LIBS_USER takes precedence over R_LIBS_SITE
 			// so will cause the loading characteristics to
 			// not be representative of the hierarchy specified
 			// in Library/Libpaths in the pkgr configuration

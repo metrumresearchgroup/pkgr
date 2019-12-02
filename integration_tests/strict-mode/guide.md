@@ -1,4 +1,5 @@
 # strict-mode
+tags: strict-mode
 
 ## Description
 Verify that strict-mode enforces pre-created library folder.

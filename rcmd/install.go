@@ -1,7 +1,6 @@
 package rcmd
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -167,7 +166,7 @@ func Install(
 		}
 	} else {
 		// update DESCRIPTION file with pkgr metadata
-		writeDescriptionInfo(ir, args)
+		writeDescriptionInfo(fs, ir, args)
 
 		// success, exitCode should be 0 if go is ok
 		ws := cmd.ProcessState.Sys().(syscall.WaitStatus)
@@ -528,50 +527,75 @@ func InstallPackagePlan(
 	return nil
 }
 
-func writeDescriptionInfo(ir InstallRequest, ia InstallArgs) {
+func writeDescriptionInfo(fs afero.Fs, ir InstallRequest, ia InstallArgs) {
 	_, err := updateDescriptionInfo(
+		fs,
 		filepath.Join(ia.Library, ir.Package, "DESCRIPTION"),
 		ir.ExecSettings.PkgrVersion,
 		ir.Metadata.Metadata.Config.Type.String(),
 		ir.Metadata.Metadata.Config.Repo.URL,
-		ir.Metadata.Metadata.Config.Repo.Name,
-		true)
+		ir.Metadata.Metadata.Config.Repo.Name)
 
 	if err != nil {
 		log.Warn(fmt.Sprintf("DESCRIPTION file error:%s", err))
 	}
 }
 
-func updateDescriptionInfo(filename, version, installType, repoURL, repo string, writeFile bool) ([]byte, error) {
-	var update []byte
-	fs := afero.NewOsFs()
-	file, err := fs.Open(filename)
-
-	if err == nil {
-		defer file.Close()
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			line := scanner.Text()
-			if len(strings.Trim(line, " ")) == 0 {
-				continue
-			}
-			if strings.Contains(line, string("Repository:")) && !strings.Contains(line, repo) {
-				line = line + " " + repo
-			}
-			update = append(update, []byte(line)...)
-			update = append(update, []byte("\n")...)
-		}
-		update = append(update, []byte("PkgrVersion: "+version+"\n")...)
-		update = append(update, []byte("PkgrInstallType: "+installType+"\n")...)
-		update = append(update, []byte("PkgrRepositoryURL: "+repoURL+"\n")...)
-
-		if writeFile {
-			fi, _ := os.Stat(filename)
-			err = afero.WriteFile(fs, filename, update, fi.Mode())
-			if err != nil {
-				log.Warn(fmt.Sprintf("Error updating DESCRIPTION file:%s", err))
-			}
-		}
+// function to apply relevant changes to DESCRIPTION file (if applicable) and ultimately write out the updated
+// DESCRIPTION file.
+func updateDescriptionInfo(fs afero.Fs, filename, version, installType, repoURL, repo string) ([]string, error) {
+	descriptionLines, err := goutils.ReadLinesFS(fs, filename)
+	if err != nil {
+		return nil, err
 	}
-	return update, err
+	descriptionFinal := updateDescriptionInfoByLines(descriptionLines, version, installType, repoURL, repo)
+	err = writeUpdatedDescriptionFile(fs, filename, descriptionFinal)
+
+	return descriptionFinal, err
+}
+
+// writes a slice of strings out to a file. Adds newline characters to the end of the each line.
+func writeUpdatedDescriptionFile(fs afero.Fs, filename string, update []string) error {
+	err := goutils.WriteLinesFS(fs, update, filename)
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"filename" : filename,
+		}).Error("could not update DESCRIPTION file", err)
+		return err
+	}
+
+	return nil
+}
+
+// takes a string slice of lines (without line-endings) representing a DESCRIPTION file and uses
+// provided parameters to make appropriate updates to that description file.
+// returns the updated string slice, still without new-line characters.
+func updateDescriptionInfoByLines(lines []string, version, installType, repoURL, repo string) []string {
+
+	var newLines []string
+	for _, line := range lines {
+		//log.Info("Starting repo: " + repo)
+
+		// Don't add these lines to final set, if they exist. This way, we can add/"overwrite" them at the end.
+		if strings.Contains(line, "PkgrVersion:") ||
+			strings.Contains(line, "PkgrInstallType:") ||
+			strings.Contains(line, "PkgrRepositoryURL") {
+			continue
+		}
+
+		if strings.Contains(line, string("Repository:")) && !strings.Contains(line, repo) {
+			//log.Info("Got where we needed.")
+			originalRepo := strings.Trim(strings.Split(line, ":")[1], " ")
+			newLines = append(newLines, "OriginalRepository: " + originalRepo)
+			line = "Repository: " + repo
+		}
+		newLines = append(newLines, line)
+	}
+
+	newLines = append(newLines, "PkgrVersion: "+version)
+	newLines = append(newLines, "PkgrInstallType: "+installType)
+	newLines = append(newLines, "PkgrRepositoryURL: "+repoURL)
+
+	return newLines
 }

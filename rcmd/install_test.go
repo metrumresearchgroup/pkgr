@@ -1,12 +1,9 @@
 package rcmd
 
 import (
-	"bytes"
 	"fmt"
-	"testing"
-
-	"github.com/metrumresearchgroup/pkgr/desc"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestInstallArgs(t *testing.T) {
@@ -39,49 +36,110 @@ func TestInstallArgs(t *testing.T) {
 	}
 }
 
-// ATTENTION:
-// This test is misconfigured, it shouldn't be pointing to the integration test folders as those folders are only valid
-// after make test-install has been run from the integration_tests folder.
-// This test might fail falsey depending on the current state of pkgr/integration_tests/simple/test-library
-func TestUpdateDcfFile(t *testing.T) {
-	var tests = []struct {
-		filename     string
-		version      string
-		installType  string
-		repoURL      string
-		repo         string
-		expectedRepo string
-		message      string
+func TestUpdateDescriptionInfoByLines_RepoUpdated(t *testing.T) {
+	tests := map[string]struct{
+		startingLines []string
+		version string
+		installType string
+		repoURL string
+		repo string
 	}{
-		{
-			filename:     "../integration_tests/simple/test-library/R6/Description",
-			version:      "version",
-			installType:  "binary",
-			repoURL:      "myURL",
-			repo:         "CRAN",
-			expectedRepo: "CRAN",
-			message:      "R6 test",
-		},
-		{
-			filename:     "../integration_tests/simple/test-library/pillar/Description",
-			version:      "1.2.3",
-			installType:  "binary",
-			repoURL:      "www.myURL.com",
-			repo:         "GitHub",
-			expectedRepo: "CRAN GitHub",
-			message:      "pillar test",
+		"Repository Upated": {
+			startingLines: []string{"Package: R6", "Version: 2.4.0", "Repository: CRAN"},
+			version: "pkgr0.0.test",
+			installType: "binary",
+			repoURL: "https://www.fakecranrepos.org",
+			repo: "AlCRAN_Mandragoran",
 		},
 	}
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			results := updateDescriptionInfoByLines(test.startingLines, test.version, test.installType, test.repoURL, test.repo)
+			assert.Len(t, results, 7)
+			assert.Equal(t, results[0], "Package: R6")
+			assert.Equal(t, results[1], "Version: 2.4.0")
+			assert.Equal(t, results[2], "OriginalRepository: CRAN")
+			assert.Equal(t, results[3], "Repository: " + test.repo)
+			assert.Equal(t, results[4], "PkgrVersion: " + test.version)
+			assert.Equal(t, results[5], "PkgrInstallType: " + test.installType)
+			assert.Equal(t, results[6], "PkgrRepositoryURL: " + test.repoURL)
+		})
 
-	for _, tt := range tests {
+	}
 
-		dcf, err := updateDescriptionInfo(tt.filename, tt.version, tt.installType, tt.repoURL, tt.repo, false)
-		installedPackage, _ := desc.ParseDesc(bytes.NewReader(dcf))
 
-		assert.Equal(t, nil, err, fmt.Sprintf("Error: %s", err))
-		assert.Equal(t, tt.expectedRepo, installedPackage.Repository, fmt.Sprintf("Failed: %s", tt.message))
-		assert.Equal(t, tt.version, installedPackage.PkgrVersion, fmt.Sprintf("Failed: %s", tt.message))
-		assert.Equal(t, tt.repoURL, installedPackage.PkgrRepositoryURL, fmt.Sprintf("Failed: %s", tt.message))
-		assert.Equal(t, tt.installType, installedPackage.PkgrInstallType, fmt.Sprintf("Failed: %s", tt.message))
+}
+
+func TestUpdateDescriptionInfoByLines_RepoTheSame(t *testing.T) {
+	tests := map[string]struct{
+		startingLines []string
+		version string
+		installType string
+		repoURL string
+		repo string
+	}{
+		"Repository Upated": {
+			startingLines: []string{"Package: R6", "Version: 2.4.0", "Repository: CRAN"},
+			version: "pkgr0.0.test",
+			installType: "binary",
+			repoURL: "https://www.fakecranrepos.org",
+			repo: "CRAN",
+		},
+		"Pkgr Info Updated": {
+			startingLines: []string{
+				"Package: R6",
+				"Version: 2.4.0",
+				"Repository: CRAN",
+				"PkgrVersion: pkgr_older_version",
+				"PkgrInstallType: source",
+				"PkgrRepositoryURL: https://cran.r-project.org/",
+			},
+			version: "pkgr0.0.test",
+			installType: "binary",
+			repoURL: "https://www.fakecranrepos.org",
+			repo: "CRAN",
+		},
+		"Pkgr Info Partially Updated": {
+			startingLines: []string{
+				"Package: R6",
+				"Version: 2.4.0",
+				"Repository: CRAN",
+				"PkgrVersion: pkgr_older_version",
+				"PkgrInstallType: binary", // matches final result
+				"PkgrRepositoryURL: https://cran.r-project.org/",
+			},
+			version: "pkgr0.0.test",
+			installType: "binary",
+			repoURL: "https://www.fakecranrepos.org",
+			repo: "CRAN",
+		},
+		"Pkgr Info Not Upated": {
+			startingLines: []string{
+				"Package: R6",
+				"Version: 2.4.0",
+				"Repository: CRAN",
+				"PkgrVersion: pkgr0.0.test",
+				"PkgrInstallType: binary", // matches final result
+				"PkgrRepositoryURL: https://www.fakecranrepos.org",
+			},
+			version: "pkgr0.0.test",
+			installType: "binary",
+			repoURL: "https://www.fakecranrepos.org",
+			repo: "CRAN",
+		},
+	}
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			results := updateDescriptionInfoByLines(test.startingLines, test.version, test.installType, test.repoURL, test.repo)
+			assert.Len(t, results, 6)
+			assert.Equal(t, results[0], "Package: R6")
+			assert.Equal(t, results[1], "Version: 2.4.0")
+			//assert.Equal(t, results[2], "OriginalRepository: CRAN")
+			assert.Equal(t, results[2], "Repository: " + test.repo)
+			assert.Equal(t, results[3], "PkgrVersion: " + test.version)
+			assert.Equal(t, results[4], "PkgrInstallType: " + test.installType)
+			assert.Equal(t, results[5], "PkgrRepositoryURL: " + test.repoURL)
+		})
+
 	}
 }

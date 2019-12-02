@@ -1,4 +1,5 @@
 # rollback
+tags: rollback
 
 ## Description
 Testing area to demonstrate that the entire package environment is rolled back
