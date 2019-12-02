@@ -14,6 +14,13 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 	envList := NvpList{}
 	envVars := []string{}
 
+	for _, p := range rs.GlobalEnvVars.Pairs {
+		_, exists := envList.Get(p.Name)
+		if !exists {
+			envList.Append(p.Name, p.Value)
+		}
+	}
+
 	pkgEnv, hasCustomEnv := rs.PkgEnvVars[pkg]
 	if hasCustomEnv {
 		// not sure if this is needed when logging maps but for simple json want a single string
@@ -27,12 +34,6 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 		}).Trace("Custom Environment Variables")
 	}
 
-	for _, p := range rs.GlobalEnvVars.Pairs {
-		_, exists := envList.Get(p.Name)
-		if !exists {
-			envList.Append(p.Name, p.Value)
-		}
-	}
 	// system env vars generally
 	for _, ev := range sysEnvVars {
 		evs := strings.SplitN(ev, "=", 2)
