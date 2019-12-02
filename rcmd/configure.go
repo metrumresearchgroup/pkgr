@@ -22,7 +22,7 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 			envList.Append(k, v)
 		}
 		log.WithFields(log.Fields{
-			"envs":    envVars,
+			"envs":    pkgEnv,
 			"package": pkg,
 		}).Trace("Custom Environment Variables")
 	}
@@ -39,7 +39,7 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 		if len(evs) > 1 && evs[1] != "" {
 
 			// we don't want to track the order of these anyway since they should take priority in the end
-			// R_LIBS_USER takes precidence over R_LIBS_SITE
+			// R_LIBS_USER takes precedence over R_LIBS_SITE
 			// so will cause the loading characteristics to
 			// not be representative of the hierarchy specified
 			// in Library/Libpaths in the pkgr configuration
