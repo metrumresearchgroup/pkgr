@@ -1,5 +1,7 @@
 tags: basic, dependencies, cache-system, local-library, clean-cache, clean-pkgdb, inspect, install-type
 
+result: PASS
+
 # Idea
 We list the test results in a directory structure like this, store all
 screenshots for an integration test in the associated results directory, and
@@ -19,10 +21,8 @@ done automatically if we write a clever enough script.
 ![step3](step3.png)
 
 ## Step 4:
-### Before
-![step4before](step4_before.png)
-### After
-![step4after](step4_after.png)
+### Before and after (performed a reset after step 3 to show before)
+![step4](step4.png)
 
 ## Step 5:
 ![step5](step5.png)
@@ -31,7 +31,4 @@ done automatically if we write a clever enough script.
 ![step6](step6.png)
 
 ## Step 7
-### Before
-![step7before](step7_before.png)
-### After
-![step7after](step7_after.png)
+![step7](step7.png)
