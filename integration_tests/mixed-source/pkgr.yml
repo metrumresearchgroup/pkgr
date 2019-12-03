@@ -11,7 +11,7 @@ Packages:
 Repos:
   - r_validated: "https://metrumresearchgroup.github.io/r_validated"
   - CRAN-Micro: "https://cran.microsoft.com/snapshot/2018-11-18"
-  - CRAN: "https://cran.rstudio.com"
+  - CRAN: "https://cran.microsoft.com/snapshot/2019-12-02"
 
 Library: "test-library"
 

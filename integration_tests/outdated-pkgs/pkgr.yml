@@ -5,7 +5,7 @@ Packages:
   - pillar
   - Matrix
 
-# Update: true
+Update: true
 
 # any repositories, order matters
 Repos:

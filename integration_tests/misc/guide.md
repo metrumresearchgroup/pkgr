@@ -26,7 +26,7 @@ Environment to help test miscellaneous pkgr functionality such as idempotence.
 1. Remove all items from your system's pkgdb folder (on Mac, it should be `/Users/<user>/Library/Caches/pkgr/r_packagedb_caches`)
 2. Run `pkgr install` (this ensures that the irrelevant entries are added to the cache.) Make a note of what is created in your system's pkgdb folder.
 3. Run `pkgr install --config=pkgr2.yml`
-4. Remove from `localtmp` the `CRAN...` directory (not `CRAN_Earlier`).
+4. Remove from `localtmp` the `CRAN2...` directory (not `CRAN_Earlier`).
 5. Remove the contents of `test-library2`
 6. Rerun `pkgr install --config=pkgr2.yml`
 7. Verify that the following packages are installed in `test-library2`
@@ -39,7 +39,7 @@ Environment to help test miscellaneous pkgr functionality such as idempotence.
   - fansi (dependency)
   - assertthat (dependency)
   - crayon (dependency)
-8. The output of the install from #5 should contain lines equivalent to these:
+8. The output of the install from #6 should contain lines equivalent to these:
 ```
 INFO[0000] package installation status                   installed=0 not_from_pkgr=0 outdated=0 total_packages_required=9
 INFO[0000] package installation sources                  CRAN=1 CRAN_Earlier=8
@@ -60,4 +60,4 @@ INFO[0002] Successfully Installed.                       package=pillar remainin
 INFO[0003] Successfully Installed.                       package=Rcpp remaining=0 repo=CRAN2 version=1.0.1
 ```
 (The important thing here is that Rcpp comes from CRAN2 and must be redownloaded, but the other packages are not.)
-9. Run `pkgr clean --all`. Verify that, in localtmp, all repos are removed, and in your system's pkgdb folder (see step 1), only the file from Step 2 remains.
+9. Run `pkgr clean --all --config=pkgr2.yml`. Verify that, in localtmp, all repos are removed, and in your system's pkgdb folder (see step 1), only the file from Step 2 remains.
