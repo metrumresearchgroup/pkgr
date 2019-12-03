@@ -9,7 +9,7 @@ Change the path of the miniCRAN Repo in `pkgr.yml` to the correct path for your 
 
 ## Expected Behaviors
 * `pkgr plan` will indicate that packages will be pulled from miniCRAN
-* `pkgr install` will complete successfully. pkgr install should have the following output:
+* `pkgr install` will complete successfully, installing the packages listed in the logs below:
 
 ```
 pkgr install

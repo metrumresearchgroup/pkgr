@@ -11,12 +11,12 @@ Environment to help test the "--update" [flag or config setting]. The environmen
 
 ## Expected behavior
 
-You can modify the [pkgr.yml](pkgr.yml) file by setting the `Update` value to `true` or `false`. By default, this test case does not specify, so it should default to FALSE.
+For the official purposes of this test, you should not modify the pkgr.yml file. This test is only meant to test the `--update` flag. However, if needed for local testing, you can modify the [pkgr.yml](pkgr.yml) file by setting the `Update` value to `true` or `false`. By default, this test case does not specify, so it should default to FALSE.
 
 * **Update True**:
   - `pkgr plan` indicates that four packages are outdated: `R6`, `pillar`, and `Matrix`, plus `crayon`, which is a dependency of pillar.
 
-  - `pkgr install` will install the most recent versions of `R6`, `pillar`, `Matrix`, and `crayon`, as well as several other dependenceis.
+  - `pkgr install` will install the most recent versions of `R6`, `pillar`, `Matrix`, and `crayon`, as well as several other dependencies.
 
 * **Update False**
   - `pkgr plan` will warn that `R6`, `pillar`, `Matrix`, and `crayon` are outdated.
