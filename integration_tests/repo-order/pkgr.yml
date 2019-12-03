@@ -5,8 +5,8 @@ Packages:
 
 # any repositories, order matters
 Repos:
-  - CRAN: "https://cran.microsoft.com/snapshot/2019-05-01"
   - r_validated: "https://metrumresearchgroup.github.io/r_validated"
+  - CRAN: "https://cran.microsoft.com/snapshot/2019-05-01"
 
 Library: "test-library"
 

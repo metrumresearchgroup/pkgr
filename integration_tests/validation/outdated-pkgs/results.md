@@ -1,6 +1,6 @@
 tags: pkg-update, pkg-outdated, plan, existing-pkgs
 
-result:
+result: PASS
 
 # Update FALSE in yaml, no argument passed in (should not update)
 Note how outdated packages are flagged with warnings in `plan` and excluded from installation in `install`
