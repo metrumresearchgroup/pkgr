@@ -87,10 +87,93 @@ func TestConfigureArgs(t *testing.T) {
 			[]string{"R_LIBS_USER=original/path", "R_LIBS_SITE=original/site/path", "MISC2=bar"},
 			[]string{"DPLYR_ENV=true", "R_LIBS_SITE=path/to/install/lib", "MISC2=bar"},
 		},
+		{
+			"System contains sensitive information",
+			"",
+			[]string{"R_LIBS_USER=original/path", "GITHUB_PAT=should_get_hidden1", "ghe_token=should_get_hidden2", "ghe_PAT=should_get_hidden3", "github_token=should_get_hidden4"},
+			[]string{"R_LIBS_USER=path/to/install/lib", "GITHUB_PAT=**HIDDEN**", "ghe_token=**HIDDEN**", "ghe_PAT=**HIDDEN**", "github_token=**HIDDEN**"},
+		},
 	}
 	for i, tt := range installArgsTests {
 		actual := configureEnv(tt.sysEnv, defaultRS, tt.in)
 		assert.Equal(tt.expected, actual, fmt.Sprintf("%s, test num: %v", tt.context, i+1))
 	}
 
+}
+
+// Since the other tests are failing and we haven't addressed them yet, I'm just breaking this one out into its own group.
+func TestConfigureArgs2(t *testing.T) {
+	assert := assert.New(t)
+
+	defaultRS := NewRSettings("")
+	// there should always be at least one libpath
+	defaultRS.LibPaths = []string{"path/to/install/lib"}
+	defaultRS.PkgEnvVars["dplyr"] = map[string]string{"DPLYR_ENV": "true"}
+	var installArgsTests = []struct {
+		context string
+		in      string
+		// mocked system environment variables per os.Environ()
+		sysEnv   []string
+		expected []string
+	}{
+		{
+			"System contains sensitive information",
+			"",
+			[]string{
+				"R_LIBS_USER=original/path",
+				"GITHUB_PAT=should_get_hidden1",
+				"ghe_token=should_get_hidden2",
+				"ghe_PAT=should_get_hidden3",
+				"github_token=should_get_hidden4",
+				"AWS_ACCESS_KEY_ID=should_get_hidden5",
+				"AWS_SECRET_KEY=should_get_hidden6",
+
+			},
+			[]string{
+				"GITHUB_PAT=**HIDDEN**",
+				"ghe_token=**HIDDEN**",
+				"ghe_PAT=**HIDDEN**",
+				"github_token=**HIDDEN**",
+				"AWS_ACCESS_KEY_ID=**HIDDEN**",
+				"AWS_SECRET_KEY=**HIDDEN**",
+				"R_LIBS_SITE=path/to/install/lib",
+			},
+		},
+	}
+	for i, tt := range installArgsTests {
+		actual := configureEnv(tt.sysEnv, defaultRS, tt.in)
+		assert.Equal(tt.expected, actual, fmt.Sprintf("%s, test num: %v", tt.context, i+1))
+	}
+
+}
+
+func TestCensoredEnvVars(t *testing.T) {
+	tests := map[string]struct{
+		additionalVars []string
+		expected []string
+	}{
+		"Default": {
+			additionalVars: nil,
+			expected: []string{"GITHUB_TOKEN", "GITHUB_PAT", "GHE_TOKEN", "GHE_PAT", "AWS_ACCESS_KEY_ID", "AWS_SECRET_KEY",},
+		},
+		"Empty arg": {
+			additionalVars: []string{},
+			expected: []string{"GITHUB_TOKEN", "GITHUB_PAT", "GHE_TOKEN", "GHE_PAT", "AWS_ACCESS_KEY_ID", "AWS_SECRET_KEY",},
+		},
+		"Add one": {
+			additionalVars: []string{"cats"},
+			expected: []string{"GITHUB_TOKEN", "GITHUB_PAT", "GHE_TOKEN", "GHE_PAT", "AWS_ACCESS_KEY_ID", "AWS_SECRET_KEY", "CATS"},
+		},
+		"Add two": {
+			additionalVars: []string{"CATS", "and_oranges"},
+			expected: []string{"GITHUB_TOKEN", "GITHUB_PAT", "GHE_TOKEN", "GHE_PAT", "AWS_ACCESS_KEY_ID", "AWS_SECRET_KEY", "CATS", "AND_ORANGES"},
+		},
+	}
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			results := censoredEnvVars(test.additionalVars)
+			assert.Equal(t, test.expected, results, fmt.Sprintf("failure in test %s: expected not equal to actual", testName))
+		})
+
+	}
 }

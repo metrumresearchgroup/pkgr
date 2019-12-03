@@ -2,6 +2,7 @@ package rcmd
 
 import (
 	"fmt"
+	"github.com/thoas/go-funk"
 	"path/filepath"
 	"strings"
 
@@ -63,7 +64,12 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 			// if exists would be custom to the package hence should not accept the system env
 			_, exists := envList.Get(evs[0])
 			if !exists {
-				envList.Append(evs[0], evs[1])
+				displayValue := evs[1]
+				censoredVars := censoredEnvVars(nil)
+				if funk.Contains(censoredVars, strings.ToUpper(evs[0])) {
+					 displayValue = "**HIDDEN**"
+				}
+				envList.Append(evs[0], displayValue)
 			}
 		}
 	}
@@ -79,4 +85,17 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 	}
 
 	return envVars
+}
+
+
+// Returns a constant set of env vars to be hidden in logs.
+// Calling function may pass in additional values to include in the censor list.
+func censoredEnvVars(add []string) []string {
+	censoredVars := []string{"GITHUB_TOKEN", "GITHUB_PAT", "GHE_TOKEN", "GHE_PAT", "AWS_ACCESS_KEY_ID", "AWS_SECRET_KEY",}
+	if add != nil {
+		for _, v := range add {
+			censoredVars = append(censoredVars, strings.ToUpper(v))
+		}
+	}
+	return censoredVars
 }
