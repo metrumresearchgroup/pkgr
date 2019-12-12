@@ -37,7 +37,7 @@ type testData struct {
 	data      []pkgData
 }
 
-func Test_rAdd(t *testing.T) {
+func Test_rAddAndDelete(t *testing.T) {
 	type args struct {
 		ccmd *cobra.Command
 		args []string
@@ -45,21 +45,36 @@ func Test_rAdd(t *testing.T) {
 
 	tests := []testData{
 		{
-			ymlfolder: "../integration_tests/simple",
+			ymlfolder: "testsite/golden/simple",
 			data: []pkgData{
 				{
-					name:   "shiny",
-					folder: "../integration_tests/simple/test-library/shiny",
+					name:   "R6",
+					folder: "testsite/golden/simple/test-library/shiny",
 				},
 				{
-					name:   "abc",
-					folder: "../integration_tests/simple/test-library/abc",
+					name:   "jsonlite",
+					folder: "testsite/golden//simple/test-library/abc",
 				},
 			},
 		},
 		// Note: before adding a test, make sure the base test "pkgr install" works before testing "pkgr add --install"
 	}
 	fs := afero.NewOsFs()
+	//fs := afero.NewMemMapFs()
+	pkgrYamlContent := []byte(`
+Version: 1
+
+Packages:
+  - fansi
+Repos:
+  - MPN: "https://mpn.metworx.com/snapshots/stable/2019-12-02"
+
+Library: "test-library"
+`)
+
+	afero.WriteFile(fs, "testsite/golden/simple/pkgr.yml", pkgrYamlContent, 0755)
+
+	defer fs.RemoveAll("testsite/golden/simple/test-library")
 	for _, tt := range tests {
 
 		ymlFilename := filepath.Join(tt.ymlfolder, "pkgr.yml")
@@ -73,7 +88,9 @@ func Test_rAdd(t *testing.T) {
 
 		for _, d := range tt.data {
 			b, _ := afero.FileContainsBytes(fs, filepath.Join(tt.ymlfolder, "pkgr.yml"), []byte(d.name))
+			installed, _ := afero.DirExists(fs, filepath.Join(tt.ymlfolder, "test-library", d.name)) // make sure packages were installed with --install flag
 			assert.Equal(t, true, b, fmt.Sprintf("Package not added:%s", d.name))
+			assert.Equal(t, true, installed, fmt.Sprintf("Package not installed after being added:%s", d.name))
 		}
 
 		t.Log("testing remove ...")
