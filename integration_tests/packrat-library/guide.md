@@ -10,12 +10,16 @@ then the "Library" path is defined like a packrat library path:
 ## Expected behavior
 
 If the "packrat-like" folder does not exist, an error is shown:
+
+```
 pkgr install
 INFO[0000] R Version 3.6.0                              
 FATA[0000] package library not found at given library path  libraryPath=packrat/lib/x86_64-apple-darwin15.6.0/3.6.0
-
+```
 
 If the "packrat-like" folder does exist, packages are installed to the packrat-folder and the output is similar to:
+
+```
 pkgr install
 INFO[0000] R Version 3.6.0                              
 INFO[0000] found installed packages                      count=0
@@ -44,3 +48,4 @@ INFO[0001] Successfully Installed                        package=vctrs repo=CRAN
 INFO[0001] Successfully Installed                        package=pillar repo=CRAN version=1.4.2
 INFO[0001] total install time                            duration=1.392967947s
 INFO[0001] duration:1.630248569s                        
+```
