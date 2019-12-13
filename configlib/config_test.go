@@ -51,7 +51,7 @@ func TestAddRemovePackage(t *testing.T) {
 
 	appFS := afero.NewOsFs()
 	for _, tt := range tests {
-		fileName := filepath.Join(getTestFolder(t, tt.fileName), "pkgr.yml")
+		fileName := filepath.Join(getIntegrationTestFolder(t, tt.fileName), "pkgr.yml")
 
 		b, _ := afero.Exists(appFS, fileName)
 		assert.Equal(t, true, b, fmt.Sprintf("yml file not found:%s", fileName))
@@ -150,6 +150,11 @@ func TestNewConfigPackrat(t *testing.T) {
 			expected: "packrat",
 			message:  "packrat exists",
 		},
+		{
+			folder: "renv-library",
+			expected: "renv",
+			message: "renv exists",
+		},
 	}
 	for _, tt := range tests {
 		var cfg PkgrConfig
@@ -160,7 +165,8 @@ func TestNewConfigPackrat(t *testing.T) {
 	}
 }
 
-func TestNewConfigNoPackrat(t *testing.T) {
+
+func TestNewConfigNoLockfile(t *testing.T) {
 	tests := []struct {
 		folder   string
 		expected string
@@ -422,7 +428,7 @@ func TestSetViperCustomizations2(t *testing.T) {
 
 		viper.Reset()
 		viper.SetConfigName("pkgr")
-		ymlfile := getTestFolder(t, "customization")
+		ymlfile := getIntegrationTestFolder(t, "customization")
 		viper.AddConfigPath(ymlfile)
 
 		err := viper.ReadInConfig()
@@ -517,7 +523,7 @@ func TestSetPkgConfig(t *testing.T) {
 		viper.Reset()
 		viper.SetConfigName("pkgr")
 
-		ymlfile := getTestFolder(t, "customization")
+		ymlfile := getIntegrationTestFolder(t, "customization")
 
 		viper.AddConfigPath(ymlfile)
 		err := viper.ReadInConfig()
@@ -599,6 +605,17 @@ func setViperCustomizations2(cfg PkgrConfig, pkgSettings PkgSettingsMap, depende
 }
 
 func getTestFolder(t *testing.T, folder string) string {
+	_, filename, _, _ := runtime.Caller(0)
+	sa := strings.SplitAfter(filename, "/pkgr/")
+
+	test_folder := filepath.Join(filepath.Dir(sa[0]), "configlib", "testsite", folder)
+	return test_folder
+}
+
+// NOTE: This should NOT be used, but I'm creating this function as a patch while we decide the best way to test these things.
+// It is only acceptable to use this function for tests that access ONLY the pkgr.yml files in the integration tests in
+// a read-only capacity.
+func getIntegrationTestFolder(t *testing.T, folder string) string {
 	_, filename, _, _ := runtime.Caller(0)
 	sa := strings.SplitAfter(filename, "/pkgr/")
 	return filepath.Join(filepath.Dir(sa[0]), "integration_tests", folder)
