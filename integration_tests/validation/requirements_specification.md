@@ -406,3 +406,54 @@ pkg-update
 
 
 ---
+## 203: As a user, I can use pkgr to automatically setup my library for Packrat and Renv
+
+### Risk: medium
+
+### Summary
+* Users must be able to pass pkgr information about their Lockfile usage and have pkgr automatically set the correct library.
+	* Tests:
+		* automated
+* Must work for packrat
+	* Tests:
+		* pkgr/configlib/config_test.go/TestNewConfigPackrat, pkgr/configlib/config_test.go/TestNewConfigNoPackrat, pkgr/configlib/config_test.go/TestGetLibraryPath
+* Must work for renv
+	* Tests:
+		* pkgr/configlib/config_test.go/TestGetLibraryPath
+
+pkgr/configlib/config_test.go/TestNewConfigPackrat
+* Automated tests:
+	- pkgr/configlib/config_test.go
+		- TestNewConfigPackrat (tests Packrat and RENV)
+		- TestNewConfigNoLockfile
+		- TestGetLibraryPath
+
+|Test Tag |Location |File |Link Test |Link Results |
+|:--------|:--------|:----|:---------|:------------|
+|automated|pkgr/configlib|config_test.go|[Test](../../configlib/config_test.go)|[Result](integration_tests/validation/automated/results.md)|
+
+
+---
+## 204: As a user, I can add and remove packages from the config file via command line
+
+### Risk: medium
+
+### Summary
+* Pkgr must have a pkgr add <package> command which allows a user to add  to their pkgr.yml file. If  is already in the yml file, this command should alert the user at an Info level and do nothing to the pkgr.yml file.
+	* Tests:
+		* automated
+* Pkgr must have a pkgr remove <package command which allows a user to remove a package from their pkgr.yml file. If  isn't in the .yml file, this command should still succeed. Ideally, this should also alert the user, but that is not a requirement in this feature (see #205).
+	* Tests:
+		* automated
+
+* Automated Tests
+	- cmd/add_test.go
+		- Test_rAddAndDelete
+
+|Test Tag |Location |File |Link Test |Link Results |
+|:--------|:--------|:----|:---------|:------------|
+|automated|pkgr/cmd|add_test.go|[Test](../../cmd/add_test.go)|[Result](integration_tests/validation/automated/results.md)|
+
+
+
+---
