@@ -46,7 +46,12 @@ All `pkgr` commands follow the format `pkgr <command> <flags>`
 ## pkgr.yml Configuration Options
 **Important Note:** Any flags supplied to the command line will overwrite equivalent settings set in the configuration file.
 
-The following items can be set ONLY in the configuration file:
+### The following item MUST be set at the top of your configuration file:
+```
+Version: 1
+```
+
+### The following items can be set ONLY in the configuration file:
 * Packages to install (required)
   - Yaml syntax:
 
@@ -110,7 +115,29 @@ The following items can be set ONLY in the configuration file:
   ```
   Cache: <path_to_desired_folder
   ```
-* Lockfile settings (should pgkr make itself compatible with a Lockfile such as renv.lock?)
+* Logging Output
+  - Settings for logging output.
+  - Yaml syntax:
+  ```
+  Logging:
+    all: <path_to_file>
+    install: <path_to_file>
+    overwrite: <true/false>
+  ```
+  - These configuration options are slated for rework, but for now, they behave as described below:
+    * Setting: `all: x.log`
+      * `pkgr install` logs to x.log when `install=y.log` is not set.
+      * `pkgr clean --all` logs to x.log
+      * `pkgr inspect` logs to x.log
+      * `pkgr clean cache` and `pkgr clean pkgdbs` do NOT log to x.log
+      * `pkgr plan` does NOT log to x.log
+    * Setting: `install: y.log`
+      * `pkgr install` logs to y.log (and only to y.log)
+    * Setting: overwrite: `true`
+      * Logs are overwritten every time a new pkgr command is run.
+      * If false, logs are appended to every time a new pkgr command is run.
+
+* Lockfile settings
   - Lockfile to look for, specified by its type. Pkgr supports Packrat and Renv lockfiles.
   - Yaml syntax:
   ```
@@ -118,7 +145,8 @@ The following items can be set ONLY in the configuration file:
     Type: [packrat/renv]
   ```
 
-The following items are configurable statically in the yml file or dynamically via the command-line. Command-line flags will always overwrite the configuration in the yaml file.
+### The following items are configurable statically in the yml file or dynamically via the command-line.
+* **Note:** Command-line flags will always overwrite the configuration in the yaml file.
 
 * Library (directory) to install packages to
   - Yaml syntax
