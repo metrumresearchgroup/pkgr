@@ -608,8 +608,8 @@ func getTestFolder(t *testing.T, folder string) string {
 	_, filename, _, _ := runtime.Caller(0)
 	sa := strings.SplitAfter(filename, "/pkgr/")
 
-	test_folder := filepath.Join(filepath.Dir(sa[0]), "configlib", "testsite", folder)
-	return test_folder
+	testFolder := filepath.Join(filepath.Dir(sa[0]), "configlib", "testsite", folder)
+	return testFolder
 }
 
 // NOTE: This should NOT be used, but I'm creating this function as a patch while we decide the best way to test these things.

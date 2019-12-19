@@ -49,8 +49,6 @@ func TestViper(t *testing.T) {
 		},
 	}
 
-	t.Skip("test is dependent on the state of an integration_test folder, meaning it cannot be trusted to produce consistent results")
-
 	fs := afero.NewOsFs()
 	for _, tt := range tests {
 
