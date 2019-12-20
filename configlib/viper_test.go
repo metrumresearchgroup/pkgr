@@ -12,28 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// This test passes when executed from this file or executed alone using:
-// /usr/local/go/bin/go test -timeout 30s github.com/metrumresearchgroup/pkgr/configlib -run TestViper
-
-// This test INTERMITTENTLY fails using "go test ./..." with the below error.
-// Debugging shows the file "integration_tests/simple/pkgr.yml" contains two extra packages "abc" and
-// "shiny", however the file on the file system does not contain those packages.
-
-// --- FAIL: TestViper (0.00s)
-//     viper_test.go:51:
-//         	Error Trace:	viper_test.go:51
-//         	Error:      	Not equal:
-//         	            	expected: false
-//         	            	actual  : true
-//         	Test:       	TestViper
-//         	Messages:   	Package not equal.
-//         	            	Expected:[R6 pillar]
-//         	            	Actual:[abc shiny R6 pillar]
-
-// ATTENTION:
-// This test is misconfigured, it shouldn't be pointing to the integration test folders as those folders are only valid
-// after make test-install has been run from the integration_tests folder.
-// This test might fail falsey depending on the current state of pkgr/integration_tests/simple/test-library
 func TestViper(t *testing.T) {
 	tests := []struct {
 		ymlfolder string
@@ -48,8 +26,6 @@ func TestViper(t *testing.T) {
 			},
 		},
 	}
-
-	t.Skip("test is dependent on the state of an integration_test folder, meaning it cannot be trusted to produce consistent results")
 
 	fs := afero.NewOsFs()
 	for _, tt := range tests {
