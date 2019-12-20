@@ -1,4 +1,4 @@
-# Unofficial
+
 # Requirements Specification: pkgr 1.0.0
 
 ## Scope
@@ -17,10 +17,10 @@ The purpose of this document is to define the requirements for pkgr and document
 	* Tests:
 		* dependencies
 
-|Test Tag     |Location                       |File     |Link Test                                       |Link Results                                                   |
-|:------------|:------------------------------|:--------|:-----------------------------------------------|:--------------------------------------------------------------|
-|dependencies |../../integration_tests/simple |guide.md |[Test](../../integration_tests/simple/guide.md) |[Result](../../integration_tests/validation/simple/results.md) |
-|install-type |../../integration_tests/simple |guide.md |[Test](../../integration_tests/simple/guide.md) |[Result](../../integration_tests/validation/simple/results.md) |
+|Test Tag     |Tested In |Location                       |File     |Details                                          |
+|:------------|:---------|:------------------------------|:--------|:------------------------------------------------|
+|dependencies |simple    |pkgr/integration_tests/simple |guide.md |See: **"Test: simple"** section in test summary. |
+|install-type |simple    |pkgr/integration_tests/simple |guide.md |See: **"Test: simple"** section in test summary. |
 
 
 
@@ -33,8 +33,8 @@ The purpose of this document is to define the requirements for pkgr and document
 * All of pkgr’s functions should be executable from a command-line context.
 pkgr will read its instructions from a combination of a .yml file (pkgr.yml) and command-line arguments.
 
-|Test Tag |Location |File |Link Test |Link Results |
-|:--------|:--------|:----|:---------|:------------|
+|Test Tag |Tested In |Location |File |Details |
+|:--------|:---------|:--------|:----|:-------|
 
 
 
@@ -44,69 +44,74 @@ pkgr will read its instructions from a combination of a .yml file (pkgr.yml) and
 ### Risk: medium
 
 ### Summary
+## Summary
+The following options should be configurable in only the yml file:
 * Packages to install
-Repositories to use
-Src/binary configuration for packages
-Src/binary configuration for repositories
-Libpaths [[ unclear on what this does ]]
-Rpath
-Cache directory
-Lockfile settings (should pgkr make itself compatible with a Lockfile such as renv.lock?)
-	* Tests:
-		* basic, cache-local, pkg-customizations, lockfile, log-file, install-log
-* The following options should be configurable statically in the yml file or dynamically via the command-line (with command line arguments always overwriting yml configurations):
-* Library (directory) to install packages to
-Update settings (should pkgr attempt to update outdated packages?)
-Logging level
-Installation of “Suggested” packages config
-Number of threads to use
-Strict mode enabled/disabled
-	* Tests:
-		* pkg-update, strict-mode, local-library, log-level, thread-count, suggests
-* The following settings should be configurable only via command-line flags
-* config (path to yaml file, defaults to pkgr.yml)
-preview mode [[ unclear on what this does ]]
-Debug mode
-	* Tests:
-		* command-flags
-* If nothing is set, these are the default settings:
-* Debug mode: disabled
-Preview mode: disabled
-Strict mode: disabled
-Loglevel: “info”
-Rpath: “R”
-Threads: Number of processors available on system
-Cache: System temp directories
-Install suggested packages: false
-Update outdated packages: false
-Src/binary configurations: System defaults (bin for Mac/Windows, src for Linux)
-	* Tests:
-		* basic, todo
-* Minimum required user-settings:
-* Version (pkgr)
-Library
-Packages to install
-Repositories to use
-	* Tests:
-		* todo
+* Repositories to use
+* Src/binary configuration for packages
+* Src/binary configuration for repositories
+* Libpaths [[ unclear on what this does ]]
+* Rpath
+* Cache directory
+* Lockfile settings (should pgkr make itself compatible with a Lockfile such as renv.lock?)
+  * Tests:
+    * basic, cache-local, pkg-customizations, lockfile, log-file, install-log
 
-|Test Tag            |Location                                        |File     |Link Test                                                        |Link Results                                                                    |
-|:-------------------|:-----------------------------------------------|:--------|:----------------------------------------------------------------|:-------------------------------------------------------------------------------|
-|log-file            |../../integration_tests/logging-config          |guide.md |[Test](../../integration_tests/logging-config/guide.md)          |[Result](../../integration_tests/validation/logging-config/results.md)          |
-|install-log         |../../integration_tests/logging-config          |guide.md |[Test](../../integration_tests/logging-config/guide.md)          |[Result](../../integration_tests/validation/logging-config/results.md)          |
-|log-settings        |../../integration_tests/logging-config          |guide.md |[Test](../../integration_tests/logging-config/guide.md)          |[Result](../../integration_tests/validation/logging-config/results.md)          |
-|log-level           |../../integration_tests/logging-config          |guide.md |[Test](../../integration_tests/logging-config/guide.md)          |[Result](../../integration_tests/validation/logging-config/results.md)          |
-|repo-customizations |../../integration_tests/mixed-source            |guide.md |[Test](../../integration_tests/mixed-source/guide.md)            |[Result](../../integration_tests/validation/mixed-source/results.md)            |
-|pkg-customizations  |../../integration_tests/mixed-source            |guide.md |[Test](../../integration_tests/mixed-source/guide.md)            |[Result](../../integration_tests/validation/mixed-source/results.md)            |
-|pkg-update          |../../integration_tests/outdated-pkgs-no-update |guide.md |[Test](../../integration_tests/outdated-pkgs-no-update/guide.md) |[Result](../../integration_tests/validation/outdated-pkgs-no-update/results.md) |
-|pkg-outdated        |../../integration_tests/outdated-pkgs-no-update |guide.md |[Test](../../integration_tests/outdated-pkgs-no-update/guide.md) |[Result](../../integration_tests/validation/outdated-pkgs-no-update/results.md) |
-|command-flags       |../../integration_tests/outdated-pkgs-no-update |guide.md |[Test](../../integration_tests/outdated-pkgs-no-update/guide.md) |[Result](../../integration_tests/validation/outdated-pkgs-no-update/results.md) |
-|pkg-update          |../../integration_tests/outdated-pkgs           |guide.md |[Test](../../integration_tests/outdated-pkgs/guide.md)           |[Result](../../integration_tests/validation/outdated-pkgs/results.md)           |
-|pkg-outdated        |../../integration_tests/outdated-pkgs           |guide.md |[Test](../../integration_tests/outdated-pkgs/guide.md)           |[Result](../../integration_tests/validation/outdated-pkgs/results.md)           |
-|suggests            |../../integration_tests/simple-suggests         |guide.md |[Test](../../integration_tests/simple-suggests/guide.md)         |[Result](../../integration_tests/validation/simple-suggests/results.md)         |
-|cache-local         |../../integration_tests/simple-suggests         |guide.md |[Test](../../integration_tests/simple-suggests/guide.md)         |[Result](../../integration_tests/validation/simple-suggests/results.md)         |
-|basic               |../../integration_tests/simple                  |guide.md |[Test](../../integration_tests/simple/guide.md)                  |[Result](../../integration_tests/validation/simple/results.md)                  |
-|strict-mode         |../../integration_tests/strict-mode             |guide.md |[Test](../../integration_tests/strict-mode/guide.md)             |[Result](../../integration_tests/validation/strict-mode/results.md)             |
+The following options should be configurable statically in the yml file or dynamically via the command-line (with command line arguments always overwriting yml configurations):
+* Library (directory) to install packages to
+* Update settings (should pkgr attempt to update outdated packages?)
+* Logging level
+* Installation of “Suggested” packages config
+* Number of threads to use
+* Strict mode enabled/disabled
+  * Tests:
+    * pkg-update, strict-mode, local-library, log-level, thread-count, suggests
+
+The following settings should be configurable only via command-line flags
+* config (path to yaml file, defaults to pkgr.yml)
+* preview mode
+* Debug mode
+  * Tests:
+    * command-flags
+
+If nothing is set, these are the default settings:
+* Debug mode: disabled
+* Preview mode: disabled
+* Strict mode: disabled
+* Loglevel: “info”
+* Rpath: “R”
+* Threads: Number of processors available on system
+* Cache: System temp directories
+* Install suggested packages: false
+* Update outdated packages: false
+* Src/binary configurations: System defaults (bin for Mac/Windows, src for Linux)
+  * Tests:
+    * basic
+
+Minimum required user-settings:
+* Version (pkgr)
+* Library
+* Packages to install
+* Repositories to use
+
+
+|Test Tag            |Tested In               |Location                                        |File     |Details                                                           |
+|:-------------------|:-----------------------|:-----------------------------------------------|:--------|:-----------------------------------------------------------------|
+|log-file            |logging-config          |pkgr/integration_tests/logging-config          |guide.md |See: **"Test: logging-config"** section in test summary.          |
+|install-log         |logging-config          |pkgr/integration_tests/logging-config          |guide.md |See: **"Test: logging-config"** section in test summary.          |
+|log-settings        |logging-config          |pkgr/integration_tests/logging-config          |guide.md |See: **"Test: logging-config"** section in test summary.          |
+|log-level           |logging-config          |pkgr/integration_tests/logging-config          |guide.md |See: **"Test: logging-config"** section in test summary.          |
+|repo-customizations |mixed-source            |pkgr/integration_tests/mixed-source            |guide.md |See: **"Test: mixed-source"** section in test summary.            |
+|pkg-customizations  |mixed-source            |pkgr/integration_tests/mixed-source            |guide.md |See: **"Test: mixed-source"** section in test summary.            |
+|pkg-update          |outdated-pkgs-no-update |pkgr/integration_tests/outdated-pkgs-no-update |guide.md |See: **"Test: outdated-pkgs-no-update"** section in test summary. |
+|pkg-outdated        |outdated-pkgs-no-update |pkgr/integration_tests/outdated-pkgs-no-update |guide.md |See: **"Test: outdated-pkgs-no-update"** section in test summary. |
+|command-flags       |outdated-pkgs-no-update |pkgr/integration_tests/outdated-pkgs-no-update |guide.md |See: **"Test: outdated-pkgs-no-update"** section in test summary. |
+|pkg-update          |outdated-pkgs           |pkgr/integration_tests/outdated-pkgs           |guide.md |See: **"Test: outdated-pkgs"** section in test summary.           |
+|pkg-outdated        |outdated-pkgs           |pkgr/integration_tests/outdated-pkgs           |guide.md |See: **"Test: outdated-pkgs"** section in test summary.           |
+|suggests            |simple-suggests         |pkgr/integration_tests/simple-suggests         |guide.md |See: **"Test: simple-suggests"** section in test summary.         |
+|cache-local         |simple-suggests         |pkgr/integration_tests/simple-suggests         |guide.md |See: **"Test: simple-suggests"** section in test summary.         |
+|basic               |simple                  |pkgr/integration_tests/simple                  |guide.md |See: **"Test: simple"** section in test summary.                  |
+|strict-mode         |strict-mode             |pkgr/integration_tests/strict-mode             |guide.md |See: **"Test: strict-mode"** section in test summary.             |
 
 
 
@@ -126,10 +131,10 @@ Repositories to use
 	* Tests:
 		* cache-local, cache-system
 
-|Test Tag     |Location                                |File     |Link Test                                                |Link Results                                                            |
-|:------------|:---------------------------------------|:--------|:--------------------------------------------------------|:-----------------------------------------------------------------------|
-|cache-local  |../../integration_tests/simple-suggests |guide.md |[Test](../../integration_tests/simple-suggests/guide.md) |[Result](../../integration_tests/validation/simple-suggests/results.md) |
-|cache-system |../../integration_tests/simple          |guide.md |[Test](../../integration_tests/simple/guide.md)          |[Result](../../integration_tests/validation/simple/results.md)          |
+|Test Tag     |Tested In       |Location                                |File     |Details                                                   |
+|:------------|:---------------|:---------------------------------------|:--------|:---------------------------------------------------------|
+|cache-local  |simple-suggests |pkgr/integration_tests/simple-suggests |guide.md |See: **"Test: simple-suggests"** section in test summary. |
+|cache-system |simple          |pkgr/integration_tests/simple          |guide.md |See: **"Test: simple"** section in test summary.          |
 
 
 
@@ -144,9 +149,9 @@ Repositories to use
 Tests:
 * idempotence
 
-|Test Tag    |Location                     |File     |Link Test                                     |Link Results                                                 |
-|:-----------|:----------------------------|:--------|:---------------------------------------------|:------------------------------------------------------------|
-|idempotence |../../integration_tests/misc |guide.md |[Test](../../integration_tests/misc/guide.md) |[Result](../../integration_tests/validation/misc/results.md) |
+|Test Tag    |Tested In |Location                     |File     |Details                                        |
+|:-----------|:---------|:----------------------------|:--------|:----------------------------------------------|
+|idempotence |Misc      |pkgr/integration_tests/misc |guide.md |See: **"Test: Misc"** section in test summary. |
 
 
 
@@ -160,11 +165,11 @@ Tests:
 	* Tests:
 		* basic, heavy, thread-count
 
-|Test Tag     |Location                             |File     |Link Test                                             |Link Results                                                         |
-|:------------|:------------------------------------|:--------|:-----------------------------------------------------|:--------------------------------------------------------------------|
-|heavy        |../../integration_tests/mixed-source |guide.md |[Test](../../integration_tests/mixed-source/guide.md) |[Result](../../integration_tests/validation/mixed-source/results.md) |
-|basic        |../../integration_tests/simple       |guide.md |[Test](../../integration_tests/simple/guide.md)       |[Result](../../integration_tests/validation/simple/results.md)       |
-|thread-count |../../integration_tests/threads      |guide.md |[Test](../../integration_tests/threads/guide.md)      |[Result](../../integration_tests/validation/threads/results.md)      |
+|Test Tag     |Tested In    |Location                             |File     |Details                                                |
+|:------------|:------------|:------------------------------------|:--------|:------------------------------------------------------|
+|heavy        |mixed-source |pkgr/integration_tests/mixed-source |guide.md |See: **"Test: mixed-source"** section in test summary. |
+|basic        |simple       |pkgr/integration_tests/simple       |guide.md |See: **"Test: simple"** section in test summary.       |
+|thread-count |threads      |pkgr/integration_tests/threads      |guide.md |See: **"Test: threads"** section in test summary.      |
 
 
 
@@ -178,9 +183,9 @@ Tests:
 	* Tests:
 		* multi-repo
 
-|Test Tag   |Location                             |File     |Link Test                                             |Link Results                                                         |
-|:----------|:------------------------------------|:--------|:-----------------------------------------------------|:--------------------------------------------------------------------|
-|multi-repo |../../integration_tests/mixed-source |guide.md |[Test](../../integration_tests/mixed-source/guide.md) |[Result](../../integration_tests/validation/mixed-source/results.md) |
+|Test Tag   |Tested In    |Location                             |File     |Details                                                |
+|:----------|:------------|:------------------------------------|:--------|:------------------------------------------------------|
+|multi-repo |mixed-source |pkgr/integration_tests/mixed-source |guide.md |See: **"Test: mixed-source"** section in test summary. |
 
 
 
@@ -195,9 +200,9 @@ Tests:
 		* invalid-yml
 * Repository must be defined in the “Repos” section of pkgr.yml.
 
-|Test Tag    |Location                                  |File     |Link Test                                                  |Link Results                                                              |
-|:-----------|:-----------------------------------------|:--------|:----------------------------------------------------------|:-------------------------------------------------------------------------|
-|invalid-yml |../../integration_tests/bad-customization |guide.md |[Test](../../integration_tests/bad-customization/guide.md) |[Result](../../integration_tests/validation/bad-customization/results.md) |
+|Test Tag    |Tested In          |Location                                  |File     |Details                                                      |
+|:-----------|:------------------|:-----------------------------------------|:--------|:------------------------------------------------------------|
+|invalid-yml |bad-customizations |pkgr/integration_tests/bad-customization |guide.md |See: **"Test: bad-customizations"** section in test summary. |
 
 
 
@@ -211,9 +216,9 @@ Tests:
 	* Tests:
 		* local-library
 
-|Test Tag      |Location                       |File     |Link Test                                       |Link Results                                                   |
-|:-------------|:------------------------------|:--------|:-----------------------------------------------|:--------------------------------------------------------------|
-|local-library |../../integration_tests/simple |guide.md |[Test](../../integration_tests/simple/guide.md) |[Result](../../integration_tests/validation/simple/results.md) |
+|Test Tag      |Tested In |Location                       |File     |Details                                          |
+|:-------------|:---------|:------------------------------|:--------|:------------------------------------------------|
+|local-library |simple    |pkgr/integration_tests/simple |guide.md |See: **"Test: simple"** section in test summary. |
 
 
 
@@ -233,10 +238,10 @@ Tests:
 	* Tests:
 		* suggests
 
-|Test Tag |Location                                |File     |Link Test                                                |Link Results                                                            |
-|:--------|:---------------------------------------|:--------|:--------------------------------------------------------|:-----------------------------------------------------------------------|
-|suggests |../../integration_tests/simple-suggests |guide.md |[Test](../../integration_tests/simple-suggests/guide.md) |[Result](../../integration_tests/validation/simple-suggests/results.md) |
-|basic    |../../integration_tests/simple          |guide.md |[Test](../../integration_tests/simple/guide.md)          |[Result](../../integration_tests/validation/simple/results.md)          |
+|Test Tag |Tested In       |Location                                |File     |Details                                                   |
+|:--------|:---------------|:---------------------------------------|:--------|:---------------------------------------------------------|
+|suggests |simple-suggests |pkgr/integration_tests/simple-suggests |guide.md |See: **"Test: simple-suggests"** section in test summary. |
+|basic    |simple          |pkgr/integration_tests/simple          |guide.md |See: **"Test: simple"** section in test summary.          |
 
 
 
@@ -253,10 +258,10 @@ Tests:
 	* Tests:
 		* pkg-customizations
 
-|Test Tag           |Location                             |File     |Link Test                                             |Link Results                                                         |
-|:------------------|:------------------------------------|:--------|:-----------------------------------------------------|:--------------------------------------------------------------------|
-|pkg-customizations |../../integration_tests/mixed-source |guide.md |[Test](../../integration_tests/mixed-source/guide.md) |[Result](../../integration_tests/validation/mixed-source/results.md) |
-|basic              |../../integration_tests/simple       |guide.md |[Test](../../integration_tests/simple/guide.md)       |[Result](../../integration_tests/validation/simple/results.md)       |
+|Test Tag           |Tested In    |Location                             |File     |Details                                                |
+|:------------------|:------------|:------------------------------------|:--------|:------------------------------------------------------|
+|pkg-customizations |mixed-source |pkgr/integration_tests/mixed-source |guide.md |See: **"Test: mixed-source"** section in test summary. |
+|basic              |simple       |pkgr/integration_tests/simple       |guide.md |See: **"Test: simple"** section in test summary.       |
 
 
 
@@ -270,9 +275,9 @@ Tests:
 	* Tests:
 		* repo-customizations
 
-|Test Tag            |Location                             |File     |Link Test                                             |Link Results                                                         |
-|:-------------------|:------------------------------------|:--------|:-----------------------------------------------------|:--------------------------------------------------------------------|
-|repo-customizations |../../integration_tests/mixed-source |guide.md |[Test](../../integration_tests/mixed-source/guide.md) |[Result](../../integration_tests/validation/mixed-source/results.md) |
+|Test Tag            |Tested In    |Location                             |File     |Details                                                |
+|:-------------------|:------------|:------------------------------------|:--------|:------------------------------------------------------|
+|repo-customizations |mixed-source |pkgr/integration_tests/mixed-source |guide.md |See: **"Test: mixed-source"** section in test summary. |
 
 
 
@@ -290,11 +295,11 @@ pkg-outdated
 	* Tests:
 		* plan
 
-|Test Tag     |Location                                        |File     |Link Test                                                        |Link Results                                                                    |
-|:------------|:-----------------------------------------------|:--------|:----------------------------------------------------------------|:-------------------------------------------------------------------------------|
-|pkg-outdated |../../integration_tests/outdated-pkgs-no-update |guide.md |[Test](../../integration_tests/outdated-pkgs-no-update/guide.md) |[Result](../../integration_tests/validation/outdated-pkgs-no-update/results.md) |
-|pkg-outdated |../../integration_tests/outdated-pkgs           |guide.md |[Test](../../integration_tests/outdated-pkgs/guide.md)           |[Result](../../integration_tests/validation/outdated-pkgs/results.md)           |
-|plan         |../../integration_tests/outdated-pkgs           |guide.md |[Test](../../integration_tests/outdated-pkgs/guide.md)           |[Result](../../integration_tests/validation/outdated-pkgs/results.md)           |
+|Test Tag     |Tested In               |Location                                        |File     |Details                                                           |
+|:------------|:-----------------------|:-----------------------------------------------|:--------|:-----------------------------------------------------------------|
+|pkg-outdated |outdated-pkgs-no-update |pkgr/integration_tests/outdated-pkgs-no-update |guide.md |See: **"Test: outdated-pkgs-no-update"** section in test summary. |
+|pkg-outdated |outdated-pkgs           |pkgr/integration_tests/outdated-pkgs           |guide.md |See: **"Test: outdated-pkgs"** section in test summary.           |
+|plan         |outdated-pkgs           |pkgr/integration_tests/outdated-pkgs           |guide.md |See: **"Test: outdated-pkgs"** section in test summary.           |
 
 
 
@@ -308,10 +313,10 @@ pkg-outdated
 	* Tests:
 		* inspect
 
-|Test Tag |Location                                |File     |Link Test                                                |Link Results                                                            |
-|:--------|:---------------------------------------|:--------|:--------------------------------------------------------|:-----------------------------------------------------------------------|
-|inspect  |../../integration_tests/simple-suggests |guide.md |[Test](../../integration_tests/simple-suggests/guide.md) |[Result](../../integration_tests/validation/simple-suggests/results.md) |
-|inspect  |../../integration_tests/simple          |guide.md |[Test](../../integration_tests/simple/guide.md)          |[Result](../../integration_tests/validation/simple/results.md)          |
+|Test Tag |Tested In       |Location                                |File     |Details                                                   |
+|:--------|:---------------|:---------------------------------------|:--------|:---------------------------------------------------------|
+|inspect  |simple-suggests |pkgr/integration_tests/simple-suggests |guide.md |See: **"Test: simple-suggests"** section in test summary. |
+|inspect  |simple          |pkgr/integration_tests/simple          |guide.md |See: **"Test: simple"** section in test summary.          |
 
 
 
@@ -330,12 +335,19 @@ pkg-outdated
 * In theory, removing package caches shouldn’t actually change the end result of a pkgr install run. However, whenever caching is involved, it’s possible for irregularities to enter the process. Either way, pkgr should not be reliant on the presence of information in a cache to achieve the state described in pkgr.yml.
 	* Tests:
 		* cache-partial, cache-extraneous
+* Automated Tests
+	* pkgr/cmd/CleanCacheSuite
+	    * TestCleanCache_CleansRepoFoldersWhenEmpty
+	    * TestCleanCache_DoesNotDeleteNonEmptyRepoFolders
+	    * TestCleanCache_DeletesSpecificRepos
 
-|Test Tag    |Location                       |File     |Link Test                                       |Link Results                                                   |
-|:-----------|:------------------------------|:--------|:-----------------------------------------------|:--------------------------------------------------------------|
-|clean-pkgdb |../../integration_tests/misc   |guide.md |[Test](../../integration_tests/misc/guide.md)   |[Result](../../integration_tests/validation/misc/results.md)   |
-|clean-cache |../../integration_tests/simple |guide.md |[Test](../../integration_tests/simple/guide.md) |[Result](../../integration_tests/validation/simple/results.md) |
-|clean-pkgdb |../../integration_tests/simple |guide.md |[Test](../../integration_tests/simple/guide.md) |[Result](../../integration_tests/validation/simple/results.md) |
+
+|Test Tag    |Tested In       |Location                          |File     |Details                                                   |
+|:-----------|:---------------|:---------------------------------|:--------|:---------------------------------------------------------|
+|automated   |automated-tests |pkgr/integration_tests/automated |guide.md |See: **"Test: automated-tests"** section in test summary. |
+|clean-pkgdb |Misc            |pkgr/integration_tests/misc      |guide.md |See: **"Test: Misc"** section in test summary.            |
+|clean-cache |simple          |pkgr/integration_tests/simple    |guide.md |See: **"Test: simple"** section in test summary.          |
+|clean-pkgdb |simple          |pkgr/integration_tests/simple    |guide.md |See: **"Test: simple"** section in test summary.          |
 
 
 
@@ -355,15 +367,20 @@ pkg-update
 pkg-update
 * Default behavior should be to not update
 	* Tests:
-		* pkg-outdated
-pkg-update
+		* pkg-outdated, pkg-update
+- Automated tests
+	* pkgr/pacman/TestUtilsTestSuite
+	    * TestGetOutdatedPackages_FindsOutdatedPackage
+	    * TestGetOutdatedPackages_DoesNotFlagOlderPackage
+	        * (This test checks that pkgr doesn’t count a package on MPN (for example) as an “updated version” when the installed package has a higher version number)
 
-|Test Tag     |Location                                        |File     |Link Test                                                        |Link Results                                                                    |
-|:------------|:-----------------------------------------------|:--------|:----------------------------------------------------------------|:-------------------------------------------------------------------------------|
-|pkg-update   |../../integration_tests/outdated-pkgs-no-update |guide.md |[Test](../../integration_tests/outdated-pkgs-no-update/guide.md) |[Result](../../integration_tests/validation/outdated-pkgs-no-update/results.md) |
-|pkg-outdated |../../integration_tests/outdated-pkgs-no-update |guide.md |[Test](../../integration_tests/outdated-pkgs-no-update/guide.md) |[Result](../../integration_tests/validation/outdated-pkgs-no-update/results.md) |
-|pkg-update   |../../integration_tests/outdated-pkgs           |guide.md |[Test](../../integration_tests/outdated-pkgs/guide.md)           |[Result](../../integration_tests/validation/outdated-pkgs/results.md)           |
-|pkg-outdated |../../integration_tests/outdated-pkgs           |guide.md |[Test](../../integration_tests/outdated-pkgs/guide.md)           |[Result](../../integration_tests/validation/outdated-pkgs/results.md)           |
+|Test Tag     |Tested In               |Location                                        |File     |Details                                                           |
+|:------------|:-----------------------|:-----------------------------------------------|:--------|:-----------------------------------------------------------------|
+|automated    |automated-tests         |pkgr/integration_tests/automated               |guide.md |See: **"Test: automated-tests"** section in test summary.         |
+|pkg-update   |outdated-pkgs-no-update |pkgr/integration_tests/outdated-pkgs-no-update |guide.md |See: **"Test: outdated-pkgs-no-update"** section in test summary. |
+|pkg-outdated |outdated-pkgs-no-update |pkgr/integration_tests/outdated-pkgs-no-update |guide.md |See: **"Test: outdated-pkgs-no-update"** section in test summary. |
+|pkg-update   |outdated-pkgs           |pkgr/integration_tests/outdated-pkgs           |guide.md |See: **"Test: outdated-pkgs"** section in test summary.           |
+|pkg-outdated |outdated-pkgs           |pkgr/integration_tests/outdated-pkgs           |guide.md |See: **"Test: outdated-pkgs"** section in test summary.           |
 
 
 
@@ -379,10 +396,20 @@ pkg-update
 * When a rollback occurs, the end state of the Library folder needs to be exactly the same as the start state (all packages and their versions must match completely)
 	* Tests:
 		* rollback
+* Automated Tests
+	* pkgr/rollback/TestOperationsTestSuite
+	    * TestRollbackPackageEnvironment_DeletesOnlyNewPackages
+	    * TestRollbackPackageEnvironment_DeletesMultiplePackages
+	    * TestRollbackPackageEnvironment_HandlesEmptyListOfPackages
+	* pkgr/pacman/TestUtilsTestSuite
+	    * TestRollbackUpdatePackages_RestoresWhenNoActiveInstallation
+	    * TestRollbackUpdatePackages_OverwritesFreshInstallation
 
-|Test Tag |Location                         |File     |Link Test                                         |Link Results                                                     |
-|:--------|:--------------------------------|:--------|:-------------------------------------------------|:----------------------------------------------------------------|
-|rollback |../../integration_tests/rollback |guide.md |[Test](../../integration_tests/rollback/guide.md) |[Result](../../integration_tests/validation/rollback/results.md) |
+
+|Test Tag  |Tested In       |Location                          |File     |Details                                                   |
+|:---------|:---------------|:---------------------------------|:--------|:---------------------------------------------------------|
+|automated |automated-tests |pkgr/integration_tests/automated |guide.md |See: **"Test: automated-tests"** section in test summary. |
+|rollback  |rollback        |pkgr/integration_tests/rollback  |guide.md |See: **"Test: rollback"** section in test summary.        |
 
 
 
@@ -399,9 +426,9 @@ pkg-update
 	* Tests:
 		* existing-pkgs
 
-|Test Tag      |Location                              |File     |Link Test                                              |Link Results                                                          |
-|:-------------|:-------------------------------------|:--------|:------------------------------------------------------|:---------------------------------------------------------------------|
-|existing-pkgs |../../integration_tests/outdated-pkgs |guide.md |[Test](../../integration_tests/outdated-pkgs/guide.md) |[Result](../../integration_tests/validation/outdated-pkgs/results.md) |
+|Test Tag      |Tested In     |Location                              |File     |Details                                                 |
+|:-------------|:-------------|:-------------------------------------|:--------|:-------------------------------------------------------|
+|existing-pkgs |outdated-pkgs |pkgr/integration_tests/outdated-pkgs |guide.md |See: **"Test: outdated-pkgs"** section in test summary. |
 
 
 
@@ -416,21 +443,20 @@ pkg-update
 		* automated
 * Must work for packrat
 	* Tests:
-		* pkgr/configlib/config_test.go/TestNewConfigPackrat, pkgr/configlib/config_test.go/TestNewConfigNoPackrat, pkgr/configlib/config_test.go/TestGetLibraryPath
+		* automated
 * Must work for renv
 	* Tests:
-		* pkgr/configlib/config_test.go/TestGetLibraryPath
-
-pkgr/configlib/config_test.go/TestNewConfigPackrat
+		* automated
 * Automated tests:
-	- pkgr/configlib/config_test.go
+	* pkgr/configlib/config_test.go
 		- TestNewConfigPackrat (tests Packrat and RENV)
 		- TestNewConfigNoLockfile
 		- TestGetLibraryPath
 
-|Test Tag |Location |File |Link Test |Link Results |
-|:--------|:--------|:----|:---------|:------------|
-|automated|pkgr/configlib|config_test.go|[Test](../../configlib/config_test.go)|[Result](integration_tests/validation/automated/results.md)|
+|Test Tag  |Tested In       |Location                          |File     |Details                                                   |
+|:---------|:---------------|:---------------------------------|:--------|:---------------------------------------------------------|
+|automated |automated-tests |pkgr/integration_tests/automated |guide.md |See: **"Test: automated-tests"** section in test summary. |
+
 
 
 ---
@@ -445,14 +471,13 @@ pkgr/configlib/config_test.go/TestNewConfigPackrat
 * Pkgr must have a pkgr remove <package command which allows a user to remove a package from their pkgr.yml file. If  isn't in the .yml file, this command should still succeed. Ideally, this should also alert the user, but that is not a requirement in this feature (see #205).
 	* Tests:
 		* automated
-
 * Automated Tests
-	- cmd/add_test.go
+	* cmd/add_test.go
 		- Test_rAddAndDelete
 
-|Test Tag |Location |File |Link Test |Link Results |
-|:--------|:--------|:----|:---------|:------------|
-|automated|pkgr/cmd|add_test.go|[Test](../../cmd/add_test.go)|[Result](integration_tests/validation/automated/results.md)|
+|Test Tag  |Tested In       |Location                          |File     |Details                                                   |
+|:---------|:---------------|:---------------------------------|:--------|:---------------------------------------------------------|
+|automated |automated-tests |pkgr/integration_tests/automated |guide.md |See: **"Test: automated-tests"** section in test summary. |
 
 
 
