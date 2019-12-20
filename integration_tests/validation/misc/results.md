@@ -2,6 +2,8 @@ tags: idempotence, cache-partial, cache-extraneous, clean-pkgdb
 
 result: PASS
 
+date_run: 12-03-2019
+
 # Test 1
 ## Output
 ![output](test1.png)

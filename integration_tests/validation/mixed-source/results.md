@@ -2,6 +2,8 @@ tags: multi-repo, repo-customizations, pkg-customizations, heavy
 
 result: PASS
 
+date_run: 12-03-2019
+
 ## Pkgr Plan equivalent to output in guide
 ![plan1](plan1.png)
 ![plan2](plan2.png)

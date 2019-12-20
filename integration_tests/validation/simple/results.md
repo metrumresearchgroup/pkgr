@@ -2,6 +2,8 @@ tags: basic, dependencies, cache-system, local-library, clean-cache, clean-pkgdb
 
 result: PASS
 
+date_run: 12-02-2019
+
 # Idea
 We list the test results in a directory structure like this, store all
 screenshots for an integration test in the associated results directory, and

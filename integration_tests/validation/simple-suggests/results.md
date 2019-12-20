@@ -2,6 +2,8 @@ tags: suggests, inspect, cache-local
 
 result: PASS
 
+date_run: 12-02-2019
+
 # Plan indicates 40 packages
 ![plan](plan.png)
 

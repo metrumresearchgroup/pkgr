@@ -2,6 +2,8 @@ tags: pkg-update, pkg-outdated, plan, existing-pkgs
 
 result: PASS
 
+date_run: 12-03-2019
+
 # Update FALSE in yaml, no argument passed in (should not update)
 Note how outdated packages are flagged with warnings in `plan` and excluded from installation in `install`
 ![output1](ymlfalse1.png)

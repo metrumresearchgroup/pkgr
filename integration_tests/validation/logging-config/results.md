@@ -2,6 +2,8 @@ tags: log-file, plan-log, install-log, log-settings, log-level
 
 result: FAIL
 
+date_run: 12-03-2019
+
 # Note:
 During testing, we discovered several bugs. The failing behavior is documented here:
 https://github.com/metrumresearchgroup/pkgr/issues/198

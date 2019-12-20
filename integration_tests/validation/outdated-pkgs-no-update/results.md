@@ -2,6 +2,8 @@ tags: pkg-update, pkg-outdated, command-flags
 
 result: PASS
 
+date_run: 12-03-2019
+
 # Default behavior (nothing specified in yml, no argument passed in) should not update
 Note how outdated packages are flagged with warnings in `plan` and excluded from installation in `install`
 ![output1](default_plan.png)
