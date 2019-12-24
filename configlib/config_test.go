@@ -3,6 +3,8 @@ package configlib
 import (
 	"bytes"
 	"fmt"
+	"github.com/thoas/go-funk"
+	"gopkg.in/yaml.v2"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -75,6 +77,124 @@ func TestAddRemovePackage(t *testing.T) {
 		err := afero.WriteFile(appFS, fileName, ymlStart, fi.Mode())
 		assert.Equal(t, nil, err, fmt.Sprintf("Error writing file back to original state:%s", fileName))
 	}
+}
+
+func TestAddPackageLockfileConfig(t *testing.T) {
+	type test struct {
+		testFolder string
+		lockfileType string
+		packageToAdd string
+	}
+
+	tests := []test {
+		{
+			"renv-library-modify",
+			"renv",
+			"renv",
+		},
+		{
+			"packrat-library-modify",
+			"packrat",
+			"packrat",
+		},
+	}
+
+	fs := afero.NewOsFs()
+
+	for _, testCase := range tests {
+		pkgrYamlContent := []byte(fmt.Sprintf(`
+Version: 1
+
+Packages:
+  - fansi
+Repos:
+  - MPN: "https://mpn.metworx.com/snapshots/stable/2019-12-02"
+
+Lockfile:
+  Type: %s
+`, testCase.lockfileType))
+		configFilePath := filepath.Join("testsite", testCase.testFolder, "pkgr.yml")
+		_ = fs.Remove(configFilePath)
+		err := afero.WriteFile(fs, configFilePath, pkgrYamlContent,  0755)
+		if err != nil {
+			t.Error("Could not write test pkgr.yml file in " + testCase.testFolder)
+			t.Fail()
+		}
+		resultErr := add(configFilePath, testCase.packageToAdd)
+		assert.Nil(t, resultErr, "failed to add package")
+
+		// Find packageToRemove in yml file under Packages:
+		var actualResult PkgrConfig
+		postChangeConfig, err := afero.ReadFile(fs, configFilePath)
+		assert.Nil(t, err, "Could not read in updated yml file for folder " + testCase.testFolder)
+		err = yaml.Unmarshal(postChangeConfig, &actualResult)
+		assert.Nil(t, err, "Could not unmarshal updated yml file for folder " + testCase.testFolder)
+
+		pkgWasAdded := funk.Contains(actualResult.Packages, testCase.packageToAdd)
+		assert.True(t, pkgWasAdded, fmt.Sprintf("package not found after add command: %s", testCase.packageToAdd))
+	}
+
+}
+
+func TestRemovePackageLockfileConfig(t *testing.T) {
+	type test struct {
+		testFolder      string
+		lockfileType    string
+		packageToRemove string
+	}
+
+	tests := []test {
+		{
+			"renv-library-modify",
+			"renv",
+			"renv",
+		},
+		{
+			"packrat-library-modify",
+			"packrat",
+			"packrat",
+		},
+	}
+
+	fs := afero.NewOsFs()
+
+	for _, testCase := range tests {
+		pkgrYamlContent := []byte(fmt.Sprintf(`
+Version: 1
+
+Packages:
+  - %s
+  - fansi
+Repos:
+  - MPN: "https://mpn.metworx.com/snapshots/stable/2019-12-02"
+
+Lockfile:
+  Type: %s
+`,
+		testCase.packageToRemove, testCase.lockfileType))
+
+		configFilePath := filepath.Join("testsite", testCase.testFolder, "pkgr.yml")
+		_ = fs.Remove(configFilePath)
+		err := afero.WriteFile(fs, configFilePath, pkgrYamlContent,  0755)
+		if err != nil {
+			t.Error("Could not write test pkgr.yml file in " + testCase.testFolder)
+			t.Fail()
+		}
+		resultErr := remove(configFilePath, testCase.packageToRemove)
+		assert.Nil(t, resultErr, "failed to add package")
+
+		// Verify packageToRemove is not in yml file.
+		var actualResult PkgrConfig
+		postChangeConfig, err := afero.ReadFile(fs, configFilePath)
+		assert.Nil(t, err, "Could not read in updated yml file for folder " + testCase.testFolder)
+		err = yaml.Unmarshal(postChangeConfig, &actualResult)
+		assert.Nil(t, err, "Could not unmarshal updated yml file for folder " + testCase.testFolder)
+
+		pkgWasRemoved := !funk.Contains(actualResult.Packages, testCase.packageToRemove)
+
+		assert.True(t, pkgWasRemoved, fmt.Sprintf("package not excluded after add command: %s", testCase.packageToRemove))
+	}
+
 }
 
 func TestRemoveWhitespace(t *testing.T) {

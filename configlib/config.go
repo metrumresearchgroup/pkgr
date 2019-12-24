@@ -3,6 +3,8 @@ package configlib
 import (
 	"bytes"
 	"fmt"
+	"github.com/thoas/go-funk"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -138,7 +140,12 @@ func add(ymlfile string, packageName string) error {
 	if err != nil {
 		return err
 	}
-	if bytes.Contains(yf, []byte(packageName)) {
+
+	// TODO: yf is already unmarshalled and remarshalled in order to standardize format. We should not be doing this redundant unmarshalling.
+	var pc PkgrConfig
+	_ = yaml.Unmarshal(yf, &pc)
+
+	if funk.Contains(pc, packageName) {
 		log.Info(fmt.Sprintf("Package <%s> already found in <%s>", packageName, ymlfile))
 		return nil
 	}
