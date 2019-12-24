@@ -91,7 +91,7 @@ func TestConfigureArgs(t *testing.T) {
 			"System contains sensitive information",
 			"",
 			[]string{"R_LIBS_USER=original/path", "GITHUB_PAT=should_get_hidden1", "ghe_token=should_get_hidden2", "ghe_PAT=should_get_hidden3", "github_token=should_get_hidden4"},
-			[]string{"R_LIBS_USER=path/to/install/lib", "GITHUB_PAT=**HIDDEN**", "ghe_token=**HIDDEN**", "ghe_PAT=**HIDDEN**", "github_token=**HIDDEN**"},
+			[]string{"GITHUB_PAT=**HIDDEN**", "ghe_token=**HIDDEN**", "ghe_PAT=**HIDDEN**", "github_token=**HIDDEN**", "R_LIBS_SITE=path/to/install/lib",},
 		},
 	}
 	for i, tt := range installArgsTests {
@@ -150,23 +150,54 @@ func TestConfigureArgs2(t *testing.T) {
 func TestCensoredEnvVars(t *testing.T) {
 	tests := map[string]struct{
 		additionalVars []string
-		expected []string
+		expected map[string]string
 	}{
 		"Default": {
 			additionalVars: nil,
-			expected: []string{"GITHUB_TOKEN", "GITHUB_PAT", "GHE_TOKEN", "GHE_PAT", "AWS_ACCESS_KEY_ID", "AWS_SECRET_KEY",},
+			expected: map[string]string{
+				"GITHUB_TOKEN" : "GITHUB_TOKEN",
+				"GITHUB_PAT" : "GITHUB_PAT",
+				"GHE_TOKEN" : "GHE_TOKEN",
+				"GHE_PAT" : "GHE_PAT",
+				"AWS_ACCESS_KEY_ID" : "AWS_ACCESS_KEY_ID",
+				"AWS_SECRET_KEY" : "AWS_SECRET_KEY",
+			},
 		},
 		"Empty arg": {
 			additionalVars: []string{},
-			expected: []string{"GITHUB_TOKEN", "GITHUB_PAT", "GHE_TOKEN", "GHE_PAT", "AWS_ACCESS_KEY_ID", "AWS_SECRET_KEY",},
+			expected: map[string]string{
+				"GITHUB_TOKEN" : "GITHUB_TOKEN",
+				"GITHUB_PAT" : "GITHUB_PAT",
+				"GHE_TOKEN" : "GHE_TOKEN",
+				"GHE_PAT" : "GHE_PAT",
+				"AWS_ACCESS_KEY_ID" : "AWS_ACCESS_KEY_ID",
+				"AWS_SECRET_KEY" : "AWS_SECRET_KEY",
+			},
 		},
 		"Add one": {
 			additionalVars: []string{"cats"},
-			expected: []string{"GITHUB_TOKEN", "GITHUB_PAT", "GHE_TOKEN", "GHE_PAT", "AWS_ACCESS_KEY_ID", "AWS_SECRET_KEY", "CATS"},
+			expected: map[string]string{
+				"GITHUB_TOKEN" : "GITHUB_TOKEN",
+				"GITHUB_PAT" : "GITHUB_PAT",
+				"GHE_TOKEN" : "GHE_TOKEN",
+				"GHE_PAT" : "GHE_PAT",
+				"AWS_ACCESS_KEY_ID" : "AWS_ACCESS_KEY_ID",
+				"AWS_SECRET_KEY" : "AWS_SECRET_KEY",
+				"CATS" : "CATS",
+			},
 		},
 		"Add two": {
 			additionalVars: []string{"CATS", "and_oranges"},
-			expected: []string{"GITHUB_TOKEN", "GITHUB_PAT", "GHE_TOKEN", "GHE_PAT", "AWS_ACCESS_KEY_ID", "AWS_SECRET_KEY", "CATS", "AND_ORANGES"},
+			expected: map[string]string{
+				"GITHUB_TOKEN" : "GITHUB_TOKEN",
+				"GITHUB_PAT" : "GITHUB_PAT",
+				"GHE_TOKEN" : "GHE_TOKEN",
+				"GHE_PAT" : "GHE_PAT",
+				"AWS_ACCESS_KEY_ID" : "AWS_ACCESS_KEY_ID",
+				"AWS_SECRET_KEY" : "AWS_SECRET_KEY",
+				"CATS" : "CATS",
+				"AND_ORANGES" : "AND_ORANGES",
+			},
 		},
 	}
 	for testName, test := range tests {
