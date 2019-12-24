@@ -79,6 +79,64 @@ func TestAddRemovePackage(t *testing.T) {
 	}
 }
 
+func TestAddPackageWithDuplicate(t *testing.T) {
+	type test struct {
+		testFolder string
+		packageToAdd string
+	}
+
+	tests := []test {
+		{
+			"simple-modify",
+			"R6",
+		},
+	}
+
+	fs := afero.NewOsFs()
+
+	for _, testCase := range tests {
+		pkgrYamlContent := []byte(`
+Version: 1
+# top level packages
+Packages:
+  - R6
+  - pillar
+
+# any repositories, order matters
+Repos:
+  - CRAN: "https://cran.microsoft.com/snapshot/2019-05-01"
+
+
+Library: "test-library"
+
+`)
+		configFilePath := filepath.Join("testsite", testCase.testFolder, "pkgr.yml")
+		_ = fs.Remove(configFilePath)
+		err := afero.WriteFile(fs, configFilePath, pkgrYamlContent,  0755)
+		if err != nil {
+			t.Error("Could not write test pkgr.yml file in " + testCase.testFolder)
+			t.Fail()
+		}
+		resultErr := add(configFilePath, testCase.packageToAdd)
+		assert.Nil(t, resultErr, "failed to add package")
+
+		var actualResult PkgrConfig
+		postChangeConfig, err := afero.ReadFile(fs, configFilePath)
+		assert.Nil(t, err, "Could not read in updated yml file for folder " + testCase.testFolder)
+		err = yaml.Unmarshal(postChangeConfig, &actualResult)
+		assert.Nil(t, err, "Could not unmarshal updated yml file for folder " + testCase.testFolder)
+
+		pkgCount := 0
+		for _, p := range actualResult.Packages {
+			if p == testCase.packageToAdd {
+				pkgCount++
+			}
+		}
+		assert.Equal(t, 1, pkgCount, fmt.Sprintf("expected to find exactly one occurence of package %s in %s, found %d", testCase.packageToAdd, configFilePath, pkgCount))
+	}
+
+}
+
 func TestAddPackageLockfileConfig(t *testing.T) {
 	type test struct {
 		testFolder string

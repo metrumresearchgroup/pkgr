@@ -1,11 +1,15 @@
 Version: 1
+
+
 # top level packages
 Packages:
+  - packrat
+  - packrat
   - R6
   - pillar
-
 Lockfile:
-  Type: packrat
+    Type: packrat
+
 
 # any repositories, order matters
 Repos:
