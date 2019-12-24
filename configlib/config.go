@@ -140,12 +140,11 @@ func add(ymlfile string, packageName string) error {
 	if err != nil {
 		return err
 	}
-
-	// TODO: yf is already unmarshalled and remarshalled in order to standardize format. We should not be doing this redundant unmarshalling.
+	
 	var pc PkgrConfig
 	_ = yaml.Unmarshal(yf, &pc)
 
-	if funk.Contains(pc, packageName) {
+	if funk.Contains(pc.Packages, packageName) {
 		log.Info(fmt.Sprintf("Package <%s> already found in <%s>", packageName, ymlfile))
 		return nil
 	}
