@@ -63,7 +63,14 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 			// if exists would be custom to the package hence should not accept the system env
 			_, exists := envList.Get(evs[0])
 			if !exists {
-				envList.Append(evs[0], evs[1])
+				displayValue := evs[1]
+				censoredVars := censoredEnvVars(nil)
+				_, isCensored := censoredVars[strings.ToUpper(evs[0])]
+
+				if isCensored {
+					 displayValue = "**HIDDEN**"
+				}
+				envList.Append(evs[0], displayValue)
 			}
 		}
 	}
@@ -79,4 +86,24 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 	}
 
 	return envVars
+}
+
+
+// Returns a constant set of env vars to be hidden in logs.
+// Calling function may pass in additional values to include in the censor list.
+func censoredEnvVars(add []string) map[string]string {
+	censoredVarsMap := map[string]string{
+		"GITHUB_TOKEN" : "GITHUB_TOKEN",
+		"GITHUB_PAT" : "GITHUB_PAT",
+		"GHE_TOKEN" : "GHE_TOKEN",
+		"GHE_PAT" : "GHE_PAT",
+		"AWS_ACCESS_KEY_ID" : "AWS_ACCESS_KEY_ID",
+		"AWS_SECRET_KEY" : "AWS_SECRET_KEY",
+	}
+	if add != nil {
+		for _, v := range add {
+			censoredVarsMap[strings.ToUpper(v)] = strings.ToUpper(v)// append(censoredVars, strings.ToUpper(v))
+		}
+	}
+	return censoredVarsMap
 }
