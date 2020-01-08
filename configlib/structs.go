@@ -51,4 +51,5 @@ type PkgrConfig struct {
 	Logging        LogConfig           `yaml:"Logging,omitempty"`
 	Update         bool                `yaml:"Update,omitempty"`
 	Lockfile       Lockfile            `yaml:"Lockfile,omitempty"`
+	Strict         bool                `yaml:"Strict,omitempty"`
 }

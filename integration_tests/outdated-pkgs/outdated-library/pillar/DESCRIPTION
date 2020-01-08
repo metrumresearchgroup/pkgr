@@ -32,3 +32,6 @@ Maintainer: Kirill Müller <krlmlr+r@mailbox.org>
 Repository: CRAN
 Date/Publication: 2018-02-27 12:42:32 UTC
 Built: R 3.5.3; ; 2019-04-10 14:50:08 UTC; unix
+PkgrVersion: 0.5.0-rc.1-2019-11-08T16:32:20-0500
+PkgrInstallType: binary
+PkgrRepositoryURL: https://cran.microsoft.com/snapshot/2019-08-14

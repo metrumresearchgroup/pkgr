@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/metrumresearchgroup/pkgr/cran"
+	"github.com/thoas/go-funk"
 
 	"github.com/deckarep/golang-set"
 )
@@ -140,4 +141,24 @@ func (ip *InstallPlan) GetAllPackages() []string {
 		toInstall = append(toInstall, depsList)
 	}
 	return toInstall
+}
+
+func (ip *InstallPlan) GetNumPackagesToInstall() int {
+	requiredPackages := ip.GetAllPackages()
+
+
+	// Handle the case where packages not requested via pkgr.yml (or dependencies) are present in directory.
+	installedRequired := 0
+	for p := range ip.InstalledPackages {
+		if funk.Contains(requiredPackages, p) {
+			installedRequired = installedRequired + 1
+		}
+	}
+	toUpdate := 0
+	// Everything in OutdatedPackages should be required, otherwise pkgr wouldn't have checked for an updated version.
+	if ip.Update {
+		toUpdate = len(ip.OutdatedPackages)
+	}
+	return len(requiredPackages) - installedRequired + toUpdate
+
 }

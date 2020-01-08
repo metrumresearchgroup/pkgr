@@ -81,6 +81,9 @@ func init() {
 	RootCmd.PersistentFlags().Bool("update", cfg.Update, "Update packages along with install")
 	_ = viper.BindPFlag("update", RootCmd.PersistentFlags().Lookup("update"))
 
+	RootCmd.PersistentFlags().Bool("strict", cfg.Update, "Enable strict mode")
+	_ = viper.BindPFlag("strict", RootCmd.PersistentFlags().Lookup("strict"))
+
 	// packrat related
 	// RootCmd.PersistentFlags().String("pr_lockfile", "", "packrat lockfile")
 	// viper.BindPFlag("pr_lockfile", RootCmd.PersistentFlags().Lookup("pr_lockfile"))

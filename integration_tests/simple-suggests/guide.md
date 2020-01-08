@@ -1,4 +1,7 @@
 # simple-suggests
+tags: suggests, inspect, cache-local
+
+todo: instructions for cache test.
 
 ## Description
 

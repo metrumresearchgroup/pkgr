@@ -1,4 +1,5 @@
 # repo-local
+tags: repo-local, repo-remote
 
 ## Description
 Environment to help test that pkgr can install packages from a mix of local and remote repositories.

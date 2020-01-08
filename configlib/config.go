@@ -3,6 +3,8 @@ package configlib
 import (
 	"bytes"
 	"fmt"
+	"github.com/thoas/go-funk"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -65,7 +67,7 @@ func LoadConfigFromPath(configFilename string) error {
 	if err != nil {
 		// panic if can't find or parse config as this could be explicit to user expectations
 		if _, ok := err.(*os.PathError); ok {
-			panic(fmt.Errorf("could not find a config file at path: %s", configFilename))
+			log.Fatalf("could not find a config file at path: %s", configFilename)
 		}
 	}
 	expb := []byte(os.ExpandEnv(string(b)))
@@ -73,7 +75,7 @@ func LoadConfigFromPath(configFilename string) error {
 	if err != nil {
 		if _, ok := err.(viper.ConfigParseError); ok {
 			// found config file but couldn't parse it, should error
-			panic(fmt.Errorf("unable to parse config file with error (%s)", err))
+			log.Fatalf("unable to parse config file with error (%s)", err)
 		}
 		// maybe could be more loose on this later, but for now will require a config file
 		fmt.Println("Error with pkgr config file:")
@@ -93,6 +95,7 @@ func loadDefaultSettings() {
 	// path to R on system, defaults to R in path
 	viper.SetDefault("rpath", "R")
 	viper.SetDefault("threads", 0)
+	viper.SetDefault("strict", false)
 }
 
 // IsCustomizationSet ...
@@ -137,7 +140,11 @@ func add(ymlfile string, packageName string) error {
 	if err != nil {
 		return err
 	}
-	if bytes.Contains(yf, []byte(packageName)) {
+	
+	var pc PkgrConfig
+	_ = yaml.Unmarshal(yf, &pc)
+
+	if funk.Contains(pc.Packages, packageName) {
 		log.Info(fmt.Sprintf("Package <%s> already found in <%s>", packageName, ymlfile))
 		return nil
 	}
