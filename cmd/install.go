@@ -15,7 +15,6 @@
 package cmd
 
 import (
-	"github.com/metrumresearchgroup/pkgr/pacman"
 	"github.com/metrumresearchgroup/pkgr/rollback"
 	"path/filepath"
 	"runtime"
@@ -76,7 +75,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if viper.GetBool("update") {
+	if viper.GetBool("update") && viper.GetBool("rollback") {
 		log.Info("update argument passed. staging packages for update...")
 		rollbackPlan.PreparePackagesForUpdate(fs, cfg.Library)
 	}
@@ -111,7 +110,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	err = rcmd.InstallPackagePlan(fs, installPlan, pkgMap, packageCache, pkgInstallArgs, rSettings, rcmd.ExecSettings{PkgrVersion: VERSION}, nworkers)
 
 	//If anything went wrong during the installation, rollback the environment.
-	if err != nil {
+	if err != nil && viper.GetBool("rollback") {
 		errRollback := rollback.RollbackPackageEnvironment(fs, rollbackPlan)
 		if errRollback != nil {
 			log.WithFields(log.Fields{
@@ -119,7 +118,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 			}).Error("failed to reset package environment after bad installation. Your package Library will be in a corrupt state. It is recommended you delete your Library and reinstall all packages.")
 		}
 	} else {
-		pacman.CleanUpdateBackups(fs, rollbackPlan.UpdateRollbacks)
+		rollback.CleanUpdateBackups(fs, rollbackPlan.UpdateRollbacks)
 	}
 
 	log.Info("duration:", time.Since(startTime))

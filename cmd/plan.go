@@ -174,6 +174,8 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		pkgNexus,
 		cfg.Update,
 		libraryExists)
+
+
 	rollbackPlan := rollback.CreateRollbackPlan(cfg.Library, installPlan, installedPackages)
 
 	if err != nil {
