@@ -7,7 +7,7 @@ Packages:
   - R6
   - xml2 #### included because it fails on John Carlo's machine.
   - Rcpp
-  #- ballr
+  - flatxml
 
 # any repositories, order matters
 Repos:
