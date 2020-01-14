@@ -32,7 +32,7 @@ which has been configured in some way to test a different case.
 * crayon: **Normal, preinstalled** -- A "regular" package that is already installed and doesn't need updates.
 * fansi: **Normal, not installed** -- A "regular" package that will install correctly.
 * R6: **Outdated** -- An outdated package that successfully installs prior to error.
-* Rcpp: **Outdated** -- An outdated package that installs after the failure.
+* Rcpp: **Outdated dependency of failure** -- An outdated package that the "fail" package relies on and will update.
 * utf8: **Not installed by pkgr** -- A package that is not included at all in the pkgr file. We may want to remove this, but I figured we shouldn't be corrupting users' environments even if they're using pkgr in an unintended way.
 
 ## Expected Behavior:

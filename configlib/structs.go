@@ -54,3 +54,14 @@ type PkgrConfig struct {
 	Lockfile       Lockfile            `yaml:"Lockfile,omitempty"`
 	Strict         bool                `yaml:"Strict,omitempty"`
 }
+
+/*	viper.SetDefault("debug", false)
+	viper.SetDefault("preview", false)
+	// should be one of Debug,Info,Warn,Error,Fatal,Panic
+	viper.SetDefault("loglevel", "info")
+	// path to R on system, defaults to R in path
+	viper.SetDefault("rpath", "R")
+	viper.SetDefault("threads", 0)
+	viper.SetDefault("strict", false)
+	viper.SetDefault("rollback", true)
+*/

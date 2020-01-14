@@ -38,6 +38,7 @@ func RollbackPackageEnvironment(fileSystem afero.Fs, rbp RollbackPlan) error {
 		}
 	}
 
+
 	//Rollback updated packages -- we have to do this differently than the rest, because updated packages need to be
 	//restored from backups.
 	if len(rbp.UpdateRollbacks) > 0 {
@@ -83,9 +84,9 @@ func tagOldInstallation(fileSystem afero.Fs, libraryPath string, outdatedPackage
 	}
 }
 
-func CleanUpdateBackups(fileSystem afero.Fs, packageBackupInfo []UpdateAttempt) error {
+func DeleteBackupPackageFolders(fileSystem afero.Fs, packageBackupInfo []UpdateAttempt) error {
 	if len(packageBackupInfo) == 0 {
-		logrus.Debug("Not update-packages to restore.")
+		logrus.Debug("No update-packages to restore.")
 		return nil
 	}
 

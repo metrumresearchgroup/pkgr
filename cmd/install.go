@@ -20,8 +20,6 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/spf13/viper"
-
 	"github.com/metrumresearchgroup/pkgr/configlib"
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/logger"
@@ -75,7 +73,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if viper.GetBool("update") && viper.GetBool("rollback") {
+	if cfg.Update && cfg.Rollback {
 		log.Info("update argument passed. staging packages for update...")
 		rollbackPlan.PreparePackagesForUpdate(fs, cfg.Library)
 	}
@@ -98,7 +96,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 
 	// Get the number of workers.
 	// Use number of user defined threads if set. Otherwise, use the number of CPUs (up to 8).
-	nworkers := getWorkerCount(viper.GetInt("threads"), runtime.NumCPU())
+	nworkers := getWorkerCount(cfg.Threads, runtime.NumCPU())
 
 	// Process any customizations set in the yaml config file for individual packages.
 	// Set ENV values in rSettings
@@ -109,22 +107,25 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	//
 	err = rcmd.InstallPackagePlan(fs, installPlan, pkgMap, packageCache, pkgInstallArgs, rSettings, rcmd.ExecSettings{PkgrVersion: VERSION}, nworkers)
 
-	//If anything went wrong during the installation, rollback the environment.
-	if err != nil && viper.GetBool("rollback") {
-		errRollback := rollback.RollbackPackageEnvironment(fs, rollbackPlan)
-		if errRollback != nil {
-			log.WithFields(log.Fields{
+	if cfg.Rollback {
+		//If anything went wrong during the installation, rollback the environment.
+		if err != nil {
+			errRollback := rollback.RollbackPackageEnvironment(fs, rollbackPlan)
+			if errRollback != nil {
+				log.WithFields(log.Fields{
 
-			}).Error("failed to reset package environment after bad installation. Your package Library will be in a corrupt state. It is recommended you delete your Library and reinstall all packages.")
+				}).Error("failed to reset package environment after bad installation. Your package Library will be in a corrupt state. It is recommended you delete your Library and reinstall all packages.")
+			}
+		} else {
+			// Just remove the backup folders
+			rollback.DeleteBackupPackageFolders(fs, rollbackPlan.UpdateRollbacks)
 		}
-	} else {
-		rollback.CleanUpdateBackups(fs, rollbackPlan.UpdateRollbacks)
 	}
 
 	log.Info("duration:", time.Since(startTime))
 
 	if err != nil {
-		log.Fatalf("failed package install with err, %s", err)
+		log.Errorf("failed package install with err, %s", err)
 	}
 
 	return nil

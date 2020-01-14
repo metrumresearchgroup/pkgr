@@ -82,7 +82,7 @@ func init() {
 	_ = viper.BindPFlag("update", RootCmd.PersistentFlags().Lookup("update"))
 
 	RootCmd.PersistentFlags().Bool("rollback", cfg.Rollback, "Enable rollback")
-	_ = viper.BindPFlag("update", RootCmd.PersistentFlags().Lookup("rollback"))
+	_ = viper.BindPFlag("rollback", RootCmd.PersistentFlags().Lookup("rollback"))
 
 	RootCmd.PersistentFlags().Bool("strict", cfg.Strict, "Enable strict mode")
 	_ = viper.BindPFlag("strict", RootCmd.PersistentFlags().Lookup("strict"))
