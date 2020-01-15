@@ -11,7 +11,8 @@ Packages:
 
 # any repositories, order matters
 Repos:
-  - CRAN2: https://cran.microsoft.com/snapshot/2018-11-18
+  #- CRAN2: https://cran.microsoft.com/snapshot/2018-11-18
+  - CRAN2: "../../localrepos/bad-xml2"
 
 Library: "test-library"
 

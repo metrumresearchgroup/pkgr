@@ -1,0 +1,51 @@
+# The version number of the config file, used to indicate the API for the config.
+# Do not change.
+Version: 1
+
+# Top-level packages. Include the packages you wish to have in your environment
+# Dependencies for these packages will be automatically determined and installed.
+Packages:
+  - xml2
+  - Rcpp
+  - R6
+  - crayon
+  - bitops
+  - RCurl
+  - utf8
+  - fansi
+  - flatxml
+
+# CRAN-Like Repositories from which packages will be downloaded.
+# The order that the repositories are listed in matters: Pkgr will look for
+# each package in the first repository listed. If a package is not found in the
+# first, Pkgr will check the second, then the third, etc.
+# first repository listed for each
+Repos:
+  - CRAN: "https://cran.rstudio.com"
+  #localdownloads: "~/go/src/github.com/metrumresearchgroup/pkgr/localrepos/get-sources-here/CRAN-739227e5be3e"
+
+# Path the install packages to
+Library: "retrieve-lib"
+
+Cache: get-sources-here
+
+# Options for Logging
+# Without any options set, Pkgr will only log Info-level (and above) messages
+# to the standard output device..
+# To save logs to a file, use the "all" (as in "log all too").
+# To save logs from the "pkgr install" command to a separate file, use the
+# "install" option.
+# By default, log files will be appended to each time a pkgr is run. If you would
+# like the log files to be overwritten instead, set the "overwrite" option to true.
+
+Type: source
+
+# Package-specific Customizations
+# These optional customizations should take the format
+Customizations:
+  Packages:
+    - xml2:
+        Type: source
+  Repos:
+    - CRAN:
+        Type: source
