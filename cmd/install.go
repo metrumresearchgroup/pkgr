@@ -73,7 +73,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if cfg.Update && cfg.Rollback {
+	if cfg.Update { //} && cfg.Rollback { We actually need this to run either way, as the "prepare packages for update" operation moves the current installations to __OLD__ folders, thus allowing updated versions to be installed.
 		log.Info("update argument passed. staging packages for update...")
 		rollbackPlan.PreparePackagesForUpdate(fs, cfg.Library)
 	}
@@ -116,11 +116,10 @@ func rInstall(cmd *cobra.Command, args []string) error {
 
 				}).Error("failed to reset package environment after bad installation. Your package Library will be in a corrupt state. It is recommended you delete your Library and reinstall all packages.")
 			}
-		} else {
-			// Just remove the backup folders
-			rollback.DeleteBackupPackageFolders(fs, rollbackPlan.UpdateRollbacks)
 		}
 	}
+	// If any packages were being updated, we need to remove any leftover backup folders that were created.
+	rollback.DeleteBackupPackageFolders(fs, rollbackPlan.UpdateRollbacks)
 
 	log.Info("duration:", time.Since(startTime))
 
