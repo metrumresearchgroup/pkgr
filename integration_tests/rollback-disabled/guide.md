@@ -58,44 +58,11 @@ Dependency tree (via `pkgr install --deps`):
 
 ## Current behavior observed:
 `pkgr install`:
-* R6 and Rcpp do not update
+* R6 and Rcpp update successfully
 * fansi, bitops, and RCurl are installed
 * xml2 fails to install and says `ERRO[0000] installation failed for packages: xml2`     
 * flaxtml does not install, but there is no message saying the installation failed.
 
-Output:
-```
-johncarlos: ~/go/src/github.com/metrumresearchgroup/pkgr/integration_tests/rollback-disabled$: pkgr install
-INFO[0000] R Version 3.6.0                              
-INFO[0000] found installed packages                      count=4
-INFO[0000] Default package installation type:  binary   
-INFO[0000] 0:13396 (binary:source) packages available in for CRAN2 from https://cran.microsoft.com/snapshot/2018-11-18
-INFO[0000] package will be updated                       installed_version=2.0.0 pkg=R6 update_version=2.3.0
-INFO[0000] package will be updated                       installed_version=0.1.0 pkg=Rcpp update_version=1.0.0
-INFO[0000] package installation status                   installed=4 not_from_pkgr=0 outdated=2 total_packages_required=8
-INFO[0000] package installation sources                  CRAN2=8
-INFO[0000] package installation plan                     to_install=7 to_update=2
-INFO[0000] to install                                    package=bitops repo=CRAN2 type=source version=1.0-6
-INFO[0000] to install                                    package=fansi repo=CRAN2 type=source version=0.4.0
-INFO[0000] to install                                    package=xml2 repo=CRAN2 type=source version=1.2.0
-INFO[0000] to install                                    package=RCurl repo=CRAN2 type=source version=1.95-4.11
-INFO[0000] to install                                    package=flatxml repo=CRAN2 type=source version=0.0.2
-INFO[0000] resolution time 133.397087ms                 
-INFO[0000] downloading required packages within directory   dir=/Users/johncarlos/Library/Caches/pkgr
-INFO[0000] all packages downloaded                       duration="205.169µs"
-INFO[0000] starting initial install                     
-INFO[0000] Successfully Installed.                       package=bitops remaining=6 repo=CRAN2 version=1.0-6
-INFO[0000] Successfully Installed.                       package=fansi remaining=5 repo=CRAN2 version=0.4.0
-INFO[0000] Successfully Installed.                       package=RCurl remaining=4 repo=CRAN2 version=1.95-4.11
-ERRO[0000] cmd output                                    exitCode=1 package=xml2 stderr="* installing *source* package ‘xml2’ ...\n** package ‘xml2’ successfully unpacked and MD5 sums checked\n** using staged installation\nERROR: configuration failed for package ‘xml2’\n* removing ‘/private/var/folders/kn/ny6x14mj6sj97c050mp06ywc0000gn/T/NBWFQRMELAIP/xml2’\n" stdout="Found pkg-config cflags and libs!\nUsing PKG_CFLAGS=-I/usr/include/libxml2\nUsing PKG_LIBS=-L/usr/lib -lxml2 -lz -lpthread -licucore -lm\n------------------------- ANTICONF ERROR ---------------------------\nConfiguration failed because libxml-2.0 was not found. Try installing:\n * deb: libxml2-dev (Debian, Ubuntu, etc)\n * rpm: libxml2-devel (Fedora, CentOS, RHEL)\n * csw: libxml2_dev (Solaris)\nIf libxml-2.0 is already installed, check that 'pkg-config' is in your\nPATH and PKG_CONFIG_PATH contains a libxml-2.0.pc file. If pkg-config\nis unavailable you can set INCLUDE_DIR and LIB_DIR manually via:\nR CMD INSTALL --configure-vars='INCLUDE_DIR=... LIB_DIR=...'\n--------------------------------------------------------------------\n"
-WARN[0000] error installing                              err="exit status 1"
-INFO[0000] total install time                            duration=778.171557ms
-ERRO[0000] did not install xml2                         
-ERRO[0000] did not install flatxml                      
-ERRO[0000] installation failed for packages: xml2       
-INFO[0000] duration:924.635672ms                        
-WARN[0000] failed package install with err, %sfailed installation for packages: xml2 
-```
 
 ## Expected Behavior:
 
