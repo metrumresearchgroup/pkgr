@@ -55,6 +55,10 @@ func Execute(build string) {
 func init() {
 	cobra.OnInitialize(initConfig)
 
+	rootInit()
+}
+
+func rootInit() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports Persistent Flags, which, if defined here,
 	// will be global for your application.
@@ -72,6 +76,7 @@ func init() {
 
 	RootCmd.PersistentFlags().Bool("debug", false, "use debug mode")
 	_ = viper.BindPFlag("debug", RootCmd.PersistentFlags().Lookup("debug"))
+
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	// globals
@@ -86,14 +91,6 @@ func init() {
 
 	RootCmd.PersistentFlags().Bool("strict", cfg.Strict, "Enable strict mode")
 	_ = viper.BindPFlag("strict", RootCmd.PersistentFlags().Lookup("strict"))
-
-	//RootCmd.PersistentFlags().Bool/**/
-
-	// packrat related
-	// RootCmd.PersistentFlags().String("pr_lockfile", "", "packrat lockfile")
-	// viper.BindPFlag("pr_lockfile", RootCmd.PersistentFlags().Lookup("pr_lockfile"))
-	// RootCmd.PersistentFlags().String("pr_dir", "", "packrat dir")
-	// viper.BindPFlag("pr_dir", RootCmd.PersistentFlags().Lookup("pr_dir"))
 }
 
 func setGlobals() {
