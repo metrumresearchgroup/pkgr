@@ -64,31 +64,33 @@ func rootInit() {
 	// will be global for your application.
 	RootCmd.PersistentFlags().String("config", "", "config file (default is pkgr.yml)")
 	_ = viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
+
 	RootCmd.PersistentFlags().String("loglevel", "", "level for logging")
 	_ = viper.BindPFlag("loglevel", RootCmd.PersistentFlags().Lookup("loglevel"))
+
 	RootCmd.PersistentFlags().Int("threads", 0, "number of threads to execute with")
 	_ = viper.BindPFlag("threads", RootCmd.PersistentFlags().Lookup("threads"))
+
 	RootCmd.PersistentFlags().Bool("preview", false, "preview action, but don't actually run command")
 	_ = viper.BindPFlag("preview", RootCmd.PersistentFlags().Lookup("preview"))
+
 	RootCmd.PersistentFlags().Bool("debug", false, "use debug mode")
 	_ = viper.BindPFlag("debug", RootCmd.PersistentFlags().Lookup("debug"))
+
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	// globals
 	RootCmd.PersistentFlags().String("library", "", "library to install packages")
 	_ = viper.BindPFlag("library", RootCmd.PersistentFlags().Lookup("library"))
+
 	RootCmd.PersistentFlags().Bool("update", cfg.Update, "Update packages along with install")
 	_ = viper.BindPFlag("update", RootCmd.PersistentFlags().Lookup("update"))
+
 	RootCmd.PersistentFlags().Bool("rollback", cfg.Rollback, "Enable rollback")
 	_ = viper.BindPFlag("rollback", RootCmd.PersistentFlags().Lookup("rollback"))
+
 	RootCmd.PersistentFlags().Bool("strict", cfg.Strict, "Enable strict mode")
 	_ = viper.BindPFlag("strict", RootCmd.PersistentFlags().Lookup("strict"))
-	//RootCmd.PersistentFlags().Bool/**/
-	// packrat related
-	// RootCmd.PersistentFlags().String("pr_lockfile", "", "packrat lockfile")
-	// viper.BindPFlag("pr_lockfile", RootCmd.PersistentFlags().Lookup("pr_lockfile"))
-	// RootCmd.PersistentFlags().String("pr_dir", "", "packrat dir")
-	// viper.BindPFlag("pr_dir", RootCmd.PersistentFlags().Lookup("pr_dir"))
 }
 
 func setGlobals() {
