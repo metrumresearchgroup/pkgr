@@ -1,5 +1,5 @@
-sources_path <- "get-sources-here/CRAN-739227e5b53e/src/"
-repo_path <- "bad-xml2/"
+sources_path <- "get-sources-here/CRAN-eed1668927b6/src/"
+repo_path <- "./simple"
 
 toAdd <- list.files(path = sources_path, full.names = TRUE)
 
