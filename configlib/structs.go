@@ -6,6 +6,7 @@ type PkgConfig struct {
 	Env      map[string]string `yaml:"Env,omitempty"`
 	Repo     string            `yaml:"Repo,omitempty"`
 	Type     string            `yaml:"Type,omitempty"`
+	Tarball  string 		   `yaml:"Tarball,omitempty"`
 }
 
 // PkgSettingsMap ...
@@ -41,6 +42,7 @@ type PkgrConfig struct {
 	Version        int                 `yaml:"Version,omitempty"`
 	Packages       []string            `yaml:"Packages,omitempty"`
 	Suggests       bool                `yaml:"Suggests,omitempty"`
+	//Tarballs	   []string			   `yaml:"Tarballs,omitempty"`
 	Repos          []map[string]string `yaml:"Repos,omitempty"`
 	Rollback	   bool				   `yaml:"Rollback,omitempty"`
 	Library        string              `yaml:"Library,omitempty"`

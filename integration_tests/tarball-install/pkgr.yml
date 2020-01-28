@@ -1,0 +1,21 @@
+Version: 1
+# top level packages
+Packages:
+  - R6
+  - crayon
+
+# any repositories, order matters
+Repos:
+  - local: "/Users/johncarlos/go/src/github.com/metrumresearchgroup/pkgr/localrepos/simple"
+
+Library: "test-library"
+
+Cache: "testsets/pkgcache"
+
+Customizations:
+  Packages:
+    - crayon:
+        Tarball: "/Users/johncarlos/go/src/github.com/metrumresearchgroup/pkgr/localrepos/tarballs/crayon_1.3.4.tar.gz"
+  Repos:
+    - local:
+      Type: source

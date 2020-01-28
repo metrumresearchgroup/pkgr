@@ -7,7 +7,7 @@ import (
 )
 
 func TestSetType(t *testing.T) {
-	var pkgConfig PkgConfig
+	var pkgConfig PkgConfigImpl
 
 	setType(&pkgConfig, "source")
 	assert.Equal(t, Source, pkgConfig.Type, "Error setting type source")
@@ -33,13 +33,13 @@ func TestSetType2(t *testing.T) {
 
 	pkgNexus, _ := NewPkgDb(urls, Source, &installConfig, RVersion{})
 	_, pkgCfg, _ := pkgNexus.GetPackage(pkgName)
-	assert.Equal(t, Source, pkgCfg.Type, "Error getting type source")
+	assert.Equal(t, Source, pkgCfg.GetSourceType2(), "Error getting type source")
 
 	pkgNexus.SetPackageType(pkgName, "binary")
-	assert.Equal(t, Binary, pkgNexus.Config.Packages[pkgName].Type, "Error setting type binary")
+	assert.Equal(t, Binary, pkgNexus.Config.Packages[pkgName].GetSourceType2(), "Error setting type binary")
 
 	pkgNexus.SetPackageType(pkgName, "source")
-	assert.Equal(t, Source, pkgNexus.Config.Packages[pkgName].Type, "Error setting type source")
+	assert.Equal(t, Source, pkgNexus.Config.Packages[pkgName].GetSourceType2(), "Error setting type source")
 
 	err := pkgNexus.SetPackageType(pkgName, "invalid")
 	assert.Equal(t, "invalid source type: invalid", err.Error(), "Error setting type invalid value")
@@ -64,9 +64,9 @@ func TestSetRepo(t *testing.T) {
 	pkgNexus, _ := NewPkgDb(urls, Source, &installConfig, RVersion{})
 
 	_, pkgCfg, _ := pkgNexus.GetPackage(pkgName)
-	assert.Equal(t, "CRAN_2018_11_11", pkgCfg.Repo.Name, "Error getting repo CRAN_2018_11_11")
+	assert.Equal(t, "CRAN_2018_11_11", pkgCfg.GetOrigin().Name, "Error getting repo CRAN_2018_11_11")
 
 	pkgNexus.SetPackageRepo(pkgName, "CRAN_2018_11_12")
 	_, pkgCfg, _ = pkgNexus.GetPackage(pkgName)
-	assert.Equal(t, "CRAN_2018_11_12", pkgCfg.Repo.Name, "Error setting repo CRAN_2018_11_12")
+	assert.Equal(t, "CRAN_2018_11_12", pkgCfg.GetOrigin().Name, "Error setting repo CRAN_2018_11_12")
 }

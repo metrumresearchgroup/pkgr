@@ -34,11 +34,7 @@ type RepoConfig struct {
 	DefaultSourceType SourceType
 }
 
-//PkgConfig stores configuration information about a given package
-type PkgConfig struct {
-	Repo RepoURL
-	Type SourceType
-}
+
 
 // PkgNexus represents a package database
 type PkgNexus struct {
@@ -84,4 +80,6 @@ type OutdatedPackage struct {
 	OldVersion string
 	NewVersion string
 }
+
+
 

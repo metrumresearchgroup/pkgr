@@ -519,12 +519,12 @@ func TestSetViperCustomizations(t *testing.T) {
 
 		val := getCustomizationValue("Type", pkgSettings, tt.pkg)
 		assert.Equal(t, tt.stype, val, fmt.Sprintf("Error setting type %s for pkg %s", tt.stype, tt.pkg))
-		assert.Equal(t, tt.source, pkgNexus.Config.Packages[tt.pkg].Type, fmt.Sprintf("Error setting type %s for pkg %s", tt.stype, tt.pkg))
+		assert.Equal(t, tt.source, pkgNexus.Config.Packages[tt.pkg].GetSourceType2(), fmt.Sprintf("Error setting type %s for pkg %s", tt.stype, tt.pkg))
 
 		// Repo
 		val = getCustomizationValue("Repo", pkgSettings, tt.pkg)
 		assert.Equal(t, tt.repo, val, fmt.Sprintf("Error setting repo %s for pkg %s", tt.repo, tt.pkg))
-		assert.Equal(t, tt.repo, pkgNexus.Config.Packages[tt.pkg].Repo.Name, fmt.Sprintf("Error setting repo %s for pkg %s", tt.repo, tt.pkg))
+		assert.Equal(t, tt.repo, pkgNexus.Config.Packages[tt.pkg].GetOrigin().Name, fmt.Sprintf("Error setting repo %s for pkg %s", tt.repo, tt.pkg))
 
 		// Suggests
 		pkgDepTypes, found := dependencyConfigurations.Deps[tt.pkg]
@@ -629,10 +629,10 @@ func TestSetViperCustomizations2(t *testing.T) {
 		setViperCustomizations2(cfg, pkgSettings2, dependencyConfigurations2, pkgNexus2)
 
 		// Type
-		assert.Equal(t, pkgNexus2.Config.Packages[tt.pkg].Type, pkgNexus.Config.Packages[tt.pkg].Type, fmt.Sprintf("Error setting type %s for pkg %s", tt.stype, tt.pkg))
+		assert.Equal(t, pkgNexus2.Config.Packages[tt.pkg].GetSourceType2(), pkgNexus.Config.Packages[tt.pkg].GetSourceType2(), fmt.Sprintf("Error setting type %s for pkg %s", tt.stype, tt.pkg))
 
 		// Repo
-		assert.Equal(t, pkgNexus2.Config.Packages[tt.pkg].Repo.Name, pkgNexus.Config.Packages[tt.pkg].Repo.Name, fmt.Sprintf("Error setting repo %s for pkg %s", tt.repo, tt.pkg))
+		assert.Equal(t, pkgNexus2.Config.Packages[tt.pkg].GetOrigin().Name, pkgNexus.Config.Packages[tt.pkg].GetOrigin().Name, fmt.Sprintf("Error setting repo %s for pkg %s", tt.repo, tt.pkg))
 
 		pkgDepTypes, found := dependencyConfigurations.Deps[tt.pkg]
 		assert.Equal(t, true, found, fmt.Sprintf("Deps not found:%s", tt.pkg))
@@ -715,10 +715,10 @@ func TestSetPkgConfig(t *testing.T) {
 		setViperCustomizations2(cfg, pkgSettings2, dependencyConfigurations2, pkgNexus2)
 
 		// Type
-		assert.Equal(t, pkgNexus2.Config.Packages[tt.pkg].Type, pkgNexus.Config.Packages[tt.pkg].Type, fmt.Sprintf("Error setting type %s for pkg %s", tt.stype, tt.pkg))
+		assert.Equal(t, pkgNexus2.Config.Packages[tt.pkg].GetSourceType2(), pkgNexus.Config.Packages[tt.pkg].GetSourceType2(), fmt.Sprintf("Error setting type %s for pkg %s", tt.stype, tt.pkg))
 
 		// Repo
-		assert.Equal(t, pkgNexus2.Config.Packages[tt.pkg].Repo.Name, pkgNexus.Config.Packages[tt.pkg].Repo.Name, fmt.Sprintf("Error setting repo %s for pkg %s", tt.repo, tt.pkg))
+		assert.Equal(t, pkgNexus2.Config.Packages[tt.pkg].GetOrigin().Name, pkgNexus.Config.Packages[tt.pkg].GetOrigin().Name, fmt.Sprintf("Error setting repo %s for pkg %s", tt.repo, tt.pkg))
 
 		pkgDepTypes, found := dependencyConfigurations.Deps[tt.pkg]
 		assert.Equal(t, true, found, fmt.Sprintf("Deps not found:%s", tt.pkg))

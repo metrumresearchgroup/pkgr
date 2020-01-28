@@ -208,7 +208,7 @@ func isInCache(
 	meta := ir.Metadata
 	pkg := ir.Metadata.Metadata.Package
 
-	repoHash := cran.RepoURLHash(meta.Metadata.Config.Repo)
+	repoHash := cran.RepoURLHash(meta.Metadata.Config.GetOrigin())
 	bpath := filepath.Join(
 		pc.BaseDir,
 		repoHash,
@@ -229,7 +229,7 @@ func isInCache(
 		"package": pkg.Package,
 	}).Trace("found in cache")
 	ir.Metadata.Path = bpath
-	ir.Metadata.Metadata.Config.Type = cran.Binary
+	ir.Metadata.Metadata.Config.SetSourceType(cran.Binary.String())
 	return true, ir
 }
 
@@ -419,7 +419,7 @@ func InstallPackagePlan(
 					log.WithFields(log.Fields{
 						"package": iu.Package,
 						"version": pkg.Metadata.Package.Version,
-						"repo":    pkg.Metadata.Config.Repo.Name,
+						"repo":    pkg.Metadata.Config.GetOrigin().Name,
 						"remaining": packagesNeeded,
 					}).Info("Successfully Installed.")
 				}
@@ -532,9 +532,9 @@ func writeDescriptionInfo(fs afero.Fs, ir InstallRequest, ia InstallArgs) {
 		fs,
 		filepath.Join(ia.Library, ir.Package, "DESCRIPTION"),
 		ir.ExecSettings.PkgrVersion,
-		ir.Metadata.Metadata.Config.Type.String(),
-		ir.Metadata.Metadata.Config.Repo.URL,
-		ir.Metadata.Metadata.Config.Repo.Name)
+		ir.Metadata.Metadata.Config.GetSourceType2().String(),
+		ir.Metadata.Metadata.Config.GetOrigin().URL,
+		ir.Metadata.Metadata.Config.GetOrigin().Name)
 
 	if err != nil {
 		log.Warn(fmt.Sprintf("DESCRIPTION file error:%s", err))

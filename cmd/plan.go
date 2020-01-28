@@ -123,16 +123,16 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		}
 	}
 	st := cran.DefaultType()
-	cic := cran.NewInstallConfig()
+	installConfigurations := cran.NewInstallConfig()
 	for rn, val := range cfg.Customizations.Repos {
 		if strings.EqualFold(val.Type, "binary") {
-			cic.Repos[rn] = cran.RepoConfig{DefaultSourceType: cran.Binary}
+			installConfigurations.Repos[rn] = cran.RepoConfig{DefaultSourceType: cran.Binary}
 		}
 		if strings.EqualFold(val.Type, "source") {
-			cic.Repos[rn] = cran.RepoConfig{DefaultSourceType: cran.Source}
+			installConfigurations.Repos[rn] = cran.RepoConfig{DefaultSourceType: cran.Source}
 		}
 	}
-	pkgNexus, err := cran.NewPkgDb(repos, st, cic, rv)
+	pkgNexus, err := cran.NewPkgDb(repos, st, installConfigurations, rv)
 	if err != nil {
 		log.Panicln("error getting pkgdb ", err)
 	}
@@ -234,8 +234,8 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 				log.WithFields(log.Fields{
 					"package": pkgDesc.Package,
 					"version": pkgDesc.Version,
-					"repo":    cfg.Repo.Name,
-					"type":    cfg.Type,
+					"repo":    cfg.GetOrigin().Name,
+					"type":    cfg.GetSourceType2(),
 				}).Info("to install")
 			}
 		}
@@ -249,8 +249,8 @@ func logUserPackageRepos(packageDownloads []cran.PkgDl) {
 	for _, pkg := range packageDownloads {
 		log.WithFields(log.Fields{
 			"pkg":          pkg.Package.Package,
-			"repo":         pkg.Config.Repo.Name,
-			"type":         pkg.Config.Type,
+			"repo":         pkg.Config.GetOrigin().Name,
+			"type":         pkg.Config.GetSourceType2(),
 			"version":      pkg.Package.Version,
 			"relationship": "user package",
 		}).Debug("package repository set")
@@ -264,8 +264,8 @@ func logDependencyRepos(dependencyDownloads []cran.PkgDl) {
 		if !stringInSlice(pkg, cfg.Packages) {
 			log.WithFields(log.Fields{
 				"pkg":          pkgToDownload.Package.Package,
-				"repo":         pkgToDownload.Config.Repo.Name,
-				"type":         pkgToDownload.Config.Type,
+				"repo":         pkgToDownload.Config.GetOrigin().Name,
+				"type":         pkgToDownload.Config.GetSourceType2(),
 				"version":      pkgToDownload.Package.Version,
 				"relationship": "dependency",
 			}).Debug("package repository set")

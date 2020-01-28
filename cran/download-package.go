@@ -43,7 +43,7 @@ const (
 func getRepos(ds []PkgDl) map[string]RepoURL {
 	rpm := make(map[string]RepoURL)
 	for _, d := range ds {
-		rpm[d.Config.Repo.Name] = d.Config.Repo
+		rpm[d.Config.GetOrigin().Name] = d.Config.GetOrigin()
 	}
 	return rpm
 }
@@ -71,10 +71,10 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string, rv RVersion) (*Pk
 		wg.Add(1)
 		go func(d PkgDl, wg *sync.WaitGroup) {
 			var pkgType string
-			if d.Config.Type == Default {
-				d.Config.Type = DefaultType()
+			if d.Config.GetSourceType2() == Default {
+				d.Config.SetSourceType(DefaultType().String())
 			}
-			switch d.Config.Type {
+			switch d.Config.GetSourceType2() {
 			case Binary:
 				pkgType = "binary"
 			case Source:
@@ -90,14 +90,22 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string, rv RVersion) (*Pk
 			// TODO: should potentially provide a lookup mapping
 			// but would want to do this outside the goroutine that downloads\
 			// the package so didn't get invoked multiple times
-			urlHash := RepoURLHash(d.Config.Repo)
+			urlHash := RepoURLHash(d.Config.GetOrigin())
 			pkgdir := filepath.Join(baseDir, urlHash, pkgType)
+
 			var pkgFile string
-			if d.Config.Type == Binary {
-				pkgFile = filepath.Join(pkgdir, rv.ToString(), binaryName(d.Package.Package, d.Package.Version))
+
+			if d.Config.IsDownloadable() {
+				if d.Config.GetSourceType2() == Binary {
+					pkgFile = filepath.Join(pkgdir, rv.ToString(), binaryName(d.Package.Package, d.Package.Version))
+				} else {
+					pkgFile = filepath.Join(pkgdir, fmt.Sprintf("%s_%s.tar.gz", d.Package.Package, d.Package.Version))
+				}
 			} else {
-				pkgFile = filepath.Join(pkgdir, fmt.Sprintf("%s_%s.tar.gz", d.Package.Package, d.Package.Version))
+				pkgFile = d.Config.GetOrigin().URL
 			}
+
+
 			startDl := time.Now()
 			dl, err := DownloadPackage(fs, d, pkgFile, rv)
 			if err != nil {
@@ -144,15 +152,15 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 		}, nil
 	}
 	var pkgdl string
-	if d.Config.Type == Source || !SupportsCranBinary() {
-		d.Config.Type = Source // in case was originally set to binary
+	if d.Config.GetSourceType2() == Source || !SupportsCranBinary() {
+		d.Config.SetSourceType(Source.String())// in case was originally set to binary
 		if !SupportsCranBinary() {
 			log.WithField("package", d.Package.Package).Debug("CRAN binary not supported, downloading source instead ")
 		}
-		pkgdl = fmt.Sprintf("%s/src/contrib/%s", strings.TrimSuffix(d.Config.Repo.URL, "/"), filepath.Base(dest))
+		pkgdl = fmt.Sprintf("%s/src/contrib/%s", strings.TrimSuffix(d.Config.GetOrigin().URL, "/"), filepath.Base(dest))
 	} else {
 		pkgdl = fmt.Sprintf("%s/bin/%s/contrib/%s/%s",
-			strings.TrimSuffix(d.Config.Repo.URL, "/"),
+			strings.TrimSuffix(d.Config.GetOrigin().URL, "/"),
 			cranBinaryURL(),
 			rv.ToString(),
 			filepath.Base(dest))

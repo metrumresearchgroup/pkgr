@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
@@ -141,7 +142,7 @@ func add(ymlfile string, packageName string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	var pc PkgrConfig
 	_ = yaml.Unmarshal(yf, &pc)
 
@@ -249,6 +250,32 @@ func setCfgCustomizations(cfg PkgrConfig, dependencyConfigurations *gpsr.Install
 
 func setViperCustomizations(cfg PkgrConfig, pkgSettings []interface{}, dependencyConfigurations gpsr.InstallDeps, pkgNexus *cran.PkgNexus) {
 	for pkg, v := range cfg.Customizations.Packages {
+		if IsCustomizationSet("Tarball", pkgSettings, pkg) {
+			if IsCustomizationSet("Repo", pkgSettings, pkg) {
+				log.WithFields(log.Fields{
+					"pkg":  pkg,
+					"repo": v.Repo,
+					"tarball": v.Tarball,
+				}).Fatal("package cannot be specified with both tarball and repo -- only one may be used")
+			}
+			if IsCustomizationSet("Type", pkgSettings, pkg) {
+				if !strings.EqualFold(v.Type, "source") {
+					log.WithFields(log.Fields{
+						"pkg":  pkg,
+						"type_requested": v.Type,
+						"tarball": v.Tarball,
+					}).Fatal("misconfigured customization - packages installed as tarballs can only have type of \"source\"")
+				}
+			}
+			err := pkgNexus.SetPackageRepo(pkg, v.Tarball) // Question to answer: What happens here?
+			if err != nil {
+				log.WithFields(log.Fields{
+					"pkg":  pkg,
+					"repo": v.Repo,
+				}).Fatal("error finding custom repo to set 1")
+			}
+		}
+
 		if IsCustomizationSet("Suggests", pkgSettings, pkg) {
 			pkgDepTypes := dependencyConfigurations.Default
 			pkgDepTypes.Suggests = v.Suggests
@@ -260,8 +287,11 @@ func setViperCustomizations(cfg PkgrConfig, pkgSettings []interface{}, dependenc
 				log.WithFields(log.Fields{
 					"pkg":  pkg,
 					"repo": v.Repo,
-				}).Fatal("error finding custom repo to set")
+				}).Fatal("error finding custom repo to set 2")
 			}
+		}
+		if IsCustomizationSet("Tarball", pkgSettings, pkg) {
+
 		}
 		if IsCustomizationSet("Type", pkgSettings, pkg) {
 			err := pkgNexus.SetPackageType(pkg, v.Type)
@@ -269,7 +299,7 @@ func setViperCustomizations(cfg PkgrConfig, pkgSettings []interface{}, dependenc
 				log.WithFields(log.Fields{
 					"pkg":  pkg,
 					"repo": v.Repo,
-				}).Fatal("error finding custom repo to set")
+				}).Fatal("error finding custom repo to set 3")
 			}
 		}
 	}

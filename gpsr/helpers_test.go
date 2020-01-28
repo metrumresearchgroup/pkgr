@@ -25,10 +25,11 @@ func TestAppendGraph(t *testing.T) {
 		},
 	}
 	packages := map[string]cran.PkgConfig{
-		"brew": cran.PkgConfig{
-			Repo: urls[0],
-			Type: cran.Source,
-		},
+
+	}
+	packages["brew"] = &cran.PkgConfigImpl{
+		Repo: urls[0],
+		Type: cran.Source,
 	}
 	var installConfig = cran.InstallConfig{
 		Packages: packages,

@@ -5,13 +5,16 @@ LDFLAGS=-ldflags "-X main.buildTime=${BUILD}"
 BUILD_HOME=${PWD}/../cmd/pkgr
 TEST_HOME=${PWD}
 
-.PHONY: install test-setup test-mixed-source-reset test-simple-reset test-threads-reset test-logging-config-reset test-outdated-pkgs-reset test-repo-order-reset test-repo-local-reset test-repo-local-and-remote-reset test-rollback-reset test-simple-suggests-reset test-rollback-reset test-rollback-disabled-reset test-create-library-reset test-strict-mode-reset test-outdated-pkgs-no-update-reset test-misc-reset test-bad-customizations-reset test-description-repo-bug-reset
+.PHONY: install test-setup test-mixed-source-reset test-simple-reset test-threads-reset test-logging-config-reset test-outdated-pkgs-reset test-repo-order-reset test-repo-local-reset test-repo-local-and-remote-reset test-rollback-reset test-simple-suggests-reset test-rollback-reset test-rollback-disabled-reset test-create-library-reset test-strict-mode-reset test-outdated-pkgs-no-update-reset test-misc-reset test-bad-customizations-reset test-description-repo-bug-reset test-tarball-install-reset
 
 install:
 	cd ${BUILD_HOME}; go install ${LDFLAGS}
 
-test-setup: test-mixed-source-reset test-simple-reset test-threads-reset test-logging-config-reset test-outdated-pkgs-reset test-outdated-pkgs-stress-reset test-repo-order-reset test-repo-local-reset test-repo-local-and-remote-reset test-simple-suggests-reset test-rollback-reset test-rollback-disabled-reset test-create-library-reset test-strict-mode-reset test-outdated-pkgs-no-update-reset test-misc-reset test-bad-customizations-reset test-description-repo-bug-reset install
+test-setup: test-mixed-source-reset test-simple-reset test-threads-reset test-logging-config-reset test-outdated-pkgs-reset test-outdated-pkgs-stress-reset test-repo-order-reset test-repo-local-reset test-repo-local-and-remote-reset test-simple-suggests-reset test-rollback-reset test-rollback-disabled-reset test-create-library-reset test-strict-mode-reset test-outdated-pkgs-no-update-reset test-misc-reset test-bad-customizations-reset test-description-repo-bug-reset test-tarball-install-reset install 
 
+test-tarball-install-reset:
+	cd ${TEST_HOME}/tarball-install; rm -rf test-library/
+	cd ${TEST_HOME}/tarball-install; mkdir test-library/
 
 test-mixed-source-reset:
 	cd ${TEST_HOME}/mixed-source; rm -rf test-library/

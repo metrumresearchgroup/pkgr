@@ -64,7 +64,8 @@ func (pkgNexus *PkgNexus) SetPackageRepo(pkg string, repo string) error {
 	for _, r := range pkgNexus.Db {
 		if r.Repo.Name == repo {
 			cfg := pkgNexus.Config.Packages[pkg]
-			cfg.Repo = r.Repo
+			//cfg.Repo = r.Repo
+			cfg.SetOrigin(r.Repo.Name, r.Repo.URL)
 			pkgNexus.Config.Packages[pkg] = cfg
 			return nil
 		}
@@ -75,7 +76,7 @@ func (pkgNexus *PkgNexus) SetPackageRepo(pkg string, repo string) error {
 // SetPackageType sets the package type (source/binary) for installation
 func (pkgNexus *PkgNexus) SetPackageType(pkg string, t string) error {
 	cfg := pkgNexus.Config.Packages[pkg]
-	err := setType(&cfg, t)
+	err := setType(cfg, t)
 	if err != nil {
 		return err
 	}
@@ -83,11 +84,12 @@ func (pkgNexus *PkgNexus) SetPackageType(pkg string, t string) error {
 	return nil
 }
 
-func setType(cfg *PkgConfig, t string) error {
+func setType(cfg PkgConfig, t string) error {
 	if strings.EqualFold(t, "source") {
-		cfg.Type = Source
+		cfg.SetSourceType("source")
+		//cfg.Type = Source
 	} else if strings.EqualFold(t, "binary") {
-		cfg.Type = Binary
+		cfg.SetSourceType("binary")
 	} else {
 		return fmt.Errorf("invalid source type: %s", t)
 	}
@@ -111,8 +113,8 @@ func pkgExistsInRepo(pkg string, dbs map[SourceType]map[string]desc.Desc) bool {
 
 func isCorrectRepo(pkg string, r RepoURL, cfg map[string]PkgConfig) bool {
 	pkgcfg, exists := cfg[pkg]
-	if exists && pkgcfg.Repo.Name != "" {
-		if pkgcfg.Repo.Name == r.Name {
+	if exists && pkgcfg.GetOrigin().Name != "" {
+		if pkgcfg.GetOrigin().Name == r.Name {
 			return true
 		} else {
 			return false
@@ -125,8 +127,8 @@ func isCorrectRepo(pkg string, r RepoURL, cfg map[string]PkgConfig) bool {
 func (pkgNexus *PkgNexus) GetPackage(pkg string) (desc.Desc, PkgConfig, bool) {
 	cfg, exists := pkgNexus.Config.Packages[pkg]
 	st := pkgNexus.DefaultSourceType
-	if exists && cfg.Type != Default {
-		st = cfg.Type
+	if exists && cfg.GetSourceType2() != Default {
+		st = cfg.GetSourceType2()
 	}
 	for _, db := range pkgNexus.Db {
 		rst := st
@@ -138,25 +140,25 @@ func (pkgNexus *PkgNexus) GetPackage(pkg string) (desc.Desc, PkgConfig, bool) {
 		// the checking if also exists as source or otherwise should occur upstream
 		// then be set as part of the explicit configuration.
 		if pkgExists(pkg, db.DescriptionsBySourceType[rst]) && isCorrectRepo(pkg, db.Repo, pkgNexus.Config.Packages) {
-			return db.DescriptionsBySourceType[rst][pkg], PkgConfig{Repo: db.Repo, Type: rst}, true
+			return db.DescriptionsBySourceType[rst][pkg], &PkgConfigImpl{Repo: db.Repo, Type: rst}, true
 		}
 	}
-	return desc.Desc{}, PkgConfig{}, false
+	return desc.Desc{}, &PkgConfigImpl{}, false
 }
 
-// GetPackageFromRepo gets a package from a repo in the package database
-func (pkgNexus *PkgNexus) GetPackageFromRepo(pkg string, repo string) (desc.Desc, PkgConfig, bool) {
-	st := pkgNexus.Config.Packages[pkg].Type
-	for _, db := range pkgNexus.Db {
-		if repo != "" && db.Repo.Name != repo {
-			continue
-		}
-		if pkgExists(pkg, db.DescriptionsBySourceType[st]) {
-			return db.DescriptionsBySourceType[st][pkg], PkgConfig{Repo: db.Repo, Type: st}, true
-		}
-	}
-	return desc.Desc{}, PkgConfig{}, false
-}
+//// GetPackageFromRepo gets a package from a repo in the package database
+//func (pkgNexus *PkgNexus) GetPackageFromRepo(pkg string, repo string) (desc.Desc, PkgConfigImpl, bool) {
+//	st := pkgNexus.Config.Packages[pkg].Type
+//	for _, db := range pkgNexus.Db {
+//		if repo != "" && db.Repo.Name != repo {
+//			continue
+//		}
+//		if pkgExists(pkg, db.DescriptionsBySourceType[st]) {
+//			return db.DescriptionsBySourceType[st][pkg], PkgConfigImpl{Repo: db.Repo, Type: st}, true
+//		}
+//	}
+//	return desc.Desc{}, PkgConfigImpl{}, false
+//}
 
 // GetPackages returns all packages and the repo that they
 // will be acquired from, as well as any missing packages
