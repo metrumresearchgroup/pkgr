@@ -1,5 +1,5 @@
 sources_path <- "get-sources-here/CRAN-eed1668927b6/src/"
-repo_path <- "./simple"
+repo_path <- "./simple-no-crayon"
 
 toAdd <- list.files(path = sources_path, full.names = TRUE)
 
