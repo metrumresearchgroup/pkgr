@@ -84,6 +84,64 @@ func (suite *PlanTestSuite) TestGetPriorInstalledPackages_NoPreinstalledPackages
 	suite.Equal(0, len(actual))
 }
 
+// Partial Test, mostly just to let me access the internal functions without a lot of hoopla.
+// Might delete later.
+func TestUnpackTarballs(t *testing.T){
+
+	t.Skip("Test is meant for developer user only")
+
+	type TestCase struct {
+		localRepoName string
+		tarballName string
+		installUpdates bool
+		installSuggests bool
+		toInstall []string // Equivalent to  "Packages" in pkgr.yml
+//		expectedInstalled []string
+	}
+
+	testCases := map[string]TestCase {
+		"Basic Check" : TestCase {
+			localRepoName : "simple-no-R6",
+			installUpdates : false,
+			installSuggests : false,
+			toInstall : []string{
+				"pillar",
+			},
+			tarballName: "R6_2.4.0.tar.gz",
+			//expectedInstalled : []string {
+			//	"assertthat",
+			//	"cli",
+			//	"crayon",
+			//	"fansi",
+			//	"pillar",
+			//	"R6", //Should be installed through tarball
+			//	"rlang",
+			//	"utf8",
+			//},
+		},
+	}
+
+	for testName, tc := range testCases {
+		t.Run(testName, func(t *testing.T) {
+			InitializeEmptyTestSiteWorking()
+			InitializeGlobalsForTest()
+			libraryPath := filepath.Join("testsite", "working", "libs")
+			localRepoPath, err := filepath.Abs(filepath.Join("..", "localrepos", tc.localRepoName))
+			checkError(t, err)
+			tarballPath, err := filepath.Abs(filepath.Join("..", "localrepos", "tarballs", tc.tarballName))
+			InitGlobalConfig(libraryPath, localRepoPath, tc.installUpdates, tc.installSuggests, "source", tc.toInstall)
+			cfg.Tarballs = []string {tarballPath, }
+
+
+		})
+
+		unpackTarballs(fs, cfg)
+		// If this passes without error, you can view the results in the testsite/working directory.
+	}
+}
+
+
+
 //////// Utility
 
 func installedPackagesAreEqual(expected, actual desc.Desc) bool {

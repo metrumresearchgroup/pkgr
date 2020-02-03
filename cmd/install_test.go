@@ -35,6 +35,49 @@ func InitializeGoldenTestSiteWorking(goldenSet string) {
 	}
 }
 
+func InitGlobalConfig(libraryPath, localRepo string, update, suggests bool, installType string, packages []string) {
+
+	cfg = configlib.PkgrConfig{
+		Threads: 5,
+		Update: update,
+		Rollback: false,
+		Strict: false,
+		Packages: packages,
+		Library: libraryPath,
+		Version: 1,
+		//Logging: nil,
+		Cache: "./testsite/working/localcache",
+		Customizations: configlib.Customizations{
+			Repos: map[string]configlib.RepoConfig {
+				"testRepo" : configlib.RepoConfig{
+					Type: installType,
+				},
+			},
+		},
+		//LibPaths: nil,
+		//Lockfile: nil,
+		Repos: []map[string]string{
+			{
+				"testRepo" : localRepo,
+			},
+		},
+		//RPath: nil,
+		Suggests: suggests,
+	}
+}
+
+
+func InitializeGlobalsForTest() {
+	// Overwrite the global root cmd to "fake" the parts we need for cobra.
+	RootCmd = &cobra.Command{
+		Use:   "pkgr",
+		Short: "package manager",
+	}
+
+	// Run the "set globals" function to init the "fs" object.
+	setGlobals()
+}
+
 func TestPackagesInstalled(t *testing.T) {
 
 	type TestCase struct {
@@ -172,55 +215,6 @@ func TestTarballInstall(t *testing.T) {
 }
 
 
-func checkError(t *testing.T, err error) {
-	if err != nil {
-		t.Error(err)
-		t.Fail()
-	}
-}
-
-func InitializeGlobalsForTest() {
-	// Overwrite the global root cmd to "fake" the parts we need for cobra.
-	RootCmd = &cobra.Command{
-		Use:   "pkgr",
-		Short: "package manager",
-	}
-
-	// Run the "set globals" function to init the "fs" object.
-	setGlobals()
-}
-
-func InitGlobalConfig(libraryPath, localRepo string, update, suggests bool, installType string, packages []string) {
-
-	cfg = configlib.PkgrConfig{
-		Threads: 5,
-		Update: update,
-		Rollback: false,
-		Strict: false,
-		Packages: packages,
-		Library: libraryPath,
-		Version: 1,
-		//Logging: nil,
-		Cache: "./testsite/working/localcache",
-		Customizations: configlib.Customizations{
-			Repos: map[string]configlib.RepoConfig {
-				"testRepo" : configlib.RepoConfig{
-					Type: installType,
-				},
-			},
-		},
-		//LibPaths: nil,
-		//Lockfile: nil,
-		Repos: []map[string]string{
-			{
-				"testRepo" : localRepo,
-			},
-		},
-		//RPath: nil,
-		Suggests: suggests,
-	}
-}
-
 func TestInstallWithoutRollback(t *testing.T) {
 	// Setup
 	InitializeGoldenTestSiteWorking("rollback-disabled")
@@ -293,4 +287,14 @@ func TestInstallWithoutRollback(t *testing.T) {
 	assert.False(t, dirExistsCheck, "Package was not properly removed or was installed when it shouldn't have been")
 	dirExistsCheck, _ = afero.DirExists(fs, filepath.Join(testLibrary, "flatxml"))
 	assert.False(t, dirExistsCheck, "Package was not properly removed or was installed when it shouldn't have been")
+}
+
+// Utility
+
+
+func checkError(t *testing.T, err error) {
+	if err != nil {
+		t.Error(err)
+		t.Fail()
+	}
 }

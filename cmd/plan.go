@@ -15,8 +15,13 @@
 package cmd
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"github.com/spf13/afero"
+	"github.com/thoas/go-funk"
+	"io"
+	"path/filepath"
 	"runtime"
 
 	"github.com/metrumresearchgroup/pkgr/rollback"
@@ -38,7 +43,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	funk "github.com/thoas/go-funk"
+
+	"archive/tar"
+	"compress/gzip"
 )
 
 // planCmd shows the install plan
@@ -144,6 +151,13 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	dependencyConfigurations := gpsr.NewDefaultInstallDeps()
 	configlib.SetPlanCustomizations(cfg, dependencyConfigurations, pkgNexus)
 
+	// Check for tarball installations and add deps to cfg.Packages
+	if len(cfg.Tarballs) > 0 {
+		unpackTarballs(fs, cfg)
+
+	}
+
+
 	availableUserPackages := pkgNexus.GetPackages(cfg.Packages)
 	if len(availableUserPackages.Missing) > 0 {
 		log.Errorln("missing packages: ", availableUserPackages.Missing)
@@ -167,6 +181,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		}
 	}
 	logUserPackageRepos(availableUserPackages.Packages)
+
 	installPlan, err := gpsr.ResolveInstallationReqs(
 		cfg.Packages,
 		installedPackages,
@@ -243,6 +258,101 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 
 	log.Infoln("resolution time", time.Since(startTime))
 	return pkgNexus, installPlan, rollbackPlan
+}
+
+// Tarball manipulation code taken from https://gist.github.com/indraniel/1a91458984179ab4cf80 -- is there a built-in function that does this?
+func unpackTarballs(fs afero.Fs, cfg configlib.PkgrConfig) {
+	cacheDir := userCache(cfg.Cache)
+	for _, path := range cfg.Tarballs {
+		untar(fs, path, cacheDir)
+	}
+}
+
+func untar(fs afero.Fs, path string, cacheDir string) {
+	//fs.OpenFile( path, os.O_RDWR, 0666)
+
+	// Part 1
+	tgzFile, err := fs.Open(path)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"path": path,
+		}).Fatal("error processing specified tarball")
+	}
+	defer tgzFile.Close()
+	tgzFileForHash, err := fs.Open(path) // Shouldn't fail if the first one passed, but I'll check anyway.
+	if err != nil {
+		log.WithFields(log.Fields{
+			"path": path,
+		}).Fatal("error opening second copy of specified tarball for hashing")
+	}
+	defer tgzFileForHash.Close()
+
+	// Part 1.5
+	//Use a hash of the file so that we always regenerate when the tarball is updated.
+	tarballDirectoryName, err := GetHashedTarballName(tgzFileForHash)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"path": path,
+		}).Fatalf("error while creating hash for tarball in cache: %s", err)
+	}
+	//tarballDirectoryName := "thisisrandom"
+	tarballDirectoryPath := filepath.Join(cacheDir, tarballDirectoryName)
+
+	//Part 2
+	gzipStream, err := gzip.NewReader(tgzFile)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"path": path,
+		}).Fatal("error creating gzip stream for specified tarball")
+	}
+	defer gzipStream.Close()
+	tarStream := tar.NewReader(gzipStream)
+	for {
+		header, err := tarStream.Next()
+
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			log.Error("could not process file in tar stream. Error was: ", err)
+		}
+
+		switch header.Typeflag {
+		case tar.TypeDir:
+			fs.MkdirAll(filepath.Join(tarballDirectoryPath, header.Name), 0755)
+			break
+		case tar.TypeReg:
+			dstFile := filepath.Join(tarballDirectoryPath, header.Name)
+			extractFile(dstFile, tarStream)
+			break
+		default:
+			log.WithFields(log.Fields{
+				"type": header.Typeflag,
+				"path": path,
+			}).Error("unknown file type found while processing tarball")
+			break
+		}
+	}
+}
+
+func extractFile(dstFile string, tarStream *tar.Reader) {
+	outFile, err := os.Create(dstFile)
+	if err != nil {
+		log.Fatalf("ExtractTarGz: Create() failed: %s", err.Error())
+	}
+	defer outFile.Close()
+	if _, err := io.Copy(outFile, tarStream); err != nil {
+		log.Fatalf("ExtractTarGz: Copy() failed: %s", err.Error())
+	}
+}
+
+func GetHashedTarballName(tgzFile afero.File) (string, error) {
+	hash := md5.New()
+	_, err := io.Copy(hash, tgzFile)
+	hashInBytes := hash.Sum(nil)[:8]
+	//Convert the bytes to a string, used as a directory name for the package.
+	tarballDirectoryName := hex.EncodeToString(hashInBytes)
+	// Hashing code adapted from https://mrwaggel.be/post/generate-md5-hash-of-a-file-in-golang/
+	return tarballDirectoryName, err
 }
 
 func logUserPackageRepos(packageDownloads []cran.PkgDl) {
