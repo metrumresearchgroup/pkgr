@@ -28,7 +28,7 @@ import (
 )
 
 // VERSION is the current pkgr version
-var VERSION = "0.5.0-rc.1"
+var VERSION = "0.5.1"
 
 var fs afero.Fs
 var cfg configlib.PkgrConfig
