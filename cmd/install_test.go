@@ -109,11 +109,10 @@ func TestTarballInstall(t *testing.T) {
 
 	testCases := map[string]TestCase {
 		"Basic Check" : TestCase {
-			localRepoName : "simple_no_crayon",
+			localRepoName : "simple-no-R6",
 			installUpdates : false,
 			installSuggests : false,
 			toInstall : []string{
-				"R6",
 				"pillar",
 			},
 			expectedInstalled : []string {
@@ -122,7 +121,7 @@ func TestTarballInstall(t *testing.T) {
 				"crayon",
 				"fansi",
 				"pillar",
-				"R6",
+				"R6", //Should be installed through tarball
 				"rlang",
 				"utf8",
 			},
@@ -202,7 +201,7 @@ func InitGlobalConfig(libraryPath, localRepo string, update, suggests bool, inst
 		Library: libraryPath,
 		Version: 1,
 		//Logging: nil,
-		//Cache: nil,
+		Cache: "./testsite/working/localcache",
 		Customizations: configlib.Customizations{
 			Repos: map[string]configlib.RepoConfig {
 				"testRepo" : configlib.RepoConfig{
