@@ -74,6 +74,21 @@ type Desc struct {
 	PkgrRepositoryURL string
 }
 
+func (d *Desc) GetCombinedDependencies() map[string]Dep {
+	combined := map[string]Dep{}
+	for key, value := range d.Depends {
+		combined[key] = value
+	}
+	for key, value := range d.Imports {
+		combined[key] = value
+	}
+	for key, value := range d.LinkingTo {
+		combined[key] = value
+	}
+	return combined
+}
+
+
 // TODO figure out unmarshalling pattern so can
 // implement that on Desc so don't need intermediate
 // desc struct

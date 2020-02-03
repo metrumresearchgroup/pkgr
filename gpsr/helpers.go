@@ -69,3 +69,11 @@ func appendToGraph(m Graph, d desc.Desc, dependencyConfigs InstallDeps, pkgNexus
 		}
 	}
 }
+
+
+// Left off here -- we can easily gather a list of Dep objects and try to append them,
+// but if we add the full-blown Desc objects, then we'll be putting the tarball package in the install plan.
+// We're probably just going to do a hacky workaround for this.
+func appendSingleDependencyToGraph(m Graph, d desc.Dep, pkgNexus *cran.PkgNexus) {
+
+}

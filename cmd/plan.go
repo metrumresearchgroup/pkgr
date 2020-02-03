@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"bytes"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -153,10 +154,8 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 
 	// Check for tarball installations and add deps to cfg.Packages
 	if len(cfg.Tarballs) > 0 {
-		unpackTarballs(fs, cfg)
-
+		tarballDependencies := unpackTarballs(fs, cfg)
 	}
-
 
 	availableUserPackages := pkgNexus.GetPackages(cfg.Packages)
 	if len(availableUserPackages.Missing) > 0 {
@@ -261,15 +260,47 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 }
 
 // Tarball manipulation code taken from https://gist.github.com/indraniel/1a91458984179ab4cf80 -- is there a built-in function that does this?
-func unpackTarballs(fs afero.Fs, cfg configlib.PkgrConfig) {
+func unpackTarballs(fs afero.Fs, cfg configlib.PkgrConfig) []desc.Dep {
 	cacheDir := userCache(cfg.Cache)
+
+	var untarredPaths []string
 	for _, path := range cfg.Tarballs {
-		untar(fs, path, cacheDir)
+		untarredFolder := untar(fs, path, cacheDir)
+		untarredPaths = append(untarredPaths, untarredFolder)
 	}
+
+	var descriptions []desc.Desc
+	for _, path := range untarredPaths {
+		reader, err := fs.Open(filepath.Join(path, "DESCRIPTION"))
+		if err != nil {
+			log.WithFields(log.Fields{
+				"file": path,
+				"error": err,
+			}).Fatal("error opening DESCRIPTION file for tarball package")
+		}
+
+		desc, err := desc.ParseDesc(reader)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"file": path,
+				"error": err,
+			}).Fatal("error parsing DESCRIPTION file for tarball package")
+		}
+		descriptions = append(descriptions, desc)
+	}
+
+	// Put dependencies of tarball packages as user-level packages.
+	var deps []desc.Dep
+	for _, d := range descriptions {
+		for _, dep := range d.GetCombinedDependencies() {
+			deps := append(deps, dep)
+		}
+	}
+	return deps
 }
 
-func untar(fs afero.Fs, path string, cacheDir string) {
-	//fs.OpenFile( path, os.O_RDWR, 0666)
+// Returns top-level path of untarred files
+func untar(fs afero.Fs, path string, cacheDir string) string {
 
 	// Part 1
 	tgzFile, err := fs.Open(path)
@@ -295,7 +326,6 @@ func untar(fs afero.Fs, path string, cacheDir string) {
 			"path": path,
 		}).Fatalf("error while creating hash for tarball in cache: %s", err)
 	}
-	//tarballDirectoryName := "thisisrandom"
 	tarballDirectoryPath := filepath.Join(cacheDir, tarballDirectoryName)
 
 	//Part 2
@@ -332,6 +362,8 @@ func untar(fs afero.Fs, path string, cacheDir string) {
 			break
 		}
 	}
+
+	return tarballDirectoryPath
 }
 
 func extractFile(dstFile string, tarStream *tar.Reader) {

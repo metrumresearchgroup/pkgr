@@ -12,6 +12,7 @@ import (
 func ResolveInstallationReqs(
 		pkgs []string,
 		preinstalledPkgs map[string]desc.Desc,
+		tarballDependencies []desc.Dep,
 		dependencyConfigs InstallDeps,
 		pkgNexus *cran.PkgNexus,
 		update bool,
