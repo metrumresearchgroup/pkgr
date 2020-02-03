@@ -96,6 +96,83 @@ func TestPackagesInstalled(t *testing.T) {
 
 }
 
+// Only intended to be one test case, I'm copying the above function and  tweaking for quickness.
+func TestTarballInstall(t *testing.T) {
+
+	type TestCase struct {
+		localRepoName string
+		installUpdates bool
+		installSuggests bool
+		toInstall []string // Equivalent to  "Packages" in pkgr.yml
+		expectedInstalled []string
+	}
+
+	testCases := map[string]TestCase {
+		"Basic Check" : TestCase {
+			localRepoName : "simple_no_crayon",
+			installUpdates : false,
+			installSuggests : false,
+			toInstall : []string{
+				"R6",
+				"pillar",
+			},
+			expectedInstalled : []string {
+				"assertthat",
+				"cli",
+				"crayon",
+				"fansi",
+				"pillar",
+				"R6",
+				"rlang",
+				"utf8",
+			},
+		},
+	}
+
+	for testName, tc := range testCases {
+		t.Run(testName, func(t *testing.T) {
+
+			// Setup
+			InitializeEmptyTestSiteWorking()
+			InitializeGlobalsForTest()
+
+			libraryPath := filepath.Join("testsite", "working", "libs")
+			localRepoPath, err := filepath.Abs(filepath.Join("..", "localrepos", tc.localRepoName))
+			checkError(t, err)
+			InitGlobalConfig(libraryPath, localRepoPath, tc.installUpdates, tc.installSuggests, "source", tc.toInstall)
+
+			////Add the customization we need.
+			//cfg.Customizations = configlib.Customizations{
+			//	Packages : map[string]configlib.PkgConfig {
+			//		"crayon" : configlib.PkgConfig{
+			//			Tarball:  "/Users/johncarlos/go/src/github.com/metrumresearchgroup/pkgr/localrepos/tarballs/crayon_1.3.4.tar.gz",
+			//		},
+			//	},
+			//	Repos: map[string]configlib.RepoConfig {
+			//		"testRepo" : configlib.RepoConfig{
+			//			Type: "source",
+			//		},
+			//	},
+			//}
+
+			// Execution
+			_ = rInstall(nil, []string{})
+
+			//Validation
+			libSubDirectories, err := afero.ReadDir(fs, libraryPath)
+			checkError(t, err)
+			numInstalled := len(libSubDirectories)
+			assert.Equalf(t, len(tc.expectedInstalled), numInstalled, "Expected %d packages to be installed but found %d", len(tc.expectedInstalled), numInstalled)
+
+			for _, p := range tc.expectedInstalled {
+				assert.DirExists(t, filepath.Join(libraryPath, p), "Package missing from final results: "+ p)
+			}
+		})
+	}
+
+}
+
+
 func checkError(t *testing.T, err error) {
 	if err != nil {
 		t.Error(err)

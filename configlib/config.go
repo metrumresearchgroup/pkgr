@@ -115,6 +115,7 @@ func IsCustomizationSet(key string, elems []interface{}, elem string) bool {
 	return false
 }
 
+
 // AddPackage add a package to the Package section of the yml config file
 func AddPackage(name string) error {
 	cfgname := viper.ConfigFileUsed()
@@ -230,7 +231,8 @@ func SetPlanCustomizations(cfg PkgrConfig, dependencyConfigurations gpsr.Install
 
 	setCfgCustomizations(cfg, &dependencyConfigurations)
 
-	if viper.Sub("Customizations") != nil && viper.Sub("Customizations").AllSettings()["packages"] != nil {
+	//if viper.Sub("Customizations") != nil && viper.Sub("Customizations").AllSettings()["packages"] != nil {
+	if len(cfg.Customizations.Packages) > 0 {
 		pkgSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
 		setViperCustomizations(cfg, pkgSettings, dependencyConfigurations, pkgNexus)
 	}
