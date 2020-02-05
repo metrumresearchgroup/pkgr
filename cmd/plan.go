@@ -166,6 +166,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		}
 
 	}
+	cfg.Packages = removeBasePackages(cfg.Packages)
 
 	availableUserPackages := pkgNexus.GetPackages(cfg.Packages)
 	if len(availableUserPackages.Missing) > 0 {
@@ -269,6 +270,22 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 
 	log.Infoln("resolution time", time.Since(startTime))
 	return pkgNexus, installPlan, rollbackPlan
+}
+
+// Removes any "base" packages from the given list.
+func removeBasePackages(pkgList []string) []string {
+	var nonbasePkgList []string
+	for _, p := range pkgList {
+		pType, found := gpsr.DefaultPackages[p]
+		if !found || pType != "base" {
+			nonbasePkgList = append(nonbasePkgList, p)
+		} else {
+			log.WithFields(log.Fields{
+				"pkg": p,
+			}).Warn("removing base package from user-defined package list")
+		}
+	}
+	return nonbasePkgList
 }
 
 // Tarball manipulation code taken from https://gist.github.com/indraniel/1a91458984179ab4cf80 -- is there a built-in function that does this?

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"github.com/metrumresearchgroup/pkgr/configlib"
-	"github.com/metrumresearchgroup/pkgr/logger"
 	"github.com/metrumresearchgroup/pkgr/testhelper"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
@@ -77,7 +76,7 @@ func InitializeGlobalsForTest() {
 
 	// Run the "set globals" function to init the "fs" object.
 	setGlobals()
-	logger.SetLogLevel("trace") // Overwriting what's done in setGlobals() if we need to for testing.
+	//logger.SetLogLevel("trace") // Overwriting what's done in setGlobals() if we need to for testing.
 }
 
 func TestPackagesInstalled(t *testing.T) {
@@ -180,7 +179,7 @@ func TestTarballInstall(t *testing.T) {
 			},
 		},
 		"Tarball with dependencies" : TestCase {
-			localRepoName : "simple-no-R6",
+			localRepoName : "testthat_deps",
 			installUpdates : false,
 			installSuggests : false,
 			toInstall : []string{
