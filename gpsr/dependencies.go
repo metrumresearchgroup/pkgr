@@ -66,26 +66,27 @@ func ResolveLayers(graph Graph) ([][]string, error) {
 	}
 
 	// Iteratively find and remove nodes from the graph which have no dependencies.
+	// Removed nodes are added to a "ready" set as they are found, thereby causing other nodes to have no deps.
 	// If at some point there are still nodes in the graph and we cannot find
 	// nodes without dependencies, that means we have a circular dependency
 	var resolved [][]string
 	for len(nodeDependencies) != 0 {
 		// Get all nodes from the graph which have no dependencies
-		readySet := mapset.NewSet()
+		readyLayer := mapset.NewSet()
 		for name, deps := range nodeDependencies {
 			if deps.Cardinality() == 0 {
-				readySet.Add(name)
+				readyLayer.Add(name)
 			}
 		}
 
 		// If there aren't any ready nodes, then we have a cicular dependency
-		if readySet.Cardinality() == 0 {
+		if readyLayer.Cardinality() == 0 {
 			return resolved, errors.New("Circular dependency found")
 		}
 
 		// Remove the ready nodes and add them to the resolved graph
 		var dl []string
-		for name := range readySet.Iter() {
+		for name := range readyLayer.Iter() {
 			delete(nodeDependencies, name.(string))
 			dl = append(dl, name.(string))
 		}
@@ -94,7 +95,7 @@ func ResolveLayers(graph Graph) ([][]string, error) {
 		// Also make sure to remove the ready nodes from the
 		// remaining node dependencies as well
 		for name, deps := range nodeDependencies {
-			diff := deps.Difference(readySet)
+			diff := deps.Difference(readyLayer)
 			nodeDependencies[name] = diff
 		}
 	}

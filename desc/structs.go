@@ -74,7 +74,7 @@ type Desc struct {
 	PkgrRepositoryURL string
 }
 
-func (d *Desc) GetCombinedDependencies() map[string]Dep {
+func (d *Desc) GetCombinedDependencies(suggests bool) map[string]Dep {
 	combined := map[string]Dep{}
 	for key, value := range d.Depends {
 		combined[key] = value
@@ -84,6 +84,11 @@ func (d *Desc) GetCombinedDependencies() map[string]Dep {
 	}
 	for key, value := range d.LinkingTo {
 		combined[key] = value
+	}
+	if suggests {
+		for key, value := range d.Suggests {
+			combined[key] = value
+		}
 	}
 	return combined
 }

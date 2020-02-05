@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/metrumresearchgroup/pkgr/configlib"
+	"github.com/metrumresearchgroup/pkgr/logger"
 	"github.com/metrumresearchgroup/pkgr/testhelper"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
@@ -45,7 +46,7 @@ func InitGlobalConfig(libraryPath, localRepo string, update, suggests bool, inst
 		Packages: packages,
 		Library: libraryPath,
 		Version: 1,
-		//Logging: nil,
+		//Logging: configlib.LogConfig{Level: "debug"}, // Controlled before cfg unmarshalling, I think
 		Cache: "./testsite/working/localcache",
 		Customizations: configlib.Customizations{
 			Repos: map[string]configlib.RepoConfig {
@@ -76,6 +77,7 @@ func InitializeGlobalsForTest() {
 
 	// Run the "set globals" function to init the "fs" object.
 	setGlobals()
+	logger.SetLogLevel("trace") // Overwriting what's done in setGlobals() if we need to for testing.
 }
 
 func TestPackagesInstalled(t *testing.T) {
@@ -142,23 +144,31 @@ func TestPackagesInstalled(t *testing.T) {
 // Only intended to be one test case, I'm copying the above function and  tweaking for quickness.
 func TestTarballInstall(t *testing.T) {
 
+	libraryPath := filepath.Join("testsite", "working", "libs")
+	localReposDir, err := filepath.Abs(filepath.Join("..", "localrepos"))
+	checkError(t, err)
+
 	type TestCase struct {
 		localRepoName string
 		installUpdates bool
 		installSuggests bool
 		toInstall []string // Equivalent to  "Packages" in pkgr.yml
+		toInstallTarballs []string
 		expectedInstalled []string
 	}
 
 	testCases := map[string]TestCase {
-		"Basic Check" : TestCase {
+		"Tarball no dependencies" : TestCase {
 			localRepoName : "simple-no-R6",
 			installUpdates : false,
 			installSuggests : false,
 			toInstall : []string{
 				"pillar",
 			},
-			expectedInstalled : []string {
+			toInstallTarballs: []string {
+				filepath.Join(localReposDir, "tarballs", "R6_2.4.0.tar.gz"),
+			},
+			expectedInstalled: []string {
 				"assertthat",
 				"cli",
 				"crayon",
@@ -167,6 +177,32 @@ func TestTarballInstall(t *testing.T) {
 				"R6", //Should be installed through tarball
 				"rlang",
 				"utf8",
+			},
+		},
+		"Tarball with dependencies" : TestCase {
+			localRepoName : "simple-no-R6",
+			installUpdates : false,
+			installSuggests : false,
+			toInstall : []string{
+				"pillar",
+			},
+			toInstallTarballs: []string {
+				filepath.Join(localReposDir, "tarballs", "testthat_2.1.1.tar.gz"),
+			},
+			expectedInstalled: []string {
+				"assertthat",
+				"cli",
+				"crayon",
+				"digest",
+				"fansi",
+				"magrittr",
+				"pillar",
+				"praise",
+				"R6",
+				"rlang",
+				"testthat", //Should be installed through tarball
+				"utf8",
+				"withr",
 			},
 		},
 	}
@@ -178,10 +214,10 @@ func TestTarballInstall(t *testing.T) {
 			InitializeEmptyTestSiteWorking()
 			InitializeGlobalsForTest()
 
-			libraryPath := filepath.Join("testsite", "working", "libs")
-			localRepoPath, err := filepath.Abs(filepath.Join("..", "localrepos", tc.localRepoName))
-			checkError(t, err)
+			localRepoPath := filepath.Join(localReposDir, tc.localRepoName)
+
 			InitGlobalConfig(libraryPath, localRepoPath, tc.installUpdates, tc.installSuggests, "source", tc.toInstall)
+			cfg.Tarballs = tc.toInstallTarballs
 
 			////Add the customization we need.
 			//cfg.Customizations = configlib.Customizations{

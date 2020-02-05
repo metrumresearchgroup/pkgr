@@ -15,7 +15,6 @@
 package cmd
 
 import (
-	"bytes"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -152,9 +151,20 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	dependencyConfigurations := gpsr.NewDefaultInstallDeps()
 	configlib.SetPlanCustomizations(cfg, dependencyConfigurations, pkgNexus)
 
+	var tarballDescriptions []desc.Desc
+	var tarballPaths []string
 	// Check for tarball installations and add deps to cfg.Packages
 	if len(cfg.Tarballs) > 0 {
-		tarballDependencies := unpackTarballs(fs, cfg)
+		tarballDescriptions, tarballPaths = unpackTarballs(fs, cfg)
+		for _, tarballDesc := range tarballDescriptions {
+			tarballDeps := tarballDesc.GetCombinedDependencies(false)
+			for _, d := range tarballDeps {
+				if !funk.Contains(cfg.Packages, d.Name) {
+					cfg.Packages = append(cfg.Packages, d.Name)
+				}
+			}
+		}
+
 	}
 
 	availableUserPackages := pkgNexus.GetPackages(cfg.Packages)
@@ -184,11 +194,13 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	installPlan, err := gpsr.ResolveInstallationReqs(
 		cfg.Packages,
 		installedPackages,
+		//tarballDescriptions,
 		dependencyConfigurations,
 		pkgNexus,
 		cfg.Update,
 		libraryExists)
 
+	installPlan.Tarballs = tarballPaths
 
 	rollbackPlan := rollback.CreateRollbackPlan(cfg.Library, installPlan, installedPackages)
 
@@ -260,7 +272,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 }
 
 // Tarball manipulation code taken from https://gist.github.com/indraniel/1a91458984179ab4cf80 -- is there a built-in function that does this?
-func unpackTarballs(fs afero.Fs, cfg configlib.PkgrConfig) []desc.Dep {
+func unpackTarballs(fs afero.Fs, cfg configlib.PkgrConfig) ([]desc.Desc, []string)  {
 	cacheDir := userCache(cfg.Cache)
 
 	var untarredPaths []string
@@ -290,16 +302,16 @@ func unpackTarballs(fs afero.Fs, cfg configlib.PkgrConfig) []desc.Dep {
 	}
 
 	// Put dependencies of tarball packages as user-level packages.
-	var deps []desc.Dep
-	for _, d := range descriptions {
-		for _, dep := range d.GetCombinedDependencies() {
-			deps := append(deps, dep)
-		}
-	}
-	return deps
+	//var deps []desc.Dep
+	//for _, d := range descriptions {
+	//	for _, dep := range d.GetCombinedDependencies() {
+	//		deps = append(deps, dep)
+	//	}
+	//}
+	return descriptions, untarredPaths
 }
 
-// Returns top-level path of untarred files
+// Returns path to top-level package folder of untarred files
 func untar(fs afero.Fs, path string, cacheDir string) string {
 
 	// Part 1
@@ -363,7 +375,33 @@ func untar(fs afero.Fs, path string, cacheDir string) string {
 		}
 	}
 
-	return tarballDirectoryPath
+	dirEntries, err := afero.ReadDir(fs, tarballDirectoryPath)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"directory": tarballDirectoryPath,
+			"tarball": path,
+			"error": err,
+		}).Error("error encountered while reading untarred directory")
+	}
+
+	if len(dirEntries) == 0 {
+		log.WithFields(log.Fields{
+			"directory": tarballDirectoryPath,
+			"tarball": path,
+		}).Fatal("untarred directory is empty -- cannot install tarball package")
+	} else if len(dirEntries) > 1 {
+		log.WithFields(log.Fields{
+			"directory": tarballDirectoryPath,
+			"tarball": path,
+		}).Warn("found more than one item at top level in unarchived tarball -- assuming first alphabetical entry is package directory")
+	}
+
+	//log.WithFields(log.Fields{
+	//	"directory": tarballDirectoryPath,
+	//	"tarball": path,
+	//	"returning": filepath.Join(tarballDirectoryPath, dirEntries[0].Name()),
+	//}).Info("returning tarball package path")
+	return filepath.Join(tarballDirectoryPath, dirEntries[0].Name())
 }
 
 func extractFile(dstFile string, tarStream *tar.Reader) {

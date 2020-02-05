@@ -6,3 +6,5 @@ get-sources-here/
 setup-lib
 retrieve-lib/*
 test-library/
+.RData
+.Rhistory
