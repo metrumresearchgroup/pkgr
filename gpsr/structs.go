@@ -12,7 +12,7 @@ type InstallPlan struct {
 	PackageDownloads []cran.PkgDl
 	OutdatedPackages []cran.OutdatedPackage
 	InstalledPackages map[string]desc.Desc
-	Tarballs		[]string // Paths to tarball packages that should be installed at the end.
+	Tarballs		map[string]string // Paths to tarball packages that should be installed at the end.
 	CreateLibrary bool
 	Update bool
 }

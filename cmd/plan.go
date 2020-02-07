@@ -152,10 +152,10 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	configlib.SetPlanCustomizations(cfg, dependencyConfigurations, pkgNexus)
 
 	var tarballDescriptions []desc.Desc
-	var tarballPaths []string
+	var tarballPathMap map[string]string
 	// Check for tarball installations and add deps to cfg.Packages
 	if len(cfg.Tarballs) > 0 {
-		tarballDescriptions, tarballPaths = unpackTarballs(fs, cfg)
+		tarballDescriptions, tarballPathMap = unpackTarballs(fs, cfg)
 		for _, tarballDesc := range tarballDescriptions {
 			tarballDeps := tarballDesc.GetCombinedDependencies(false)
 			for _, d := range tarballDeps {
@@ -201,7 +201,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		cfg.Update,
 		libraryExists)
 
-	installPlan.Tarballs = tarballPaths
+	installPlan.Tarballs = tarballPathMap
 
 	rollbackPlan := rollback.CreateRollbackPlan(cfg.Library, installPlan, installedPackages)
 
@@ -289,8 +289,10 @@ func removeBasePackages(pkgList []string) []string {
 }
 
 // Tarball manipulation code taken from https://gist.github.com/indraniel/1a91458984179ab4cf80 -- is there a built-in function that does this?
-func unpackTarballs(fs afero.Fs, cfg configlib.PkgrConfig) ([]desc.Desc, []string)  {
+func unpackTarballs(fs afero.Fs, cfg configlib.PkgrConfig) ([]desc.Desc, map[string]string)  {
 	cacheDir := userCache(cfg.Cache)
+
+	untarredMap := make(map[string]string)
 
 	var untarredPaths []string
 	for _, path := range cfg.Tarballs {
@@ -316,6 +318,7 @@ func unpackTarballs(fs afero.Fs, cfg configlib.PkgrConfig) ([]desc.Desc, []strin
 			}).Fatal("error parsing DESCRIPTION file for tarball package")
 		}
 		descriptions = append(descriptions, desc)
+		untarredMap[desc.Package] = path
 	}
 
 	// Put dependencies of tarball packages as user-level packages.
@@ -325,7 +328,7 @@ func unpackTarballs(fs afero.Fs, cfg configlib.PkgrConfig) ([]desc.Desc, []strin
 	//		deps = append(deps, dep)
 	//	}
 	//}
-	return descriptions, untarredPaths
+	return descriptions, untarredMap
 }
 
 // Returns path to top-level package folder of untarred files

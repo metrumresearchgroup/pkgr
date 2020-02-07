@@ -107,6 +107,50 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	//
 	err = rcmd.InstallPackagePlan(fs, installPlan, pkgMap, packageCache, pkgInstallArgs, rSettings, rcmd.ExecSettings{PkgrVersion: VERSION}, nworkers)
 
+
+	// Install the tarballs
+	iargs := rcmd.NewDefaultInstallArgs()
+	iargs.Library = cfg.Library
+	for tarballPkg, tarballPath := range installPlan.Tarballs {
+		log.WithFields(log.Fields{
+			"pkg" : tarballPkg,
+			"tarball": tarballPath,
+		}).Info("installing tarball")
+		res, err := rcmd.Install(
+			fs,
+			tarballPkg,
+			tarballPath,
+			rcmd.InstallArgs{
+				Build: true,
+				Library: cfg.Library,
+			},
+			rSettings,
+			rcmd.ExecSettings{PkgrVersion: VERSION},
+			rcmd.InstallRequest{
+				Package: tarballPkg,
+				Cache: rcmd.PackageCache{
+					BaseDir: userCache(cfg.Cache),
+				},
+				InstallArgs: iargs,
+			},
+		)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"pkg" : tarballPkg,
+				"tarball": tarballPath,
+				"error": err,
+			}).Error("error installing tarball")
+		} else {
+			log.WithFields(log.Fields{
+				"pkg" : tarballPkg,
+				"tarball": tarballPath,
+				"output": res.Stdout,
+			}).Info("tarball installed successfully")
+		}
+
+	}
+
+
 	if cfg.Rollback {
 		//If anything went wrong during the installation, rollback the environment.
 		if err != nil {
