@@ -24,3 +24,5 @@ require (
 	pault.ag/go/debian v0.0.0-20180722221659-90aeb542bd40
 	pault.ag/go/topsort v0.0.0-20160530003732-f98d2ad46e1a // indirect
 )
+
+go 1.13

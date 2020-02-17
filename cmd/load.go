@@ -16,10 +16,17 @@ limitations under the License.
 package cmd
 
 import (
+	"bytes"
 	"fmt"
+	"github.com/metrumresearchgroup/pkgr/rcmd"
 	"github.com/spf13/viper"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
 
 	"github.com/spf13/cobra"
+	log "github.com/sirupsen/logrus"
 )
 
 // loadCmd represents the load command
@@ -29,7 +36,28 @@ var loadCmd = &cobra.Command{
 	Long: `Attempts to load user packages specified in pkgr.yml to validate that each package has been installed
 successfully and can be used. Use the --all flag to load all packages in the user-library dependency tree instead of just user-level packages.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("load called")
+		all := viper.GetBool("all")
+		json := viper.GetBool("json")
+
+		rs := rcmd.NewRSettings(cfg.RPath)
+
+		// Get directory to test package loads from.
+		// By default, use the same directory as the config file.
+		rDir := viper.GetString("config")
+		if rDir == "" {
+			rDir, _ = os.Getwd()
+		} else {
+			rDir = filepath.Dir(rDir)
+		}
+		rDir, err := filepath.Abs(rDir)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+				"directory": rDir,
+			}).Fatal("error getting absolute path for R directory")
+		}
+
+		load(rs, rDir, all, json)
 	},
 }
 
@@ -51,6 +79,111 @@ func init() {
 	// loadCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func Load() {
+func load(rs rcmd.RSettings, rDir string, all, json bool) {
+	log.WithFields(log.Fields{
+		"all_arg" : all,
+		"json_arg" : json,
+	}).Info("attempting to load packages")
+
+	rVersion := rcmd.GetRVersion(&rs)
+	_, installPlan, _ := planInstall(rVersion, false)
+
+	var toLoad []string
+	if all {
+		toLoad = installPlan.GetAllPackages()
+	} else {
+		toLoad = cfg.Packages
+	}
+
+	var report loadReport
+
+	for _, pkg := range toLoad {
+		lr := attemptLoad(rs, rDir, pkg)
+		report.AddResult(pkg, lr)
+	}
+
+	if report.failures == 0 {
+		log.WithFields(log.Fields{
+			"working_directory": rDir,
+			"user_packages_attempted": "true",
+			"dependencies_attempted": all,
+		}).Info("packages loaded successfully")
+	}
+
+	//Add failure condition.
+}
+
+func attemptLoad(rs rcmd.RSettings, rDir, pkg string) loadResult {
+
+	libraryCmd := fmt.Sprintf("library('%s')", pkg)
+
+	cmdArgs := []string{
+		//"--vanilla",
+		"-e",
+		libraryCmd,
+	}
+	cmd := exec.Command(rs.R(runtime.GOOS), cmdArgs...)
+	cmd.Dir = rDir
+	//cmd.Env = envVars
+
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	//cmd.Stdin = os.Stdin
+
+	err := cmd.Run()
+	if err != nil {
+		log.WithFields(log.Fields{
+			"cmd": rs.R(runtime.GOOS),
+			"rDir": rDir,
+			"pkg": pkg,
+		}).Fatal("could not execute R 'library' call for package")
+	} //TODO: revist
+
+	outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
+	return MakeLoadResult(outStr, errStr)
 
 }
+
+//// Load report struct
+type loadReport struct {
+	results map[string]loadResult
+	failures int
+}
+
+func (report *loadReport) AddResult(pkg string, result loadResult) {
+	report.results[pkg] = result
+	if !result.success {
+		report.failures = report.failures + 1
+	}
+}
+
+
+//// Load result struct
+type loadResult struct {
+	stdout string
+	stderr string
+	success bool
+	// Can store information for JSON here
+}
+
+func (result *loadResult) updateResult() {
+	if result.stderr == "" {
+		result.success = true
+	} else {
+		result.success = false
+	}
+}
+
+// Constructor for load result
+func MakeLoadResult(outStr, errStr string) loadResult {
+	lr := loadResult{
+		stdout : outStr,
+		stderr : errStr,
+	}
+	lr.updateResult()
+	return lr
+}
+
+
+
