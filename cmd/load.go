@@ -62,8 +62,19 @@ func load(rs rcmd.RSettings, rDir string, all, json bool) {
 		"json_arg" : json,
 	}).Info("attempting to load packages")
 
+	log.Info("getting relevant packages via `pkgr plan`..................")
+
 	rVersion := rcmd.GetRVersion(&rs)
 	_, installPlan, _ := planInstall(rVersion, false)
+
+	log.WithFields(log.Fields{
+		"all_arg" : all,
+		"json_arg" : json,
+	}).Info("attempting to load packages")
+
+	log.Info("finished getting packages from `pkgr plan`__________________")
+
+
 
 	var toLoad []string
 	if all {
@@ -72,7 +83,7 @@ func load(rs rcmd.RSettings, rDir string, all, json bool) {
 		toLoad = cfg.Packages
 	}
 
-	var report loadReport
+	report := MakeLoadReport()
 
 	for _, pkg := range toLoad {
 		lr := attemptLoad(rs, rDir, pkg)
@@ -109,6 +120,8 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) loadResult {
 	//cmd.Stdin = os.Stdin
 
 	var exitError *exec.ExitError
+
+	log.WithFields(log.Fields{"pkg" : pkg, "rDir": rDir,}).Trace("attempting to load package.")
 	err := cmd.Run()
 
 	var didSucceed bool
@@ -128,9 +141,9 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) loadResult {
 
 	outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
 	if errStr == "" {
-		didSucceed = false
-	} else {
 		didSucceed = true
+	} else {
+		didSucceed = false
 	}
 
 	if didSucceed {
@@ -141,7 +154,7 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) loadResult {
 		log.WithFields(log.Fields{
 			"pkg": pkg,
 			"rDir": rDir,
-			"stdOut": stdout,
+			"stdOut": string(stdout.Bytes()),
 		}).Trace("Package loaded successfully")
 	} else {
 		log.WithFields(log.Fields{
@@ -154,6 +167,13 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) loadResult {
 
 	return MakeLoadResult(outStr, errStr, didSucceed)
 
+}
+
+func MakeLoadReport() loadReport {
+	return loadReport {
+		results : make(map[string]loadResult),
+		failures : 0,
+	}
 }
 
 //// Load report struct
