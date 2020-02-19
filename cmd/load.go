@@ -1,22 +1,8 @@
-/*
-Copyright © 2020 NAME HERE <EMAIL ADDRESS>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
 package cmd
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
 	"github.com/spf13/viper"
@@ -63,15 +49,6 @@ successfully and can be used. Use the --all flag to load all packages in the use
 
 func init() {
 	RootCmd.AddCommand(loadCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// loadCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
 	loadCmd.Flags().Bool("all", false, "load user packages as well as their dependencies")
 	viper.BindPFlag("all", loadCmd.LocalFlags().Lookup("all")) //There doesn't seem to be a way to bind local flags.
 	loadCmd.Flags().Bool("json", false, "output a JSON object of package info at the end")
@@ -131,17 +108,51 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) loadResult {
 	cmd.Stderr = &stderr
 	//cmd.Stdin = os.Stdin
 
+	var exitError *exec.ExitError
 	err := cmd.Run()
+
+	var didSucceed bool
+
 	if err != nil {
-		log.WithFields(log.Fields{
-			"cmd": rs.R(runtime.GOOS),
-			"rDir": rDir,
-			"pkg": pkg,
-		}).Fatal("could not execute R 'library' call for package")
-	} //TODO: revist
+		if errors.As(err, &exitError) { // If the command had an exit code != 0
+			didSucceed = false
+		} else {
+			log.WithFields(log.Fields{
+				"cmd": rs.R(runtime.GOOS),
+				"rDir": rDir,
+				"pkg": pkg,
+			}).Fatal("could not execute R 'library' call for package") //TODO: revist
+		}
+	}
+
 
 	outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
-	return MakeLoadResult(outStr, errStr)
+	if errStr == "" {
+		didSucceed = false
+	} else {
+		didSucceed = true
+	}
+
+	if didSucceed {
+		log.WithFields(log.Fields{
+			"pkg": pkg,
+			"rDir": rDir,
+		}).Debug("Package loaded successfully")
+		log.WithFields(log.Fields{
+			"pkg": pkg,
+			"rDir": rDir,
+			"stdOut": stdout,
+		}).Trace("Package loaded successfully")
+	} else {
+		log.WithFields(log.Fields{
+			"goErr" : err,
+			"stdErr": errStr,
+			"pkg": pkg,
+			"rDir": rDir,
+		}).Error("error loading package via `library(<pkg>)` in R")
+	}
+
+	return MakeLoadResult(outStr, errStr, didSucceed)
 
 }
 
@@ -167,21 +178,22 @@ type loadResult struct {
 	// Can store information for JSON here
 }
 
-func (result *loadResult) updateResult() {
-	if result.stderr == "" {
-		result.success = true
-	} else {
-		result.success = false
-	}
-}
+//func (result *loadResult) updateResult() {
+//	if result.stderr == "" {
+//		result.success = true
+//	} else {
+//		result.success = false
+//	}
+//}
 
 // Constructor for load result
-func MakeLoadResult(outStr, errStr string) loadResult {
+func MakeLoadResult(outStr, errStr string, success bool) loadResult {
 	lr := loadResult{
 		stdout : outStr,
 		stderr : errStr,
+		success : success,
 	}
-	lr.updateResult()
+	//lr.updateResult()
 	return lr
 }
 

@@ -7,7 +7,7 @@ Packages:
 
 # any repositories, order matters
 Repos:
-  - CRAN: "https://cran.microsoft.com/snapshot/2019-11-01" 
+  - CRAN: "https://cran.microsoft.com/snapshot/2019-11-01"
   - CRAN2: "https://cran.microsoft.com/snapshot/2019-05-01"
 
 Library: "test-library"
@@ -24,4 +24,4 @@ Customizations:
         Repo: CRAN
   Repos:
     - CRAN:
-        Type: binary
+        Type: source

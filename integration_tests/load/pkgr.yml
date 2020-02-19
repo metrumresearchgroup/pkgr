@@ -1,0 +1,17 @@
+Version: 1
+# top level packages
+Packages:
+  - R6
+  - pillar
+
+# any repositories, order matters
+Repos:
+  - local: "../../localrepos/simple"
+
+
+Library: "test-library"
+
+Customizations:
+  Repos:
+    - local:
+        Type: source
