@@ -133,6 +133,7 @@ func getRSessionMetadata(rs rcmd.RSettings, rDir string) rSessionMetadata {
 	libPathsCmd := fmt.Sprintf(".LibPaths()")
 
 	cmdArgs := []string{
+		"-q",
 		"-e",
 		libPathsCmd,
 	}
@@ -167,7 +168,7 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) loadResult {
 	libraryCmd := fmt.Sprintf("library('%s')", pkg)
 
 	cmdArgs := []string{
-		//"--vanilla",
+		"-q",
 		"-e",
 		libraryCmd,
 	}
@@ -238,7 +239,7 @@ func getAdditionalPkgInfo(rs rcmd.RSettings, rDir, pkg string) pkgLoadMetadata {
 	infoCmd := fmt.Sprintf("find.package('%s'); packageVersion('%s')", pkg, pkg)
 
 	cmdArgs := []string{
-		//"--vanilla",
+		"-q",
 		"-e",
 		infoCmd,
 	}
