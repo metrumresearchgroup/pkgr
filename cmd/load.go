@@ -162,9 +162,6 @@ func getRSessionLibPaths(rs rcmd.RSettings, rDir string) []string {
 	var libPathsReturn []string
 	libPathsRaw := strings.Split(outStr, "\n")
 	for _, lp := range libPathsRaw {
-		//log.Warn(lp)
-		//if len(lp) == 0 { continue }
-		//if string(lp[0]) == ">" { continue }
 		pattern := regexp.MustCompile(`\[\d*\] \"(.*)\"`)
 		match := pattern.FindStringSubmatch(lp)
 		if match == nil || len(match) < 2{ continue }
@@ -214,7 +211,6 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) loadResult {
 
 
 	outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
-	log.Warn(outStr)
 	if errStr == "" {
 		didSucceed = true
 	} else {
