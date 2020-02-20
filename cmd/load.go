@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 
@@ -108,10 +109,6 @@ func load(rs rcmd.RSettings, rDir string, all, json bool) {
 }
 
 func logLoadReport(rpt loadReport) {
-	//var rptPkgs []string
-	//for key := range rpt.LoadResults {
-	//	rptPkgs = append(rptPkgs, key)
-	//}
 	jsonObj, err := json.MarshalIndent(rpt, "", "    ")
 	if err != nil {
 		log.WithFields(log.Fields{"err" : err}).Error("encountered problem marshalling load report to JSON")
@@ -128,9 +125,14 @@ func getRSessionMetadata(rs rcmd.RSettings, rDir string) rSessionMetadata {
 		RVersion: fmt.Sprintf("%d.%d.%d", rs.Version.Major, rs.Version.Minor, rs.Version.Patch),
 	}
 
+	sessionMetadata.LibPaths = getRSessionLibPaths(rs, rDir)
 
+	return sessionMetadata
+}
+
+func getRSessionLibPaths(rs rcmd.RSettings, rDir string) []string {
 	// We need to get the LibPaths that the session uses, not necessarily the ones pkgr would set.
-	libPathsCmd := fmt.Sprintf(".LibPaths()")
+	libPathsCmd := fmt.Sprintf(".libPaths()")
 
 	cmdArgs := []string{
 		"-q",
@@ -150,18 +152,28 @@ func getRSessionMetadata(rs rcmd.RSettings, rDir string) rSessionMetadata {
 
 	if cmdErr != nil || errStr != "" {
 		log.WithFields(log.Fields{
-			"session_work_dir" : rDir,
-			"err" : cmdErr,
+			"sessionWorkingDir" : rDir,
+			"cmdErr" : cmdErr,
+			"stdErr": errStr,
 		}).Warn("could not get LibPaths -- there was a problem running `.LibPaths()` in an R session")
-		sessionMetadata.LibPaths = []string {"could not retrieve libpaths"}
-		return sessionMetadata
+		return []string {"could not retrieve libpaths"}
 	}
 
-	sessionMetadata.LibPaths = strings.Split(outStr, "\n")
-	return sessionMetadata
+	var libPathsReturn []string
+	libPathsRaw := strings.Split(outStr, "\n")
+	for _, lp := range libPathsRaw {
+		//log.Warn(lp)
+		//if len(lp) == 0 { continue }
+		//if string(lp[0]) == ">" { continue }
+		pattern := regexp.MustCompile(`\[\d*\] \"(.*)\"`)
+		match := pattern.FindStringSubmatch(lp)
+		if match == nil || len(match) < 2{ continue }
+		libPath := match[1] // take the first capture group from the regex.
+		libPathsReturn = append(libPathsReturn, libPath)
+	}
+	return libPathsReturn
+
 }
-
-
 
 func attemptLoad(rs rcmd.RSettings, rDir, pkg string) loadResult {
 
@@ -202,6 +214,7 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) loadResult {
 
 
 	outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
+	log.Warn(outStr)
 	if errStr == "" {
 		didSucceed = true
 	} else {
@@ -300,7 +313,7 @@ type loadResult struct {
 	Package string
 	Version string
 	Path    string
-	Exiterr error // could be equivalent to exit code.
+	Exiterr string // could be equivalent to exit code.
 	Stdout  string
 	Stderr  string
 	Success bool
@@ -313,11 +326,16 @@ type pkgLoadMetadata struct { // Used to help create loadResult
 }
 
 func MakeLoadResult(pkg, version, path, outStr, errStr string, success bool, exitErr error) loadResult {
+	exitErrString := ""
+	if exitErr != nil {
+		exitErrString = exitErr.Error()
+	}
+
 	return loadResult {
 		Package: pkg,
 		Version: version,
 		Path:    path,
-		Exiterr: exitErr,
+		Exiterr: exitErrString,
 		Stdout:  outStr,
 		Stderr:  errStr,
 		Success: success,
