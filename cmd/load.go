@@ -42,7 +42,7 @@ successfully and can be used. Use the --all flag to load all packages in the use
 			log.WithFields(log.Fields{
 				"error": err,
 				"directory": rDir,
-			}).Fatal("error getting absolute path for R directory")
+			}).Fatal("error getting absolute Path for R directory")
 		}
 
 		load(rs, rDir, all, json)
@@ -90,7 +90,7 @@ func load(rs rcmd.RSettings, rDir string, all, json bool) {
 		report.AddResult(pkg, lr)
 	}
 
-	if report.failures == 0 {
+	if report.Failures == 0 {
 		log.WithFields(log.Fields{
 			"working_directory": rDir,
 			"user_packages_attempted": "true",
@@ -109,10 +109,10 @@ func load(rs rcmd.RSettings, rDir string, all, json bool) {
 
 func logLoadReport(rpt loadReport) {
 	//var rptPkgs []string
-	//for key := range rpt.results {
+	//for key := range rpt.LoadResults {
 	//	rptPkgs = append(rptPkgs, key)
 	//}
-	jsonObj, err := json.Marshal(rpt)
+	jsonObj, err := json.MarshalIndent(rpt, "", "    ")
 	if err != nil {
 		log.WithFields(log.Fields{"err" : err}).Error("encountered problem marshalling load report to JSON")
 		return
@@ -124,13 +124,13 @@ func logLoadReport(rpt loadReport) {
 
 func getRSessionMetadata(rs rcmd.RSettings, rDir string) rSessionMetadata {
 	sessionMetadata := rSessionMetadata{
-		rPath : rs.Rpath,
-		rVersion : fmt.Sprintf("%d.%d.%d", rs.Version.Major, rs.Version.Minor, rs.Version.Patch),
+		RPath:    rs.Rpath,
+		RVersion: fmt.Sprintf("%d.%d.%d", rs.Version.Major, rs.Version.Minor, rs.Version.Patch),
 	}
 
 
-	// We need to get the libPaths that the session uses, not necessarily the ones pkgr would set.
-	libPathsCmd := fmt.Sprintf(".libPaths()")
+	// We need to get the LibPaths that the session uses, not necessarily the ones pkgr would set.
+	libPathsCmd := fmt.Sprintf(".LibPaths()")
 
 	cmdArgs := []string{
 		"-e",
@@ -143,7 +143,7 @@ func getRSessionMetadata(rs rcmd.RSettings, rDir string) rSessionMetadata {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	log.WithFields(log.Fields{"pkg" : pkg, "rDir": rDir,}).Trace("attempting to get R libpaths")
+	log.WithFields(log.Fields{"Package" : pkg, "rDir": rDir,}).Trace("attempting to get R libpaths")
 	cmdErr := cmd.Run()
 	outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
 
@@ -151,12 +151,12 @@ func getRSessionMetadata(rs rcmd.RSettings, rDir string) rSessionMetadata {
 		log.WithFields(log.Fields{
 			"session_work_dir" : rDir,
 			"err" : cmdErr,
-		}).Warn("could not get libPaths -- there was a problem running `.libPaths()` in an R session")
-		sessionMetadata.libPaths = []string {"could not retrieve libpaths"}
+		}).Warn("could not get LibPaths -- there was a problem running `.LibPaths()` in an R session")
+		sessionMetadata.LibPaths = []string {"could not retrieve libpaths"}
 		return sessionMetadata
 	}
 
-	sessionMetadata.libPaths = strings.Split(outStr, "\n")
+	sessionMetadata.LibPaths = strings.Split(outStr, "\n")
 	return sessionMetadata
 }
 
@@ -182,7 +182,7 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) loadResult {
 
 	var exitError *exec.ExitError
 
-	log.WithFields(log.Fields{"pkg" : pkg, "rDir": rDir,}).Trace("attempting to load package.")
+	log.WithFields(log.Fields{"Package" : pkg, "rDir": rDir,}).Trace("attempting to load package.")
 	cmdErr := cmd.Run()
 
 	var didSucceed bool
@@ -194,7 +194,7 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) loadResult {
 			log.WithFields(log.Fields{
 				"cmd": rs.R(runtime.GOOS),
 				"rDir": rDir,
-				"pkg": pkg,
+				"Package": pkg,
 			}).Fatal("could not execute R 'library' call for package") //TODO: revisit
 		}
 	}
@@ -209,11 +209,11 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) loadResult {
 
 	if didSucceed {
 		log.WithFields(log.Fields{
-			"pkg": pkg,
+			"Package": pkg,
 			"rDir": rDir,
 		}).Debug("Package loaded successfully")
 		log.WithFields(log.Fields{
-			"pkg": pkg,
+			"Package": pkg,
 			"rDir": rDir,
 			"stdOut": string(stdout.Bytes()),
 		}).Trace("Package loaded successfully")
@@ -221,9 +221,9 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) loadResult {
 		log.WithFields(log.Fields{
 			"goErr" : cmdErr,
 			"stdErr": errStr,
-			"pkg": pkg,
+			"Package": pkg,
 			"rDir": rDir,
-		}).Error("error loading package via `library(<pkg>)` in R")
+		}).Error("error loading package via `library(<Package>)` in R")
 	}
 
 	additionalInfo := getAdditionalPkgInfo(rs, rDir, pkg)
@@ -233,7 +233,7 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) loadResult {
 
 }
 
-// Get the path and version for a given package, assuming that that package can be loaded.
+// Get the Path and Version for a given package, assuming that that package can be loaded.
 func getAdditionalPkgInfo(rs rcmd.RSettings, rDir, pkg string) pkgLoadMetadata {
 	infoCmd := fmt.Sprintf("find.package('%s'); packageVersion('%s')", pkg, pkg)
 
@@ -249,23 +249,23 @@ func getAdditionalPkgInfo(rs rcmd.RSettings, rDir, pkg string) pkgLoadMetadata {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	log.WithFields(log.Fields{"pkg" : pkg, "rDir": rDir,}).Trace("attempting to load package.")
+	log.WithFields(log.Fields{"Package" : pkg, "rDir": rDir,}).Trace("attempting to load package.")
 	cmdErr := cmd.Run()
 	outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
 
 	if cmdErr != nil || errStr != "" {
 		log.WithFields(log.Fields{
-			"pkg" : pkg,
+			"Package" : pkg,
 			"rDir" : rDir,
 			"err" : cmdErr,
-		}).Warn("could not get package path and info data during load")
+		}).Warn("could not get package Path and info data during load")
 		return pkgLoadMetadata{"could not retrieve",	"could not retrieve",}
 	}
 
 	outStrSplit := strings.Split(outStr, "\n")
 	return pkgLoadMetadata{
-		outStrSplit[0], //path
-		outStrSplit[1], //version
+		outStrSplit[0], //Path
+		outStrSplit[1], //Version
 	}
 }
 
@@ -273,36 +273,36 @@ func getAdditionalPkgInfo(rs rcmd.RSettings, rDir, pkg string) pkgLoadMetadata {
 
 //// Load report struct
 type loadReport struct {
-	rMetadata rSessionMetadata
-	results map[string]loadResult
-	failures int
+	RMetadata   rSessionMetadata
+	LoadResults map[string]loadResult
+	Failures    int
 }
 
 func MakeLoadReport(rMetadata rSessionMetadata) loadReport {
 	return loadReport {
-		rMetadata : rMetadata,
-		results : make(map[string]loadResult),
-		failures : 0,
+		RMetadata:   rMetadata,
+		LoadResults: make(map[string]loadResult),
+		Failures:    0,
 	}
 }
 
 func (report *loadReport) AddResult(pkg string, result loadResult) {
-	report.results[pkg] = result
-	if !result.success {
-		report.failures = report.failures + 1
+	report.LoadResults[pkg] = result
+	if !result.Success {
+		report.Failures = report.Failures + 1
 	}
 }
 
 
 //// Load result struct
 type loadResult struct {
-	pkg string
-	version string
-	path string
-	exiterr error // could be equivalent to exit code.
-	stdout string
-	stderr string
-	success bool
+	Package string
+	Version string
+	Path    string
+	Exiterr error // could be equivalent to exit code.
+	Stdout  string
+	Stderr  string
+	Success bool
 	// Can store information for JSON here
 }
 
@@ -313,30 +313,30 @@ type pkgLoadMetadata struct { // Used to help create loadResult
 
 func MakeLoadResult(pkg, version, path, outStr, errStr string, success bool, exitErr error) loadResult {
 	return loadResult {
-		pkg : pkg,
-		version : version,
-		path : path,
-		exiterr : exitErr,
-		stdout : outStr,
-		stderr : errStr,
-		success : success,
+		Package: pkg,
+		Version: version,
+		Path:    path,
+		Exiterr: exitErr,
+		Stdout:  outStr,
+		Stderr:  errStr,
+		Success: success,
 	}
 }
 
 //// R Session Info Struct
 type rSessionMetadata struct {
-	libPaths []string
-	rPath string
-	rVersion string
+	LibPaths []string
+	RPath    string
+	RVersion string
 }
 
 
 //// Constructor for load result
-//func MakeLoadResult(outStr, errStr string, success bool) loadResult {
+//func MakeLoadResult(outStr, errStr string, Success bool) loadResult {
 //	lr := loadResult{
-//		stdout : outStr,
-//		stderr : errStr,
-//		success : success,
+//		Stdout : outStr,
+//		Stderr : errStr,
+//		Success : Success,
 //	}
 //	//lr.updateResult()
 //	return lr

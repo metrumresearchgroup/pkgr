@@ -8,29 +8,29 @@ import "testing"
 func TestDebugPrintLoadReport(t *testing.T) {
 	t.Log("Quick debugging test.")
 	mockRpt := loadReport{
-		rMetadata: rSessionMetadata{
-			libPaths: append([]string{"path1", "path2", "path3"}),
-			rVersion: "rVersionString",
-			rPath: "rPathString",
+		RMetadata: rSessionMetadata{
+			LibPaths: append([]string{"path1", "path2", "path3"}),
+			RVersion: "rVersionString",
+			RPath:    "rPathString",
 		},
-		results : map[string]loadResult {
+		LoadResults: map[string]loadResult {
 			"lr1" : loadResult {
-				stdout: "stdout",
-				stderr: "stderr",
-				success: true,
-				exiterr: nil,
-				path: "pathpathpath",
-				pkg: "pkg1",
-				version: "pkg1version",
+				Stdout:  "Stdout",
+				Stderr:  "Stderr",
+				Success: true,
+				Exiterr: nil,
+				Path:    "pathpathpath",
+				Package: "pkg1",
+				Version: "pkg1version",
 			},
 			"lr2" : loadResult {
-				stdout: "stdout",
-				stderr: "stderr",
-				success: true,
-				exiterr: nil,
-				path: "pathpathpath",
-				pkg: "pkg2",
-				version: "pkg2version",
+				Stdout:  "Stdout",
+				Stderr:  "Stderr",
+				Success: true,
+				Exiterr: nil,
+				Path:    "pathpathpath",
+				Package: "pkg2",
+				Version: "pkg2version",
 			},
 		},
 	}
