@@ -6,11 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
+	"github.com/metrumresearchgroup/pkgr/rcmd/rp"
 	"github.com/spf13/viper"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 
@@ -32,21 +32,21 @@ successfully and can be used. Use the --all flag to load all packages in the use
 
 		// Get directory to test package loads from.
 		// By default, use the same directory as the config file.
-		rDir := viper.GetString("config")
-		if rDir == "" {
-			rDir, _ = os.Getwd()
+		r_dir := viper.GetString("config")
+		if r_dir == "" {
+			r_dir, _ = os.Getwd()
 		} else {
-			rDir = filepath.Dir(rDir)
+			r_dir = filepath.Dir(r_dir)
 		}
-		rDir, err := filepath.Abs(rDir)
+		r_dir, err := filepath.Abs(r_dir)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
-				"directory": rDir,
+				"directory": r_dir,
 			}).Fatal("error getting absolute Path for R directory")
 		}
 
-		load(rs, rDir, all, json)
+		load(rs, r_dir, all, json)
 	},
 }
 
@@ -59,7 +59,7 @@ func init() {
 	// loadCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func load(rs rcmd.RSettings, rDir string, all, json bool) {
+func load(rs rcmd.RSettings, r_dir string, all, json bool) {
 	log.WithFields(log.Fields{
 		"all_arg" : all,
 		"json_arg" : json,
@@ -84,23 +84,23 @@ func load(rs rcmd.RSettings, rDir string, all, json bool) {
 		toLoad = cfg.Packages
 	}
 
-	report := MakeLoadReport(getRSessionMetadata(rs, rDir))
+	report := MakeLoadReport(getRSessionMetadata(rs, r_dir))
 
 	for _, pkg := range toLoad {
-		lr := attemptLoad(rs, rDir, pkg)
+		lr := attemptLoad(rs, r_dir, pkg)
 		report.AddResult(pkg, lr)
 	}
 
 	if report.Failures == 0 {
 		log.WithFields(log.Fields{
-			"working_directory": rDir,
+			"working_directory": r_dir,
 			"user_packages_attempted": "true",
 			"dependencies_attempted": all,
 		}).Info("packages loaded successfully")
 	}
 
 	if json {
-		//getRSessionMetadata(rs, rDir)
+		//getRSessionMetadata(rs, r_dir)
 		log.Info("printing load report as JSON")
 		logLoadReport(report)
 	}
@@ -119,13 +119,13 @@ func logLoadReport(rpt loadReport) {
 	//fmt.Printf("%s \n", jsonObj)
 }
 
-func getRSessionMetadata(rs rcmd.RSettings, rDir string) rSessionMetadata {
+func getRSessionMetadata(rs rcmd.RSettings, r_dir string) rSessionMetadata {
 	sessionMetadata := rSessionMetadata{
 		RPath:    rs.Rpath,
 		RVersion: fmt.Sprintf("%d.%d.%d", rs.Version.Major, rs.Version.Minor, rs.Version.Patch),
 	}
 
-	sessionMetadata.LibPaths = getRSessionLibPaths(rs, rDir)
+	sessionMetadata.LibPaths = getRSessionLibPaths(rs, r_dir)
 
 	return sessionMetadata
 }
@@ -146,34 +146,26 @@ func getRSessionLibPaths(rs rcmd.RSettings, rDir string) []string {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	log.WithFields(log.Fields{"Package" : pkg, "rDir": rDir,}).Trace("attempting to get R libpaths")
+	log.WithFields(log.Fields{"pkg" : pkg, "rDir": rDir,}).Trace("attempting to get R libpaths")
 	cmdErr := cmd.Run()
-	outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
+	//outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
+	outLines := rp.ScanROutput(stdout.Bytes(), false)
+	errLines := rp.ScanROutput(stderr.Bytes(), false)
 
-	if cmdErr != nil || errStr != "" {
+	if cmdErr != nil || len(errLines) > 0 {
 		log.WithFields(log.Fields{
 			"sessionWorkingDir" : rDir,
-			"cmdErr" : cmdErr,
-			"stdErr": errStr,
+			"cmdErr" :            cmdErr,
+			"std_erro":           errLines,
 		}).Warn("could not get LibPaths -- there was a problem running `.LibPaths()` in an R session")
 		return []string {"could not retrieve libpaths"}
 	}
 
-	var libPathsReturn []string
-	libPathsRaw := strings.Split(outStr, "\n")
-	for _, lp := range libPathsRaw {
-		pattern := regexp.MustCompile(`\[\d*\] \"(.*)\"`)
-		match := pattern.FindStringSubmatch(lp)
-		if match == nil || len(match) < 2{ continue }
-		libPath := match[1] // take the first capture group from the regex.
-		libPathsReturn = append(libPathsReturn, libPath)
-	}
-	return libPathsReturn
+	return outLines
 
 }
 
 func attemptLoad(rs rcmd.RSettings, rDir, pkg string) loadResult {
-
 	libraryCmd := fmt.Sprintf("library('%s')", pkg)
 
 	cmdArgs := []string{
@@ -192,54 +184,49 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) loadResult {
 
 	var exitError *exec.ExitError
 
-	log.WithFields(log.Fields{"Package" : pkg, "rDir": rDir,}).Trace("attempting to load package.")
+	log.WithFields(log.Fields{"pkg" : pkg, "rDir": rDir,}).Trace("attempting to load package.")
 	cmdErr := cmd.Run()
 
 	var didSucceed bool
+
+	//outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
+	outLines := rp.ScanLines(stdout.Bytes())
+	errLines := rp.ScanLines(stderr.Bytes())
 
 	if cmdErr != nil {
 		if errors.As(cmdErr, &exitError) { // If the command had an exit code != 0
 			didSucceed = false
 		} else {
 			log.WithFields(log.Fields{
-				"cmd": rs.R(runtime.GOOS),
-				"rDir": rDir,
-				"Package": pkg,
+				"cmd":           rs.R(runtime.GOOS),
+				"r_dir":         rDir,
+				"pkg":           pkg,
+				"command_error": cmdErr,
 			}).Fatal("could not execute R 'library' call for package") //TODO: revisit
 		}
-	}
-
-
-	outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
-	if errStr == "" {
-		didSucceed = true
-	} else {
+	} else if len(errLines) > 0 { // Should be impossible, as any errors in stderr should cause exit code to be non-zero.
 		didSucceed = false
-	}
-
-	if didSucceed {
 		log.WithFields(log.Fields{
-			"Package": pkg,
-			"rDir": rDir,
+			"go_error" : cmdErr,
+			"std_erro":  errLines,
+			"pkg":       pkg,
+			"rDir":     rDir,
+		}).Errorf("error loading package via `library(%s)` in R", pkg)
+	} else {
+		didSucceed = true
+		log.WithFields(log.Fields{
+			"pkg":   pkg,
+			"r_dir": rDir,
 		}).Debug("Package loaded successfully")
 		log.WithFields(log.Fields{
-			"Package": pkg,
-			"rDir": rDir,
-			"stdOut": string(stdout.Bytes()),
+			"pkg":    pkg,
+			"r_dir":  rDir,
+			"std_out": string(stdout.Bytes()),
 		}).Trace("Package loaded successfully")
-	} else {
-		log.WithFields(log.Fields{
-			"goErr" : cmdErr,
-			"stdErr": errStr,
-			"Package": pkg,
-			"rDir": rDir,
-		}).Error("error loading package via `library(<Package>)` in R")
 	}
 
 	additionalInfo := getAdditionalPkgInfo(rs, rDir, pkg)
-	return MakeLoadResult(pkg, additionalInfo.pkgVersion, additionalInfo.pkgPath, outStr, errStr, didSucceed, cmdErr)
-
-	//return MakeLoadResult(outStr, errStr, didSucceed)
+	return MakeLoadResult(pkg, additionalInfo.pkgVersion, additionalInfo.pkgPath, strings.Join(outLines, "\n"), strings.Join(errLines, "\n"), didSucceed, cmdErr)
 
 }
 
@@ -259,26 +246,35 @@ func getAdditionalPkgInfo(rs rcmd.RSettings, rDir, pkg string) pkgLoadMetadata {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	log.WithFields(log.Fields{"Package" : pkg, "rDir": rDir,}).Trace("attempting to load package.")
+	log.WithFields(log.Fields{"pkg" : pkg, "r_dir": rDir,}).Trace("attempting to load package.")
 	cmdErr := cmd.Run()
-	outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
+	outLines := rp.ScanROutput(stdout.Bytes(), false)
+	errLines := rp.ScanROutput(stderr.Bytes(), false)
 
-	if cmdErr != nil || errStr != "" {
+	if cmdErr != nil || len(errLines) > 0 {
 		log.WithFields(log.Fields{
-			"Package" : pkg,
-			"rDir" : rDir,
-			"err" : cmdErr,
-		}).Warn("could not get package Path and info data during load")
+			"pkg" :   pkg,
+			"r_dir" : rDir,
+			"err" :   cmdErr,
+		}).Warn("could not get package Path and Version info data during load")
+		return pkgLoadMetadata{"could not retrieve",	"could not retrieve",}
+	} else if len(outLines) != 2 {
+		log.WithFields(log.Fields{
+			"pkg" :    pkg,
+			"r_dir" :  rDir,
+			"output" : outLines,
+		}).Warn("could not parse R command output for package Path and Version info")
 		return pkgLoadMetadata{"could not retrieve",	"could not retrieve",}
 	}
 
-	outStrSplit := strings.Split(outStr, "\n")
+	pkgPath := outLines[0]
+	pkgVersion := outLines[1]
+
 	return pkgLoadMetadata{
-		outStrSplit[0], //Path
-		outStrSplit[1], //Version
+		pkgPath,
+		pkgVersion,
 	}
 }
-
 
 
 //// Load report struct
@@ -344,18 +340,5 @@ type rSessionMetadata struct {
 	RPath    string
 	RVersion string
 }
-
-
-//// Constructor for load result
-//func MakeLoadResult(outStr, errStr string, Success bool) loadResult {
-//	lr := loadResult{
-//		Stdout : outStr,
-//		Stderr : errStr,
-//		Success : Success,
-//	}
-//	//lr.updateResult()
-//	return lr
-//}
-
 
 
