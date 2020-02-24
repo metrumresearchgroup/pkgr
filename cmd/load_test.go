@@ -10,14 +10,14 @@ import (
 //// the test here as a development tool (the mocked object is useful).
 //func TestDebugPrintLoadReport(t *testing.T) {
 //	t.Log("Quick debugging test.")
-//	mockRpt := loadReport{
-//		RMetadata: rSessionMetadata{
+//	mockRpt := LoadReport{
+//		RMetadata: RSessionMetadata{
 //			LibPaths: append([]string{"path1", "path2", "path3"}),
 //			RVersion: "rVersionString",
 //			RPath:    "rPathString",
 //		},
-//		LoadResults: map[string]loadResult {
-//			"lr1" : loadResult {
+//		LoadResults: map[string]LoadResult {
+//			"lr1" : LoadResult {
 //				Stdout:  "Stdout",
 //				Stderr:  "Stderr",
 //				Success: true,
@@ -26,7 +26,7 @@ import (
 //				Package: "pkg1",
 //				Version: "pkg1version",
 //			},
-//			"lr2" : loadResult {
+//			"lr2" : LoadResult {
 //				Stdout:  "Stdout",
 //				Stderr:  "Stderr",
 //				Success: true,
