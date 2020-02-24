@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"sync"
 
 	"github.com/spf13/cobra"
 	log "github.com/sirupsen/logrus"
@@ -87,17 +86,34 @@ func load(rs rcmd.RSettings, rDir string, all, json bool) {
 
 	report := InitLoadReport(getRSessionMetadata(rs, rDir))
 
-	var waitGroup sync.WaitGroup
+	//var waitGroup sync.WaitGroup
 	resultsChannel := make(chan LoadResult, cfg.Threads * 2)
 
-	for _, pkg := range toLoad {
-		//loadResult := attemptLoad(rs, rDir, pkg)
-		//report.AddResult(pkg, loadResult)
-		waitGroup.Add(1)
-		go goAttemptLoad(rs, rDir, pkg, resultsChannel)//, waitGroup)
+	//goAttemptLoad()
 
+	go func() {
+		for _, pkg := range toLoad {
+			//loadResult := attemptLoad(rs, rDir, pkg)
+			//report.AddResult(pkg, loadResult)
+			//waitGroup.Add(1)
+			go goAttemptLoad2(rs, rDir, pkg, resultsChannel)//, waitGroup)
+
+		}
+		//close(resultsChannel)
+	}()
+	for r := range resultsChannel {
+		report.AddResult(r.Package, r)
 	}
-	waitGroup.Wait()
+
+	//for _, pkg := range toLoad {
+	//	//loadResult := attemptLoad(rs, rDir, pkg)
+	//	//report.AddResult(pkg, loadResult)
+	//	//waitGroup.Add(1)
+	//	go goAttemptLoad(rs, rDir, pkg, resultsChannel)//, waitGroup)
+	//
+	//}
+
+	//waitGroup.Wait()
 
 	if report.Failures == 0 {
 		log.WithFields(log.Fields{
@@ -153,7 +169,16 @@ func logLoadReport(rpt LoadReport) {
 	//fmt.Printf("%s \n", jsonObj)
 }
 
-func goAttemptLoad(rs rcmd.RSettings, rDir, pkg string, c chan<- LoadResult) {
+func goAttemptLoad(rs rcmd.RSettings, rDir string, pkgs []string, c chan<- LoadResult) {
+	//defer wg.Done()
+	for _, pkg := range pkgs {
+		c <- attemptLoad(rs, rDir, pkg)
+	}
+	//result := attemptLoad(rs, rDir, pkg)
+	//c <- result
+}
+
+func goAttemptLoad2(rs rcmd.RSettings, rDir string, pkg string, c chan<- LoadResult) {
 	//defer wg.Done()
 	result := attemptLoad(rs, rDir, pkg)
 	c <- result
