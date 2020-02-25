@@ -13,6 +13,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/spf13/cobra"
 	log "github.com/sirupsen/logrus"
@@ -87,40 +89,44 @@ func load(rs rcmd.RSettings, rDir string, all, json bool) {
 	report := InitLoadReport(getRSessionMetadata(rs, rDir))
 
 	//var waitGroup sync.WaitGroup
-	resultsChannel := make(chan LoadResult, cfg.Threads * 2)
+	log.Printf("Making channel with slots %d", cfg.Threads*2)
+	resultsChannel := make(chan LoadResult)
+	inChannel := make(chan LoadRequest)
 
-	//goAttemptLoad()
-
+	for i := 0; i < cfg.Threads * 2; i++ {
+		go loadWorker(inChannel, resultsChannel)
+	}
 	go func() {
 		for _, pkg := range toLoad {
-			//loadResult := attemptLoad(rs, rDir, pkg)
-			//report.AddResult(pkg, loadResult)
-			//waitGroup.Add(1)
-			go goAttemptLoad2(rs, rDir, pkg, resultsChannel)//, waitGroup)
-
+			inChannel <- LoadRequest{
+				rs,
+				rDir,
+				pkg,
+			}
 		}
-		//close(resultsChannel)
+		close(inChannel)
 	}()
-	for r := range resultsChannel {
-		report.AddResult(r.Package, r)
+
+	for len(report.LoadResults) < len(toLoad) {
+		select {
+			case lr := <- resultsChannel:
+				log.WithFields(log.Fields{
+					"pkg" : lr.Package,
+					"succeeded": lr.Success,
+				}).Trace("completed load attempt and adding to load report.")
+				report.AddResult(lr.Package, lr)
+			default:
+				log.Info("Waiting for load to complete...")
+				time.Sleep(750 * time.Millisecond)
+		}
 	}
-
-	//for _, pkg := range toLoad {
-	//	//loadResult := attemptLoad(rs, rDir, pkg)
-	//	//report.AddResult(pkg, loadResult)
-	//	//waitGroup.Add(1)
-	//	go goAttemptLoad(rs, rDir, pkg, resultsChannel)//, waitGroup)
-	//
-	//}
-
-	//waitGroup.Wait()
 
 	if report.Failures == 0 {
 		log.WithFields(log.Fields{
 			"working_directory":       rDir,
 			"user_packages_attempted": "true",
 			"dependencies_attempted":  all,
-		}).Info("packages loaded successfully")
+		}).Info("all packages loaded successfully")
 	}
 
 	if json {
@@ -129,15 +135,22 @@ func load(rs rcmd.RSettings, rDir string, all, json bool) {
 		logLoadReport(report)
 	}
 
+	if report.Failures != 0 {
+		log.WithFields(log.Fields{
+			"working_directory": rDir,
+			"failures": report.Failures,
+		}).Error("some packages failed to load.")
+	}
+
 	//Add failure condition.
 }
 
-func getRSessionMetadata(rs rcmd.RSettings, r_dir string) RSessionMetadata {
+func getRSessionMetadata(rs rcmd.RSettings, rDir string) RSessionMetadata {
 	sessionMetadata := RSessionMetadata{
 		RPath:    rs.Rpath,
 		RVersion: fmt.Sprintf("%d.%d.%d", rs.Version.Major, rs.Version.Minor, rs.Version.Patch),
 	}
-	sessionMetadata.LibPaths = getRSessionLibPaths(rs, r_dir)
+	sessionMetadata.LibPaths = getRSessionLibPaths(rs, rDir)
 
 	return sessionMetadata
 }
@@ -165,23 +178,18 @@ func logLoadReport(rpt LoadReport) {
 		return
 	}
 	log.Infof("%s \n", jsonObj)
-	log.Info("done printing load report")
-	//fmt.Printf("%s \n", jsonObj)
 }
 
-func goAttemptLoad(rs rcmd.RSettings, rDir string, pkgs []string, c chan<- LoadResult) {
-	//defer wg.Done()
-	for _, pkg := range pkgs {
-		c <- attemptLoad(rs, rDir, pkg)
+type LoadRequest struct {
+	Rs rcmd.RSettings
+	RDir string
+	Pkg string
+}
+
+func loadWorker(in <- chan LoadRequest, out chan <- LoadResult ) {
+	for request := range in {
+		out <- attemptLoad(request.Rs, request.RDir, request.Pkg)
 	}
-	//result := attemptLoad(rs, rDir, pkg)
-	//c <- result
-}
-
-func goAttemptLoad2(rs rcmd.RSettings, rDir string, pkg string, c chan<- LoadResult) {
-	//defer wg.Done()
-	result := attemptLoad(rs, rDir, pkg)
-	c <- result
 }
 
 func attemptLoad(rs rcmd.RSettings, rDir, pkg string) LoadResult {
