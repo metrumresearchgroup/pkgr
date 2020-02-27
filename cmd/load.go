@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/metrumresearchgroup/pkgr/logger"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
 	"github.com/metrumresearchgroup/pkgr/rcmd/rp"
 	"github.com/spf13/viper"
@@ -13,7 +14,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -48,7 +48,7 @@ successfully and can be used. Use the --all flag to load all packages in the use
 			}).Fatal("error getting absolute Path for R directory")
 		}
 
-		load(rs, rDir, all, json)
+		load(cfg.Packages, rs, rDir, cfg.Threads, all, json)
 	},
 }
 
@@ -61,10 +61,14 @@ func init() {
 	// loadCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func load(rs rcmd.RSettings, rDir string, all, json bool) {
+func load(userPackages []string, rs rcmd.RSettings, rDir string, threads int, all, toJson bool) {
+	if toJson {
+		logger.SetLogLevel("fatal") // disable logging
+	}
+
 	log.WithFields(log.Fields{
-		"all_arg" : all,
-		"json_arg" : json,
+		"all_arg" :  all,
+		"json_arg" : toJson,
 	}).Info("attempting to load packages")
 
 	log.Info("getting relevant packages via `pkgr plan`..................")
@@ -73,8 +77,8 @@ func load(rs rcmd.RSettings, rDir string, all, json bool) {
 	_, installPlan, _ := planInstall(rVersion, false)
 
 	log.WithFields(log.Fields{
-		"all_arg" : all,
-		"json_arg" : json,
+		"all_arg" :  all,
+		"json_arg" : toJson,
 	}).Info("attempting to load packages")
 
 	log.Info("finished getting packages from `pkgr plan`__________________")
@@ -83,17 +87,17 @@ func load(rs rcmd.RSettings, rDir string, all, json bool) {
 	if all {
 		toLoad = installPlan.GetAllPackages()
 	} else {
-		toLoad = cfg.Packages
+		toLoad = userPackages
 	}
 
 	report := InitLoadReport(getRSessionMetadata(rs, rDir))
 
 	//var waitGroup sync.WaitGroup
-	log.Printf("Making channel with slots %d", cfg.Threads*2)
+	log.Printf("Making channel with slots %d", threads * 2)
 	resultsChannel := make(chan LoadResult)
 	inChannel := make(chan LoadRequest)
 
-	for i := 0; i < cfg.Threads * 2; i++ {
+	for i := 0; i < threads * 2; i++ {
 		go loadWorker(inChannel, resultsChannel)
 	}
 	go func() {
@@ -129,10 +133,10 @@ func load(rs rcmd.RSettings, rDir string, all, json bool) {
 		}).Info("all packages loaded successfully")
 	}
 
-	if json {
+	if toJson {
 		//getRSessionMetadata(rs, rDir)
 		log.Info("printing load report as JSON")
-		logLoadReport(report)
+		printJsonLoadReport(report)
 	}
 
 	if report.Failures != 0 {
@@ -171,13 +175,13 @@ func getRSessionLibPaths(rs rcmd.RSettings, rDir string) []string {
 	return outLines
 }
 
-func logLoadReport(rpt LoadReport) {
+func printJsonLoadReport(rpt LoadReport) {
 	jsonObj, err := json.MarshalIndent(rpt, "", "    ")
 	if err != nil {
 		log.WithFields(log.Fields{"err" : err}).Error("encountered problem marshalling load report to JSON")
 		return
 	}
-	log.Infof("%s \n", jsonObj)
+	fmt.Printf("%s \n", jsonObj)
 }
 
 type LoadRequest struct {
@@ -203,10 +207,10 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) LoadResult {
 		didSucceed = false
 		if errors.As(cmdErr, &exitError) { // If the command had an exit code != 0
 			log.WithFields(log.Fields{
-				"go_error" : cmdErr,
-				"std_error":  errLines,
+				"go_error":  cmdErr,
+				"std_error": errLines,
 				"pkg":       pkg,
-				"rDir":     rDir,
+				"rDir":      rDir,
 			}).Errorf("error loading package via `library(%s)` in R -- received non-zero exit code", pkg)
 		} else {
 			log.WithFields(log.Fields{
@@ -216,7 +220,8 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) LoadResult {
 				"command_error": cmdErr,
 			}).Fatal("could not execute R 'library' call for package") //TODO: revisit -- can we consider this a fatal error?
 		}
-	} else if len(errLines) > 0 { // Should be impossible, as any errors in stderr should cause exit code to be non-zero.
+		/*
+	else if len(errLines) > 0 { // Should be impossible, as any errors in stderr should cause exit code to be non-zero. -- This assumption was wrong. There can be non-failing info in stderr.
 		didSucceed = false
 		log.WithFields(log.Fields{
 			"go_error" : cmdErr,
@@ -224,6 +229,9 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) LoadResult {
 			"pkg":       pkg,
 			"rDir":     rDir,
 		}).Errorf("error loading package via `library(%s)` in R", pkg)
+
+	}
+	*/
 	} else {
 		didSucceed = true
 		log.WithFields(log.Fields{
@@ -254,11 +262,13 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) LoadResult {
 func getAdditionalPkgInfo(rs rcmd.RSettings, rDir, pkg string) pkgLoadMetadata {
 	outLines, errLines, cmdErr := runRCmd(fmt.Sprintf("find.package('%s'); packageVersion('%s')", pkg, pkg), rs, rDir, true)
 
-	if cmdErr != nil || len(errLines) > 0 {
+	if cmdErr != nil {// || len(errLines) > 0 {
 		log.WithFields(log.Fields{
 			"pkg" :   pkg,
 			"r_dir" : rDir,
 			"err" :   cmdErr,
+			"stdout": outLines,
+			"stderr": errLines,
 		}).Warn("could not get package Path and Version info data during load")
 		return pkgLoadMetadata{"could not retrieve",	"could not retrieve",}
 	} else if len(outLines) != 2 {
@@ -266,6 +276,7 @@ func getAdditionalPkgInfo(rs rcmd.RSettings, rDir, pkg string) pkgLoadMetadata {
 			"pkg" :    pkg,
 			"r_dir" :  rDir,
 			"output" : outLines,
+			"stderr" : errLines,
 		}).Warn("could not parse R command output for package Path and Version info -- expected exactly two lines of output.")
 		return pkgLoadMetadata{"could not retrieve",	"could not retrieve",}
 	}
@@ -278,20 +289,6 @@ func getAdditionalPkgInfo(rs rcmd.RSettings, rDir, pkg string) pkgLoadMetadata {
 		pkgVersion,
 	}
 }
-
-//// If we can find it, return the exit code and a bool indicating whether or not it was parsed.
-//// If there's an error but we can't parse an exit code, return a non-zero exit code and "false".
-//// If there's no error, return an exit code of 0 and "false", just to clarify that it wasn't parsed.
-//func ParseExitCode(cmdErr error) (int, bool) {
-//	if cmdErr != nil {
-//		if exitError, ok := cmdErr.(*exec.ExitError); ok {
-//			return exitError.ExitCode(), true
-//		} else {
-//			return -999, false
-//		}
-//	}
-//	return 0, false // Assume exit code zero if cmdErr is nil.
-//}
 
 func runRCmd(rExpression string, rs rcmd.RSettings, rDir string, reducedOutput bool) ([]string, []string, error) {
 	cmdArgs := []string{
@@ -311,17 +308,6 @@ func runRCmd(rExpression string, rs rcmd.RSettings, rDir string, reducedOutput b
 
 	})
 	cmdErr := cmd.Run()
-
-	//exitCode, isAuthenticExitCode := ParseExitCode(cmdErr)
-	//if !isAuthenticExitCode {
-	//	log.WithFields(log.Fields{
-	//		"r_dir": rDir,
-	//		"cmd_error": cmdErr,
-	//		"exit_code": exitCode,
-	//		"r_code": rExpression,
-	//	}).Warn("exit code for R expression could not be determined -- the exit code provided is our best guess.")
-	//}
-
 
 	outLines := rp.ScanROutput(stdout.Bytes(), reducedOutput)
 	errLines := rp.ScanLines(stderr.Bytes())

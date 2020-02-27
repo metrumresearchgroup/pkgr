@@ -38,7 +38,7 @@ import (
 //		},
 //	}
 //
-//	logLoadReport(mockRpt)
+//	printJsonLoadReport(mockRpt)
 //}
 //
 //func TestStringSlice(t *testing.T) {

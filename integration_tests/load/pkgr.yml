@@ -8,6 +8,7 @@ Packages:
 Repos:
   - local: "../../localrepos/simple"
 
+Threads: 2
 
 Library: "test-library"
 
