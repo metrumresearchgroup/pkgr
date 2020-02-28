@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/metrumresearchgroup/pkgr/logger"
@@ -61,6 +60,8 @@ func init() {
 	// loadCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
+// Attempts to load all of the packages in userPackages, and (optionally) the dependencies of those packages, in an R
+// session launched from rDir.
 func load(userPackages []string, rs rcmd.RSettings, rDir string, threads int, all, toJson bool) {
 	if toJson {
 		logger.SetLogLevel("fatal") // disable logging
@@ -149,6 +150,7 @@ func load(userPackages []string, rs rcmd.RSettings, rDir string, threads int, al
 	//Add failure condition.
 }
 
+// Get top-level information about an R session launched from rDir.
 func getRSessionMetadata(rs rcmd.RSettings, rDir string) RSessionMetadata {
 	sessionMetadata := RSessionMetadata{
 		RPath:    rs.Rpath,
@@ -159,6 +161,7 @@ func getRSessionMetadata(rs rcmd.RSettings, rDir string) RSessionMetadata {
 	return sessionMetadata
 }
 
+// Get the libPaths that will load for an R session launched in rDir.
 func getRSessionLibPaths(rs rcmd.RSettings, rDir string) []string {
 
 	outLines, errLines, cmdErr := runRCmd(".libPaths()", rs, rDir, true)
@@ -167,23 +170,19 @@ func getRSessionLibPaths(rs rcmd.RSettings, rDir string) []string {
 		log.WithFields(log.Fields{
 			"sessionWorkingDir" : rDir,
 			"cmdErr" :            cmdErr,
-			"std_erro":           errLines,
+			"std_error":           errLines,
 		}).Warn("could not get LibPaths -- there was a problem running `.LibPaths()` in an R session")
 		return []string {"could not retrieve libpaths"}
 	}
+	var trimmedOutLines []string
+	for _, line := range outLines {
+		trimmedOutLines = append(trimmedOutLines, strings.ReplaceAll(line, "\"", ""))
+	}
 
-	return outLines
+	return trimmedOutLines
 }
 
-func JsonMarshal(t interface{}) ([]byte, error) {
-	buffer := &bytes.Buffer{}
-	encoder := json.NewEncoder(buffer)
-	encoder.SetEscapeHTML(false)
-	encoder.SetIndent("", "    ")
-	err := encoder.Encode(t)
-	return buffer.Bytes(), err
-}
-
+// Print a LoadReport as a JSON object.
 func printJsonLoadReport(rpt LoadReport) {
 	jsonObj, err := JsonMarshal(rpt)
 	if err != nil {
@@ -193,18 +192,22 @@ func printJsonLoadReport(rpt LoadReport) {
 	fmt.Printf("%s \n", jsonObj)
 }
 
+// Struct to hold "work" for a loadworker to do.
 type LoadRequest struct {
 	Rs rcmd.RSettings
 	RDir string
 	Pkg string
 }
 
+// Worker function to perform work specified in LoadRequest.
+// Multiple workers may be launched concurrently to parallelize the process.
 func loadWorker(in <- chan LoadRequest, out chan <- LoadResult ) {
 	for request := range in {
 		out <- attemptLoad(request.Rs, request.RDir, request.Pkg)
 	}
 }
 
+// Try to load the given R package in the rDir specified. Bundle the results in a LoadResults object and return.
 func attemptLoad(rs rcmd.RSettings, rDir, pkg string) LoadResult {
 	log.WithFields(log.Fields{"pkg": pkg, "rDir": rDir,}).Trace("attempting to load package.")
 	outLines, errLines, cmdErr := runRCmd(fmt.Sprintf("library('%s')", pkg), rs, rDir, false)
@@ -229,18 +232,6 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) LoadResult {
 				"command_error": cmdErr,
 			}).Fatal("could not execute R 'library' call for package") //TODO: revisit -- can we consider this a fatal error?
 		}
-		/*
-	else if len(errLines) > 0 { // Should be impossible, as any errors in stderr should cause exit code to be non-zero. -- This assumption was wrong. There can be non-failing info in stderr.
-		didSucceed = false
-		log.WithFields(log.Fields{
-			"go_error" : cmdErr,
-			"std_erro":  errLines,
-			"pkg":       pkg,
-			"rDir":     rDir,
-		}).Errorf("error loading package via `library(%s)` in R", pkg)
-
-	}
-	*/
 	} else {
 		didSucceed = true
 		log.WithFields(log.Fields{
@@ -269,7 +260,7 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) LoadResult {
 
 // Get the Path and Version for a given package, assuming that that package can be loaded.
 func getAdditionalPkgInfo(rs rcmd.RSettings, rDir, pkg string) pkgLoadMetadata {
-	outLines, errLines, cmdErr := runRCmd(fmt.Sprintf("find.package('%s'); packageVersion('%s')", pkg, pkg), rs, rDir, true)
+	outLines, errLines, cmdErr := runRCmd(fmt.Sprintf("find.package('%s'); as.character(packageVersion('%s'))", pkg, pkg), rs, rDir, true)
 
 	if cmdErr != nil {// || len(errLines) > 0 {
 		log.WithFields(log.Fields{
@@ -291,9 +282,7 @@ func getAdditionalPkgInfo(rs rcmd.RSettings, rDir, pkg string) pkgLoadMetadata {
 	}
 
 	pkgPath := strings.ReplaceAll(outLines[0], "\"", "")
-	pkgVersion := strings.ReplaceAll(outLines[1], "‘", "") // This is a weird apostrophe: ‘ (not ' or `)
-	pkgVersion = strings.ReplaceAll(pkgVersion, "’", "") // Also a weird apostrophe: ’ (the end-tick of the above)
-
+	pkgVersion := strings.ReplaceAll(outLines[1], "\"", "")
 
 	return pkgLoadMetadata{
 		pkgPath,
@@ -301,6 +290,8 @@ func getAdditionalPkgInfo(rs rcmd.RSettings, rDir, pkg string) pkgLoadMetadata {
 	}
 }
 
+// Helper function to run R commands and gather the outputs, using the set of arguments that `pkgr load` internal
+// operations require.
 func runRCmd(rExpression string, rs rcmd.RSettings, rDir string, reducedOutput bool) ([]string, []string, error) {
 	cmdArgs := []string{
 		"--slave",

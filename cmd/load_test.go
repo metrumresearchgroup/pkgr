@@ -1,9 +1,29 @@
 package cmd
 
-import (
-	"regexp"
-	"testing"
-)
+//import "testing"
+
+//func TestExecRCommand(t *testing.T) {
+//	wd := "/Users/johncarlos/go/src/github.com/metrumresearchgroup/pkgr/integration_tests/load-fail"
+//	err := os.Chdir(wd)
+//	if err != nil {
+//		t.Error(err)
+//	}
+//	//t.Log(os.Getwd())
+//
+//	rsFixture := rcmd.RSettings{
+//		Rpath: "R",
+//		Version: cran.RVersion{
+//			0,
+//			0,
+//			0,
+//		},
+//	}
+//
+//	outlines, errlines, err := runRCmd("utf8", rsFixture, wd, false)
+//	t.Log(outlines)
+//	t.Log(errlines)
+//	t.Log(err)
+//}
 
 //// This test is just to easily allow me to set breakpoints to see what's going on.
 //// This should not be considered part of the functional test suite, but I'm leaving
