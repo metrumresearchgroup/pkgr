@@ -125,6 +125,7 @@ func load(userPackages []string, rs rcmd.RSettings, rDir string, threads int, al
 				time.Sleep(750 * time.Millisecond)
 		}
 	}
+	close(resultsChannel)
 
 	if report.Failures == 0 {
 		log.WithFields(log.Fields{
