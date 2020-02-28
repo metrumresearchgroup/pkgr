@@ -175,8 +175,17 @@ func getRSessionLibPaths(rs rcmd.RSettings, rDir string) []string {
 	return outLines
 }
 
+func JsonMarshal(t interface{}) ([]byte, error) {
+	buffer := &bytes.Buffer{}
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+	encoder.SetIndent("", "    ")
+	err := encoder.Encode(t)
+	return buffer.Bytes(), err
+}
+
 func printJsonLoadReport(rpt LoadReport) {
-	jsonObj, err := json.MarshalIndent(rpt, "", "    ")
+	jsonObj, err := JsonMarshal(rpt)
 	if err != nil {
 		log.WithFields(log.Fields{"err" : err}).Error("encountered problem marshalling load report to JSON")
 		return
@@ -281,8 +290,10 @@ func getAdditionalPkgInfo(rs rcmd.RSettings, rDir, pkg string) pkgLoadMetadata {
 		return pkgLoadMetadata{"could not retrieve",	"could not retrieve",}
 	}
 
-	pkgPath := outLines[0]
-	pkgVersion := outLines[1]
+	pkgPath := strings.ReplaceAll(outLines[0], "\"", "")
+	pkgVersion := strings.ReplaceAll(outLines[1], "‘", "") // This is a weird apostrophe: ‘ (not ' or `)
+	pkgVersion = strings.ReplaceAll(pkgVersion, "’", "") // Also a weird apostrophe: ’ (the end-tick of the above)
+
 
 	return pkgLoadMetadata{
 		pkgPath,
@@ -292,7 +303,7 @@ func getAdditionalPkgInfo(rs rcmd.RSettings, rDir, pkg string) pkgLoadMetadata {
 
 func runRCmd(rExpression string, rs rcmd.RSettings, rDir string, reducedOutput bool) ([]string, []string, error) {
 	cmdArgs := []string{
-		"-q",
+		"--slave",
 		"-e",
 		rExpression,
 	}
