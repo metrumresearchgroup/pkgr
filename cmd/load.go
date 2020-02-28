@@ -311,6 +311,7 @@ func runRCmd(rExpression string, rs rcmd.RSettings, rDir string, reducedOutput b
 
 	outLines := rp.ScanROutput(stdout.Bytes(), reducedOutput)
 	errLines := rp.ScanLines(stderr.Bytes())
+
 	return outLines, errLines, cmdErr
 }
 
