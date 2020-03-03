@@ -4,7 +4,6 @@ import (
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/desc"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
-	"github.com/metrumresearchgroup/pkgr/pacman"
 	"github.com/spf13/afero"
 	"github.com/thoas/go-funk"
 )
@@ -13,7 +12,7 @@ import (
 type RollbackPlan struct {
 	AllPackages []string
 	NewPackages []string
-	UpdateRollbacks []pacman.UpdateAttempt
+	UpdateRollbacks []UpdateAttempt
 	InstallPlan gpsr.InstallPlan
 	Library string
 }
@@ -47,7 +46,7 @@ func (rp *RollbackPlan) PreparePackagesForUpdate(fs afero.Fs, library string) {
 	}
 
 	// Wrap this function for now until we're ready to move it over.
-	updateAttempts := pacman.PreparePackagesForUpdate(fs, library, opFiltered)
+	updateAttempts := PreparePackagesForUpdate(fs, library, opFiltered)
 	rp.UpdateRollbacks = updateAttempts
 }
 

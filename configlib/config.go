@@ -96,6 +96,7 @@ func loadDefaultSettings() {
 	viper.SetDefault("rpath", "R")
 	viper.SetDefault("threads", 0)
 	viper.SetDefault("strict", false)
+	viper.SetDefault("rollback", true)
 }
 
 // IsCustomizationSet ...
