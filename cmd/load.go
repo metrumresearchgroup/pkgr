@@ -77,11 +77,6 @@ func load(userPackages []string, rs rcmd.RSettings, rDir string, threads int, al
 	rVersion := rcmd.GetRVersion(&rs)
 	_, installPlan, _ := planInstall(rVersion, false)
 
-	log.WithFields(log.Fields{
-		"all_arg" :  all,
-		"json_arg" : toJson,
-	}).Info("attempting to load packages")
-
 	log.Info("finished getting packages from `pkgr plan`__________________")
 
 	var toLoad []string
@@ -101,6 +96,8 @@ func load(userPackages []string, rs rcmd.RSettings, rDir string, threads int, al
 		log.Fields{
 		"num_to_load": len(toLoad),
 		"threads": threads * 2,
+		"all_arg" :  all,
+		"json_arg" : toJson,
 	}).Info("attempting to load packages")
 
 	// Kick off every load request as a goroutine, each of which will wait on the availability of a semaphore wait group.
@@ -108,7 +105,9 @@ func load(userPackages []string, rs rcmd.RSettings, rDir string, threads int, al
 		wg.Add(1)
 		go attemptLoadConcurrent(
 			LoadRequest {
-			rs, rDir, pkg,
+			rs,
+			rDir,
+			pkg,
 			},
 			&wg,
 			sem,
@@ -135,6 +134,11 @@ func load(userPackages []string, rs rcmd.RSettings, rDir string, threads int, al
 			"user_packages_attempted": "true",
 			"dependencies_attempted":  all,
 		}).Info("all packages loaded successfully")
+	} else {
+		log.WithFields(log.Fields{
+			"working_directory": rDir,
+			"failures": report.Failures,
+		}).Error("some packages failed to load.")
 	}
 
 	if toJson {
@@ -142,15 +146,6 @@ func load(userPackages []string, rs rcmd.RSettings, rDir string, threads int, al
 		log.Info("printing load report as JSON")
 		printJsonLoadReport(report)
 	}
-
-	if report.Failures != 0 {
-		log.WithFields(log.Fields{
-			"working_directory": rDir,
-			"failures": report.Failures,
-		}).Error("some packages failed to load.")
-	}
-
-	//Add failure condition.
 }
 
 // Get top-level information about an R session launched from rDir.
@@ -159,6 +154,7 @@ func getRSessionMetadata(rs rcmd.RSettings, rDir string) RSessionMetadata {
 		RPath:    rs.Rpath,
 		RVersion: fmt.Sprintf("%d.%d.%d", rs.Version.Major, rs.Version.Minor, rs.Version.Patch),
 	}
+
 	sessionMetadata.LibPaths = getRSessionLibPaths(rs, rDir)
 
 	return sessionMetadata
@@ -166,13 +162,13 @@ func getRSessionMetadata(rs rcmd.RSettings, rDir string) RSessionMetadata {
 
 // Get the libPaths that will load for an R session launched in rDir.
 func getRSessionLibPaths(rs rcmd.RSettings, rDir string) []string {
-
+	log.Trace("attempting to get session lib paths")
 	outLines, errLines, cmdErr := runRCmd(".libPaths()", rs, rDir, true)
 
 	if cmdErr != nil || len(errLines) > 0 {
 		log.WithFields(log.Fields{
-			"sessionWorkingDir" : rDir,
-			"cmdErr" :            cmdErr,
+			"session_working_dir" : rDir,
+			"cmd_err" :            cmdErr,
 			"std_error":           errLines,
 		}).Warn("could not get LibPaths -- there was a problem running `.LibPaths()` in an R session")
 		return []string {"could not retrieve libpaths"}
@@ -193,13 +189,6 @@ func printJsonLoadReport(rpt LoadReport) {
 		return
 	}
 	fmt.Printf("%s \n", jsonObj)
-}
-
-// Struct to hold "work" for a loadworker to do.
-type LoadRequest struct {
-	Rs rcmd.RSettings
-	RDir string
-	Pkg string
 }
 
 // Worker function to perform work specified in LoadRequest.
@@ -234,7 +223,7 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) LoadResult {
 				"r_dir":         rDir,
 				"pkg":           pkg,
 				"command_error": cmdErr,
-			}).Fatal("could not execute R 'library' call for package") //TODO: revisit -- can we consider this a fatal error?
+			}).Fatal("could not execute R 'library' call for package")
 		}
 	} else {
 		didSucceed = true

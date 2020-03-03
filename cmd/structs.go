@@ -1,5 +1,15 @@
 package cmd
 
+import "github.com/metrumresearchgroup/pkgr/rcmd"
+
+//// Load Request Struct
+// Struct to hold the args that go into an attempted package load.
+type LoadRequest struct {
+	Rs rcmd.RSettings
+	RDir string
+	Pkg string
+}
+
 //// Load report struct
 type LoadReport struct {
 	RMetadata   RSessionMetadata
