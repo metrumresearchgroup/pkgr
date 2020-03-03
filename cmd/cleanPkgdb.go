@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"github.com/metrumresearchgroup/pkgr/configlib"
+	"github.com/metrumresearchgroup/pkgr/cran"
 
 	"github.com/metrumresearchgroup/pkgr/rcmd"
 	log "github.com/sirupsen/logrus"
@@ -84,7 +85,7 @@ func removePackageDatabases(pkgdbsToClear []string, cfg configlib.PkgrConfig) er
 
 	rs := rcmd.NewRSettings(cfg.RPath)
 
-	pkgNexus, _, _ := planInstall(rs.Version, false)
+	pkgNexus, _, _ := planInstall(rs.Version, cran.DefaultType(), false)
 	repoDatabases := pkgNexus.Db
 
 	for _, dbToClear := range pkgdbsToClear {

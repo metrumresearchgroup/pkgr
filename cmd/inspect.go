@@ -17,6 +17,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/logger"
 
 	"github.com/metrumresearchgroup/pkgr/gpsr"
@@ -68,7 +69,7 @@ func inspect(cmd *cobra.Command, args []string) error {
 
 	rs := rcmd.NewRSettings(cfg.RPath)
 	rVersion := rcmd.GetRVersion(&rs)
-	_, ip, _ := planInstall(rVersion, true)
+	_, ip, _ := planInstall(rVersion, cran.DefaultType(), true)
 	if showDeps {
 		var allDeps map[string][]string
 		keepDeps := make(map[string][]string)

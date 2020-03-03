@@ -49,20 +49,22 @@ func getRepos(ds []PkgDl) map[string]RepoURL {
 }
 
 // DownloadPackages downloads a set of packages concurrently
-func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string, rv RVersion) (*PkgMap, error) {
+func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string, rv RVersion, hash bool) (*PkgMap, error) {
 	startTime := time.Now()
 	result := NewPkgMap()
 	sem := make(chan struct{}, 10)
 	wg := sync.WaitGroup{}
 	rpm := getRepos(ds)
-	for _, r := range rpm {
-		urlHash := RepoURLHash(r)
-		for _, pt := range []string{"src", filepath.Join("binary", rv.ToString())} {
-			pkgdir := filepath.Join(baseDir, urlHash, pt)
-			err := fs.MkdirAll(pkgdir, 0777)
-			if err != nil {
-				log.WithField("dir", pkgdir).WithField("error", err.Error()).Fatal("error creating package directory ")
-				return result, err
+	if hash {
+		for _, r := range rpm {
+			urlHash := RepoURLHash(r)
+			for _, pt := range []string{"src", filepath.Join("binary", rv.ToString())} {
+				pkgdir := filepath.Join(baseDir, urlHash, pt)
+				err := fs.MkdirAll(pkgdir, 0777)
+				if err != nil {
+					log.WithField("dir", pkgdir).WithField("error", err.Error()).Fatal("error creating package directory ")
+					return result, err
+				}
 			}
 		}
 	}
@@ -91,7 +93,17 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string, rv RVersion) (*Pk
 			// but would want to do this outside the goroutine that downloads\
 			// the package so didn't get invoked multiple times
 			urlHash := RepoURLHash(d.Config.Repo)
-			pkgdir := filepath.Join(baseDir, urlHash, pkgType)
+
+			// the idea here is hashing should be used when maintaining the package versions for purposes
+			// of longer term caching, however we also now have the case of just wanting to download
+			// all files to a single directory for uses such as easier archival or
+			// for preparing for R CMD checks
+			var pkgdir string
+			if hash {
+				pkgdir = filepath.Join(baseDir, urlHash, pkgType)
+			} else {
+				pkgdir = filepath.Join(baseDir, pkgType)
+			}
 			var pkgFile string
 			if d.Config.Type == Binary {
 				pkgFile = filepath.Join(pkgdir, rv.ToString(), binaryName(d.Package.Package, d.Package.Version))
@@ -188,6 +200,7 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 				"path":    pkgdl,
 			}).Fatal("missing package")
 		}
+		defer from.Close()
 	}
 
 	file, err := fs.Create(dest)
