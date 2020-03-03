@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
+	"sync"
 
 	"github.com/spf13/cobra"
 	log "github.com/sirupsen/logrus"
@@ -93,39 +93,41 @@ func load(userPackages []string, rs rcmd.RSettings, rDir string, threads int, al
 
 	report := InitLoadReport(getRSessionMetadata(rs, rDir))
 
-	//var waitGroup sync.WaitGroup
-	log.Printf("Making channel with slots %d", threads * 2)
-	resultsChannel := make(chan LoadResult)
-	inChannel := make(chan LoadRequest)
+	resultsChannel := make(chan LoadResult, len(toLoad))
+	sem := make(chan int, threads * 2)
+	var wg sync.WaitGroup
 
-	for i := 0; i < threads * 2; i++ {
-		go loadWorker(inChannel, resultsChannel)
-	}
-	go func() {
-		for _, pkg := range toLoad {
-			inChannel <- LoadRequest{
-				rs,
-				rDir,
-				pkg,
-			}
-		}
-		close(inChannel)
-	}()
+	log.WithFields(
+		log.Fields{
+		"num_to_load": len(toLoad),
+		"threads": threads * 2,
+	}).Info("attempting to load packages")
 
-	for len(report.LoadResults) < len(toLoad) {
-		select {
-			case lr := <- resultsChannel:
-				log.WithFields(log.Fields{
-					"pkg" : lr.Package,
-					"succeeded": lr.Success,
-				}).Trace("completed load attempt and adding to load report.")
-				report.AddResult(lr.Package, lr)
-			default:
-				log.Info("Waiting for load to complete...")
-				time.Sleep(750 * time.Millisecond)
-		}
+	// Kick off every load request as a goroutine, each of which will wait on the availability of a semaphore wait group.
+	for _, pkg := range toLoad {
+		wg.Add(1)
+		go attemptLoadConcurrent(
+			LoadRequest {
+			rs, rDir, pkg,
+			},
+			&wg,
+			sem,
+			resultsChannel,
+		)
 	}
+
+	wg.Wait()
 	close(resultsChannel)
+	close(sem)
+
+	for lr := range resultsChannel {
+		log.WithFields(
+			log.Fields{
+				"pkg" : lr.Package,
+				"succeeded": lr.Success,
+			}).Trace("completed load attempt and adding to load report.")
+		report.AddResult(lr.Package, lr)
+	}
 
 	if report.Failures == 0 {
 		log.WithFields(log.Fields{
@@ -202,10 +204,11 @@ type LoadRequest struct {
 
 // Worker function to perform work specified in LoadRequest.
 // Multiple workers may be launched concurrently to parallelize the process.
-func loadWorker(in <- chan LoadRequest, out chan <- LoadResult ) {
-	for request := range in {
-		out <- attemptLoad(request.Rs, request.RDir, request.Pkg)
-	}
+func attemptLoadConcurrent(request LoadRequest, waitGroup *sync.WaitGroup, sem chan int, out chan LoadResult ) {
+	sem <- 1 // write to semaphore, which is capped at threads*2. If semaphore is full, block until you can write.
+	out <- attemptLoad(request.Rs, request.RDir, request.Pkg)
+	waitGroup.Done()
+	<-sem // read from sempaphore to indicate that you are done running, thus opening the "slot" taken earlier.
 }
 
 // Try to load the given R package in the rDir specified. Bundle the results in a LoadResults object and return.
