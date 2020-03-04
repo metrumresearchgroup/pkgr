@@ -191,7 +191,6 @@ func printJsonLoadReport(rpt LoadReport) {
 func attemptLoadConcurrent(request LoadRequest, sem chan int, out chan LoadResult ) {
 	sem <- 1 // write to semaphore, which is capped at threads*2. If semaphore is full, block until you can write.
 	out <- attemptLoad(request.Rs, request.RDir, request.Pkg)
-	//waitGroup.Done()
 	<-sem // read from sempaphore to indicate that you are done running, thus opening the "slot" taken earlier.
 }
 
