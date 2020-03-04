@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"sync"
 
 	"github.com/spf13/cobra"
 	log "github.com/sirupsen/logrus"
@@ -90,7 +89,6 @@ func load(userPackages []string, rs rcmd.RSettings, rDir string, threads int, al
 
 	resultsChannel := make(chan LoadResult, len(toLoad))
 	sem := make(chan int, threads * 2)
-	var wg sync.WaitGroup
 
 	log.WithFields(
 		log.Fields{
@@ -102,24 +100,19 @@ func load(userPackages []string, rs rcmd.RSettings, rDir string, threads int, al
 
 	// Kick off every load request as a goroutine, each of which will wait on the availability of a semaphore wait group.
 	for _, pkg := range toLoad {
-		wg.Add(1)
 		go attemptLoadConcurrent(
 			LoadRequest {
 			rs,
 			rDir,
 			pkg,
 			},
-			&wg,
 			sem,
 			resultsChannel,
 		)
 	}
 
-	wg.Wait()
-	close(resultsChannel)
-	close(sem)
-
-	for lr := range resultsChannel {
+	for i := 0; i < len(toLoad); i++ {
+		lr := <-resultsChannel
 		log.WithFields(
 			log.Fields{
 				"pkg" : lr.Package,
@@ -127,6 +120,8 @@ func load(userPackages []string, rs rcmd.RSettings, rDir string, threads int, al
 			}).Trace("completed load attempt and adding to load report.")
 		report.AddResult(lr.Package, lr)
 	}
+	close(resultsChannel)
+	close(sem)
 
 	if report.Failures == 0 {
 		log.WithFields(log.Fields{
@@ -193,10 +188,10 @@ func printJsonLoadReport(rpt LoadReport) {
 
 // Worker function to perform work specified in LoadRequest.
 // Multiple workers may be launched concurrently to parallelize the process.
-func attemptLoadConcurrent(request LoadRequest, waitGroup *sync.WaitGroup, sem chan int, out chan LoadResult ) {
+func attemptLoadConcurrent(request LoadRequest, sem chan int, out chan LoadResult ) {
 	sem <- 1 // write to semaphore, which is capped at threads*2. If semaphore is full, block until you can write.
 	out <- attemptLoad(request.Rs, request.RDir, request.Pkg)
-	waitGroup.Done()
+	//waitGroup.Done()
 	<-sem // read from sempaphore to indicate that you are done running, thus opening the "slot" taken earlier.
 }
 
