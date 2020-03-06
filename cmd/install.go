@@ -113,6 +113,8 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	//
 	installTarballs(installPlan, rSettings)
 
+	log.WithField("duration", time.Since(startTime)).Info("total package install time")
+
 	if cfg.Rollback {
 		//If anything went wrong during the installation, rollback the environment.
 		if err != nil {
@@ -137,41 +139,33 @@ func rInstall(cmd *cobra.Command, args []string) error {
 }
 
 func installTarballs(installPlan gpsr.InstallPlan, rSettings rcmd.RSettings) {
-	// Install the tarballs
+
+	toInstallCount := len(installPlan.Tarballs) - 1
+
+	// Set up installArgs object
 	iargs := rcmd.NewDefaultInstallArgs()
 
-	libraryAbs, err := filepath.Abs(cfg.Library) // Need to use absolute path to library to accomodate our "extracurricular usage" of Install method.
+	// Need to use absolute path to library to accomodate our "extracurricular usage" of Install method.
+	libraryAbs, err := filepath.Abs(cfg.Library)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"lib_folder": cfg.Library,
 			"error":   err,
 		}).Error("error installing tarball -- could not find absolute path for library folder")
 	}
-
 	iargs.Library = libraryAbs
+
+	log.Info("starting individual tarball install")
+
 	for tarballPkg, tarballPath := range installPlan.Tarballs {
 		log.WithFields(log.Fields{
 			"package":     tarballPkg,
 			"tarball": tarballPath,
-		}).Info("installing tarball")
+		}).Debug("installing tarball")
 
-		//installReqest2 := rcmd.InstallRequest{
-		//	Package: tarballPkg,
-		//	Cache: rcmd.PackageCache {BaseDir: userCache(cfg.Cache)},
-		//	Metadata : cran.Download {Path : tarballPath},
-		//	InstallArgs: iargs,
-		//	RSettings: rSettings,
-		//}
-		//
-		//res, _, err := rcmd.InstallThroughBinary(fs, installReqest2, rcmd.PackageCache{ BaseDir: filepath.Dir(tarballPath)}) // We pass in the tarball path for the pkg cache here to assure that pkgr doens't find a prexisting binary and thus alwasy rebuilds.
-		//if err != nil || res.ExitCode != 0 {
-		//	log.WithFields(log.Fields{
-		//		"err":       err,
-		//		"exit_code": res.ExitCode,
-		//		"tarball":   tarballPath,
-		//	}).Error("could not install package, problem in function InstallThroughBinary")
-		//}
-		tarballPathAbs, err := filepath.Abs(tarballPath) // Need to do this or else we get a weird bug from filepath.Clean in the Install function.
+		// Need to use absolute path or else we encounter a weird bug from filepath.Clean in the Install function.
+		// 	(Instead of cleaning the local path, it was basically duplicating the path onto itself: A/B became A/B/A/B)
+		tarballPathAbs, err := filepath.Abs(tarballPath)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"pkg":     tarballPkg,
@@ -205,16 +199,30 @@ func installTarballs(installPlan gpsr.InstallPlan, rSettings rcmd.RSettings) {
 				"tarball": tarballPath,
 				"error":   err,
 			}).Error("error installing tarball")
+			log.WithFields(log.Fields{
+				"pkg":       tarballPkg,
+				"tarball":   tarballPath,
+				"remaining": toInstallCount,
+				"stdout": res.Stdout,
+				"stderr": res.Stderr,
+			}).Debug("error installing tarball")
 		} else {
 			log.WithFields(log.Fields{
-				"pkg":     tarballPkg,
-				"tarball": tarballPath,
-				"output":  res.Stdout,
-			}).Info("tarball installed successfully")
+				"pkg":       tarballPkg,
+				"tarball":   tarballPath,
+				"remaining": toInstallCount,
+			}).Info("Successfully Installed Tarball.")
+			log.WithFields(log.Fields{
+				"pkg":       tarballPkg,
+				"tarball":   tarballPath,
+				"remaining": toInstallCount,
+				"stdout": res.Stdout,
+			}).Trace("Successfully Installed Tarball.")
 		}
+
+		toInstallCount--
 	}
 }
-
 
 func initInstallLog() {
 	//Init install-specific log, if one has been set. This overwrites the default log.

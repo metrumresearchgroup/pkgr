@@ -238,6 +238,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		_, rn := pkgdl.PkgAndRepoNames()
 		installSources[rn]++
 	}
+	installSources["tarballs"] = len(installPlan.Tarballs)
 	fields := make(log.Fields)
 	for k, v := range installSources {
 		fields[k] = v

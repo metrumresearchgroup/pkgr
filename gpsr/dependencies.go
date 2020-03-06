@@ -151,7 +151,11 @@ func (ip *InstallPlan) GetNumPackagesToInstall() int {
 	// Handle the case where packages not requested via pkgr.yml (or dependencies) are present in directory.
 	installedRequired := 0
 	for p := range ip.InstalledPackages {
-		if funk.Contains(requiredPackages, p) {
+
+		// Tarballs are always installed, even if they're already present.
+		_, isTarballInstallation := ip.Tarballs[p]
+
+		if funk.Contains(requiredPackages, p) && !isTarballInstallation {
 			installedRequired = installedRequired + 1
 		}
 	}
@@ -160,6 +164,10 @@ func (ip *InstallPlan) GetNumPackagesToInstall() int {
 	if ip.Update {
 		toUpdate = len(ip.OutdatedPackages)
 	}
-	return len(requiredPackages) - installedRequired + toUpdate
+
+	// Handle the case of tarballs to install
+	tarballCount := len(ip.Tarballs)
+
+	return len(requiredPackages) - installedRequired + toUpdate + tarballCount
 
 }

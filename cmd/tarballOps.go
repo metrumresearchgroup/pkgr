@@ -46,13 +46,6 @@ func unpackTarballs(fs afero.Fs, tarballs []string, cache string) ([]desc.Desc, 
 		untarredMap[desc.Package] = path
 	}
 
-	// Put dependencies of tarball packages as user-level packages.
-	//var deps []desc.Dep
-	//for _, d := range descriptions {
-	//	for _, dep := range d.GetCombinedDependencies() {
-	//		deps = append(deps, dep)
-	//	}
-	//}
 	return descriptions, untarredMap
 }
 
@@ -141,11 +134,6 @@ func untar(fs afero.Fs, path string, cacheDir string) string {
 		}).Warn("found more than one item at top level in unarchived tarball -- assuming first alphabetical entry is package directory")
 	}
 
-	//log.WithFields(log.Fields{
-	//	"directory": tarballDirectoryPath,
-	//	"tarball": path,
-	//	"returning": filepath.Join(tarballDirectoryPath, dirEntries[0].Name()),
-	//}).Info("returning tarball package path")
 	return filepath.Join(tarballDirectoryPath, dirEntries[0].Name())
 }
 

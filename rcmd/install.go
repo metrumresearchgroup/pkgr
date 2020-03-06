@@ -92,6 +92,8 @@ func Install(
 		}
 	}
 
+	// Clean filepath if it's not an absolute filepath
+	// Warning: I encountered a bug with this method that caused duplication: path A/B became path A/B/A/B.
 	if !filepath.IsAbs(tbp) {
 		tbp = filepath.Clean(filepath.Join(rdir, tbp))
 	}
@@ -200,8 +202,6 @@ func Install(
 				"package":  pkg,
 			}).Debug("cmd output")
 	}
-	//log.Info(cmdResult.Stdout)
-	//log.Info(cmd.Stderr)
 	return cmdResult, err
 }
 
@@ -348,7 +348,6 @@ func InstallThroughBinary(
 			"bbp":        bbp,
 			"binaryBall": binaryBall,
 		}).Trace("binary location prior to install")
-		//log.Info("---Metadata.Path", ir.Metadata.Path)
 		ok, _ := afero.Exists(fs, binaryBall)
 		if !ok {
 			log.WithFields(log.Fields{
@@ -520,7 +519,7 @@ func InstallPackagePlan(
 	}
 	wg.Wait()
 
-	log.WithField("duration", time.Since(startTime)).Info("total install time")
+	log.WithField("duration", time.Since(startTime)).Debug("user package install time")
 	for pkg := range plan.DepDb {
 		_, exists := installedPkgs[pkg]
 		if !exists {
