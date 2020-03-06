@@ -103,6 +103,7 @@ func initConfig() {
 	// if cfgFile != "" { // enable ability to specify config file via flag
 	// 	viper.SetConfigFile(cfgFile)
 	// }
+	log.Trace("attempting to load config file")
 	_ = configlib.LoadConfigFromPath(viper.GetString("config"))
 
 	setGlobals()

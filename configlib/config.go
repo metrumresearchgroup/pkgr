@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
@@ -94,7 +95,7 @@ func loadDefaultSettings() {
 	viper.SetDefault("loglevel", "info")
 	// path to R on system, defaults to R in path
 	viper.SetDefault("rpath", "R")
-	viper.SetDefault("threads", 0)
+	viper.SetDefault("threads", runtime.NumCPU())
 	viper.SetDefault("strict", false)
 	viper.SetDefault("rollback", true)
 }
