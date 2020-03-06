@@ -15,13 +15,9 @@
 package cmd
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
 	"github.com/spf13/afero"
 	"github.com/thoas/go-funk"
-	"io"
-	"path/filepath"
 	"runtime"
 
 	"github.com/metrumresearchgroup/pkgr/rollback"
@@ -43,9 +39,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"archive/tar"
-	"compress/gzip"
 )
 
 // planCmd shows the install plan
@@ -151,11 +144,12 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	dependencyConfigurations := gpsr.NewDefaultInstallDeps()
 	configlib.SetPlanCustomizations(cfg, dependencyConfigurations, pkgNexus)
 
+	// Set tarball dependencies as user-packages, for convenience.
 	var tarballDescriptions []desc.Desc
 	var tarballPathMap map[string]string
-	// Check for tarball installations and add deps to cfg.Packages
+
 	if len(cfg.Tarballs) > 0 {
-		tarballDescriptions, tarballPathMap = unpackTarballs(fs, cfg)
+		tarballDescriptions, tarballPathMap = unpackTarballs(fs, cfg.Tarballs, cfg.Cache)
 		for _, tarballDesc := range tarballDescriptions {
 			tarballDeps := tarballDesc.GetCombinedDependencies(false)
 			for _, d := range tarballDeps {
@@ -167,6 +161,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 
 	}
 	cfg.Packages = removeBasePackages(cfg.Packages)
+	// end tarball deps
 
 	availableUserPackages := pkgNexus.GetPackages(cfg.Packages)
 	if len(availableUserPackages.Missing) > 0 {
@@ -199,7 +194,8 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		dependencyConfigurations,
 		pkgNexus,
 		cfg.Update,
-		libraryExists)
+		libraryExists,
+	)
 
 	installPlan.Tarballs = tarballPathMap
 
@@ -288,163 +284,6 @@ func removeBasePackages(pkgList []string) []string {
 	return nonbasePkgList
 }
 
-// Tarball manipulation code taken from https://gist.github.com/indraniel/1a91458984179ab4cf80 -- is there a built-in function that does this?
-func unpackTarballs(fs afero.Fs, cfg configlib.PkgrConfig) ([]desc.Desc, map[string]string)  {
-	cacheDir := userCache(cfg.Cache)
-
-	untarredMap := make(map[string]string)
-
-	var untarredPaths []string
-	for _, path := range cfg.Tarballs {
-		untarredFolder := untar(fs, path, cacheDir)
-		untarredPaths = append(untarredPaths, untarredFolder)
-	}
-
-	var descriptions []desc.Desc
-	for _, path := range untarredPaths {
-		reader, err := fs.Open(filepath.Join(path, "DESCRIPTION"))
-		if err != nil {
-			log.WithFields(log.Fields{
-				"file": path,
-				"error": err,
-			}).Fatal("error opening DESCRIPTION file for tarball package")
-		}
-
-		desc, err := desc.ParseDesc(reader)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"file": path,
-				"error": err,
-			}).Fatal("error parsing DESCRIPTION file for tarball package")
-		}
-		descriptions = append(descriptions, desc)
-		untarredMap[desc.Package] = path
-	}
-
-	// Put dependencies of tarball packages as user-level packages.
-	//var deps []desc.Dep
-	//for _, d := range descriptions {
-	//	for _, dep := range d.GetCombinedDependencies() {
-	//		deps = append(deps, dep)
-	//	}
-	//}
-	return descriptions, untarredMap
-}
-
-// Returns path to top-level package folder of untarred files
-func untar(fs afero.Fs, path string, cacheDir string) string {
-
-	// Part 1
-	tgzFile, err := fs.Open(path)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"path": path,
-		}).Fatal("error processing specified tarball")
-	}
-	defer tgzFile.Close()
-	tgzFileForHash, err := fs.Open(path) // Shouldn't fail if the first one passed, but I'll check anyway.
-	if err != nil {
-		log.WithFields(log.Fields{
-			"path": path,
-		}).Fatal("error opening second copy of specified tarball for hashing")
-	}
-	defer tgzFileForHash.Close()
-
-	// Part 1.5
-	//Use a hash of the file so that we always regenerate when the tarball is updated.
-	tarballDirectoryName, err := GetHashedTarballName(tgzFileForHash)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"path": path,
-		}).Fatalf("error while creating hash for tarball in cache: %s", err)
-	}
-	tarballDirectoryPath := filepath.Join(cacheDir, tarballDirectoryName)
-
-	//Part 2
-	gzipStream, err := gzip.NewReader(tgzFile)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"path": path,
-		}).Fatal("error creating gzip stream for specified tarball")
-	}
-	defer gzipStream.Close()
-	tarStream := tar.NewReader(gzipStream)
-	for {
-		header, err := tarStream.Next()
-
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			log.Error("could not process file in tar stream. Error was: ", err)
-		}
-
-		switch header.Typeflag {
-		case tar.TypeDir:
-			fs.MkdirAll(filepath.Join(tarballDirectoryPath, header.Name), 0755)
-			break
-		case tar.TypeReg:
-			dstFile := filepath.Join(tarballDirectoryPath, header.Name)
-			extractFile(dstFile, tarStream)
-			break
-		default:
-			log.WithFields(log.Fields{
-				"type": header.Typeflag,
-				"path": path,
-			}).Error("unknown file type found while processing tarball")
-			break
-		}
-	}
-
-	dirEntries, err := afero.ReadDir(fs, tarballDirectoryPath)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"directory": tarballDirectoryPath,
-			"tarball": path,
-			"error": err,
-		}).Error("error encountered while reading untarred directory")
-	}
-
-	if len(dirEntries) == 0 {
-		log.WithFields(log.Fields{
-			"directory": tarballDirectoryPath,
-			"tarball": path,
-		}).Fatal("untarred directory is empty -- cannot install tarball package")
-	} else if len(dirEntries) > 1 {
-		log.WithFields(log.Fields{
-			"directory": tarballDirectoryPath,
-			"tarball": path,
-		}).Warn("found more than one item at top level in unarchived tarball -- assuming first alphabetical entry is package directory")
-	}
-
-	//log.WithFields(log.Fields{
-	//	"directory": tarballDirectoryPath,
-	//	"tarball": path,
-	//	"returning": filepath.Join(tarballDirectoryPath, dirEntries[0].Name()),
-	//}).Info("returning tarball package path")
-	return filepath.Join(tarballDirectoryPath, dirEntries[0].Name())
-}
-
-func extractFile(dstFile string, tarStream *tar.Reader) {
-	outFile, err := os.Create(dstFile)
-	if err != nil {
-		log.Fatalf("ExtractTarGz: Create() failed: %s", err.Error())
-	}
-	defer outFile.Close()
-	if _, err := io.Copy(outFile, tarStream); err != nil {
-		log.Fatalf("ExtractTarGz: Copy() failed: %s", err.Error())
-	}
-}
-
-func GetHashedTarballName(tgzFile afero.File) (string, error) {
-	hash := md5.New()
-	_, err := io.Copy(hash, tgzFile)
-	hashInBytes := hash.Sum(nil)[:8]
-	//Convert the bytes to a string, used as a directory name for the package.
-	tarballDirectoryName := hex.EncodeToString(hashInBytes)
-	// Hashing code adapted from https://mrwaggel.be/post/generate-md5-hash-of-a-file-in-golang/
-	return tarballDirectoryName, err
-}
-
 func logUserPackageRepos(packageDownloads []cran.PkgDl) {
 	for _, pkg := range packageDownloads {
 		log.WithFields(log.Fields{
@@ -473,10 +312,3 @@ func logDependencyRepos(dependencyDownloads []cran.PkgDl) {
 	}
 }
 
-func extractNamesFromDesc(installedPackages map[string]desc.Desc) []string {
-	var installedPackageNames []string
-	for key := range installedPackages {
-		installedPackageNames = append(installedPackageNames, key)
-	}
-	return installedPackageNames
-}

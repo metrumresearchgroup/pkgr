@@ -2,11 +2,14 @@ package cmd
 
 import (
 	"bytes"
+
 	"encoding/json"
+
+	"github.com/metrumresearchgroup/pkgr/desc"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"os"
 	"path/filepath"
-	log "github.com/sirupsen/logrus"
 )
 
 // returns the cache or sets to a cache dir
@@ -71,3 +74,12 @@ func JsonMarshal(t interface{}) ([]byte, error) {
 	err := encoder.Encode(t)
 	return buffer.Bytes(), err
 }
+
+func extractNamesFromDesc(installedPackages map[string]desc.Desc) []string {
+	var installedPackageNames []string
+	for key := range installedPackages {
+		installedPackageNames = append(installedPackageNames, key)
+	}
+	return installedPackageNames
+}
+

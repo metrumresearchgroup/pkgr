@@ -6,10 +6,5 @@ get-sources-here/
 setup-lib
 retrieve-lib/*
 test-library/
-<<<<<<< HEAD
-.RData
-.Rhistory
-=======
 **/*.RData
 **/*.Rhistory
->>>>>>> 0cda8446c10afeebea0818af468c0b89c3576cff

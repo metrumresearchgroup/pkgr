@@ -71,7 +71,10 @@ func Install(
 	args InstallArgs,
 	rs RSettings,
 	es ExecSettings,
-	ir InstallRequest) (CmdResult, error) {
+	ir InstallRequest,
+) (CmdResult, error) {
+
+	// Get rdir and check that it exists
 	rdir := es.WorkDir
 	if rdir == "" {
 		rdir, _ = os.Getwd()
@@ -88,10 +91,12 @@ func Install(
 			}, err
 		}
 	}
+
 	if !filepath.IsAbs(tbp) {
 		tbp = filepath.Clean(filepath.Join(rdir, tbp))
 	}
 
+	// check existence of tarball path.
 	ok, err := afero.Exists(fs, tbp)
 	if !ok || err != nil {
 		log.WithFields(log.Fields{
@@ -195,6 +200,8 @@ func Install(
 				"package":  pkg,
 			}).Debug("cmd output")
 	}
+	//log.Info(cmdResult.Stdout)
+	//log.Info(cmd.Stderr)
 	return cmdResult, err
 }
 
@@ -341,6 +348,7 @@ func InstallThroughBinary(
 			"bbp":        bbp,
 			"binaryBall": binaryBall,
 		}).Trace("binary location prior to install")
+		//log.Info("---Metadata.Path", ir.Metadata.Path)
 		ok, _ := afero.Exists(fs, binaryBall)
 		if !ok {
 			log.WithFields(log.Fields{

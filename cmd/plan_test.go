@@ -135,7 +135,7 @@ func TestUnpackTarballs(t *testing.T){
 
 		})
 
-		unpackTarballs(fs, cfg)
+		unpackTarballs(fs, cfg.Tarballs, cfg.Cache)
 		// If this passes without error, you can view the results in the testsite/working directory.
 	}
 }

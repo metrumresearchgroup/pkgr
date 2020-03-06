@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/metrumresearchgroup/pkgr/rollback"
 	"path/filepath"
 	"runtime"
@@ -107,49 +108,10 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	//
 	err = rcmd.InstallPackagePlan(fs, installPlan, pkgMap, packageCache, pkgInstallArgs, rSettings, rcmd.ExecSettings{PkgrVersion: VERSION}, nworkers)
 
-
-	// Install the tarballs
-	iargs := rcmd.NewDefaultInstallArgs()
-	iargs.Library = cfg.Library
-	for tarballPkg, tarballPath := range installPlan.Tarballs {
-		log.WithFields(log.Fields{
-			"pkg" : tarballPkg,
-			"tarball": tarballPath,
-		}).Info("installing tarball")
-		res, err := rcmd.Install(
-			fs,
-			tarballPkg,
-			tarballPath,
-			rcmd.InstallArgs{
-				Build: true,
-				Library: cfg.Library,
-			},
-			rSettings,
-			rcmd.ExecSettings{PkgrVersion: VERSION},
-			rcmd.InstallRequest{
-				Package: tarballPkg,
-				Cache: rcmd.PackageCache{
-					BaseDir: userCache(cfg.Cache),
-				},
-				InstallArgs: iargs,
-			},
-		)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"pkg" : tarballPkg,
-				"tarball": tarballPath,
-				"error": err,
-			}).Error("error installing tarball")
-		} else {
-			log.WithFields(log.Fields{
-				"pkg" : tarballPkg,
-				"tarball": tarballPath,
-				"output": res.Stdout,
-			}).Info("tarball installed successfully")
-		}
-
-	}
-
+	//
+	// Install the tarballs, if applicable.
+	//
+	installTarballs(installPlan, rSettings)
 
 	if cfg.Rollback {
 		//If anything went wrong during the installation, rollback the environment.
@@ -172,6 +134,85 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+func installTarballs(installPlan gpsr.InstallPlan, rSettings rcmd.RSettings) {
+	// Install the tarballs
+	iargs := rcmd.NewDefaultInstallArgs()
+
+	libraryAbs, err := filepath.Abs(cfg.Library) // Need to use absolute path to library to accomodate our "extracurricular usage" of Install method.
+	if err != nil {
+		log.WithFields(log.Fields{
+			"lib_folder": cfg.Library,
+			"error":   err,
+		}).Error("error installing tarball -- could not find absolute path for library folder")
+	}
+
+	iargs.Library = libraryAbs
+	for tarballPkg, tarballPath := range installPlan.Tarballs {
+		log.WithFields(log.Fields{
+			"package":     tarballPkg,
+			"tarball": tarballPath,
+		}).Info("installing tarball")
+
+		//installReqest2 := rcmd.InstallRequest{
+		//	Package: tarballPkg,
+		//	Cache: rcmd.PackageCache {BaseDir: userCache(cfg.Cache)},
+		//	Metadata : cran.Download {Path : tarballPath},
+		//	InstallArgs: iargs,
+		//	RSettings: rSettings,
+		//}
+		//
+		//res, _, err := rcmd.InstallThroughBinary(fs, installReqest2, rcmd.PackageCache{ BaseDir: filepath.Dir(tarballPath)}) // We pass in the tarball path for the pkg cache here to assure that pkgr doens't find a prexisting binary and thus alwasy rebuilds.
+		//if err != nil || res.ExitCode != 0 {
+		//	log.WithFields(log.Fields{
+		//		"err":       err,
+		//		"exit_code": res.ExitCode,
+		//		"tarball":   tarballPath,
+		//	}).Error("could not install package, problem in function InstallThroughBinary")
+		//}
+		tarballPathAbs, err := filepath.Abs(tarballPath) // Need to do this or else we get a weird bug from filepath.Clean in the Install function.
+		if err != nil {
+			log.WithFields(log.Fields{
+				"pkg":     tarballPkg,
+				"tarball": tarballPath,
+				"error":   err,
+			}).Error("error installing tarball -- could not find absolute path for tarball")
+		}
+
+		res, err := rcmd.Install(
+			fs,
+			tarballPkg,
+			tarballPathAbs,
+			iargs,
+			rSettings,
+			rcmd.ExecSettings{
+				PkgrVersion: VERSION,
+				WorkDir: filepath.Dir(tarballPath),
+			},
+			rcmd.InstallRequest{
+				Package: tarballPkg,
+				Cache: rcmd.PackageCache{
+					BaseDir: userCache(cfg.Cache),
+				},
+				InstallArgs: iargs,
+			},
+		)
+
+		if err != nil {
+			log.WithFields(log.Fields{
+				"pkg":     tarballPkg,
+				"tarball": tarballPath,
+				"error":   err,
+			}).Error("error installing tarball")
+		} else {
+			log.WithFields(log.Fields{
+				"pkg":     tarballPkg,
+				"tarball": tarballPath,
+				"output":  res.Stdout,
+			}).Info("tarball installed successfully")
+		}
+	}
 }
 
 

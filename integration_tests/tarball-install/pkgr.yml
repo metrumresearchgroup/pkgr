@@ -15,3 +15,8 @@ Repos:
 Cache: localcache
 
 Library: "test-library"
+
+Customizations:
+  Repos:
+    - CRAN:
+        Type: source
