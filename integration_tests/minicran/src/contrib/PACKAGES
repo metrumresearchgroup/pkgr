@@ -9,8 +9,9 @@ NeedsCompilation: yes
 Package: curl
 Version: 4.0
 Depends: R (>= 3.0.0)
-Suggests: askpass, spelling, testthat (>= 1.0.0), knitr, jsonlite,
-        rmarkdown, magrittr, httpuv (>= 1.4.4), webutils
+Suggests: askpass, spelling, testthat (>=
+     1.0.0), knitr, jsonlite, rmarkdown,
+     magrittr, httpuv (>= 1.4.4), webutils
 License: MIT + file LICENSE
 MD5sum: a1a6ca6e1ad08589b7d2517a1f2a7df5
 NeedsCompilation: yes
@@ -19,9 +20,10 @@ Package: glue
 Version: 1.3.1
 Depends: R (>= 3.1)
 Imports: methods
-Suggests: testthat, covr, magrittr, crayon, knitr, rmarkdown, DBI,
-        RSQLite, R.utils, forcats, microbenchmark, rprintf, stringr,
-        ggplot2, dplyr, withr
+Suggests: testthat, covr, magrittr, crayon,
+     knitr, rmarkdown, DBI, RSQLite, R.utils,
+     forcats, microbenchmark, rprintf, stringr,
+     ggplot2, dplyr, withr
 License: MIT + file LICENSE
 MD5sum: 242edf3ba74c928b434c8cee138aa16e
 NeedsCompilation: yes
@@ -29,9 +31,10 @@ NeedsCompilation: yes
 Package: httr
 Version: 1.4.1
 Depends: R (>= 3.2)
-Imports: curl (>= 3.0.0), jsonlite, mime, openssl (>= 0.8), R6
-Suggests: covr, httpuv, jpeg, knitr, png, readr, rmarkdown, testthat (>=
-        0.8.0), xml2
+Imports: curl (>= 3.0.0), jsonlite, mime,
+     openssl (>= 0.8), R6
+Suggests: covr, httpuv, jpeg, knitr, png, readr,
+     rmarkdown, testthat (>= 0.8.0), xml2
 License: MIT + file LICENSE
 MD5sum: f62588fb6c8b4e243c69e277f7056ec8
 NeedsCompilation: no
@@ -39,7 +42,8 @@ NeedsCompilation: no
 Package: jsonlite
 Version: 1.6
 Depends: methods
-Suggests: httr, curl, plyr, testthat, knitr, rmarkdown, R.rsp, sp
+Suggests: httr, curl, plyr, testthat, knitr,
+     rmarkdown, R.rsp, sp
 License: MIT + file LICENSE
 MD5sum: a9cd554c212dd8db93b157932fcb4f8d
 NeedsCompilation: yes
@@ -54,7 +58,8 @@ NeedsCompilation: yes
 Package: openssl
 Version: 1.4.1
 Imports: askpass
-Suggests: testthat, digest, knitr, rmarkdown, jsonlite, jose, sodium
+Suggests: testthat, digest, knitr, rmarkdown,
+     jsonlite, jose, sodium
 License: MIT + file LICENSE
 MD5sum: 776426687d74e645334542f30757f5a6
 NeedsCompilation: yes
@@ -62,7 +67,8 @@ NeedsCompilation: yes
 Package: R6
 Version: 2.4.0
 Depends: R (>= 3.0)
-Suggests: knitr, microbenchmark, pryr, testthat, ggplot2, scales
+Suggests: knitr, microbenchmark, pryr, testthat,
+     ggplot2, scales
 License: MIT + file LICENSE
 MD5sum: f8e4f293f95efd44b5a2a77f4446318e
 NeedsCompilation: no
@@ -72,6 +78,13 @@ Version: 1.1-2
 Depends: R (>= 2.0.0)
 License: Apache License 2.0
 MD5sum: 66054d83eade4dff8a43ad4732691182
+NeedsCompilation: no
+
+Package: survivalrec
+Version: 0.0.1
+Imports: magrittr, survival
+License: MIT + file LICENSE
+MD5sum: dd8264a46b86bf8f3bb7ffed0b4ce229
 NeedsCompilation: no
 
 Package: sys
