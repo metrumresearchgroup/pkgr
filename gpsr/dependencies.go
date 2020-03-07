@@ -49,7 +49,7 @@ func DisplayGraph(graph Graph) {
 // each layer only dependends on elements from above
 // allowing confident parallel installation at any
 // layer
-func ResolveLayers(graph Graph) ([][]string, error) {
+func ResolveLayers(graph Graph, noRecommended bool) ([][]string, error) {
 	// A map containing the nodes and their dependencies
 	nodeDependencies := make(map[string]mapset.Set)
 
@@ -58,7 +58,7 @@ func ResolveLayers(graph Graph) ([][]string, error) {
 
 		dependencySet := mapset.NewSet()
 		for _, dep := range node.Deps {
-			if !isDefaultPackage(dep) {
+			if !isDefaultPackage(dep, noRecommended) {
 				dependencySet.Add(dep)
 			}
 		}

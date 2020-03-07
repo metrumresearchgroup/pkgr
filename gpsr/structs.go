@@ -23,6 +23,7 @@ type PkgDeps struct {
 	Imports   bool
 	Suggests  bool
 	LinkingTo bool
+	NoRecommended bool
 }
 
 // InstallDeps contains the information about dependencies to be installed
