@@ -50,6 +50,9 @@ func getLibraryPath(lockfileType string, rpath string, rversion cran.RVersion, p
 	case "pkgr":
 	default:
 	}
+	if library == "" {
+		log.Fatal("must specify either a Lockfile Type or  Library path")
+	}
 	return library
 }
 
@@ -96,6 +99,7 @@ func loadDefaultSettings() {
 	viper.SetDefault("rpath", "R")
 	viper.SetDefault("threads", 0)
 	viper.SetDefault("strict", false)
+	viper.SetDefault("rollback", true)
 }
 
 // IsCustomizationSet ...

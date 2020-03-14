@@ -58,7 +58,7 @@ func init() {
 }
 
 func plan(cmd *cobra.Command, args []string) error {
-	log.Infof("Installation would launch %v workers\n", getWorkerCount(viper.GetInt("threads"), runtime.NumCPU()))
+	log.Infof("Installation would launch %v workers\n", getWorkerCount(cfg.Threads, runtime.NumCPU()))
 	rs := rcmd.NewRSettings(cfg.RPath)
 	rVersion := rcmd.GetRVersion(&rs)
 	log.Infoln("R Version " + rVersion.ToFullString())
@@ -142,6 +142,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	}
 
 	dependencyConfigurations := gpsr.NewDefaultInstallDeps()
+	dependencyConfigurations.Default.NoRecommended = cfg.NoRecommended
 	configlib.SetPlanCustomizations(cfg, dependencyConfigurations, pkgNexus)
 
 	availableUserPackages := pkgNexus.GetPackages(cfg.Packages)
@@ -173,7 +174,11 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		dependencyConfigurations,
 		pkgNexus,
 		cfg.Update,
-		libraryExists)
+		libraryExists,
+		cfg.NoRecommended,
+		)
+
+
 	rollbackPlan := rollback.CreateRollbackPlan(cfg.Library, installPlan, installedPackages)
 
 	if err != nil {
@@ -191,7 +196,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 			"installed_version": p.OldVersion,
 			"update_version":    p.NewVersion,
 		}
-		if viper.GetBool("update") {
+		if cfg.Update {
 			log.WithFields(updateLogFields).Info("package will be updated")
 			pkgsToUpdateCount = len(installPlan.OutdatedPackages)
 		} else {
@@ -223,6 +228,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		"to_install": toInstall,
 		"to_update":  pkgsToUpdateCount,
 	}).Info("package installation plan")
+	log.Infof("Library path to install packages: %s\n", cfg.Library)
 
 	if toInstall > 0 && toInstall != totalPackagesRequired {
 		// log which packages to install, but only if doing an incremental install

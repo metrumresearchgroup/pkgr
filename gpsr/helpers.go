@@ -3,10 +3,14 @@ package gpsr
 import (
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/desc"
+	log "github.com/sirupsen/logrus"
 )
 
-func isDefaultPackage(pkg string) bool {
-	_, exists := DefaultPackages[pkg]
+func isExcludedPackage(pkg string, noRecommended bool) bool {
+	pkgType, exists := DefaultPackages[pkg]
+	if exists && !noRecommended && pkgType == "recommended" {
+		return false
+	}
 	return exists
 }
 
@@ -16,27 +20,34 @@ func appendToGraph(m Graph, d desc.Desc, dependencyConfigs InstallDeps, pkgNexus
 	if !exists {
 		dependencyConfig = dependencyConfigs.Default
 	}
+	log.WithField("pkg", d.Package).WithField("config", dependencyConfig).Trace("dep config")
 	if dependencyConfig.Depends {
 		for r := range d.Depends {
 			_, _, ok := pkgNexus.GetPackage(r)
-			if ok && !isDefaultPackage(r) {
+			if ok && !isExcludedPackage(r, dependencyConfig.NoRecommended) {
 				reqs = append(reqs, r)
+			} else {
+				log.WithField("pkg", d.Package).WithField("dep", r).Trace("skipping Depends dep")
 			}
 		}
 	}
 	if dependencyConfig.Imports {
 		for r := range d.Imports {
 			_, _, ok := pkgNexus.GetPackage(r)
-			if ok && !isDefaultPackage(r) {
+			if ok && !isExcludedPackage(r, dependencyConfig.NoRecommended) {
 				reqs = append(reqs, r)
+			} else {
+				log.WithField("pkg", d.Package).WithField("dep", r).Trace("skipping Imports dep")
 			}
 		}
 	}
 	if dependencyConfig.LinkingTo {
 		for r := range d.LinkingTo {
 			_, _, ok := pkgNexus.GetPackage(r)
-			if ok && !isDefaultPackage(r) {
+			if ok && !isExcludedPackage(r, dependencyConfig.NoRecommended) {
 				reqs = append(reqs, r)
+			} else {
+				log.WithField("pkg", d.Package).WithField("dep", r).Trace("skipping LinkingTo dep")
 			}
 		}
 	}

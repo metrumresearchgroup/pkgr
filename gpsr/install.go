@@ -10,6 +10,7 @@ func NewDefaultInstallDeps() InstallDeps {
 			Imports:   true,
 			LinkingTo: true,
 			Suggests:  false,
+			NoRecommended: false,
 		}}
 }
 
