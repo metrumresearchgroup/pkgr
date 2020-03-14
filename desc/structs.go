@@ -63,6 +63,7 @@ type Desc struct {
 	Description       string
 	MD5sum            string
 	Remotes           []string
+	OriginalRepository string
 	Repository        string
 	Imports           map[string]Dep
 	Suggests          map[string]Dep
@@ -84,6 +85,7 @@ type desc struct {
 	Description       string
 	MD5sum            string
 	Remotes           []string `delim:"," strip:"\n\r\t "`
+	OriginalRepository string
 	Repository        string
 	Imports           []string `delim:"," strip:"\n\r\t "`
 	Suggests          []string `delim:"," strip:"\n\r\t "`

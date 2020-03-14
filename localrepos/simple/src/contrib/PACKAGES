@@ -1,0 +1,64 @@
+Package: assertthat
+Version: 0.2.1
+Imports: tools
+Suggests: testthat, covr
+License: GPL-3
+MD5sum: 9f2eae3d20a9d6b40856a6fed013cb05
+NeedsCompilation: no
+
+Package: cli
+Version: 1.1.0
+Depends: R (>= 2.10)
+Imports: assertthat, crayon (>= 1.3.4), methods, utils
+Suggests: covr, fansi, mockery, testthat, webshot, withr
+License: MIT + file LICENSE
+MD5sum: cc16412dbe255fdd7beae222d2753132
+NeedsCompilation: no
+
+Package: crayon
+Version: 1.3.4
+Imports: grDevices, methods, utils
+Suggests: mockery, rstudioapi, testthat, withr
+License: MIT + file LICENSE
+MD5sum: 77c7c2906c59a3141306d86c89ffc7d3
+NeedsCompilation: no
+
+Package: fansi
+Version: 0.4.0
+Depends: R (>= 3.1.0)
+Suggests: unitizer, knitr, rmarkdown
+License: GPL (>= 2)
+MD5sum: 8642a7132e7c2f64ce60a67f2c05304b
+NeedsCompilation: yes
+
+Package: pillar
+Version: 1.3.1
+Imports: cli (>= 1.0.0), crayon (>= 1.3.4), fansi (>= 0.4.0), methods, rlang (>= 0.3.0.1), utf8 (>= 1.1.3)
+Suggests: knitr (>= 1.19), lubridate (>= 1.7.4), testthat (>= 2.0.0), withr (>= 2.1.2)
+License: GPL-3
+MD5sum: fe7ef47df16a5599b20121de28923c32
+NeedsCompilation: no
+
+Package: R6
+Version: 2.4.0
+Depends: R (>= 3.0)
+Suggests: knitr, microbenchmark, pryr, testthat, ggplot2, scales
+License: MIT + file LICENSE
+MD5sum: f8e4f293f95efd44b5a2a77f4446318e
+NeedsCompilation: no
+
+Package: rlang
+Version: 0.3.4
+Depends: R (>= 3.1.0)
+Suggests: covr, crayon, magrittr, methods, pillar, rmarkdown, testthat (>= 2.0.0)
+License: GPL-3
+MD5sum: c44f84ce72ebc7c3d0d02640c6b12a13
+NeedsCompilation: yes
+
+Package: utf8
+Version: 1.1.4
+Depends: R (>= 2.10)
+Suggests: knitr, rmarkdown, testthat
+License: Apache License (== 2.0) | file LICENSE
+MD5sum: 33de0b2841c49e84f8eb5a7b2a8222b8
+NeedsCompilation: yes

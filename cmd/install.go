@@ -15,12 +15,10 @@
 package cmd
 
 import (
-	"github.com/metrumresearchgroup/pkgr/pacman"
 	"github.com/metrumresearchgroup/pkgr/rollback"
 	"path/filepath"
+	"runtime"
 	"time"
-
-	"github.com/spf13/viper"
 
 	"github.com/metrumresearchgroup/pkgr/configlib"
 	"github.com/metrumresearchgroup/pkgr/cran"
@@ -59,7 +57,23 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	//  as well as a master install plan to guide our process.
 	_, installPlan, rollbackPlan := planInstall(rVersion, true)
 
-	if viper.GetBool("update") {
+	if installPlan.CreateLibrary {
+		if cfg.Strict {
+			log.WithFields(log.Fields{
+				"library": cfg.Library,
+			}).Fatal("library directory must exist before running pkgr in strict mode -- halting execution")
+		}
+
+		err := fs.MkdirAll(cfg.Library, 0755)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"library" : cfg.Library,
+				"error" : err,
+			}).Fatal("could not create library directory")
+		}
+	}
+
+	if cfg.Update { //} && cfg.Rollback { We actually need this to run either way, as the "prepare packages for update" operation moves the current installations to __OLD__ folders, thus allowing updated versions to be installed.
 		log.Info("update argument passed. staging packages for update...")
 		rollbackPlan.PreparePackagesForUpdate(fs, cfg.Library)
 	}
@@ -81,10 +95,8 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	pkgInstallArgs.Library, _ = filepath.Abs(cfg.Library)
 
 	// Get the number of workers.
-	// leave at least 1 thread open for coordination, given more than 2 threads available.
-	// if only 2 available, will let the OS hypervisor coordinate some else would drop the
-	// install time too much for the little bit of additional coordination going on.
-	nworkers := getWorkerCount()
+	// Use number of user defined threads if set. Otherwise, use the number of CPUs (up to 8).
+	nworkers := getWorkerCount(cfg.Threads, runtime.NumCPU())
 
 	// Process any customizations set in the yaml config file for individual packages.
 	// Set ENV values in rSettings
@@ -95,22 +107,24 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	//
 	err = rcmd.InstallPackagePlan(fs, installPlan, pkgMap, packageCache, pkgInstallArgs, rSettings, rcmd.ExecSettings{PkgrVersion: VERSION}, nworkers)
 
-	//If anything went wrong during the installation, rollback the environment.
-	if err != nil {
-		errRollback := rollback.RollbackPackageEnvironment(fs, rollbackPlan)
-		if errRollback != nil {
-			log.WithFields(log.Fields{
+	if cfg.Rollback {
+		//If anything went wrong during the installation, rollback the environment.
+		if err != nil {
+			errRollback := rollback.RollbackPackageEnvironment(fs, rollbackPlan)
+			if errRollback != nil {
+				log.WithFields(log.Fields{
 
-			}).Error("failed to reset package environment after bad installation. Your package Library will be in a corrupt state. It is recommended you delete your Library and reinstall all packages.")
+				}).Error("failed to reset package environment after bad installation. Your package Library will be in a corrupt state. It is recommended you delete your Library and reinstall all packages.")
+			}
 		}
-	} else {
-		pacman.CleanUpdateBackups(fs, rollbackPlan.UpdateRollbacks)
 	}
+	// If any packages were being updated, we need to remove any leftover backup folders that were created.
+	rollback.DeleteBackupPackageFolders(fs, rollbackPlan.UpdateRollbacks)
 
 	log.Info("duration:", time.Since(startTime))
 
 	if err != nil {
-		log.Fatalf("failed package install with err, %s", err)
+		log.Errorf("failed package install with err, %s", err)
 	}
 
 	return nil

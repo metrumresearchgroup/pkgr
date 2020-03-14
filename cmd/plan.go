@@ -16,6 +16,8 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/spf13/afero"
+	"runtime"
 
 	"github.com/metrumresearchgroup/pkgr/rollback"
 
@@ -56,7 +58,7 @@ func init() {
 }
 
 func plan(cmd *cobra.Command, args []string) error {
-	log.Infof("Installation would launch %v workers\n", getWorkerCount())
+	log.Infof("Installation would launch %v workers\n", getWorkerCount(cfg.Threads, runtime.NumCPU()))
 	rs := rcmd.NewRSettings(cfg.RPath)
 	rVersion := rcmd.GetRVersion(&rs)
 	log.Infoln("R Version " + rVersion.ToFullString())
@@ -74,18 +76,46 @@ func plan(cmd *cobra.Command, args []string) error {
 func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.InstallPlan, rollback.RollbackPlan) {
 	startTime := time.Now()
 
-	installedPackages := pacman.GetPriorInstalledPackages(fs, cfg.Library)
-	installedPackageNames := extractNamesFromDesc(installedPackages)
-	log.WithField("count", len(installedPackages)).Info("found installed packages")
-	whereInstalledFrom := pacman.GetInstallers(installedPackages)
+	//Check library existence
+	libraryExists, err := afero.DirExists(fs, cfg.Library)
 
-	notPkgr := whereInstalledFrom.NotFromPkgr()
-	if len(notPkgr) > 0 {
-		// TODO: should this say "prior installed packages" not ...
+	if err != nil {
 		log.WithFields(log.Fields{
-			"packages": notPkgr,
-		}).Warn("Packages not installed by pkgr")
+			"library": cfg.Library,
+			"error" : err,
+		}).Error("unexpected error when checking existence of library")
 	}
+
+	if !libraryExists && cfg.Strict {
+		log.WithFields(log.Fields{
+			"library": cfg.Library,
+		}).Error("library directory must exist before running pkgr in strict mode")
+	}
+
+	var installedPackageNames []string
+	var installedPackages map[string]desc.Desc
+	var whereInstalledFrom pacman.InstalledFromPkgs
+
+	if libraryExists {
+		installedPackages = pacman.GetPriorInstalledPackages(fs, cfg.Library)
+		installedPackageNames = extractNamesFromDesc(installedPackages)
+		log.WithField("count", len(installedPackages)).Info("found installed packages")
+		whereInstalledFrom = pacman.GetInstallers(installedPackages)
+		notPkgr := whereInstalledFrom.NotFromPkgr()
+		if len(notPkgr) > 0 {
+			// TODO: should this say "prior installed packages" not ...
+			log.WithFields(log.Fields{
+				"packages": notPkgr,
+			}).Warn("Packages not installed by pkgr")
+		}
+	} else {
+		log.WithFields(log.Fields{
+			"path": cfg.Library,
+		}).Info("Package Library will be created")
+		//fs.Create(cfg.Library)
+		//fs.Chmod(cfg.Library, 0755)
+	}
+
 	var repos []cran.RepoURL
 	for _, r := range cfg.Repos {
 		for nm, url := range r {
@@ -137,7 +167,15 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		}
 	}
 	logUserPackageRepos(availableUserPackages.Packages)
-	installPlan, err := gpsr.ResolveInstallationReqs(cfg.Packages, installedPackages, dependencyConfigurations, pkgNexus)
+	installPlan, err := gpsr.ResolveInstallationReqs(
+		cfg.Packages,
+		installedPackages,
+		dependencyConfigurations,
+		pkgNexus,
+		cfg.Update,
+		libraryExists)
+
+
 	rollbackPlan := rollback.CreateRollbackPlan(cfg.Library, installPlan, installedPackages)
 
 	if err != nil {
@@ -155,17 +193,16 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 			"installed_version": p.OldVersion,
 			"update_version":    p.NewVersion,
 		}
-		if viper.GetBool("update") {
+		if cfg.Update {
 			log.WithFields(updateLogFields).Info("package will be updated")
 			pkgsToUpdateCount = len(installPlan.OutdatedPackages)
 		} else {
 			log.WithFields(updateLogFields).Warn("outdated package found")
 		}
-
 	}
 
 	totalPackagesRequired := len(pkgs)
-	toInstall := totalPackagesRequired - len(whereInstalledFrom.FromPkgr())
+	toInstall := installPlan.GetNumPackagesToInstall()
 	log.WithFields(log.Fields{
 		"total_packages_required": totalPackagesRequired,
 		"installed":               len(installedPackages),

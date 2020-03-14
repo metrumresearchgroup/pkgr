@@ -1,0 +1,14 @@
+Version: 1
+
+threads: 5
+
+# top level packages
+Packages:
+  - R6
+  - pillar
+
+# any repositories, order matters
+Repos:
+  - CRAN: "https://cran.microsoft.com/snapshot/2019-05-01"
+
+Library: "test-library"

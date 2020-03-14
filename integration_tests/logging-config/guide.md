@@ -1,4 +1,5 @@
 # logging-config
+tags: log-file, plan-log, install-log, log-settings, log-level
 
 ## Description
 

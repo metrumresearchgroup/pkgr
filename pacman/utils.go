@@ -18,7 +18,7 @@ func GetPriorInstalledPackages(fileSystem afero.Fs, libraryPath string) map[stri
 	installedLibrary, err := fileSystem.Open(libraryPath)
 
 	if err != nil {
-		log.WithField("libraryPath", libraryPath).Fatal("package library not found at given library path")
+		log.WithField("libraryPath", libraryPath).Warn("package library not found at given library path")
 		return installed
 	}
 	defer installedLibrary.Close()
@@ -130,114 +130,6 @@ func GetOutdatedPackages(installed map[string]desc.Desc, availablePackages []cra
 		}
 	}
 	return outdatedPackages
-}
-
-// PreparePackagesForUpdate ...
-func PreparePackagesForUpdate(fileSystem afero.Fs, libraryPath string, outdatedPackages []cran.OutdatedPackage) []UpdateAttempt {
-	var updateAttempts []UpdateAttempt
-
-	//Tag each outdated pkg directory in library with "__OLD__"
-	for _, pkg := range outdatedPackages {
-		updateAttempts = append(updateAttempts, tagOldInstallation(fileSystem, libraryPath, pkg))
-	}
-
-	return updateAttempts
-}
-
-func tagOldInstallation(fileSystem afero.Fs, libraryPath string, outdatedPackage cran.OutdatedPackage) UpdateAttempt {
-	packageDir := filepath.Join(libraryPath, outdatedPackage.Package)
-	taggedPackageDir := filepath.Join(libraryPath, "__OLD__"+outdatedPackage.Package)
-
-	err := fileSystem.Rename(packageDir, taggedPackageDir)
-	//err := RenameDirRecursive(fileSystem, packageDir, taggedPackageDir)
-
-	if err != nil {
-		log.WithField("package dir", packageDir).Warn("error when backing up outdated package")
-		log.Error(err)
-	}
-
-	return UpdateAttempt{
-		Package:                outdatedPackage.Package,
-		ActivePackageDirectory: packageDir,
-		BackupPackageDirectory: taggedPackageDir,
-		OldVersion:             outdatedPackage.OldVersion,
-		NewVersion:             outdatedPackage.NewVersion,
-	}
-}
-
-func CleanUpdateBackups(fileSystem afero.Fs, packageBackupInfo []UpdateAttempt) error {
-	if len(packageBackupInfo) == 0 {
-		log.Debug("Not update-packages to restore.")
-		return nil
-	}
-
-	for _, info := range packageBackupInfo {
-
-		backupExists, _ := afero.Exists(fileSystem, info.BackupPackageDirectory)
-		//_, err1 := fileSystem.Stat(info.BackupPackageDirectory) // Checking existence
-		if backupExists {
-			err1 := fileSystem.RemoveAll(info.BackupPackageDirectory)
-			if err1 != nil {
-				log.WithFields(log.Fields{
-					"package":           info.Package,
-					"problem_directory": info.BackupPackageDirectory,
-				}).Warn("could not delete directory during cleanup")
-				return err1
-			}
-		}
-	}
-
-	return nil
-}
-
-func RollbackUpdatePackages(fileSystem afero.Fs, packageBackupInfo []UpdateAttempt) error {
-
-	if len(packageBackupInfo) == 0 {
-		log.Debug("Not update-packages to restore.")
-		return nil
-	}
-
-	for _, info := range packageBackupInfo {
-
-		log.WithFields(log.Fields{
-			"pkg":         info.Package,
-			"rolling back to": info.OldVersion,
-			"failed to update to": info.NewVersion,
-		}).Warn("did not update package, restoring last-installed version")
-
-		_, err1 := fileSystem.Stat(info.ActivePackageDirectory) // Checking existence
-		if err1 == nil {
-			err1 = fileSystem.RemoveAll(info.ActivePackageDirectory)
-			if err1 != nil {
-				log.WithFields(log.Fields{
-					"package": info.Package,
-					"problem_directory": info.ActivePackageDirectory,
-				}).Warn("could not delete directory during package rollback")
-				return err1
-			}
-		}
-
-		err2 := fileSystem.Rename(info.BackupPackageDirectory, info.ActivePackageDirectory)
-
-		if err2 != nil {
-			log.WithFields(log.Fields{
-				"pkg":         info.Package,
-			}).Warn("could not rollback package -- package will need reinstallation.")
-			return err2
-		}
-
-	}
-
-	return nil
-}
-
-// UpdateAttempt ...
-type UpdateAttempt struct {
-	Package                string
-	ActivePackageDirectory string
-	BackupPackageDirectory string
-	OldVersion             string
-	NewVersion             string
 }
 
 // InstalledFromPkgs ...

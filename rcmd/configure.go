@@ -14,6 +14,13 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 	envList := NvpList{}
 	envVars := []string{}
 
+	for _, p := range rs.GlobalEnvVars.Pairs {
+		_, exists := envList.Get(p.Name)
+		if !exists {
+			envList.Append(p.Name, p.Value)
+		}
+	}
+
 	pkgEnv, hasCustomEnv := rs.PkgEnvVars[pkg]
 	if hasCustomEnv {
 		// not sure if this is needed when logging maps but for simple json want a single string
@@ -22,24 +29,18 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 			envList.Append(k, v)
 		}
 		log.WithFields(log.Fields{
-			"envs":    envVars,
+			"envs":    pkgEnv,
 			"package": pkg,
 		}).Trace("Custom Environment Variables")
 	}
 
-	for _, p := range rs.GlobalEnvVars.Pairs {
-		_, exists := envList.Get(p.Name)
-		if !exists {
-			envList.Append(p.Name, p.Value)
-		}
-	}
 	// system env vars generally
 	for _, ev := range sysEnvVars {
 		evs := strings.SplitN(ev, "=", 2)
 		if len(evs) > 1 && evs[1] != "" {
 
 			// we don't want to track the order of these anyway since they should take priority in the end
-			// R_LIBS_USER takes precidence over R_LIBS_SITE
+			// R_LIBS_USER takes precedence over R_LIBS_SITE
 			// so will cause the loading characteristics to
 			// not be representative of the hierarchy specified
 			// in Library/Libpaths in the pkgr configuration
@@ -62,7 +63,14 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 			// if exists would be custom to the package hence should not accept the system env
 			_, exists := envList.Get(evs[0])
 			if !exists {
-				envList.Append(evs[0], evs[1])
+				displayValue := evs[1]
+				censoredVars := censoredEnvVars(nil)
+				_, isCensored := censoredVars[strings.ToUpper(evs[0])]
+
+				if isCensored {
+					 displayValue = "**HIDDEN**"
+				}
+				envList.Append(evs[0], displayValue)
 			}
 		}
 	}
@@ -78,4 +86,24 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 	}
 
 	return envVars
+}
+
+
+// Returns a constant set of env vars to be hidden in logs.
+// Calling function may pass in additional values to include in the censor list.
+func censoredEnvVars(add []string) map[string]string {
+	censoredVarsMap := map[string]string{
+		"GITHUB_TOKEN" : "GITHUB_TOKEN",
+		"GITHUB_PAT" : "GITHUB_PAT",
+		"GHE_TOKEN" : "GHE_TOKEN",
+		"GHE_PAT" : "GHE_PAT",
+		"AWS_ACCESS_KEY_ID" : "AWS_ACCESS_KEY_ID",
+		"AWS_SECRET_KEY" : "AWS_SECRET_KEY",
+	}
+	if add != nil {
+		for _, v := range add {
+			censoredVarsMap[strings.ToUpper(v)] = strings.ToUpper(v)// append(censoredVars, strings.ToUpper(v))
+		}
+	}
+	return censoredVarsMap
 }

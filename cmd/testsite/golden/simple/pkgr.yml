@@ -1,0 +1,9 @@
+
+Version: 1
+
+Packages:
+  - fansi
+Repos:
+  - MPN: "https://mpn.metworx.com/snapshots/stable/2019-12-02"
+
+Library: "test-library"

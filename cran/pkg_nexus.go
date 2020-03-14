@@ -41,8 +41,15 @@ func NewPkgDb(urls []RepoURL, dst SourceType, cfgdb *InstallConfig, rv RVersion)
 	for i := 0; i < len(urls); i++ {
 		result := <-rdbc
 		if result.Err != nil {
-			//
-			log.Fatalf("error downloading repo information from: %s:%s\n", result.Url.Name, result.Url.URL)
+			// ran into an error here when downloading on multiple versions of R on windows
+			// within the 1 hr cache time, using the same pkgr.yml minus the Rpath/lib
+			// simply changing the offending repo name to something else, eg MPN2 vs MPN
+			// caused it to then run successfully
+			log.WithFields(log.Fields{
+				"repo":  result.Url.Name,
+				"url":   result.Url.URL,
+				"error": err,
+			}).Error("error downloading repo information")
 			err = result.Err
 		} else {
 			pkgNexus.Db[result.repoIndex] = result.Rdb

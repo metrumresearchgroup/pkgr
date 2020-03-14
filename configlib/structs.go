@@ -42,6 +42,7 @@ type PkgrConfig struct {
 	Packages       []string            `yaml:"Packages,omitempty"`
 	Suggests       bool                `yaml:"Suggests,omitempty"`
 	Repos          []map[string]string `yaml:"Repos,omitempty"`
+	Rollback	   bool				   `yaml:"Rollback,omitempty"`
 	Library        string              `yaml:"Library,omitempty"`
 	LibPaths       []string            `yaml:"LibPaths,omitempty"`
 	Customizations Customizations      `yaml:"Customizations,omitempty"`
@@ -51,4 +52,16 @@ type PkgrConfig struct {
 	Logging        LogConfig           `yaml:"Logging,omitempty"`
 	Update         bool                `yaml:"Update,omitempty"`
 	Lockfile       Lockfile            `yaml:"Lockfile,omitempty"`
+	Strict         bool                `yaml:"Strict,omitempty"`
 }
+
+/*	viper.SetDefault("debug", false)
+	viper.SetDefault("preview", false)
+	// should be one of Debug,Info,Warn,Error,Fatal,Panic
+	viper.SetDefault("loglevel", "info")
+	// path to R on system, defaults to R in path
+	viper.SetDefault("rpath", "R")
+	viper.SetDefault("threads", 0)
+	viper.SetDefault("strict", false)
+	viper.SetDefault("rollback", true)
+*/

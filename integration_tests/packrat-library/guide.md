@@ -1,4 +1,5 @@
 # packrat-library
+tags: packrat-lockfile
 
 ## Description
 
@@ -19,7 +20,7 @@ pkgr install
 INFO[0000] R Version 3.6.0                              
 INFO[0000] found installed packages                      count=0
 INFO[0000] Default package installation type:  binary   
-INFO[0000] 14351:14857 (binary:source) packages available in for CRAN from https://cran.rstudio.com 
+INFO[0000] 14351:14857 (binary:source) packages available in for CRAN from https://cran.rstudio.com
 INFO[0000] package installation status                   installed=0 not_from_pkgr=0 outdated=0 total_packages_required=14
 INFO[0000] package installation sources                  CRAN=14
 INFO[0000] package installation plan                     to_install=14 to_update=0
@@ -43,4 +44,3 @@ INFO[0001] Successfully Installed                        package=vctrs repo=CRAN
 INFO[0001] Successfully Installed                        package=pillar repo=CRAN version=1.4.2
 INFO[0001] total install time                            duration=1.392967947s
 INFO[0001] duration:1.630248569s                        
-
