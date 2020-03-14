@@ -181,7 +181,7 @@ func TestInstallWithoutRollback(t *testing.T) {
 		//Lockfile: nil,
 		Repos: []map[string]string{
 			{
-				"local58" : "/Users/johncarlos/go/src/github.com/metrumresearchgroup/pkgr/localrepos/bad-xml2",
+				"local58" : "../localrepos/bad-xml2",
 			},
 		},
 		//RPath: nil,

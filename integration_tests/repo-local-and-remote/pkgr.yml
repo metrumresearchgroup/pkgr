@@ -7,7 +7,7 @@ Packages:
 
 # any repositories, order matters
 Repos:
-  - miniCRAN: "/Users/johncarlos/go/src/github.com/metrumresearchgroup/pkgr/integration_tests/minicran"
+  - miniCRAN: "../integration_tests/minicran"
   - CRAN: "https://cran.microsoft.com/snapshot/2018-11-18"
 
 Library: "test-library"
