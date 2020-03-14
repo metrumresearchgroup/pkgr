@@ -58,7 +58,7 @@ func ResolveLayers(graph Graph, noRecommended bool) ([][]string, error) {
 
 		dependencySet := mapset.NewSet()
 		for _, dep := range node.Deps {
-			if !isDefaultPackage(dep, noRecommended) {
+			if !isExcludedPackage(dep, noRecommended) {
 				dependencySet.Add(dep)
 			}
 		}

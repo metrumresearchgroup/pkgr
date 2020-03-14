@@ -6,7 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func isDefaultPackage(pkg string, noRecommended bool) bool {
+func isExcludedPackage(pkg string, noRecommended bool) bool {
 	pkgType, exists := DefaultPackages[pkg]
 	if exists && !noRecommended && pkgType == "recommended" {
 		return false
@@ -24,7 +24,7 @@ func appendToGraph(m Graph, d desc.Desc, dependencyConfigs InstallDeps, pkgNexus
 	if dependencyConfig.Depends {
 		for r := range d.Depends {
 			_, _, ok := pkgNexus.GetPackage(r)
-			if ok && !isDefaultPackage(r, dependencyConfig.NoRecommended) {
+			if ok && !isExcludedPackage(r, dependencyConfig.NoRecommended) {
 				reqs = append(reqs, r)
 			} else {
 				log.WithField("pkg", d.Package).WithField("dep", r).Trace("skipping Depends dep")
@@ -34,7 +34,7 @@ func appendToGraph(m Graph, d desc.Desc, dependencyConfigs InstallDeps, pkgNexus
 	if dependencyConfig.Imports {
 		for r := range d.Imports {
 			_, _, ok := pkgNexus.GetPackage(r)
-			if ok && !isDefaultPackage(r, dependencyConfig.NoRecommended) {
+			if ok && !isExcludedPackage(r, dependencyConfig.NoRecommended) {
 				reqs = append(reqs, r)
 			} else {
 				log.WithField("pkg", d.Package).WithField("dep", r).Trace("skipping Imports dep")
@@ -44,7 +44,7 @@ func appendToGraph(m Graph, d desc.Desc, dependencyConfigs InstallDeps, pkgNexus
 	if dependencyConfig.LinkingTo {
 		for r := range d.LinkingTo {
 			_, _, ok := pkgNexus.GetPackage(r)
-			if ok && !isDefaultPackage(r, dependencyConfig.NoRecommended) {
+			if ok && !isExcludedPackage(r, dependencyConfig.NoRecommended) {
 				reqs = append(reqs, r)
 			} else {
 				log.WithField("pkg", d.Package).WithField("dep", r).Trace("skipping LinkingTo dep")
