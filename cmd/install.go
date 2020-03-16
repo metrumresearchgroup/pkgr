@@ -157,35 +157,36 @@ func installAdditionalPackages(installPlan gpsr.InstallPlan, rSettings rcmd.RSet
 
 	log.Info("starting individual tarball install")
 
-	for additionalPkg, pkgSourcePath := range installPlan.AdditionalPackageSources {
+	for pkgName, additionalPkg := range installPlan.AdditionalPackageSources {
+
 		log.WithFields(log.Fields{
-			"package": additionalPkg,
-			"pkgSource": pkgSourcePath,
+			"package":   pkgName,
+			"pkgSource": additionalPkg.InstallPath,
 		}).Debug("installing tarball")
 
 		// Need to use absolute path or else we encounter a weird bug from filepath.Clean in the Install function.
 		// 	(Instead of cleaning the local path, it was basically duplicating the path onto itself: A/B became A/B/A/B)
-		pkgSourcePathAbs, err := filepath.Abs(pkgSourcePath)
+		pkgSourcePathAbs, err := filepath.Abs(additionalPkg.InstallPath)
 		if err != nil {
 			log.WithFields(log.Fields{
-				"pkg":     additionalPkg,
-				"pkgSource": pkgSourcePath,
-				"error":   err,
+				"pkg":       pkgName,
+				"pkgSource": additionalPkg.InstallPath,
+				"error":     err,
 			}).Error("error installing tarball -- could not find absolute path for tarball")
 		}
 
 		res, err := rcmd.Install(
 			fs,
-			additionalPkg,
+			pkgName,
 			pkgSourcePathAbs,
 			iargs,
 			rSettings,
 			rcmd.ExecSettings{
 				PkgrVersion: VERSION,
-				WorkDir: filepath.Dir(pkgSourcePath),
+				WorkDir: filepath.Dir(additionalPkg.InstallPath),
 			},
 			rcmd.InstallRequest{
-				Package: additionalPkg,
+				Package: pkgName,
 				Cache: rcmd.PackageCache{
 					BaseDir: userCache(cache),
 				},
@@ -209,26 +210,33 @@ func installAdditionalPackages(installPlan gpsr.InstallPlan, rSettings rcmd.RSet
 
 		if err != nil {
 			log.WithFields(log.Fields{
-				"pkg":     additionalPkg,
-				"pkgSource": pkgSourcePath,
-				"error":   err,
+				"pkg":       pkgName,
+				"source":	additionalPkg.OriginPath,
+				"installedFrom": additionalPkg.InstallPath,
+				"installType": additionalPkg.Type,
+				"error":     err,
 			}).Error("error installing package")
 			log.WithFields(log.Fields{
-				"pkg":       additionalPkg,
-				"pkgSource":   pkgSourcePath,
+				"pkg":       pkgName,
+				"source":	additionalPkg.OriginPath,
+				"installedFrom": additionalPkg.InstallPath,
+				"installType": additionalPkg.Type,
 				"remaining": toInstallCount,
 				"stdout":    res.Stdout,
 				"stderr":    res.Stderr,
 			}).Debug("error installing package")
 		} else {
 			log.WithFields(log.Fields{
-				"pkg":       additionalPkg,
-				"pkgSource":   pkgSourcePath,
+				"pkg":       pkgName,
+				"source": additionalPkg.OriginPath,
+				"installType": additionalPkg.Type,
 				"remaining": toInstallCount,
 			}).Info("Successfully Installed Package.")
 			log.WithFields(log.Fields{
-				"pkg":       additionalPkg,
-				"pkgSource":   pkgSourcePath,
+				"pkg":       pkgName,
+				"source":	additionalPkg.OriginPath,
+				"installedFrom": additionalPkg.InstallPath,
+				"installType": additionalPkg.Type,
 				"remaining": toInstallCount,
 				"stdout":    res.Stdout,
 			}).Trace("Successfully Installed Package.")

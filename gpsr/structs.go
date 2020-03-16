@@ -12,9 +12,15 @@ type InstallPlan struct {
 	PackageDownloads         []cran.PkgDl
 	OutdatedPackages         []cran.OutdatedPackage
 	InstalledPackages        map[string]desc.Desc
-	AdditionalPackageSources map[string]string // Paths to top-level package folders for packages that will be installed at the end of the process.
+	AdditionalPackageSources map[string]AdditionalPkg // Paths to top-level package folders for packages that will be installed at the end of the process.
 	CreateLibrary            bool
 	Update                   bool
+}
+
+type AdditionalPkg struct {
+	InstallPath string
+	OriginPath string
+	Type string
 }
 
 // PkgDeps contains which dependencies should be installed

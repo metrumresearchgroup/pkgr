@@ -6,6 +6,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"github.com/metrumresearchgroup/pkgr/desc"
+	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"io"
@@ -14,23 +15,18 @@ import (
 )
 
 // Tarball manipulation code taken from https://gist.github.com/indraniel/1a91458984179ab4cf80 -- is there a built-in function that does this?
-func unpackTarballs(fs afero.Fs, tarballs []string, cache string) ([]desc.Desc, map[string]string) {
+func unpackTarballs(fs afero.Fs, tarballs []string, cache string) ([]desc.Desc, map[string]gpsr.AdditionalPkg) {
 	cacheDir := userCache(cache)
 
-	untarredMap := make(map[string]string)
-
-	var untarredPaths []string
-	for _, path := range tarballs {
-		untarredFolder := untar(fs, path, cacheDir)
-		untarredPaths = append(untarredPaths, untarredFolder)
-	}
-
 	var descriptions []desc.Desc
-	for _, path := range untarredPaths {
-		reader, err := fs.Open(filepath.Join(path, "DESCRIPTION"))
+	untarredMap := make(map[string]gpsr.AdditionalPkg)
+
+	for _, tarballPath := range tarballs {
+		untarredFolder := untar(fs, tarballPath, cacheDir)
+		reader, err := fs.Open(filepath.Join(untarredFolder, "DESCRIPTION"))
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
-				"file":  path,
+				"file":  untarredFolder,
 				"error": err,
 			}).Fatal("error opening DESCRIPTION file for tarball package")
 		}
@@ -38,12 +34,12 @@ func unpackTarballs(fs afero.Fs, tarballs []string, cache string) ([]desc.Desc, 
 		desc, err := desc.ParseDesc(reader)
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
-				"file":  path,
+				"file":  untarredFolder,
 				"error": err,
 			}).Fatal("error parsing DESCRIPTION file for tarball package")
 		}
 		descriptions = append(descriptions, desc)
-		untarredMap[desc.Package] = path
+		untarredMap[desc.Package] = gpsr.AdditionalPkg{ InstallPath: untarredFolder, OriginPath: tarballPath, Type: "tarball"}
 	}
 
 	return descriptions, untarredMap
