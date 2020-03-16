@@ -190,6 +190,20 @@ func installTarballs(installPlan gpsr.InstallPlan, rSettings rcmd.RSettings) {
 					BaseDir: userCache(cfg.Cache),
 				},
 				InstallArgs: iargs,
+				ExecSettings: rcmd.ExecSettings{ // Needed for updating description file
+					PkgrVersion: VERSION, //Needed for updating description file
+				},
+				Metadata: cran.Download {  // Needed for updating description file
+					Metadata: cran.PkgDl{ // Needed for updating description file
+						Config: cran.PkgConfig{ // Needed for updating description file
+							Type: cran.Source, // Needed for updating description file
+							Repo: cran.RepoURL{ // Needed for updating description file
+								URL: "N/A", // Needed for updating description file
+								Name: "Local_Tarball", // Needed for updating description file
+							},
+						},
+					},
+				},
 			},
 		)
 

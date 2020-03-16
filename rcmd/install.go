@@ -592,7 +592,6 @@ func updateDescriptionInfoByLines(lines []string, version, installType, repoURL,
 		}
 
 		if strings.Contains(line, string("Repository:")) && !strings.Contains(line, repo) {
-			//log.Info("Got where we needed.")
 			originalRepo := strings.Trim(strings.Split(line, ":")[1], " ")
 			newLines = append(newLines, "OriginalRepository: " + originalRepo)
 			line = "Repository: " + repo
