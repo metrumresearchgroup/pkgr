@@ -3,7 +3,7 @@
 project_name: pkgr
 
 release:
-  prerelease: false 
+  prerelease: true
 
 build:
   binary: pkgr
@@ -15,8 +15,10 @@ build:
     - amd64
 
 # goreleaser.yml
-brew:
+brews:
   # Repository to push the tap to.
-  github:
-    owner: metrumresearchgroup 
-    name: homebrew-tap 
+  -
+    github:
+      owner: metrumresearchgroup
+      name: homebrew-tap
+

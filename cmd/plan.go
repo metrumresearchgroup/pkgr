@@ -142,6 +142,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	}
 
 	dependencyConfigurations := gpsr.NewDefaultInstallDeps()
+	dependencyConfigurations.Default.NoRecommended = cfg.NoRecommended
 	configlib.SetPlanCustomizations(cfg, dependencyConfigurations, pkgNexus)
 
 	availableUserPackages := pkgNexus.GetPackages(cfg.Packages)
@@ -173,7 +174,9 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		dependencyConfigurations,
 		pkgNexus,
 		cfg.Update,
-		libraryExists)
+		libraryExists,
+		cfg.NoRecommended,
+		)
 
 
 	rollbackPlan := rollback.CreateRollbackPlan(cfg.Library, installPlan, installedPackages)

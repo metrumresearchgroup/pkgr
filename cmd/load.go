@@ -206,7 +206,7 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) LoadResult {
 		didSucceed = false
 		if errors.As(cmdErr, &exitError) { // If the command had an exit code != 0
 			log.WithFields(log.Fields{
-				"go_error":  cmdErr,
+				"goError":  cmdErr,
 				"std_error": errLines,
 				"pkg":       pkg,
 				"rDir":      rDir,
@@ -303,6 +303,3 @@ func runRCmd(rExpression string, rs rcmd.RSettings, rDir string, reducedOutput b
 
 	return outLines, errLines, cmdErr
 }
-
-
-

@@ -16,17 +16,27 @@ func ResolveInstallationReqs(
 		pkgNexus *cran.PkgNexus,
 		update bool,
 		libraryExists bool,
+		noRecommended bool,
 	) (InstallPlan, error) {
 
 	workingGraph := NewGraph()
 	defaultDependencyConfigs := NewDefaultInstallDeps()
+
+	// if globally noRecommended different than default, lets set it to that
+	if noRecommended != defaultDependencyConfigs.Default.NoRecommended {
+		defaultDependencyConfigs.Default.NoRecommended = noRecommended
+	}
+	for dep, val := range dependencyConfigs.Deps {
+		val.NoRecommended = noRecommended
+		dependencyConfigs.Deps[dep] = val
+	}
 	depDb := make(map[string][]string)
 
 	for _, p := range pkgs {
 		pkg, _, _ := pkgNexus.GetPackage(p)
 		appendToGraph(workingGraph, pkg, dependencyConfigs, pkgNexus)
 	}
-	resolved, err := ResolveLayers(workingGraph)
+	resolved, err := ResolveLayers(workingGraph, noRecommended)
 	if err != nil {
 		fmt.Println("error resolving graph")
 		return InstallPlan{}, err
@@ -44,7 +54,7 @@ func ResolveInstallationReqs(
 			// to kick off installation - aka Dep/Import/LinkingTo thus we can use
 			// the default
 			appendToGraph(workingGraph, pkg, defaultDependencyConfigs, pkgNexus)
-			resolved, err := ResolveLayers(workingGraph)
+			resolved, err := ResolveLayers(workingGraph, noRecommended)
 			if err != nil {
 				fmt.Println("error resolving graph")
 				return InstallPlan{}, err
