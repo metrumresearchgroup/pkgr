@@ -67,7 +67,7 @@ func (i InstallArgs) CliArgs() []string {
 func Install(
 	fs afero.Fs,
 	pkg string,
-	tbp string, // tarball path
+	pkgPath string, // path the tarball of the package, or to the top-level directory of the package. If it's a Tarball, R CMD INSTALL unpacks it first then treats the unpacked dir like a top-level directory.
 	args InstallArgs,
 	rs RSettings,
 	es ExecSettings,
@@ -94,15 +94,15 @@ func Install(
 
 	// Clean filepath if it's not an absolute filepath
 	// Warning: I encountered a bug with this method that caused duplication: path A/B became path A/B/A/B.
-	if !filepath.IsAbs(tbp) {
-		tbp = filepath.Clean(filepath.Join(rdir, tbp))
+	if !filepath.IsAbs(pkgPath) {
+		pkgPath = filepath.Clean(filepath.Join(rdir, pkgPath))
 	}
 
 	// check existence of tarball path.
-	ok, err := afero.Exists(fs, tbp)
+	ok, err := afero.Exists(fs, pkgPath)
 	if !ok || err != nil {
 		log.WithFields(log.Fields{
-			"path": tbp,
+			"path": pkgPath,
 			"ok":   ok,
 			"err":  err,
 		}).Error("package tarball not found")
@@ -111,7 +111,7 @@ func Install(
 			errs = err.Error()
 		} else {
 			// nil error not ok
-			errs = fmt.Sprintf("%s does not exist", tbp)
+			errs = fmt.Sprintf("%s does not exist", pkgPath)
 		}
 		return CmdResult{
 			Stderr:   fmt.Sprintf("err: %s, ok: %v", errs, ok),
@@ -127,7 +127,7 @@ func Install(
 		"INSTALL",
 	}
 	cmdArgs = append(cmdArgs, args.CliArgs()...)
-	cmdArgs = append(cmdArgs, tbp)
+	cmdArgs = append(cmdArgs, pkgPath)
 	log.WithFields(
 		log.Fields{
 			"cmd":       "install",

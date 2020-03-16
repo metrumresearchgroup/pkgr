@@ -111,7 +111,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	//
 	// Install the tarballs, if applicable.
 	//
-	installTarballs(installPlan, rSettings)
+	installAdditionalPackages(installPlan, rSettings, cfg.Library, cfg.Cache)
 
 	log.WithField("duration", time.Since(startTime)).Info("total package install time")
 
@@ -138,18 +138,18 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func installTarballs(installPlan gpsr.InstallPlan, rSettings rcmd.RSettings) {
+func installAdditionalPackages(installPlan gpsr.InstallPlan, rSettings rcmd.RSettings, library, cache string,) {
 
-	toInstallCount := len(installPlan.Tarballs) - 1
+	toInstallCount := len(installPlan.AdditionalPackageSources) - 1
 
 	// Set up installArgs object
 	iargs := rcmd.NewDefaultInstallArgs()
 
 	// Need to use absolute path to library to accomodate our "extracurricular usage" of Install method.
-	libraryAbs, err := filepath.Abs(cfg.Library)
+	libraryAbs, err := filepath.Abs(library)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"lib_folder": cfg.Library,
+			"lib_folder": library,
 			"error":   err,
 		}).Error("error installing tarball -- could not find absolute path for library folder")
 	}
@@ -157,49 +157,49 @@ func installTarballs(installPlan gpsr.InstallPlan, rSettings rcmd.RSettings) {
 
 	log.Info("starting individual tarball install")
 
-	for tarballPkg, tarballPath := range installPlan.Tarballs {
+	for additionalPkg, pkgSourcePath := range installPlan.AdditionalPackageSources {
 		log.WithFields(log.Fields{
-			"package":     tarballPkg,
-			"tarball": tarballPath,
+			"package": additionalPkg,
+			"pkgSource": pkgSourcePath,
 		}).Debug("installing tarball")
 
 		// Need to use absolute path or else we encounter a weird bug from filepath.Clean in the Install function.
 		// 	(Instead of cleaning the local path, it was basically duplicating the path onto itself: A/B became A/B/A/B)
-		tarballPathAbs, err := filepath.Abs(tarballPath)
+		pkgSourcePathAbs, err := filepath.Abs(pkgSourcePath)
 		if err != nil {
 			log.WithFields(log.Fields{
-				"pkg":     tarballPkg,
-				"tarball": tarballPath,
+				"pkg":     additionalPkg,
+				"pkgSource": pkgSourcePath,
 				"error":   err,
 			}).Error("error installing tarball -- could not find absolute path for tarball")
 		}
 
 		res, err := rcmd.Install(
 			fs,
-			tarballPkg,
-			tarballPathAbs,
+			additionalPkg,
+			pkgSourcePathAbs,
 			iargs,
 			rSettings,
 			rcmd.ExecSettings{
 				PkgrVersion: VERSION,
-				WorkDir: filepath.Dir(tarballPath),
+				WorkDir: filepath.Dir(pkgSourcePath),
 			},
 			rcmd.InstallRequest{
-				Package: tarballPkg,
+				Package: additionalPkg,
 				Cache: rcmd.PackageCache{
-					BaseDir: userCache(cfg.Cache),
+					BaseDir: userCache(cache),
 				},
 				InstallArgs: iargs,
-				ExecSettings: rcmd.ExecSettings{ // Needed for updating description file
-					PkgrVersion: VERSION, //Needed for updating description file
+				ExecSettings: rcmd.ExecSettings{ 			// Needed for updating description file
+					PkgrVersion: VERSION, 					// Needed for updating description file
 				},
-				Metadata: cran.Download {  // Needed for updating description file
-					Metadata: cran.PkgDl{ // Needed for updating description file
-						Config: cran.PkgConfig{ // Needed for updating description file
-							Type: cran.Source, // Needed for updating description file
-							Repo: cran.RepoURL{ // Needed for updating description file
-								URL: "N/A", // Needed for updating description file
-								Name: "Local_Tarball", // Needed for updating description file
+				Metadata: cran.Download {  					// Needed for updating description file
+					Metadata: cran.PkgDl{ 					// Needed for updating description file
+						Config: cran.PkgConfig{ 			// Needed for updating description file
+							Type: cran.Source, 				// Needed for updating description file
+							Repo: cran.RepoURL{ 			// Needed for updating description file
+								URL:  pkgSourcePathAbs,     // Needed for updating description file
+								Name: "IndividualPackage",  // Needed for updating description file
 							},
 						},
 					},
@@ -209,29 +209,29 @@ func installTarballs(installPlan gpsr.InstallPlan, rSettings rcmd.RSettings) {
 
 		if err != nil {
 			log.WithFields(log.Fields{
-				"pkg":     tarballPkg,
-				"tarball": tarballPath,
+				"pkg":     additionalPkg,
+				"pkgSource": pkgSourcePath,
 				"error":   err,
-			}).Error("error installing tarball")
+			}).Error("error installing package")
 			log.WithFields(log.Fields{
-				"pkg":       tarballPkg,
-				"tarball":   tarballPath,
+				"pkg":       additionalPkg,
+				"pkgSource":   pkgSourcePath,
 				"remaining": toInstallCount,
-				"stdout": res.Stdout,
-				"stderr": res.Stderr,
-			}).Debug("error installing tarball")
+				"stdout":    res.Stdout,
+				"stderr":    res.Stderr,
+			}).Debug("error installing package")
 		} else {
 			log.WithFields(log.Fields{
-				"pkg":       tarballPkg,
-				"tarball":   tarballPath,
+				"pkg":       additionalPkg,
+				"pkgSource":   pkgSourcePath,
 				"remaining": toInstallCount,
-			}).Info("Successfully Installed Tarball.")
+			}).Info("Successfully Installed Package.")
 			log.WithFields(log.Fields{
-				"pkg":       tarballPkg,
-				"tarball":   tarballPath,
+				"pkg":       additionalPkg,
+				"pkgSource":   pkgSourcePath,
 				"remaining": toInstallCount,
-				"stdout": res.Stdout,
-			}).Trace("Successfully Installed Tarball.")
+				"stdout":    res.Stdout,
+			}).Trace("Successfully Installed Package.")
 		}
 
 		toInstallCount--

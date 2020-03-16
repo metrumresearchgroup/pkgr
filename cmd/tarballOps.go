@@ -122,19 +122,38 @@ func untar(fs afero.Fs, path string, cacheDir string) string {
 		}).Error("error encountered while reading untarred directory")
 	}
 
-	if len(dirEntries) == 0 {
+	var extractedDirs []os.FileInfo
+	for _, entry := range dirEntries {
+		if entry.IsDir() {
+			extractedDirs = append(extractedDirs, entry)
+		} else {
+			logrus.WithFields(logrus.Fields{
+				"tarball": path,
+				"untarredDirectory": tarballDirectoryPath,
+				"item": entry.Name(),
+			}).Trace("extraneous item found in untarred directory. If you have previously installed this tarball via pkgr, it may be a build artifact from the last installation")
+		}
+	}
+
+	if len(extractedDirs) == 0 {
 		logrus.WithFields(logrus.Fields{
 			"directory": tarballDirectoryPath,
 			"tarball":   path,
 		}).Fatal("untarred directory is empty -- cannot install tarball package")
-	} else if len(dirEntries) > 1 {
+	} else if len(extractedDirs) > 1 {
+		var entries []string
+		for _, entry := range extractedDirs {
+			entries = append(entries, entry.Name())
+		}
 		logrus.WithFields(logrus.Fields{
 			"directory": tarballDirectoryPath,
 			"tarball":   path,
-		}).Warn("found more than one item at top level in unarchived tarball -- assuming first alphabetical entry is package directory")
+			"items":     entries,
+			"using":     extractedDirs[0].Name(),
+		}).Warn("found more than one directory at top level in unarchived tarball -- assuming first alphabetical entry is package directory")
 	}
 
-	return filepath.Join(tarballDirectoryPath, dirEntries[0].Name())
+	return filepath.Join(tarballDirectoryPath, extractedDirs[0].Name())
 }
 
 func getHashedTarballName(tgzFile afero.File) (string, error) {

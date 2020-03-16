@@ -152,10 +152,10 @@ func (ip *InstallPlan) GetNumPackagesToInstall() int {
 	installedRequired := 0
 	for p := range ip.InstalledPackages {
 
-		// Tarballs are always installed, even if they're already present.
-		_, isTarballInstallation := ip.Tarballs[p]
+		// AdditionalPackageSources are always installed, even if they're already present.
+		_, isAdditionalPkgInstallation := ip.AdditionalPackageSources[p]
 
-		if funk.Contains(requiredPackages, p) && !isTarballInstallation {
+		if funk.Contains(requiredPackages, p) && !isAdditionalPkgInstallation {
 			installedRequired = installedRequired + 1
 		}
 	}
@@ -166,7 +166,7 @@ func (ip *InstallPlan) GetNumPackagesToInstall() int {
 	}
 
 	// Handle the case of tarballs to install
-	tarballCount := len(ip.Tarballs)
+	tarballCount := len(ip.AdditionalPackageSources)
 
 	return len(requiredPackages) - installedRequired + toUpdate + tarballCount
 

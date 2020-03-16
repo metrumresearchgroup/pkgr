@@ -146,10 +146,10 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 
 	// Set tarball dependencies as user-packages, for convenience.
 	var tarballDescriptions []desc.Desc
-	var tarballPathMap map[string]string
+	var unpackedTarballPathMap map[string]string
 
 	if len(cfg.Tarballs) > 0 {
-		tarballDescriptions, tarballPathMap = unpackTarballs(fs, cfg.Tarballs, cfg.Cache)
+		tarballDescriptions, unpackedTarballPathMap = unpackTarballs(fs, cfg.Tarballs, cfg.Cache)
 		for _, tarballDesc := range tarballDescriptions {
 			tarballDeps := tarballDesc.GetCombinedDependencies(false)
 			for _, d := range tarballDeps {
@@ -158,10 +158,10 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 				}
 			}
 		}
-
 	}
-	cfg.Packages = removeBasePackages(cfg.Packages)
 	// end tarball deps
+
+	cfg.Packages = removeBasePackages(cfg.Packages)
 
 	availableUserPackages := pkgNexus.GetPackages(cfg.Packages)
 	if len(availableUserPackages.Missing) > 0 {
@@ -197,7 +197,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		libraryExists,
 	)
 
-	installPlan.Tarballs = tarballPathMap
+	installPlan.AdditionalPackageSources = unpackedTarballPathMap
 
 	rollbackPlan := rollback.CreateRollbackPlan(cfg.Library, installPlan, installedPackages)
 
@@ -238,7 +238,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		_, rn := pkgdl.PkgAndRepoNames()
 		installSources[rn]++
 	}
-	installSources["tarballs"] = len(installPlan.Tarballs)
+	installSources["tarballs"] = len(installPlan.AdditionalPackageSources)
 	fields := make(log.Fields)
 	for k, v := range installSources {
 		fields[k] = v
