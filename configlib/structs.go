@@ -42,8 +42,9 @@ type PkgrConfig struct {
 	Packages       []string            `yaml:"Packages,omitempty"`
 	Tarballs	   []string			   `yaml:"Tarballs,omitempty"`
 	Suggests       bool                `yaml:"Suggests,omitempty"`
+	NoRecommended  bool                `yaml:"NoRecommended",omitempty"`
 	Repos          []map[string]string `yaml:"Repos,omitempty"`
-	Rollback	   bool				   `yaml:"Rollback,omitempty"`
+	Rollback       bool                `yaml:"Rollback,omitempty"`
 	Library        string              `yaml:"Library,omitempty"`
 	LibPaths       []string            `yaml:"LibPaths,omitempty"`
 	Customizations Customizations      `yaml:"Customizations,omitempty"`

@@ -142,6 +142,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	}
 
 	dependencyConfigurations := gpsr.NewDefaultInstallDeps()
+	dependencyConfigurations.Default.NoRecommended = cfg.NoRecommended
 	configlib.SetPlanCustomizations(cfg, dependencyConfigurations, pkgNexus)
 
 	// Set tarball dependencies as user-packages, for convenience.
@@ -195,6 +196,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		pkgNexus,
 		cfg.Update,
 		libraryExists,
+		cfg.NoRecommended,
 	)
 
 	installPlan.AdditionalPackageSources = unpackedTarballPkgs
@@ -312,4 +314,3 @@ func logDependencyRepos(dependencyDownloads []cran.PkgDl) {
 		}
 	}
 }
-

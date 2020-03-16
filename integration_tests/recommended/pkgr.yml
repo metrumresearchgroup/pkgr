@@ -1,0 +1,16 @@
+Version: 1
+# top level packages
+Packages:
+  - survivalrec
+
+# any repositories, order matters
+Repos:
+  - miniCRAN: "../minicran"
+  - MPN: "https://mpn.metworx.com/snapshots/stable/2020-02-18"
+
+Library: "test-library"
+
+Customizations:
+    Repos:
+      - miniCRAN:
+            Type: source

@@ -7,6 +7,7 @@ the declarative philosophy of defining _ideal state_ of the entire system, and w
 towards achieving that objective. Furthermore, `pkgr` is built with a focus on reproducibility
 and auditability of what is going on, a vital component for the pharmaceutical sciences + enterprises.
 
+
 # Why pkgr?
 
 `install.packages` and friends such as `remotes::install_github` have a subtle weakness --
@@ -27,6 +28,9 @@ do behaviors well. For example, rather than just having plyr, we now use dplyr+p
 the same set of responsibilities (dealing with dataframes + dealing with other list/vector objects in an iterative way).
 As such, it is becoming increasingly difficult to manage the _set_ of packages in a transparent and robust
 way.
+
+### how does it compare with pak can be read about [here](https://github.com/metrumresearchgroup/pkgr/issues/222#issuecomment-576340217)
+
 
 ## pkgr in action
 
@@ -194,24 +198,24 @@ Logging:
   overwrite: true
 ```
 
-# Pkgr and [Packrat](https://rstudio.github.io/packrat/)
+# pkgr and [packrat](https://rstudio.github.io/packrat/) and renv
 
-**Pkgr is not a replacement for Packrat -- Pkgr is complementary to Packrat**.
+**Pkgr is not a replacement for Packrat/renv -- Pkgr is complementary to packrat/renv**.
 
-Packrat is a tool to capture the state
+packrat/renv are tools to capture the state
 of your R environment and isolate it from outside modification.
 Where Packrat often falls short, however, is in the restoration said environment.
 Running packrat::restore() restores packages in an iterative fashion, which is a
 time-consuming process that doesn't always play nice with packages hosted outside
-of CRAN (such as packages hosted on GitHub). Additionally, since Packrat uses `install.packages`
+of CRAN (such as packages hosted on GitHub). Additionally, since renv uses `install.packages`
 under the hood, each call to `install.packages` is still treated as an isolated procedure rather than as a part of
 a holistic effort. This means that the installation process does not stop and inform
-the user when a package fails to install properly. In this situation, Packrat continues to install
+the user when a package fails to install properly. In this situation, renv/pkgr continues to install
 what packages it can without regard for how this might affect the package ecosystem when those
 individual installation failures are later resolved.
 
 Pkgr solves these issues by:
-  - Installing packages quickly in parallelized layers (determined by the dependency tree)
+  - Installing packages quickly in parallelized graph (determined by the dependency tree)
   - Allowing users to control things like what repo a given package is retrieved from and what Makevars it is built with
   - Showing users a holistic view of their R Environment (`pkgr inspect --deps --tree`) and how that environment would be changed on another install (`pkgr plan`)
   - Providing timely error messages and halting the installation process immediately when something goes wrong during the
