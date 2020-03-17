@@ -1,5 +1,7 @@
 # pkgr
 
+For additional details of how to use pkgr, please see the [user manual](https://github.com/metrumresearchgroup/pkgr/wiki/user_manual)
+
 # What is pkgr?
 
 `pkgr` is a rethinking of the way packages are managed in R. Namely, it embraces
