@@ -3,7 +3,6 @@ Version: 1
 Tarballs:
   - "~/go/src/github.com/metrumresearchgroup/pkgr/localrepos/tarballs/R6_2.4.0.tar.gz"
 Packages:
-  - R6
   - pillar
   - crayon
 
