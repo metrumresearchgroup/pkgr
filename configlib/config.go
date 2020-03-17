@@ -38,7 +38,49 @@ func NewConfig(cfg *PkgrConfig) {
 		rVersion := rcmd.GetRVersion(&rs)
 		cfg.Library = getLibraryPath(cfg.Lockfile.Type, cfg.RPath, rVersion, rs.Platform, cfg.Library)
 	}
+
+	cfg.Library = expandTilde(cfg.Library)
+	cfg.RPath = expandTilde(cfg.RPath)
+	cfg.Tarballs = expandTildes(cfg.Tarballs)
+	cfg.Repos = expandTildesRepos(cfg.Repos)
+	cfg.Logging.All = expandTilde(cfg.Logging.All)
+	cfg.Logging.Install = expandTilde(cfg.Logging.Install)
+
 	return
+}
+
+func expandTildes(paths []string) []string {
+	var expanded []string
+	for _, p := range paths {
+		newPath := expandTilde(p)
+		expanded = append(expanded, newPath)
+	}
+	return expanded
+}
+
+func expandTildesRepos(repos []map[string]string) []map[string]string {
+	var expanded []map[string]string
+	//expanded := make(map[string]string)
+	for _, keyValuePair := range repos {
+		kvpExpanded := make(map[string]string)
+		for key, p := range keyValuePair { // should only be one pair, but loop just in case
+			kvpExpanded[key] = expandTilde(p)
+		}
+		expanded = append(expanded, kvpExpanded)
+	}
+
+	return expanded
+}
+
+func expandTilde(p string) string {
+	expanded, err := homedir.Expand(p)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"path": p,
+			"error": err,
+		}).Fatal("problem parsing config file -- could not expand path")
+	}
+	return expanded
 }
 
 func getLibraryPath(lockfileType string, rpath string, rversion cran.RVersion, platform string, library string) string {
