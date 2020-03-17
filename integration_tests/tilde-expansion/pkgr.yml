@@ -1,39 +1,31 @@
 Version: 1
 # top level packages
-
 Tarballs:
   - "~/go/src/github.com/metrumresearchgroup/pkgr/localrepos/tarballs/R6_2.4.0.tar.gz"
-
 Packages:
-  - survival
+  - R6
   - pillar
   - crayon
-  - Hmisc
+
 
 # any repositories, order matters
 Repos:
   - CRAN_No_R6: "~/go/src/github.com/metrumresearchgroup/pkgr/localrepos/simple-no-R6"
   - CRAN_Simple: "~/go/src/github.com/metrumresearchgroup/pkgr/localrepos/simple"
-
-Cache: "~/go/src/github.com/metrumresearchgroup/pkgr/integration_tests/expand-tilda/localcache"
-
-Library: "~/go/src/github.com/metrumresearchgroup/pkgr/integration_tests/expand-tilda/test-library"
-
+Cache: "~/go/src/github.com/metrumresearchgroup/pkgr/integration_tests/tilde-expansion/localcache"
+Library: "~/go/src/github.com/metrumresearchgroup/pkgr/integration_tests/tilde-expansion/test-library"
 Logging:
-  all: "~/go/src/github.com/metrumresearchgroup/pkgr/integration_tests/expand-tilda/logs/logs.log"
-  install: "~/go/src/github.com/metrumresearchgroup/pkgr/integration_tests/expand-tilda/logs/logs-install.log"
-
-Rpath: ~/../../Library/Frameworks/R.framework/Resources/
-
+    all: "~/go/src/github.com/metrumresearchgroup/pkgr/integration_tests/tilde-expansion/logs/logs.log"
+    install: "~/go/src/github.com/metrumresearchgroup/pkgr/integration_tests/tilde-expansion/logs/logs-install.log"
+Rpath: "~/../../Library/Frameworks/R.framework/Resources/R"
 Rollback: false
-
 Customizations:
-  Repos:
-    - CRAN_No_R6:
-        Type: source
-    - CRAN_Simple:
-        Type: source
-  Packages:
-    - crayon:
-        Repo: CRAN_Simple
-        Type: source
+    Repos:
+      - CRAN_No_R6:
+            Type: source
+      - CRAN_Simple:
+            Type: source
+    Packages:
+      - crayon:
+            Repo: CRAN_Simple
+            Type: source

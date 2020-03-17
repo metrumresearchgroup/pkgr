@@ -130,4 +130,4 @@ test-tilde-expansion-reset:
 	rm -rf ${TEST_HOME}/tilde-expansion/test-library/
 	rm -rf ${TEST_HOME}/tilde-expansion/localcache/
 	rm -rf ${TEST_HOME}/tilde-expansion/logs
-	mkdir ${TEST_HOME}/tilde-expansioon/logs
+	mkdir ${TEST_HOME}/tilde-expansion/logs

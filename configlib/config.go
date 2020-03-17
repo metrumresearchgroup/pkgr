@@ -39,16 +39,33 @@ func NewConfig(cfg *PkgrConfig) {
 		cfg.Library = getLibraryPath(cfg.Lockfile.Type, cfg.RPath, rVersion, rs.Platform, cfg.Library)
 	}
 
+	// For all cfg values that can be paths, make sure that ~ is expanded to the home directory.
 	cfg.Library = expandTilde(cfg.Library)
 	cfg.RPath = expandTilde(cfg.RPath)
 	cfg.Tarballs = expandTildes(cfg.Tarballs)
 	cfg.Repos = expandTildesRepos(cfg.Repos)
 	cfg.Logging.All = expandTilde(cfg.Logging.All)
 	cfg.Logging.Install = expandTilde(cfg.Logging.Install)
+	cfg.Cache = expandTilde(cfg.Cache)
 
 	return
 }
 
+/// expand the ~ at the beginning of a path to the home directory.
+/// consider any problems a fatal error.
+func expandTilde(p string) string {
+	expanded, err := homedir.Expand(p)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"path": p,
+			"error": err,
+		}).Fatal("problem parsing config file -- could not expand path")
+	}
+	return expanded
+}
+
+/// For a list of paths, expand the ~ at the beginning of each path to the home directory.
+/// consider any problems a fatal error.
 func expandTildes(paths []string) []string {
 	var expanded []string
 	for _, p := range paths {
@@ -58,6 +75,10 @@ func expandTildes(paths []string) []string {
 	return expanded
 }
 
+/// In the PkgrConfig object, Repos are stored as a list of key-value pairs.
+/// Keys are repo names and values are paths to those repos
+/// For each key-value pair, expand the prefix ~ to be the home directory, if applicable.
+/// consider any problems a fatal error.
 func expandTildesRepos(repos []map[string]string) []map[string]string {
 	var expanded []map[string]string
 	//expanded := make(map[string]string)
@@ -69,17 +90,6 @@ func expandTildesRepos(repos []map[string]string) []map[string]string {
 		expanded = append(expanded, kvpExpanded)
 	}
 
-	return expanded
-}
-
-func expandTilde(p string) string {
-	expanded, err := homedir.Expand(p)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"path": p,
-			"error": err,
-		}).Fatal("problem parsing config file -- could not expand path")
-	}
 	return expanded
 }
 
