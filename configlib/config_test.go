@@ -20,6 +20,164 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestExpandTilde(t *testing.T) {
+	homeDirectory, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatal("error determining home directory to use for testing: ", err)
+	}
+
+	type testCase struct {
+		path string
+		expectedResult string
+	}
+
+	tests := map[string]testCase {
+		"expands tilde" : {
+			path : filepath.Join("~/Desktop/folderA"),
+			expectedResult: filepath.Join(homeDirectory, "Desktop", "folderA"),
+		},
+		"does not modify regular path" : {
+			path : filepath.Join("A/B/C"),
+			expectedResult : filepath.Join("A/B/C"),
+		},
+		"does not modify local path" : {
+			path : filepath.Join("../A/B/C"),
+			expectedResult: filepath.Join("../A/B/C"),
+		},
+		"tilde must be prefix" : {
+			path : filepath.Join("A/B/~/C"),
+			expectedResult: filepath.Join("A/B/~/C"),
+		},
+		"works with empty path" : {
+			path: "",
+			expectedResult: "",
+		},
+	}
+
+	for testName, tc := range tests {
+		t.Run(testName, func(t *testing.T) {
+			actualResult := expandTilde(tc.path)
+			assert.Equal(t, tc.expectedResult, actualResult)
+		})
+	}
+}
+
+func TestExpandTildes(t *testing.T) {
+	homeDirectory, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatal("error determining home directory to use for testing: ", err)
+	}
+
+	type testCase struct {
+		paths []string
+		expectedResults []string
+	}
+
+	tests := map[string]testCase {
+		"expands tildes" : {
+			paths : []string{
+				filepath.Join("~/Desktop/folderA"),
+				filepath.Join("~/Documents/folderB"),
+		},
+			expectedResults: []string{
+				filepath.Join(homeDirectory, "Desktop", "folderA",),
+				filepath.Join(homeDirectory, "Documents", "folderB",),
+			},
+		},
+		"expands tildes but not others" : {
+			paths : []string{
+				filepath.Join("~/Desktop/folderA",),
+				filepath.Join("/TopDir/Documents/folderB",),
+			},
+			expectedResults: []string{
+				filepath.Join(homeDirectory, "Desktop", "folderA",),
+				filepath.Join("/TopDir", "Documents", "folderB",),
+			},
+		},
+		"does not modify non-tilde repos" : {
+			paths : []string{
+				filepath.Join("A", "B", "C"),
+				filepath.Join("D"),
+				filepath.Join("/srv", "shiny-server", "log.txt"),
+				"",
+				filepath.Join("..", "E", "F"),
+			},
+			expectedResults: []string{
+				filepath.Join("A", "B", "C"),
+				filepath.Join("D"),
+				filepath.Join("/srv", "shiny-server", "log.txt"),
+				"",
+				filepath.Join("..", "E", "F"),
+			},
+		},
+	}
+
+	for testName, tc := range tests {
+		t.Run(testName, func(t *testing.T) {
+			actualResults := expandTildes(tc.paths)
+			assert.Equal(t, tc.expectedResults, actualResults)
+		})
+	}
+}
+
+func TestExpandTildesRepo (t *testing.T) {
+	homeDirectory, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatal("error determining home directory to use for testing: ", err)
+	}
+
+	type testCase struct {
+		repos           []map[string]string
+		expectedResults []map[string]string
+	}
+
+	tests := map[string]testCase {
+		"expands tildes" : {
+			repos: []map[string]string{
+				{"A" : filepath.Join("~/Desktop/folderA"),},
+				{"B" : filepath.Join("~/Documents/folderB"),},
+			},
+			expectedResults:[]map[string]string{
+				{"A" : filepath.Join(homeDirectory, "Desktop/folderA"),},
+				{"B" : filepath.Join(homeDirectory, "Documents/folderB"),},
+			},
+		},
+		"expands tildes but not others" : {
+			repos: []map[string]string{
+				{"A" : filepath.Join("~/Desktop/folderA"),},
+				{"B" : filepath.Join("/TopDir/Documents/folderB"),},
+			},
+			expectedResults: []map[string]string{
+				{ "A" : filepath.Join(homeDirectory, "Desktop", "folderA"),},
+				{ "B" : filepath.Join("/TopDir", "Documents", "folderB")},
+			},
+		},
+		"does not modify non-tilde repos" : {
+			repos: []map[string]string{
+				{ "1" : filepath.Join("A", "B", "C"),},
+				{ "2" : filepath.Join("D"),},
+				{ "3" : filepath.Join("/srv", "shiny-server", "log.txt"),},
+				{ "4" : "",},
+				{ "5" : filepath.Join("..", "E", "F"),},
+			},
+			expectedResults: []map[string]string{
+				{ "1" : filepath.Join("A", "B", "C"),},
+				{ "2" : filepath.Join("D"),},
+				{ "3" : filepath.Join("/srv", "shiny-server", "log.txt"),},
+				{ "4" : "",},
+				{ "5" : filepath.Join("..", "E", "F"),},
+			},
+		},
+	}
+
+	for testName, tc := range tests {
+		t.Run(testName, func(t *testing.T) {
+			actualResults := expandTildesRepos(tc.repos)
+			assert.Equal(t, tc.expectedResults, actualResults)
+		})
+	}
+}
+
 func TestAddRemovePackage(t *testing.T) {
 	tests := []struct {
 		fileName    string

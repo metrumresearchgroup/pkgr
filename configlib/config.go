@@ -39,7 +39,7 @@ func NewConfig(cfg *PkgrConfig) {
 		cfg.Library = getLibraryPath(cfg.Lockfile.Type, cfg.RPath, rVersion, rs.Platform, cfg.Library)
 	}
 
-	// For all cfg values that can be paths, make sure that ~ is expanded to the home directory.
+	// For all cfg values that can be repos, make sure that ~ is expanded to the home directory.
 	cfg.Library = expandTilde(cfg.Library)
 	cfg.RPath = expandTilde(cfg.RPath)
 	cfg.Tarballs = expandTildes(cfg.Tarballs)
@@ -64,7 +64,7 @@ func expandTilde(p string) string {
 	return expanded
 }
 
-/// For a list of paths, expand the ~ at the beginning of each path to the home directory.
+/// For a list of repos, expand the ~ at the beginning of each path to the home directory.
 /// consider any problems a fatal error.
 func expandTildes(paths []string) []string {
 	var expanded []string
@@ -76,7 +76,7 @@ func expandTildes(paths []string) []string {
 }
 
 /// In the PkgrConfig object, Repos are stored as a list of key-value pairs.
-/// Keys are repo names and values are paths to those repos
+/// Keys are repo names and values are repos to those repos
 /// For each key-value pair, expand the prefix ~ to be the home directory, if applicable.
 /// consider any problems a fatal error.
 func expandTildesRepos(repos []map[string]string) []map[string]string {
