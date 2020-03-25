@@ -38,7 +38,59 @@ func NewConfig(cfg *PkgrConfig) {
 		rVersion := rcmd.GetRVersion(&rs)
 		cfg.Library = getLibraryPath(cfg.Lockfile.Type, cfg.RPath, rVersion, rs.Platform, cfg.Library)
 	}
+
+	// For all cfg values that can be repos, make sure that ~ is expanded to the home directory.
+	cfg.Library = expandTilde(cfg.Library)
+	cfg.RPath = expandTilde(cfg.RPath)
+	cfg.Tarballs = expandTildes(cfg.Tarballs)
+	cfg.Repos = expandTildesRepos(cfg.Repos)
+	cfg.Logging.All = expandTilde(cfg.Logging.All)
+	cfg.Logging.Install = expandTilde(cfg.Logging.Install)
+	cfg.Cache = expandTilde(cfg.Cache)
+
 	return
+}
+
+/// expand the ~ at the beginning of a path to the home directory.
+/// consider any problems a fatal error.
+func expandTilde(p string) string {
+	expanded, err := homedir.Expand(p)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"path": p,
+			"error": err,
+		}).Fatal("problem parsing config file -- could not expand path")
+	}
+	return expanded
+}
+
+/// For a list of repos, expand the ~ at the beginning of each path to the home directory.
+/// consider any problems a fatal error.
+func expandTildes(paths []string) []string {
+	var expanded []string
+	for _, p := range paths {
+		newPath := expandTilde(p)
+		expanded = append(expanded, newPath)
+	}
+	return expanded
+}
+
+/// In the PkgrConfig object, Repos are stored as a list of key-value pairs.
+/// Keys are repo names and values are repos to those repos
+/// For each key-value pair, expand the prefix ~ to be the home directory, if applicable.
+/// consider any problems a fatal error.
+func expandTildesRepos(repos []map[string]string) []map[string]string {
+	var expanded []map[string]string
+	//expanded := make(map[string]string)
+	for _, keyValuePair := range repos {
+		kvpExpanded := make(map[string]string)
+		for key, p := range keyValuePair { // should only be one pair, but loop just in case
+			kvpExpanded[key] = expandTilde(p)
+		}
+		expanded = append(expanded, kvpExpanded)
+	}
+
+	return expanded
 }
 
 func getLibraryPath(lockfileType string, rpath string, rversion cran.RVersion, platform string, library string) string {
