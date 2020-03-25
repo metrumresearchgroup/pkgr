@@ -94,10 +94,11 @@ func cleanCacheFolders() error {
 	}
 
 	// Clear the tarballs
+	log.Info("clearing unpacked tarballs from the cache")
 	for _, tgzFile := range cfg.Tarballs {
 		openedTgz, err := fs.Open(tgzFile)
 		if err != nil {
-			log.WithField("file", tgzFile).Warn("could not find tar file in local cache")
+			log.WithField("file", tgzFile).Warn("could not find untarred directory in local cache for file")
 			continue
 		}
 		hashedDirectoryName, err := getHashedTarballName(openedTgz)
@@ -110,7 +111,7 @@ func cleanCacheFolders() error {
 			log.WithFields(log.Fields{
 				"file": tgzFile,
 				"error": err,
-			}).Error("encountered a problem removing tarball from cache")
+			}).Error("error removing tarball from cache")
 		}
 	}
 
