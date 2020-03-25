@@ -5,12 +5,12 @@ LDFLAGS=-ldflags "-X main.buildTime=${BUILD}"
 BUILD_HOME=${PWD}/../cmd/pkgr
 TEST_HOME=${PWD}
 
-.PHONY: install test-setup test-mixed-source-reset test-simple-reset test-threads-reset test-logging-config-reset test-outdated-pkgs-reset test-repo-order-reset test-repo-local-reset test-repo-local-and-remote-reset test-rollback-reset test-simple-suggests-reset test-rollback-reset test-rollback-disabled-reset test-create-library-reset test-strict-mode-reset test-outdated-pkgs-no-update-reset test-misc-reset test-bad-customizations-reset test-description-repo-bug-reset test-load-reset test-load-fail-reset test-recommended-reset test-tarball-install-reset test-tilde-expansion-reset
+.PHONY: install test-setup test-mixed-source-reset test-simple-reset test-threads-reset test-logging-config-reset test-outdated-pkgs-reset test-repo-order-reset test-repo-local-reset test-repo-local-and-remote-reset test-rollback-reset test-simple-suggests-reset test-rollback-reset test-rollback-disabled-reset test-create-library-reset test-strict-mode-reset test-outdated-pkgs-no-update-reset test-misc-reset test-bad-customizations-reset test-description-repo-bug-reset test-load-reset test-load-fail-reset test-recommended-reset test-tarball-install-reset test-tarball-rollback-reset test-tilde-expansion-reset
 
 install:
 	cd ${BUILD_HOME}; go install ${LDFLAGS}
 
-test-setup: test-mixed-source-reset test-simple-reset test-threads-reset test-logging-config-reset test-outdated-pkgs-reset test-outdated-pkgs-stress-reset test-repo-order-reset test-repo-local-reset test-repo-local-and-remote-reset test-simple-suggests-reset test-rollback-reset test-rollback-disabled-reset test-create-library-reset test-strict-mode-reset test-outdated-pkgs-no-update-reset test-misc-reset test-bad-customizations-reset test-description-repo-bug-reset test-load-reset test-load-fail-reset test-recommended-reset test-tarball-install-reset test-tilde-expansion-reset install
+test-setup: test-mixed-source-reset test-simple-reset test-threads-reset test-logging-config-reset test-outdated-pkgs-reset test-outdated-pkgs-stress-reset test-repo-order-reset test-repo-local-reset test-repo-local-and-remote-reset test-simple-suggests-reset test-rollback-reset test-rollback-disabled-reset test-create-library-reset test-strict-mode-reset test-outdated-pkgs-no-update-reset test-misc-reset test-bad-customizations-reset test-description-repo-bug-reset test-load-reset test-load-fail-reset test-recommended-reset test-tarball-install-reset test-tarball-rollback-reset test-tilde-expansion-reset install
 
 test-mixed-source-reset:
 	cd ${TEST_HOME}/mixed-source; rm -rf test-library/
@@ -125,6 +125,12 @@ test-tarball-install-reset:
 	rm -rf ${TEST_HOME}/tarball-install/test-library/
 	rm -rf ${TEST_HOME}/tarball-install/localcache/
 	mkdir ${TEST_HOME}/tarball-install/test-library
+
+test-tarball-rollback-reset:
+	rm -rf ${TEST_HOME}/tarball-rollback/test-library/
+	rm -rf ${TEST_HOME}/tarball-rollback/localcache/
+	mkdir ${TEST_HOME}/tarball-rollback/test-library/
+	cd ${TEST_HOME}/tarball-rollback; cp -r ${TEST_HOME}/tarball-rollback/preinstalled-library/* ${TEST_HOME}/tarball-rollback/test-library
 
 test-tilde-expansion-reset:
 	rm -rf ${TEST_HOME}/tilde-expansion/test-library/

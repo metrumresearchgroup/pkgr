@@ -255,6 +255,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	if toInstall > 0 && toInstall != totalPackagesRequired {
 		// log which packages to install, but only if doing an incremental install
 		for _, pn := range pkgs {
+			//_, isAdditionalPkg := installPlan.AdditionalPackageSources[pn]
 			if !funk.ContainsString(installedPackageNames, pn) {
 				pkgDesc, cfg, _ := pkgNexus.GetPackage(pn)
 				log.WithFields(log.Fields{

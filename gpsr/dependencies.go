@@ -141,12 +141,14 @@ func (ip *InstallPlan) GetAllPackages() []string {
 	for depsList := range ip.DepDb {
 		toInstall = append(toInstall, depsList)
 	}
+	for pkg := range ip.AdditionalPackageSources {
+		toInstall = append(toInstall, pkg)
+	}
 	return toInstall
 }
 
 func (ip *InstallPlan) GetNumPackagesToInstall() int {
 	requiredPackages := ip.GetAllPackages()
-
 
 	// Handle the case where packages not requested via pkgr.yml (or dependencies) are present in directory.
 	installedRequired := 0
@@ -165,9 +167,6 @@ func (ip *InstallPlan) GetNumPackagesToInstall() int {
 		toUpdate = len(ip.OutdatedPackages)
 	}
 
-	// Handle the case of tarballs to install
-	tarballCount := len(ip.AdditionalPackageSources)
-
-	return len(requiredPackages) - installedRequired + toUpdate + tarballCount
+	return len(requiredPackages) - installedRequired + toUpdate
 
 }

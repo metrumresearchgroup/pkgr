@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"errors"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/metrumresearchgroup/pkgr/rollback"
 	"path/filepath"
@@ -111,13 +112,13 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	//
 	// Install the tarballs, if applicable.
 	//
-	installAdditionalPackages(installPlan, rSettings, cfg.Library, cfg.Cache)
+	errInstallAdditional := installAdditionalPackages(installPlan, rSettings, cfg.Library, cfg.Cache)
 
 	log.WithField("duration", time.Since(startTime)).Info("total package install time")
 
 	if cfg.Rollback {
 		//If anything went wrong during the installation, rollback the environment.
-		if err != nil {
+		if err != nil || errInstallAdditional != nil {
 			errRollback := rollback.RollbackPackageEnvironment(fs, rollbackPlan)
 			if errRollback != nil {
 				log.WithFields(log.Fields{
@@ -138,7 +139,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func installAdditionalPackages(installPlan gpsr.InstallPlan, rSettings rcmd.RSettings, library, cache string,) {
+func installAdditionalPackages(installPlan gpsr.InstallPlan, rSettings rcmd.RSettings, library, cache string,) error {
 
 	toInstallCount := len(installPlan.AdditionalPackageSources) - 1
 
@@ -152,10 +153,13 @@ func installAdditionalPackages(installPlan gpsr.InstallPlan, rSettings rcmd.RSet
 			"lib_folder": library,
 			"error":   err,
 		}).Error("error installing tarball -- could not find absolute path for library folder")
+		return err
 	}
 	iargs.Library = libraryAbs
 
 	log.Info("starting individual tarball install")
+
+	var errorAggregator []error
 
 	for pkgName, additionalPkg := range installPlan.AdditionalPackageSources {
 
@@ -173,6 +177,7 @@ func installAdditionalPackages(installPlan gpsr.InstallPlan, rSettings rcmd.RSet
 				"pkgSource": additionalPkg.InstallPath,
 				"error":     err,
 			}).Error("error installing tarball -- could not find absolute path for tarball")
+			errorAggregator = append(errorAggregator, err)
 		}
 
 		res, err := rcmd.Install(
@@ -225,6 +230,7 @@ func installAdditionalPackages(installPlan gpsr.InstallPlan, rSettings rcmd.RSet
 				"stdout":    res.Stdout,
 				"stderr":    res.Stderr,
 			}).Debug("error installing package")
+			errorAggregator = append(errorAggregator, err)
 		} else {
 			log.WithFields(log.Fields{
 				"pkg":       pkgName,
@@ -244,6 +250,10 @@ func installAdditionalPackages(installPlan gpsr.InstallPlan, rSettings rcmd.RSet
 
 		toInstallCount--
 	}
+	if len(errorAggregator) > 0 {
+		return errors.New("errorAggregator occured while installing additional packages. see logs for more detail")
+	}
+	return nil
 }
 
 func initInstallLog() {
