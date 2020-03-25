@@ -93,6 +93,27 @@ func cleanCacheFolders() error {
 		return errors.New("'what? that's impossible! my logic is flawless!'")
 	}
 
+	// Clear the tarballs
+	for _, tgzFile := range cfg.Tarballs {
+		openedTgz, err := fs.Open(tgzFile)
+		if err != nil {
+			log.WithField("file", tgzFile).Warn("could not find tar file in local cache")
+			continue
+		}
+		hashedDirectoryName, err := getHashedTarballName(openedTgz)
+		if err != nil {
+			log.WithField("file", tgzFile).Warn("could not get hashed name for tarball when cleaning cache. skipping delete...")
+			continue
+		}
+		err = fs.RemoveAll(filepath.Join(cfg.Cache, hashedDirectoryName))
+		if err != nil {
+			log.WithFields(log.Fields{
+				"file": tgzFile,
+				"error": err,
+			}).Error("encountered a problem removing tarball from cache")
+		}
+	}
+
 	return nil
 }
 
