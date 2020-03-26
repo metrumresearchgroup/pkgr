@@ -10,19 +10,111 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"io"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
+	"strings"
+	log "github.com/sirupsen/logrus"
 )
 
 // Tarball manipulation code taken from https://gist.github.com/indraniel/1a91458984179ab4cf80 -- is there a built-in function that does this?
 func unpackTarballs(fs afero.Fs, tarballs []string, cache string) ([]desc.Desc, map[string]gpsr.AdditionalPkg) {
 	cacheDir := userCache(cache)
+	tmpDownloadDir := filepath.Join(cacheDir, "additionalDownloads")
+	err := fs.MkdirAll(tmpDownloadDir, 0777)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err": err,
+			"dir": tmpDownloadDir,
+		}).Error("could not make temp directory to hold downloaded tarballs")
+	}
 
 	var descriptions []desc.Desc
 	untarredMap := make(map[string]gpsr.AdditionalPkg)
 
 	for _, tarballPath := range tarballs {
-		untarredFolder := untar(fs, tarballPath, cacheDir)
+
+		var untarredFolder string
+		///Download code ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		var downloadReader io.ReadCloser
+		//var downloadReaderForHash io.ReadCloser
+		if strings.HasPrefix(tarballPath, "http") {
+			urlObj, err := url.Parse(tarballPath)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"err": err,
+					"url": tarballPath,
+				}).Error("could not parse tarball URL")
+				continue
+			}
+			resp, err := http.Get(urlObj.String())
+			if resp.StatusCode != 200 {
+				log.WithFields(log.Fields{
+					//"package":     d.Package.Package,
+					"url":         tarballPath,
+					"status":      resp.Status,
+					"status_code": resp.StatusCode,
+				}).Error("bad server response")
+				respBody, _ := ioutil.ReadAll(resp.Body)
+				log.WithField("tarball", tarballPath).Println("body: ", string(respBody))
+				//return cran.Download{}, err
+			}
+			// TODO: the response will often be valid, but return like a server 404 or other error
+			if err != nil {
+				log.WithField("tarball", tarballPath).Warn("error downloading package")
+				//return Download{}, err
+			} else { // Download successful
+				downloadReader = resp.Body
+				//downloadReaderForHash = resp.Body
+			}
+
+			urlHash := path.Base(urlObj.Path) //hashString(tarballPath)
+			tmpTarballPath := filepath.Join(tmpDownloadDir, urlHash)
+			tmpTarball, err := fs.Create(tmpTarballPath)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"err": err,
+					"tmpTarballPath": tmpTarballPath,
+					"tarballUrl": tarballPath,
+				}).Error("error copying temporary tarball from remote location")
+			}
+			io.Copy(tmpTarball, downloadReader)
+			downloadReader.Close()
+
+			//fs.Open(tmpTarballPath)
+			tarballHash, err := getHashedTarballName(tmpTarball)
+			if err != nil {
+				logrus.WithFields(logrus.Fields{
+					"tarballURL": tarballPath,
+				}).Errorf("error while creating hash for tarball in cache: %s", err)
+				continue
+			}
+			tmpTarball.Close()
+			unpackedDest := filepath.Join(cacheDir, tarballHash)
+
+
+			tmpTarball2, err := fs.Open(tmpTarballPath)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"err": err,
+					"tmpTarballPath": tmpTarballPath,
+				}).Error("error accessing temporary tarball after download")
+			}
+
+			extractedDir := extractDirFromTar(tmpTarball2, tmpTarballPath, unpackedDest)
+			untarredFolder = filepath.Join(unpackedDest, extractedDir.Name())
+
+			tmpTarball2.Close()
+
+			//defer resp.Body.Close()
+			resp.Body.Close()
+		} else {
+		//End download code~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			untarredFolder = untar(fs, tarballPath, cacheDir)
+		}
 		reader, err := fs.Open(filepath.Join(untarredFolder, "DESCRIPTION"))
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
@@ -75,10 +167,17 @@ func untar(fs afero.Fs, path string, cacheDir string) string {
 	tarballDirectoryPath := filepath.Join(cacheDir, tarballDirectoryName)
 
 	//Part 2
-	gzipStream, err := gzip.NewReader(tgzFile)
+	extractedDir := extractDirFromTar(tgzFile, path, tarballDirectoryPath)
+
+	return filepath.Join(tarballDirectoryPath, extractedDir.Name())
+}
+
+func extractDirFromTar(tgzReader io.Reader, tarballPath string, destDirectory string) os.FileInfo {
+	gzipStream, err := gzip.NewReader(tgzReader)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
-			"path": path,
+			"tarballPath": tarballPath,
+			"err": err,
 		}).Fatal("error creating gzip stream for specified tarball")
 	}
 	defer gzipStream.Close()
@@ -94,47 +193,44 @@ func untar(fs afero.Fs, path string, cacheDir string) string {
 
 		switch header.Typeflag {
 		case tar.TypeDir:
-			fs.MkdirAll(filepath.Join(tarballDirectoryPath, header.Name), 0755)
+			fs.MkdirAll(filepath.Join(destDirectory, header.Name), 0755)
 			break
 		case tar.TypeReg:
-			dstFile := filepath.Join(tarballDirectoryPath, header.Name)
+			dstFile := filepath.Join(destDirectory, header.Name)
 			extractFile(dstFile, tarStream)
 			break
 		default:
 			logrus.WithFields(logrus.Fields{
 				"type": header.Typeflag,
-				"path": path,
+				"tarballPath": tarballPath,
 			}).Error("unknown file type found while processing tarball")
 			break
 		}
 	}
-
-	dirEntries, err := afero.ReadDir(fs, tarballDirectoryPath)
+	dirEntries, err := afero.ReadDir(fs, destDirectory)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
-			"directory": tarballDirectoryPath,
-			"tarball":   path,
+			"directory": destDirectory,
+			"tarball":   tarballPath,
 			"error":     err,
 		}).Error("error encountered while reading untarred directory")
 	}
-
 	var extractedDirs []os.FileInfo
 	for _, entry := range dirEntries {
 		if entry.IsDir() {
 			extractedDirs = append(extractedDirs, entry)
 		} else {
 			logrus.WithFields(logrus.Fields{
-				"tarball": path,
-				"untarredDirectory": tarballDirectoryPath,
-				"item": entry.Name(),
+				"tarball":           tarballPath,
+				"untarredDirectory": destDirectory,
+				"item":              entry.Name(),
 			}).Trace("extraneous item found in untarred directory. If you have previously installed this tarball via pkgr, it may be a build artifact from the last installation")
 		}
 	}
-
 	if len(extractedDirs) == 0 {
 		logrus.WithFields(logrus.Fields{
-			"directory": tarballDirectoryPath,
-			"tarball":   path,
+			"directory": destDirectory,
+			"tarball":   tarballPath,
 		}).Fatal("untarred directory is empty -- cannot install tarball package")
 	} else if len(extractedDirs) > 1 {
 		var entries []string
@@ -142,17 +238,16 @@ func untar(fs afero.Fs, path string, cacheDir string) string {
 			entries = append(entries, entry.Name())
 		}
 		logrus.WithFields(logrus.Fields{
-			"directory": tarballDirectoryPath,
-			"tarball":   path,
+			"directory": destDirectory,
+			"tarball":   tarballPath,
 			"items":     entries,
 			"using":     extractedDirs[0].Name(),
 		}).Warn("found more than one directory at top level in unarchived tarball -- assuming first alphabetical entry is package directory")
 	}
-
-	return filepath.Join(tarballDirectoryPath, extractedDirs[0].Name())
+	return extractedDirs[0]
 }
 
-func getHashedTarballName(tgzFile afero.File) (string, error) {
+func getHashedTarballName(tgzFile io.Reader) (string, error) {
 	hash := md5.New()
 	_, err := io.Copy(hash, tgzFile)
 	hashInBytes := hash.Sum(nil)[:8]
@@ -161,6 +256,16 @@ func getHashedTarballName(tgzFile afero.File) (string, error) {
 	// Hashing code adapted from https://mrwaggel.be/post/generate-md5-hash-of-a-file-in-golang/
 	return tarballDirectoryName, err
 }
+
+//func getHashedTarballNameHttp(tgzFileBody io.ReadCloser) (string, error) {
+//	hash := md5.New()
+//	_, err := io.Copy(hash, tgzFileBody)
+//	hashInBytes := hash.Sum(nil)[:8]
+//	//Convert the bytes to a string, used as a directory name for the package.
+//	tarballDirectoryName := hex.EncodeToString(hashInBytes)
+//	// Hashing code adapted from https://mrwaggel.be/post/generate-md5-hash-of-a-file-in-golang/
+//	return tarballDirectoryName, err
+//}
 
 func extractFile(dstFile string, tarStream *tar.Reader) {
 	outFile, err := os.Create(dstFile)
@@ -172,4 +277,3 @@ func extractFile(dstFile string, tarStream *tar.Reader) {
 		logrus.Fatalf("ExtractTarGz: Copy() failed: %s", err.Error())
 	}
 }
-
