@@ -42,46 +42,21 @@ func RollbackPackageEnvironment(fileSystem afero.Fs, rbp RollbackPlan) error {
 	//Rollback updated packages -- we have to do this differently than the rest, because updated packages need to be
 	//restored from backups.
 	if len(rbp.UpdateRollbacks) > 0 {
-		err2 := RollbackUpdatePackages(fileSystem, rbp.UpdateRollbacks)
+		err2 := rollbackChangedPackages(fileSystem, rbp.UpdateRollbacks)
 		if err2 != nil {
 			return err2
 		}
 	}
 
+	//Rollback additional packages -- same process as updated packages, but we hold them in a separate object.
+	if len(rbp.AdditionalPkgRollbacks) > 0 {
+		err3 := rollbackChangedPackages(fileSystem, rbp.AdditionalPkgRollbacks)
+		if err3 != nil {
+			return err3
+		}
+	}
+
 	return nil
-}
-
-// PreparePackagesForUpdate ...
-func PreparePackagesForUpdate(fileSystem afero.Fs, libraryPath string, outdatedPackages []cran.OutdatedPackage) []UpdateAttempt {
-	var updateAttempts []UpdateAttempt
-
-	//Tag each outdated pkg directory in library with "__OLD__"
-	for _, pkg := range outdatedPackages {
-		updateAttempts = append(updateAttempts, tagOldInstallation(fileSystem, libraryPath, pkg))
-	}
-
-	return updateAttempts
-}
-
-func tagOldInstallation(fileSystem afero.Fs, libraryPath string, outdatedPackage cran.OutdatedPackage) UpdateAttempt {
-	packageDir := filepath.Join(libraryPath, outdatedPackage.Package)
-	taggedPackageDir := filepath.Join(libraryPath, "__OLD__"+outdatedPackage.Package)
-
-	err := fileSystem.Rename(packageDir, taggedPackageDir)
-	//err := RenameDirRecursive(fileSystem, packageDir, taggedPackageDir)
-
-	if err != nil {
-		logrus.WithField("package dir", packageDir).Warn("error when backing up outdated package")
-		logrus.Error(err)
-	}
-
-	return UpdateAttempt{
-		Package:                outdatedPackage.Package,
-		ActivePackageDirectory: packageDir,
-		BackupPackageDirectory: taggedPackageDir,
-		OldVersion:             outdatedPackage.OldVersion,
-		NewVersion:             outdatedPackage.NewVersion,
-	}
 }
 
 func DeleteBackupPackageFolders(fileSystem afero.Fs, packageBackupInfo []UpdateAttempt) error {
@@ -109,7 +84,7 @@ func DeleteBackupPackageFolders(fileSystem afero.Fs, packageBackupInfo []UpdateA
 	return nil
 }
 
-func RollbackUpdatePackages(fileSystem afero.Fs, packageBackupInfo []UpdateAttempt) error {
+func rollbackChangedPackages(fileSystem afero.Fs, packageBackupInfo []UpdateAttempt) error {
 
 	if len(packageBackupInfo) == 0 {
 		logrus.Debug("Not update-packages to restore.")
@@ -149,4 +124,39 @@ func RollbackUpdatePackages(fileSystem afero.Fs, packageBackupInfo []UpdateAttem
 
 	return nil
 }
+
+// createUpdateBackupFolders ...
+func createUpdateBackupFolders(fileSystem afero.Fs, libraryPath string, outdatedPackages []cran.OutdatedPackage) []UpdateAttempt {
+	var updateAttempts []UpdateAttempt
+
+	//Tag each outdated pkg directory in library with "__OLD__"
+	for _, pkg := range outdatedPackages {
+		updateAttempts = append(updateAttempts, tagOldInstallation(fileSystem, libraryPath, pkg))
+	}
+
+	return updateAttempts
+}
+
+func tagOldInstallation(fileSystem afero.Fs, libraryPath string, outdatedPackage cran.OutdatedPackage) UpdateAttempt {
+	packageDir := filepath.Join(libraryPath, outdatedPackage.Package)
+	taggedPackageDir := filepath.Join(libraryPath, "__OLD__"+outdatedPackage.Package)
+
+	err := fileSystem.Rename(packageDir, taggedPackageDir)
+	//err := RenameDirRecursive(fileSystem, packageDir, taggedPackageDir)
+
+	if err != nil {
+		logrus.WithField("package dir", packageDir).Warn("error when backing up outdated package")
+		logrus.Error(err)
+	}
+
+	return UpdateAttempt{
+		Package:                outdatedPackage.Package,
+		ActivePackageDirectory: packageDir,
+		BackupPackageDirectory: taggedPackageDir,
+		OldVersion:             outdatedPackage.OldVersion,
+		NewVersion:             outdatedPackage.NewVersion,
+	}
+}
+
+
 

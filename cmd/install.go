@@ -79,6 +79,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 		log.Info("update argument passed. staging packages for update...")
 		rollbackPlan.PreparePackagesForUpdate(fs, cfg.Library)
 	}
+	rollbackPlan.PrepareAdditionalPackagesForOverwrite(fs, cfg.Library)
 
 	// Create a list of package download objects using our install plan and our "nexus" object.
 	//pkgsToDownload := getPackagesToDownload(installPlan, pkgNexus)
