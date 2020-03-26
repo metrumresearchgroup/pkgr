@@ -129,7 +129,8 @@ func rInstall(cmd *cobra.Command, args []string) error {
 		}
 	}
 	// If any packages were being updated, we need to remove any leftover backup folders that were created.
-	rollback.DeleteBackupPackageFolders(fs, rollbackPlan.UpdateRollbacks)
+	// Errors are handled in the lower functions
+	_ = rollbackPlan.DeleteBackupPackageFolders(fs)
 
 	log.Info("duration:", time.Since(startTime))
 

@@ -69,6 +69,19 @@ func (rp *RollbackPlan) PrepareAdditionalPackagesForOverwrite(fs afero.Fs, libra
 	rp.AdditionalPkgRollbacks = overwriteAttempts
 }
 
+func (rp *RollbackPlan) DeleteBackupPackageFolders(fs afero.Fs) []error {
+	var errSlice []error
+	err1 := DeleteBackupPackageFolders(fs, rp.UpdateRollbacks)
+	if err1 != nil {
+		errSlice = append(errSlice, err1)
+	}
+	err2 := DeleteBackupPackageFolders(fs, rp.AdditionalPkgRollbacks)
+	if err2 != nil {
+		errSlice = append(errSlice, err2)
+	}
+	return errSlice
+}
+
 // Helper function to determine which packages out of a list are not already installed. Used to determine which packages pkgr specifically will be installing fresh.
 func discernNewPackages(toInstallPackageNames []string, preinstalledPackages map[string]desc.Desc) []string {
 	var newPackages []string
