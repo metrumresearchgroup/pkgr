@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"github.com/metrumresearchgroup/pkgr/desc"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/sirupsen/logrus"
@@ -14,7 +15,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	log "github.com/sirupsen/logrus"
@@ -22,15 +22,10 @@ import (
 
 // Tarball manipulation code taken from https://gist.github.com/indraniel/1a91458984179ab4cf80 -- is there a built-in function that does this?
 func unpackTarballs(fs afero.Fs, tarballs []string, cache string) ([]desc.Desc, map[string]gpsr.AdditionalPkg) {
+	var err error
+
 	cacheDir := userCache(cache)
-	tmpDownloadDir := filepath.Join(cacheDir, "additionalDownloads")
-	err := fs.MkdirAll(tmpDownloadDir, 0777)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"err": err,
-			"dir": tmpDownloadDir,
-		}).Error("could not make temp directory to hold downloaded tarballs")
-	}
+	//tarballCache := filepath.Join("tarballs")
 
 	var descriptions []desc.Desc
 	untarredMap := make(map[string]gpsr.AdditionalPkg)
@@ -39,81 +34,15 @@ func unpackTarballs(fs afero.Fs, tarballs []string, cache string) ([]desc.Desc, 
 
 		var untarredFolder string
 		///Download code ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		var downloadReader io.ReadCloser
 		//var downloadReaderForHash io.ReadCloser
 		if strings.HasPrefix(tarballPath, "http") {
-			urlObj, err := url.Parse(tarballPath)
+			untarredFolder, err = untarRemote(fs, tarballPath, cacheDir)
 			if err != nil {
-				log.WithFields(log.Fields{
-					"err": err,
-					"url": tarballPath,
-				}).Error("could not parse tarball URL")
 				continue
 			}
-			resp, err := http.Get(urlObj.String())
-			if resp.StatusCode != 200 {
-				log.WithFields(log.Fields{
-					//"package":     d.Package.Package,
-					"url":         tarballPath,
-					"status":      resp.Status,
-					"status_code": resp.StatusCode,
-				}).Error("bad server response")
-				respBody, _ := ioutil.ReadAll(resp.Body)
-				log.WithField("tarball", tarballPath).Println("body: ", string(respBody))
-				//return cran.Download{}, err
-			}
-			// TODO: the response will often be valid, but return like a server 404 or other error
-			if err != nil {
-				log.WithField("tarball", tarballPath).Warn("error downloading package")
-				//return Download{}, err
-			} else { // Download successful
-				downloadReader = resp.Body
-				//downloadReaderForHash = resp.Body
-			}
-
-			urlHash := path.Base(urlObj.Path) //hashString(tarballPath)
-			tmpTarballPath := filepath.Join(tmpDownloadDir, urlHash)
-			tmpTarball, err := fs.Create(tmpTarballPath)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"err": err,
-					"tmpTarballPath": tmpTarballPath,
-					"tarballUrl": tarballPath,
-				}).Error("error copying temporary tarball from remote location")
-			}
-			io.Copy(tmpTarball, downloadReader)
-			downloadReader.Close()
-
-			//fs.Open(tmpTarballPath)
-			tarballHash, err := getHashedTarballName(tmpTarball)
-			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"tarballURL": tarballPath,
-				}).Errorf("error while creating hash for tarball in cache: %s", err)
-				continue
-			}
-			tmpTarball.Close()
-			unpackedDest := filepath.Join(cacheDir, tarballHash)
-
-
-			tmpTarball2, err := fs.Open(tmpTarballPath)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"err": err,
-					"tmpTarballPath": tmpTarballPath,
-				}).Error("error accessing temporary tarball after download")
-			}
-
-			extractedDir := extractDirFromTar(tmpTarball2, tmpTarballPath, unpackedDest)
-			untarredFolder = filepath.Join(unpackedDest, extractedDir.Name())
-
-			tmpTarball2.Close()
-
-			//defer resp.Body.Close()
-			resp.Body.Close()
 		} else {
-		//End download code~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-			untarredFolder = untar(fs, tarballPath, cacheDir)
+			//End download code~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			untarredFolder = untarLocal(fs, tarballPath, cacheDir)
 		}
 		reader, err := fs.Open(filepath.Join(untarredFolder, "DESCRIPTION"))
 		if err != nil {
@@ -131,14 +60,100 @@ func unpackTarballs(fs afero.Fs, tarballs []string, cache string) ([]desc.Desc, 
 			}).Fatal("error parsing DESCRIPTION file for tarball package")
 		}
 		descriptions = append(descriptions, desc)
-		untarredMap[desc.Package] = gpsr.AdditionalPkg{ InstallPath: untarredFolder, OriginPath: tarballPath, Type: "tarball"}
+		untarredMap[desc.Package] = gpsr.AdditionalPkg{InstallPath: untarredFolder, OriginPath: tarballPath, Type: "tarball"}
 	}
 
 	return descriptions, untarredMap
 }
 
+func getTarballDownloadFolder(fs afero.Fs, cacheDir string) (string, error) {
+	tdf := filepath.Join(cacheDir, "tarball_downloads")
+	exists, err := afero.DirExists(fs, tdf)
+	if err != nil {
+		return "", err
+	}
+
+	if exists {
+		return tdf, nil
+	}
+
+	err = fs.MkdirAll(tdf, 0777)
+	if err != nil {
+		return "", err
+	}
+
+	return tdf, nil
+
+
+}
+
+func untarRemote(fs afero.Fs, tarballPath string, cacheDir string) (string, error) {
+	var downloadReader io.ReadCloser
+
+	// Download the tarball to a temporary location
+	//tarballDownloadsDir := filepath.Join(cacheDir, "additionalDownloads")
+	tarballDownloadsDir, err := getTarballDownloadFolder(fs, cacheDir)
+	//err := fs.MkdirAll(tarballDownloadsDir, 0777)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err": err,
+		}).Error("could not make temp directory to hold downloaded tarballs")
+		return "", err
+	}
+
+	// Parse tarball path into a URL object for ease of use
+	urlObj, err := url.Parse(tarballPath)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err": err,
+			"url": tarballPath,
+		}).Error("could not parse tarball URL")
+		return "", err
+	}
+
+	// Submit HTTP Get to retrieve tarball
+	resp, err := http.Get(urlObj.String())
+	if err != nil {
+		log.WithField("tarball", tarballPath).Error("error downloading package")
+		return "", err
+	} else if resp.StatusCode != 200 {
+		log.WithFields(log.Fields{
+			//"package":     d.Package.Package,
+			"url":         tarballPath,
+			"status":      resp.Status,
+			"status_code": resp.StatusCode,
+		}).Error("bad server response")
+		respBody, _ := ioutil.ReadAll(resp.Body)
+		log.WithField("tarball", tarballPath).Println("body: ", string(respBody))
+		return "", errors.New("non-200 response from server")
+	} else { // Download successful
+		downloadReader = resp.Body
+	}
+
+	urlSpecificFolder := "url" + hashString(urlObj.String())
+	//urlSpecificFolder := path.Base(urlObj.Path)
+	tmpTarballPath := filepath.Join(tarballDownloadsDir, urlSpecificFolder)
+	tmpTarball, err := fs.Create(tmpTarballPath)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err":            err,
+			"tmpTarballPath": tmpTarballPath,
+			"tarballUrl":     tarballPath,
+		}).Error("error copying temporary tarball from remote location")
+	}
+
+	// Copy downloaded tarball into temporary tarball location
+	io.Copy(tmpTarball, downloadReader)
+	downloadReader.Close()
+
+	// Treat the temporary tarball as a local tarball
+	untarredFolder := untarLocal(fs, tmpTarballPath, tarballDownloadsDir)
+
+	return untarredFolder, nil
+}
+
 // Returns path to top-level package folder of untarred files
-func untar(fs afero.Fs, path string, cacheDir string) string {
+func untarLocal(fs afero.Fs, path string, cacheDir string) string {
 
 	// Part 1
 	tgzFile, err := fs.Open(path)
@@ -157,7 +172,8 @@ func untar(fs afero.Fs, path string, cacheDir string) string {
 	defer tgzFileForHash.Close()
 
 	// Part 1.5
-	//Use a hash of the file so that we always regenerate when the tarball is updated.
+	// Use a hash of the file so that we always regenerate when the tarball is updated.
+	// This also prevents collisions when using different tarballs for the same package in a shared cache.
 	tarballDirectoryName, err := getHashedTarballName(tgzFileForHash)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
