@@ -83,8 +83,6 @@ func getTarballDownloadFolder(fs afero.Fs, cacheDir string) (string, error) {
 	}
 
 	return tdf, nil
-
-
 }
 
 func untarRemote(fs afero.Fs, tarballPath string, cacheDir string) (string, error) {
@@ -132,12 +130,12 @@ func untarRemote(fs afero.Fs, tarballPath string, cacheDir string) (string, erro
 
 	urlSpecificFolder := "url" + hashString(urlObj.String())
 	//urlSpecificFolder := path.Base(urlObj.Path)
-	tmpTarballPath := filepath.Join(tarballDownloadsDir, urlSpecificFolder)
-	tmpTarball, err := fs.Create(tmpTarballPath)
+	downloadedTarballPath := filepath.Join(tarballDownloadsDir, urlSpecificFolder)
+	tmpTarball, err := fs.Create(downloadedTarballPath)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"err":            err,
-			"tmpTarballPath": tmpTarballPath,
+			"downloadedTarballPath": downloadedTarballPath,
 			"tarballUrl":     tarballPath,
 		}).Error("error copying temporary tarball from remote location")
 	}
@@ -147,7 +145,7 @@ func untarRemote(fs afero.Fs, tarballPath string, cacheDir string) (string, erro
 	downloadReader.Close()
 
 	// Treat the temporary tarball as a local tarball
-	untarredFolder := untarLocal(fs, tmpTarballPath, tarballDownloadsDir)
+	untarredFolder := untarLocal(fs, downloadedTarballPath, tarballDownloadsDir)
 
 	return untarredFolder, nil
 }
@@ -272,16 +270,6 @@ func getHashedTarballName(tgzFile io.Reader) (string, error) {
 	// Hashing code adapted from https://mrwaggel.be/post/generate-md5-hash-of-a-file-in-golang/
 	return tarballDirectoryName, err
 }
-
-//func getHashedTarballNameHttp(tgzFileBody io.ReadCloser) (string, error) {
-//	hash := md5.New()
-//	_, err := io.Copy(hash, tgzFileBody)
-//	hashInBytes := hash.Sum(nil)[:8]
-//	//Convert the bytes to a string, used as a directory name for the package.
-//	tarballDirectoryName := hex.EncodeToString(hashInBytes)
-//	// Hashing code adapted from https://mrwaggel.be/post/generate-md5-hash-of-a-file-in-golang/
-//	return tarballDirectoryName, err
-//}
 
 func extractFile(dstFile string, tarStream *tar.Reader) {
 	outFile, err := os.Create(dstFile)
