@@ -2,6 +2,7 @@ package rcmd
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -46,11 +47,15 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 			// in Library/Libpaths in the pkgr configuration
 			// we only want R_LIBS_SITE set to control all relevant library paths for the user to
 			if evs[0] == "R_LIBS_USER" {
-				log.WithField("path", evs[1]).Debug("overriding system R_LIBS_USER")
-				continue
+				tmpdir := filepath.Join(
+					os.TempDir(),
+					randomString(12),
+				)
+				evs[1] = tmpdir
+				log.WithField("path", evs[1]).Debug("overriding system R_LIBS_USER -- setting to empty tmpdir")
 			}
 			if evs[0] == "R_LIBS_SITE" {
-				log.WithField("path", evs[1]).Debug("overriding system R_LIBS_USER")
+				log.WithField("path", evs[1]).Debug("overriding system R_LIBS_SITE")
 				continue
 			}
 			if evs[0] == "PATH" {
