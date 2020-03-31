@@ -47,12 +47,8 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 			// in Library/Libpaths in the pkgr configuration
 			// we only want R_LIBS_SITE set to control all relevant library paths for the user to
 			if evs[0] == "R_LIBS_USER" {
-				tmpdir := filepath.Join(
-					os.TempDir(),
-					randomString(12),
-				)
-				evs[1] = tmpdir
-				log.WithField("path", evs[1]).Debug("overriding system R_LIBS_USER -- setting to empty tmpdir")
+				log.WithField("path", evs[1]).Debug("overriding system R_LIBS_USER")
+				continue
 			}
 			if evs[0] == "R_LIBS_SITE" {
 				log.WithField("path", evs[1]).Debug("overriding system R_LIBS_SITE")
@@ -79,6 +75,13 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 			}
 		}
 	}
+
+	// Force R_LIBS_USER to be an empty dir so that we can be sure it won't get overridden by default R paths.
+	tmpdir := filepath.Join(
+		os.TempDir(),
+		randomString(12),
+	)
+	envList.Append("R_LIBS_USER", tmpdir)
 
 	ok, lp := rs.LibPathsEnv()
 	if ok {
