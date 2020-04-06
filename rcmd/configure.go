@@ -81,6 +81,12 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 		os.TempDir(),
 		randomString(12),
 	)
+	err := os.MkdirAll(tmpdir, 0777)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Warn("error making temporary directory while overriding R_LIBS_USER for install.")
+	}
 	envList.Append("R_LIBS_USER", tmpdir)
 
 	ok, lp := rs.LibPathsEnv()

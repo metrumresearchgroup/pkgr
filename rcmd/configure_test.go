@@ -2,6 +2,8 @@ package rcmd
 
 import (
 	"fmt"
+	"io/ioutil"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -19,7 +21,7 @@ func TestConfigureArgs(t *testing.T) {
 		in      string
 		// mocked system environment variables per os.Environ()
 		sysEnv   []string
-		expected []string
+		expected []string // order should matter, but should always exclude R_LIBS_USER
 	}{
 		{
 			"minimal",
@@ -94,9 +96,30 @@ func TestConfigureArgs(t *testing.T) {
 			[]string{"GITHUB_PAT=**HIDDEN**", "ghe_token=**HIDDEN**", "ghe_PAT=**HIDDEN**", "github_token=**HIDDEN**", "R_LIBS_SITE=path/to/install/lib",},
 		},
 	}
-	for i, tt := range installArgsTests {
+	for _, tt := range installArgsTests {
+
 		actual := configureEnv(tt.sysEnv, defaultRS, tt.in)
-		assert.Equal(tt.expected, actual, fmt.Sprintf("%s, test num: %v", tt.context, i+1))
+
+		// Make sure that all environment variables are present and in the correct "expected" order.
+		// Also make sure that R_LIBS_USER is set.
+		indexOffset := 0
+		rLibsUserFound := false
+		for index, envVar := range actual {
+			if strings.Contains(envVar, "R_LIBS_USER") {
+				rLibsUserFound = true
+				indexOffset = 1
+				tmpDir := strings.Split(envVar, "=")[1]
+				assert.DirExists(tmpDir)
+				dirEntries, err := ioutil.ReadDir(tmpDir)
+				assert.Nil(err)
+				assert.Empty(dirEntries, "failure: R_LIBS_USER was not set to an EMPTY temp directory")
+			} else {
+				assert.Equal(tt.expected[index - indexOffset], envVar)
+			}
+		}
+		assert.True(rLibsUserFound, "R_LIBS_USER was not set -- we expect it to always be set")
+
+		//assert.Equal(tt.expected, actual, fmt.Sprintf("%s, test num: %v", tt.context, i+1))
 	}
 
 }
