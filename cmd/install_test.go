@@ -18,7 +18,8 @@ func InitializeEmptyTestSiteWorking() {
 }
 
 
-func InitializeGoldenTestSiteWorking(goldenSet string) {
+// Returns path to working test directory
+func InitializeGoldenTestSiteWorking(goldenSet string) string {
 	fileSystem := afero.NewOsFs()
 	goldenSetPath := filepath.Join("testsite", "golden", goldenSet)
 	testWorkDir := filepath.Join("testsite", "working")
@@ -33,6 +34,8 @@ func InitializeGoldenTestSiteWorking(goldenSet string) {
 	if err != nil {
 		panic(err)
 	}
+
+	return filepath.Join(testWorkDir)
 }
 
 func InitGlobalConfig(libraryPath, localRepo string, update, suggests bool, installType string, packages []string) {
@@ -252,7 +255,7 @@ func TestTarballInstall(t *testing.T) {
 
 func TestInstallWithoutRollback(t *testing.T) {
 	// Setup
-	InitializeGoldenTestSiteWorking("rollback-disabled")
+	_ = InitializeGoldenTestSiteWorking("rollback-disabled")
 	testLibrary := filepath.Join("testsite", "working", "libs")
 
 	// Overwrite the global root cmd to "fake" the parts we need for cobra.
