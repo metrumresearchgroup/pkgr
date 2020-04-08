@@ -495,8 +495,7 @@ func TestNewConfigPackrat(t *testing.T) {
 	for _, tt := range tests {
 		var cfg PkgrConfig
 		_ = os.Chdir(getTestFolder(t, tt.folder))
-		_ = LoadConfigFromPath(viper.GetString("config"))
-		NewConfig(&cfg)
+		NewConfig(viper.GetString("config"), &cfg)
 		assert.Equal(t, tt.expected, cfg.Lockfile.Type, fmt.Sprintf("Fail:%s", tt.message))
 	}
 }
@@ -517,8 +516,7 @@ func TestNewConfigNoLockfile(t *testing.T) {
 	for _, tt := range tests {
 		var cfg PkgrConfig
 		_ = os.Chdir(getTestFolder(t, tt.folder))
-		_ = LoadConfigFromPath(viper.GetString("config"))
-		NewConfig(&cfg)
+		NewConfig(viper.GetString("config"), &cfg)
 		assert.Equal(t, tt.expected, cfg.Lockfile.Type, fmt.Sprintf("Fail:%s", tt.message))
 	}
 }

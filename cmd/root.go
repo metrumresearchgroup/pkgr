@@ -103,15 +103,15 @@ func initConfig() {
 	// if cfgFile != "" { // enable ability to specify config file via flag
 	// 	viper.SetConfigFile(cfgFile)
 	// }
-	log.Trace("attempting to load config file")
-	_ = configlib.LoadConfigFromPath(viper.GetString("config"))
 
 	setGlobals()
 
 	if viper.GetBool("debug") {
 		viper.Debug()
 	}
-	configlib.NewConfig(&cfg)
+
+	log.Trace("attempting to load config file")
+	configlib.NewConfig(viper.GetString("config"), &cfg)
 
 	configFilePath, _ := filepath.Abs(viper.ConfigFileUsed())
 	cwd, _ := os.Getwd()

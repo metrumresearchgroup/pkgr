@@ -95,8 +95,8 @@ func rollbackChangedPackages(fileSystem afero.Fs, packageBackupInfo []UpdateAtte
 
 		logrus.WithFields(logrus.Fields{
 			"pkg":                 info.Package,
-			"rolling back to":     info.OldVersion,
-			"failed to update to": info.NewVersion,
+			"rolling_back_to":     info.OldVersion,
+			"failed_to_update_to": info.NewVersion,
 		}).Warn("did not update package, restoring last-installed version")
 
 		_, err1 := fileSystem.Stat(info.ActivePackageDirectory) // Checking existence

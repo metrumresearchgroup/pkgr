@@ -31,15 +31,23 @@ func packratPlatform(p string) string {
 }
 
 // NewConfig initialize a PkgrConfig passed in by caller
-func NewConfig(cfg *PkgrConfig) {
-	_ = viper.Unmarshal(cfg)
+func NewConfig(cfgPath string, cfg *PkgrConfig) {
+	err := loadConfigFromPath(cfgPath)
+	if err != nil {
+		log.Fatal("could not detect config at supplied path: " + cfgPath)
+	}
+	err = viper.Unmarshal(cfg)
+	if err != nil {
+		log.Fatalf("error parsing pkgr.yml: %s\n", err)
+	}
+
 	if len(cfg.Library) == 0 {
 		rs := rcmd.NewRSettings(cfg.RPath)
 		rVersion := rcmd.GetRVersion(&rs)
 		cfg.Library = getLibraryPath(cfg.Lockfile.Type, cfg.RPath, rVersion, rs.Platform, cfg.Library)
 	}
 
-	// For all cfg values that can be repos, make sure that ~ is expanded to the home directory.
+	// For all cfg	values that can be repos, make sure that ~ is expanded to the home directory.
 	cfg.Library = expandTilde(cfg.Library)
 	cfg.RPath = expandTilde(cfg.RPath)
 	cfg.Tarballs = expandTildes(cfg.Tarballs)
@@ -106,8 +114,8 @@ func getLibraryPath(lockfileType string, rpath string, rversion cran.RVersion, p
 	return library
 }
 
-// LoadConfigFromPath loads pkc configuration into the global Viper
-func LoadConfigFromPath(configFilename string) error {
+// loadConfigFromPath loads pkc configuration into the global Viper
+func loadConfigFromPath(configFilename string) error {
 	if configFilename == "" {
 		configFilename = "pkgr.yml"
 	}
@@ -176,7 +184,7 @@ func AddPackage(name string) error {
 	if err != nil {
 		return err
 	}
-	err = LoadConfigFromPath(cfgname)
+	err = loadConfigFromPath(cfgname)
 	if err != nil {
 		return err
 	}
