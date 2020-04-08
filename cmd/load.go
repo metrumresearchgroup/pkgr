@@ -137,8 +137,6 @@ func load(userPackages []string, rs rcmd.RSettings, rDir string, threads int, al
 	}
 
 	if toJson {
-		//getRSessionMetadata(rs, rDir)
-		log.Info("printing load report as JSON")
 		printJsonLoadReport(report)
 	}
 }
@@ -282,6 +280,7 @@ func getAdditionalPkgInfo(rs rcmd.RSettings, rDir, pkg string) pkgLoadMetadata {
 func runRCmd(rExpression string, rs rcmd.RSettings, rDir string, reducedOutput bool) ([]string, []string, error) {
 	cmdArgs := []string{
 		"--slave",
+		"--no-restore",
 		"-e",
 		rExpression,
 	}

@@ -104,8 +104,10 @@ func cleanCacheFolders() error {
 		hashedDirectoryName, err := getHashedTarballName(openedTgz)
 		if err != nil {
 			log.WithField("file", tgzFile).Warn("could not get hashed name for tarball when cleaning cache. skipping delete...")
+			openedTgz.Close()
 			continue
 		}
+		openedTgz.Close()
 		err = fs.RemoveAll(filepath.Join(cfg.Cache, hashedDirectoryName))
 		if err != nil {
 			log.WithFields(log.Fields{
@@ -113,6 +115,7 @@ func cleanCacheFolders() error {
 				"error": err,
 			}).Error("error removing tarball from cache")
 		}
+
 	}
 
 	return nil
