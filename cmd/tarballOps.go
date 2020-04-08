@@ -32,6 +32,7 @@ func unpackTarballs(fs afero.Fs, tarballs []string, cache string) ([]desc.Desc, 
 		}
 
 		desc, err := desc.ParseDesc(reader)
+		reader.Close()
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
 				"file":  untarredFolder,
