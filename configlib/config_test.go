@@ -570,7 +570,9 @@ func TestSetCustomizations(t *testing.T) {
 	}
 	for _, tt := range tests {
 		var cfg PkgrConfig
-		NewConfig(&cfg)
+		_ = os.Chdir(getTestFolder(t, "simple"))
+		NewConfig(viper.GetString("config"), &cfg) // Just need to slurp in misc stuff to keep tests working.
+		cfg.Packages = []string{tt.pkg} // Overwrites whatever packages were in "simple"
 		cfg.Customizations.Packages = map[string]PkgConfig{
 			tt.pkg: PkgConfig{
 				Env: map[string]string{
@@ -599,9 +601,9 @@ func TestSetCfgCustomizations(t *testing.T) {
 	for _, tt := range tests {
 		dependencyConfigurations := gpsr.NewDefaultInstallDeps()
 		var cfg PkgrConfig
-		NewConfig(&cfg)
+		//NewConfig(viper.GetString("config"), &cfg) // Don't need to load full config for this test
 		cfg.Suggests = true
-		cfg.Packages = []string{
+		cfg.Packages = []string{ // Overwrites
 			tt.pkg,
 		}
 		setCfgCustomizations(cfg, &dependencyConfigurations)
@@ -639,7 +641,7 @@ func TestSetViperCustomizations(t *testing.T) {
 
 	for _, tt := range tests {
 		var cfg PkgrConfig
-		NewConfig(&cfg)
+		//NewConfig(viper.GetString("config"), &cfg) // Not needed for test to run.
 		cfg.Customizations.Packages = map[string]PkgConfig{
 			tt.pkg: PkgConfig{
 				Env: map[string]string{
@@ -737,7 +739,7 @@ func TestSetViperCustomizations2(t *testing.T) {
 
 	for _, tt := range tests {
 		var cfg PkgrConfig
-		NewConfig(&cfg)
+		//NewConfig(viper.GetString("config"), &cfg) // Not needed for test to run
 		cfg.Customizations.Packages = map[string]PkgConfig{
 			tt.pkg: PkgConfig{
 				Env: map[string]string{
@@ -831,7 +833,7 @@ func TestSetPkgConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		var cfg PkgrConfig
-		NewConfig(&cfg)
+		//NewConfig(viper.GetString("config"), &cfg) // not needed for test to run
 		cfg.Customizations.Packages = map[string]PkgConfig{
 			tt.pkg: PkgConfig{
 				Env: map[string]string{
