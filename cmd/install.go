@@ -15,6 +15,8 @@
 package cmd
 
 import (
+	"errors"
+	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/metrumresearchgroup/pkgr/rollback"
 	"path/filepath"
 	"runtime"
@@ -77,6 +79,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 		log.Info("update argument passed. staging packages for update...")
 		rollbackPlan.PreparePackagesForUpdate(fs, cfg.Library)
 	}
+	rollbackPlan.PrepareAdditionalPackagesForOverwrite(fs, cfg.Library)
 
 	// Create a list of package download objects using our install plan and our "nexus" object.
 	//pkgsToDownload := getPackagesToDownload(installPlan, pkgNexus)
@@ -107,9 +110,16 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	//
 	err = rcmd.InstallPackagePlan(fs, installPlan, pkgMap, packageCache, pkgInstallArgs, rSettings, rcmd.ExecSettings{PkgrVersion: VERSION}, nworkers)
 
+	//
+	// Install the tarballs, if applicable.
+	//
+	errInstallAdditional := installAdditionalPackages(installPlan, rSettings, cfg.Library, cfg.Cache)
+
+	log.WithField("duration", time.Since(startTime)).Info("total package install time")
+
 	if cfg.Rollback {
 		//If anything went wrong during the installation, rollback the environment.
-		if err != nil {
+		if err != nil || errInstallAdditional != nil {
 			errRollback := rollback.RollbackPackageEnvironment(fs, rollbackPlan)
 			if errRollback != nil {
 				log.WithFields(log.Fields{
@@ -119,7 +129,8 @@ func rInstall(cmd *cobra.Command, args []string) error {
 		}
 	}
 	// If any packages were being updated, we need to remove any leftover backup folders that were created.
-	rollback.DeleteBackupPackageFolders(fs, rollbackPlan.UpdateRollbacks)
+	// Errors are handled in the lower functions
+	_ = rollbackPlan.DeleteBackupPackageFolders(fs)
 
 	log.Info("duration:", time.Since(startTime))
 
@@ -130,6 +141,122 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func installAdditionalPackages(installPlan gpsr.InstallPlan, rSettings rcmd.RSettings, library, cache string,) error {
+
+	toInstallCount := len(installPlan.AdditionalPackageSources) - 1
+
+	// Set up installArgs object
+	iargs := rcmd.NewDefaultInstallArgs()
+
+	// Need to use absolute path to library to accomodate our "extracurricular usage" of Install method.
+	libraryAbs, err := filepath.Abs(library)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"lib_folder": library,
+			"error":   err,
+		}).Error("error installing tarball -- could not find absolute path for library folder")
+		return err
+	}
+	iargs.Library = libraryAbs
+
+	log.Info("starting individual tarball install")
+
+	var errorAggregator []error
+
+	for pkgName, additionalPkg := range installPlan.AdditionalPackageSources {
+
+		log.WithFields(log.Fields{
+			"package":   pkgName,
+			"pkgSource": additionalPkg.InstallPath,
+		}).Debug("installing tarball")
+
+		// Need to use absolute path or else we encounter a weird bug from filepath.Clean in the Install function.
+		// 	(Instead of cleaning the local path, it was basically duplicating the path onto itself: A/B became A/B/A/B)
+		pkgSourcePathAbs, err := filepath.Abs(additionalPkg.InstallPath)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"pkg":       pkgName,
+				"pkgSource": additionalPkg.InstallPath,
+				"error":     err,
+			}).Error("error installing tarball -- could not find absolute path for tarball")
+			errorAggregator = append(errorAggregator, err)
+		}
+
+		res, err := rcmd.Install(
+			fs,
+			pkgName,
+			pkgSourcePathAbs,
+			iargs,
+			rSettings,
+			rcmd.ExecSettings{
+				PkgrVersion: VERSION,
+				WorkDir: filepath.Dir(additionalPkg.InstallPath),
+			},
+			rcmd.InstallRequest{
+				Package: pkgName,
+				Cache: rcmd.PackageCache{
+					BaseDir: userCache(cache),
+				},
+				InstallArgs: iargs,
+				ExecSettings: rcmd.ExecSettings{ 			// Needed for updating description file
+					PkgrVersion: VERSION, 					// Needed for updating description file
+				},
+				Metadata: cran.Download {  					// Needed for updating description file
+					Metadata: cran.PkgDl{ 					// Needed for updating description file
+						Config: cran.PkgConfig{ 			// Needed for updating description file
+							Type: cran.Source, 				// Needed for updating description file
+							Repo: cran.RepoURL{ 			// Needed for updating description file
+								URL:  pkgSourcePathAbs,     // Needed for updating description file
+								Name: "IndividualPackage",  // Needed for updating description file
+							},
+						},
+					},
+				},
+			},
+		)
+
+		if err != nil {
+			log.WithFields(log.Fields{
+				"pkg":       pkgName,
+				"source":	additionalPkg.OriginPath,
+				"installedFrom": additionalPkg.InstallPath,
+				"installType": additionalPkg.Type,
+				"error":     err,
+			}).Error("error installing package")
+			log.WithFields(log.Fields{
+				"pkg":       pkgName,
+				"source":	additionalPkg.OriginPath,
+				"installedFrom": additionalPkg.InstallPath,
+				"installType": additionalPkg.Type,
+				"remaining": toInstallCount,
+				"stdout":    res.Stdout,
+				"stderr":    res.Stderr,
+			}).Debug("error installing package")
+			errorAggregator = append(errorAggregator, err)
+		} else {
+			log.WithFields(log.Fields{
+				"pkg":       pkgName,
+				"source": additionalPkg.OriginPath,
+				"installType": additionalPkg.Type,
+				"remaining": toInstallCount,
+			}).Info("Successfully Installed Package.")
+			log.WithFields(log.Fields{
+				"pkg":       pkgName,
+				"source":	additionalPkg.OriginPath,
+				"installedFrom": additionalPkg.InstallPath,
+				"installType": additionalPkg.Type,
+				"remaining": toInstallCount,
+				"stdout":    res.Stdout,
+			}).Trace("Successfully Installed Package.")
+		}
+
+		toInstallCount--
+	}
+	if len(errorAggregator) > 0 {
+		return errors.New("errorAggregator occured while installing additional packages. see logs for more detail")
+	}
+	return nil
+}
 
 func initInstallLog() {
 	//Init install-specific log, if one has been set. This overwrites the default log.

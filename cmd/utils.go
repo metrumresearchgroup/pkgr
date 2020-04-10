@@ -1,10 +1,15 @@
 package cmd
 
 import (
+	"bytes"
+
+	"encoding/json"
+
+	"github.com/metrumresearchgroup/pkgr/desc"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"os"
 	"path/filepath"
-	log "github.com/sirupsen/logrus"
 )
 
 // returns the cache or sets to a cache dir
@@ -59,3 +64,22 @@ func libraryExists(fileSystem afero.Fs, libraryPath string ) bool {
 	result, _ := afero.Exists(fileSystem, libraryPath)
 	return result
 }
+
+// Adapted from https://stackoverflow.com/questions/28595664/how-to-stop-json-marshal-from-escaping-and
+func JsonMarshal(t interface{}) ([]byte, error) {
+	buffer := &bytes.Buffer{}
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+	encoder.SetIndent("", "    ")
+	err := encoder.Encode(t)
+	return buffer.Bytes(), err
+}
+
+func extractNamesFromDesc(installedPackages map[string]desc.Desc) []string {
+	var installedPackageNames []string
+	for key := range installedPackages {
+		installedPackageNames = append(installedPackageNames, key)
+	}
+	return installedPackageNames
+}
+

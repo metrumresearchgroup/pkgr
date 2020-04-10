@@ -66,26 +66,27 @@ func ResolveLayers(graph Graph, noRecommended bool) ([][]string, error) {
 	}
 
 	// Iteratively find and remove nodes from the graph which have no dependencies.
+	// Removed nodes are added to a "ready" set as they are found, thereby causing other nodes to have no deps.
 	// If at some point there are still nodes in the graph and we cannot find
 	// nodes without dependencies, that means we have a circular dependency
 	var resolved [][]string
 	for len(nodeDependencies) != 0 {
 		// Get all nodes from the graph which have no dependencies
-		readySet := mapset.NewSet()
+		readyLayer := mapset.NewSet()
 		for name, deps := range nodeDependencies {
 			if deps.Cardinality() == 0 {
-				readySet.Add(name)
+				readyLayer.Add(name)
 			}
 		}
 
 		// If there aren't any ready nodes, then we have a cicular dependency
-		if readySet.Cardinality() == 0 {
+		if readyLayer.Cardinality() == 0 {
 			return resolved, errors.New("Circular dependency found")
 		}
 
 		// Remove the ready nodes and add them to the resolved graph
 		var dl []string
-		for name := range readySet.Iter() {
+		for name := range readyLayer.Iter() {
 			delete(nodeDependencies, name.(string))
 			dl = append(dl, name.(string))
 		}
@@ -94,7 +95,7 @@ func ResolveLayers(graph Graph, noRecommended bool) ([][]string, error) {
 		// Also make sure to remove the ready nodes from the
 		// remaining node dependencies as well
 		for name, deps := range nodeDependencies {
-			diff := deps.Difference(readySet)
+			diff := deps.Difference(readyLayer)
 			nodeDependencies[name] = diff
 		}
 	}
@@ -140,17 +141,23 @@ func (ip *InstallPlan) GetAllPackages() []string {
 	for depsList := range ip.DepDb {
 		toInstall = append(toInstall, depsList)
 	}
+	for pkg := range ip.AdditionalPackageSources {
+		toInstall = append(toInstall, pkg)
+	}
 	return toInstall
 }
 
 func (ip *InstallPlan) GetNumPackagesToInstall() int {
 	requiredPackages := ip.GetAllPackages()
 
-
 	// Handle the case where packages not requested via pkgr.yml (or dependencies) are present in directory.
 	installedRequired := 0
 	for p := range ip.InstalledPackages {
-		if funk.Contains(requiredPackages, p) {
+
+		// AdditionalPackageSources are always installed, even if they're already present.
+		_, isAdditionalPkgInstallation := ip.AdditionalPackageSources[p]
+
+		if funk.Contains(requiredPackages, p) && !isAdditionalPkgInstallation {
 			installedRequired = installedRequired + 1
 		}
 	}
@@ -159,6 +166,7 @@ func (ip *InstallPlan) GetNumPackagesToInstall() int {
 	if ip.Update {
 		toUpdate = len(ip.OutdatedPackages)
 	}
+
 	return len(requiredPackages) - installedRequired + toUpdate
 
 }

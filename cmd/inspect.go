@@ -38,7 +38,7 @@ var inspectCmd = &cobra.Command{
 
 var reverse bool
 var showDeps bool
-var toJSON bool
+var toJson bool
 var tree bool
 var installedFrom bool
 
@@ -56,7 +56,7 @@ func inspect(cmd *cobra.Command, args []string) error {
 
 	logger.AddLogFile(cfg.Logging.All, cfg.Logging.Overwrite)
 
-	if toJSON {
+	if toJson {
 		// this should suppress all logging from the planning
 		logger.SetLogLevel("fatal")
 	}
@@ -110,7 +110,7 @@ func init() {
 	inspectCmd.Flags().BoolVar(&showDeps, "deps", false, "show dependency tree")
 	inspectCmd.Flags().BoolVar(&reverse, "reverse", false, "show reverse dependencies")
 	inspectCmd.Flags().BoolVar(&tree, "tree", false, "show full recursive dependency tree")
-	inspectCmd.Flags().BoolVar(&toJSON, "json", false, "output as clean json")
+	inspectCmd.Flags().BoolVar(&toJson, "json", false, "output as clean json")
 	inspectCmd.Flags().BoolVar(&installedFrom, "installed-from", false, "show package installation source")
 
 	RootCmd.AddCommand(inspectCmd)

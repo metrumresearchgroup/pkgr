@@ -17,6 +17,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/afero"
+	"github.com/thoas/go-funk"
 	"runtime"
 
 	"github.com/metrumresearchgroup/pkgr/rollback"
@@ -38,7 +39,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	funk "github.com/thoas/go-funk"
 )
 
 // planCmd shows the install plan
@@ -145,6 +145,25 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	dependencyConfigurations.Default.NoRecommended = cfg.NoRecommended
 	configlib.SetPlanCustomizations(cfg, dependencyConfigurations, pkgNexus)
 
+	// Set tarball dependencies as user-packages, for convenience.
+	var tarballDescriptions []desc.Desc
+	var unpackedTarballPkgs map[string]gpsr.AdditionalPkg
+
+	if len(cfg.Tarballs) > 0 {
+		tarballDescriptions, unpackedTarballPkgs = unpackTarballs(fs, cfg.Tarballs, cfg.Cache)
+		for _, tarballDesc := range tarballDescriptions {
+			tarballDeps := tarballDesc.GetCombinedDependencies(false)
+			for _, d := range tarballDeps {
+				if !funk.Contains(cfg.Packages, d.Name) {
+					cfg.Packages = append(cfg.Packages, d.Name)
+				}
+			}
+		}
+	}
+	// end tarball deps
+
+	cfg.Packages = removeBasePackages(cfg.Packages)
+
 	availableUserPackages := pkgNexus.GetPackages(cfg.Packages)
 	if len(availableUserPackages.Missing) > 0 {
 		log.Errorln("missing packages: ", availableUserPackages.Missing)
@@ -168,16 +187,19 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		}
 	}
 	logUserPackageRepos(availableUserPackages.Packages)
+
 	installPlan, err := gpsr.ResolveInstallationReqs(
 		cfg.Packages,
 		installedPackages,
+		//tarballDescriptions,
 		dependencyConfigurations,
 		pkgNexus,
 		cfg.Update,
 		libraryExists,
 		cfg.NoRecommended,
-		)
+	)
 
+	installPlan.AdditionalPackageSources = unpackedTarballPkgs
 
 	rollbackPlan := rollback.CreateRollbackPlan(cfg.Library, installPlan, installedPackages)
 
@@ -218,6 +240,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		_, rn := pkgdl.PkgAndRepoNames()
 		installSources[rn]++
 	}
+	installSources["tarballs"] = len(installPlan.AdditionalPackageSources)
 	fields := make(log.Fields)
 	for k, v := range installSources {
 		fields[k] = v
@@ -232,6 +255,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	if toInstall > 0 && toInstall != totalPackagesRequired {
 		// log which packages to install, but only if doing an incremental install
 		for _, pn := range pkgs {
+			//_, isAdditionalPkg := installPlan.AdditionalPackageSources[pn]
 			if !funk.ContainsString(installedPackageNames, pn) {
 				pkgDesc, cfg, _ := pkgNexus.GetPackage(pn)
 				log.WithFields(log.Fields{
@@ -246,6 +270,22 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 
 	log.Infoln("resolution time", time.Since(startTime))
 	return pkgNexus, installPlan, rollbackPlan
+}
+
+// Removes any "base" packages from the given list.
+func removeBasePackages(pkgList []string) []string {
+	var nonbasePkgList []string
+	for _, p := range pkgList {
+		pType, found := gpsr.DefaultPackages[p]
+		if !found || pType != "base" {
+			nonbasePkgList = append(nonbasePkgList, p)
+		} else {
+			log.WithFields(log.Fields{
+				"pkg": p,
+			}).Warn("removing base package from user-defined package list")
+		}
+	}
+	return nonbasePkgList
 }
 
 func logUserPackageRepos(packageDownloads []cran.PkgDl) {
@@ -274,12 +314,4 @@ func logDependencyRepos(dependencyDownloads []cran.PkgDl) {
 			}).Debug("package repository set")
 		}
 	}
-}
-
-func extractNamesFromDesc(installedPackages map[string]desc.Desc) []string {
-	var installedPackageNames []string
-	for key := range installedPackages {
-		installedPackageNames = append(installedPackageNames, key)
-	}
-	return installedPackageNames
 }

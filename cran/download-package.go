@@ -188,6 +188,7 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 				"path":    pkgdl,
 			}).Fatal("missing package")
 		}
+		defer from.Close()
 	}
 
 	file, err := fs.Create(dest)

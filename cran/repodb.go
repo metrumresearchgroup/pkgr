@@ -47,6 +47,7 @@ func (repoDb *RepoDb) Decode(file string) error {
 		fmt.Println("problem opening crandb", file)
 		return err
 	}
+	defer f.Close()
 	d := gob.NewDecoder(f)
 	return d.Decode(&repoDb.DescriptionsBySourceType)
 }
@@ -156,6 +157,7 @@ func (repoDb *RepoDb) FetchPackages(rVersion RVersion) error {
 				pkgdir, _ = filepath.Abs(pkgdir)
 				if fi, err := os.Open(pkgdir); !os.IsNotExist(err) {
 					body, err = ioutil.ReadAll(fi)
+					fi.Close()
 				} else {
 					err = fmt.Errorf("no package file found at: %s", pkgdir)
 					downloadChannel <- downloadDatabase{St: st, AvailableDescriptions: descriptionMap, Err: err}

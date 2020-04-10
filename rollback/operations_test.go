@@ -135,7 +135,7 @@ func (suite *OperationsTestSuite) TestRollbackUpdatePackages_RestoresWhenNoActiv
 			OldVersion:             "1",
 		},
 	}
-	RollbackUpdatePackages(suite.FileSystem, updateAttemptFixture)
+	rollbackChangedPackages(suite.FileSystem, updateAttemptFixture)
 
 	suite.True(afero.DirExists(suite.FileSystem, filepath.Join(suite.FilePrefix, "test-library", "CatsAndOranges")))
 	suite.True(afero.Exists(suite.FileSystem, filepath.Join(suite.FilePrefix, "test-library", "CatsAndOranges", "DESCRIPTION")))
@@ -161,7 +161,7 @@ func (suite *OperationsTestSuite) TestRollbackUpdatePackages_OverwritesFreshInst
 			OldVersion:             "1",
 		},
 	}
-	RollbackUpdatePackages(suite.FileSystem, updateAttemptFixture)
+	rollbackChangedPackages(suite.FileSystem, updateAttemptFixture)
 
 	suite.True(afero.DirExists(suite.FileSystem, filepath.Join(suite.FilePrefix, "test-library", "CatsAndOranges")))
 	suite.True(afero.Exists(suite.FileSystem, filepath.Join(suite.FilePrefix, "test-library", "CatsAndOranges", "DESCRIPTION")))
