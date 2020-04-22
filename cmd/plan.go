@@ -201,6 +201,8 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 
 	installPlan.AdditionalPackageSources = unpackedTarballPkgs
 
+	logAdditionalPackageOrigins(installPlan.AdditionalPackageSources)
+
 	rollbackPlan := rollback.CreateRollbackPlan(cfg.Library, installPlan, installedPackages)
 
 	if err != nil {
@@ -245,6 +247,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	for k, v := range installSources {
 		fields[k] = v
 	}
+
 	log.WithFields(fields).Info("package installation sources")
 
 	log.WithFields(log.Fields{
@@ -286,6 +289,17 @@ func removeBasePackages(pkgList []string) []string {
 		}
 	}
 	return nonbasePkgList
+}
+
+func logAdditionalPackageOrigins(additionalPackages map[string]gpsr.AdditionalPkg) {
+	for pkg, details := range additionalPackages {
+		log.WithFields(log.Fields{
+			"pkg": pkg,
+			"origin": details.OriginPath,
+			"method": details.Type,
+			"install_from": details.InstallPath,
+		}).Debug("additional installation set")
+	}
 }
 
 func logUserPackageRepos(packageDownloads []cran.PkgDl) {
