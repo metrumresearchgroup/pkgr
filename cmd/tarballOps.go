@@ -1,13 +1,12 @@
 package cmd
 
 import (
-	"archive/tar"
-	"compress/gzip"
 	"crypto/md5"
 	"encoding/hex"
 	"github.com/metrumresearchgroup/pkgr/desc"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/sirupsen/logrus"
+	"github.com/mholt/archiver/v3"
 	"github.com/spf13/afero"
 	"io"
 	"os"
@@ -22,7 +21,12 @@ func unpackTarballs(fs afero.Fs, tarballs []string, cache string) ([]desc.Desc, 
 	untarredMap := make(map[string]gpsr.AdditionalPkg)
 
 	for _, tarballPath := range tarballs {
+
+
+		// replace
 		untarredFolder := untar(fs, tarballPath, cacheDir)
+
+
 		reader, err := fs.Open(filepath.Join(untarredFolder, "DESCRIPTION"))
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
@@ -50,6 +54,7 @@ func unpackTarballs(fs afero.Fs, tarballs []string, cache string) ([]desc.Desc, 
 func untar(fs afero.Fs, path string, cacheDir string) string {
 
 	// Part 1
+	// Create hash of Tarball to use for a folder name in the cache.
 	tgzFile, err := fs.Open(path)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
@@ -65,8 +70,9 @@ func untar(fs afero.Fs, path string, cacheDir string) string {
 	}
 	defer tgzFileForHash.Close()
 
-	// Part 1.5
-	//Use a hash of the file so that we always regenerate when the tarball is updated.
+	// Use a hash of the file so that we always regenerate when the tarball is updated.
+	// Probably unnecessary, but prevents problems in imaginary cases such as "two instances of pkgr are sharing a cache
+	// and installing two different versions of the 'same' tarball."
 	tarballDirectoryName, err := getHashedTarballName(tgzFileForHash)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
@@ -74,42 +80,29 @@ func untar(fs afero.Fs, path string, cacheDir string) string {
 		}).Fatalf("error while creating hash for tarball in cache: %s", err)
 	}
 	tarballDirectoryPath := filepath.Join(cacheDir, tarballDirectoryName)
-
-	//Part 2
-	gzipStream, err := gzip.NewReader(tgzFile)
+	tarballInCache, err := afero.DirExists(fs, tarballDirectoryPath)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
-			"path": path,
-		}).Fatal("error creating gzip stream for specified tarball")
+			"cached_location": tarballDirectoryPath,
+			"source_tarball": path,
+			"error": err,
+		}).Warn("encountered problem checking cache for existing tarball. Extracting tarball to cache_location anyway.")
 	}
-	defer gzipStream.Close()
-	tarStream := tar.NewReader(gzipStream)
-	for {
-		header, err := tarStream.Next()
-
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			logrus.Error("could not process file in tar stream. Error was: ", err)
-		}
-
-		switch header.Typeflag {
-		case tar.TypeDir:
-			fs.MkdirAll(filepath.Join(tarballDirectoryPath, header.Name), 0755)
-			break
-		case tar.TypeReg:
-			dstFile := filepath.Join(tarballDirectoryPath, header.Name)
-			extractFile(dstFile, tarStream)
-			break
-		default:
+	if tarballInCache {
+		logrus.WithFields(logrus.Fields{
+			"cached_tarball": tarballDirectoryPath,
+			"source_tarball": path,
+		}).Debug("using cached tarball.")
+	} else {
+		err = archiver.Unarchive(path, tarballDirectoryPath)
+		if err != nil {
 			logrus.WithFields(logrus.Fields{
-				"type": header.Typeflag,
 				"path": path,
-			}).Error("unknown file type found while processing tarball")
-			break
+			}).Fatalf("error while unarchiving tarball: %s", err)
 		}
 	}
 
+	//Part 2
 	dirEntries, err := afero.ReadDir(fs, tarballDirectoryPath)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
@@ -161,16 +154,5 @@ func getHashedTarballName(tgzFile afero.File) (string, error) {
 	tarballDirectoryName := hex.EncodeToString(hashInBytes)
 	// Hashing code adapted from https://mrwaggel.be/post/generate-md5-hash-of-a-file-in-golang/
 	return tarballDirectoryName, err
-}
-
-func extractFile(dstFile string, tarStream *tar.Reader) {
-	outFile, err := os.Create(dstFile)
-	if err != nil {
-		logrus.Fatalf("ExtractTarGz: Create() failed: %s", err.Error())
-	}
-	defer outFile.Close()
-	if _, err := io.Copy(outFile, tarStream); err != nil {
-		logrus.Fatalf("ExtractTarGz: Copy() failed: %s", err.Error())
-	}
 }
 
