@@ -206,6 +206,27 @@ func TestTarballInstall(t *testing.T) {
 				"withr",
 			},
 		},
+		// Right after release 1.0.0, we found a bug on a specific tarball.
+		// For this tarball, the root archive folder was not the first thing read by our tarball reader. This caused problems,
+		// as our tarball-unpacker function would try to extract files (which it found first) into folders that we hadn't created
+		// yet.
+		// This automated test is meant to regression-test the aforementioned bug. We created the test file for this by using
+		// "devtools::build()" on MacOS Mojave for the R6 package, pulled from GitHub (commit 8e0b3182cdcc5047343e9c590816578472ec9dfa)
+		"Unordered tarball" : TestCase {
+			localRepoName : "simple-no-R6",
+			installUpdates : false,
+			installSuggests : false,
+			toInstall : []string{
+				"utf8",
+			},
+			toInstallTarballs: []string {
+				filepath.Join(localReposDir, "tarballs", "R6_unordered_tarball_read.tar.gz"),
+			},
+			expectedInstalled: []string {
+				"utf8",
+				"R6",
+			},
+		},
 	}
 
 	for testName, tc := range testCases {
@@ -237,76 +258,6 @@ func TestTarballInstall(t *testing.T) {
 
 }
 
-// Right after release 1.0.0, we found a bug on a specific tarball.
-// For this tarball, the root archive folder was not the first thing read by our tarball reader. This caused problems,
-// as our tarball-unpacker function would try to extract files (which it found first) into folders that we hadn't created
-// yet.
-// This automated test is meant to regression-test the above bug. Since we do not know exactly how the order of tarball
-// files read is determined, we have opted to use the exact tarball that caused the error originally.
-func TestTarballInstallForUnorderedTarballReads(t *testing.T) {
-
-	libraryPath := filepath.Join("testsite", "working", "libs")
-	localReposDir, err := filepath.Abs(filepath.Join("..", "localrepos"))
-	checkError(t, err)
-
-	type TestCase struct {
-		localRepoName string
-		installUpdates bool
-		installSuggests bool
-		toInstall []string // Equivalent to  "Packages" in pkgr.yml
-		toInstallTarballs []string
-		expectedInstalled []string
-	}
-
-	testCases := map[string]TestCase {
-		"Tarball no dependencies" : TestCase {
-			localRepoName : "metworrrx-deps",
-			installUpdates : false,
-			installSuggests : false,
-			toInstall : []string{
-				"pillar",
-			},
-			toInstallTarballs: []string {
-				filepath.Join(localReposDir, "tarballs", "metworrrx_unordered_read.tar.gz"),
-			},
-			expectedInstalled: []string {
-				"magrittr",
-				"glue",
-				"DBI",
-				"RPostgres",
-				"dplyr",
-				"purrr",
-				"tibble",
-				"tidyr",
-				"metworrrx", // From tarball
-				// Dependencies not included
-			},
-		},
-	}
-
-	for testName, tc := range testCases {
-		t.Run(testName, func(t *testing.T) {
-
-			// Setup
-			InitializeEmptyTestSiteWorking()
-			InitializeGlobalsForTest()
-
-			localRepoPath := filepath.Join(localReposDir, tc.localRepoName)
-
-			InitGlobalConfig(libraryPath, localRepoPath, tc.installUpdates, tc.installSuggests, "source", tc.toInstall)
-			cfg.Tarballs = tc.toInstallTarballs
-
-			// Execution
-			_ = rInstall(nil, []string{})
-
-			//Validation
-			for _, p := range tc.expectedInstalled {
-				assert.DirExists(t, filepath.Join(libraryPath, p), "Package missing from final results: "+ p)
-			}
-		})
-	}
-
-}
 
 func TestInstallWithoutRollback(t *testing.T) {
 	// Setup
