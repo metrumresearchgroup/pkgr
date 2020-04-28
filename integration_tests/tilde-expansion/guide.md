@@ -17,8 +17,8 @@ final results.
 and the ending environment will be equivalent, with the following differences:
 
 `pkgr plan` will indicate that R6 will be installed from a Tarball.
-`pkgr install` will install a R6 from the indicated tarball.
-`pkgr clean cache` will remove everything from the local cache. 
+`pkgr install` will install R6 from the indicated tarball.
+`pkgr clean cache` will remove everything from the local cache.
 
 Relevant entries in the `logs` directory should be created depending on the command run.
 - `pkgr plan` currently doesn't save logs.

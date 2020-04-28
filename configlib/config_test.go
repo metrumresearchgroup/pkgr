@@ -7,6 +7,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 	"testing"
@@ -888,6 +889,92 @@ func TestSetPkgConfig(t *testing.T) {
 		val2 := pkgSettings2[tt.pkg].Suggests
 		assert.Equal(t, val2, val, fmt.Sprintf("Suggests error for pkg %s", tt.pkg))
 	}
+}
+
+func TestNewConfigSimple(t *testing.T) {
+	//type testCase struct {
+	//	testSet string
+	//
+	//}
+	testYamlFile := filepath.Join(getTestFolder(t, "simple"), "pkgr.yml")
+
+	var cfg PkgrConfig
+	NewConfig(testYamlFile, &cfg)
+
+	//cfg.Library -
+	//cfg.Packages -
+	//cfg.Version
+	//cfg.Cache
+	//cfg.Tarballs
+	//cfg.RPath
+	//cfg.Logging
+	//cfg.Update
+	//cfg.Suggests
+	//cfg.Customizations
+	//cfg.Repos
+	//cfg.Strict
+	//cfg.Lockfile
+	//cfg.Rollback
+	//cfg.Threads
+	//cfg.NoRecommended
+
+	assert.Contains(t, cfg.Packages,"R6" )
+	assert.Contains(t, cfg.Packages, "pillar")
+	assert.Equal(t, cfg.Library, "test-library", cfg.Library)
+	assert.Equal(t, 1, cfg.Version)
+	assert.Equal(t, "", cfg.Cache)
+	assert.Empty(t, cfg.Tarballs)
+	assert.Equal(t, "R", filepath.Base(cfg.RPath)) // Just make sure the path ends in R executable. May not work on Windows.
+	assert.Equal(t, LogConfig{}, cfg.Logging)
+	assert.Equal(t, false, cfg.Update)
+	assert.Equal(t, false, cfg.Suggests)
+	assert.Empty(t, cfg.Customizations)
+	assert.Equal(t, []map[string]string{ {"CRAN": "https://cran.microsoft.com/snapshot/2019-05-01"}}, cfg.Repos)
+	assert.Equal(t, false, cfg.Strict)
+	assert.Equal(t, Lockfile{}, cfg.Lockfile)
+	assert.Equal(t, true, cfg.Rollback)
+	assert.True(t, reflect.TypeOf(cfg.Threads).String() == "int")
+	assert.Equal(t, false, cfg.NoRecommended)
+
+}
+
+func TestNewConfigNonDefaults(t *testing.T) {
+	//type testCase struct {
+	//	testSet string
+	//
+	//}
+	testYamlFile := filepath.Join(getTestFolder(t, "many-settings"), "pkgr.yml")
+
+	var cfg PkgrConfig
+	NewConfig(testYamlFile, &cfg)
+
+	assert.Contains(t, cfg.Packages,"R6" )
+	assert.Contains(t, cfg.Packages, "pillar")
+	
+	assert.True(t, strings.Contains(cfg.Library, "renv/")) // Should be set because of Lockfile setting.
+
+	assert.Equal(t, 1, cfg.Version)
+	assert.Equal(t, "./localcache", cfg.Cache)
+	assert.True(t, strings.Contains(cfg.Tarballs[0], "folder/tarball.tar.gz")) // Should be set somewhere in the homedir.
+	// assert.Equal(t, "../R", cfg.RPath) // Disabling this to make the test easier.
+	assert.Equal(t, LogConfig{
+		All: "log/log.txt",
+		Install: "log/install.txt",
+		Level: "debug",
+		Overwrite: true,
+	}, cfg.Logging)
+	assert.Equal(t, true, cfg.Update)
+	assert.Equal(t, true, cfg.Suggests)
+	assert.Empty(t, cfg.Customizations) // Customizations are tested elsewhere.
+	assert.Equal(t, []map[string]string{ {"CRAN": "https://cran.microsoft.com/snapshot/2019-05-01"}}, cfg.Repos)
+	assert.Equal(t, true, cfg.Strict)
+	assert.Equal(t, Lockfile{
+		Type: "renv",
+	}, cfg.Lockfile)
+	assert.Equal(t, false, cfg.Rollback)
+	assert.Equal(t, 9, cfg.Threads)
+	assert.Equal(t, true, cfg.NoRecommended)
+
 }
 
 func getPkgSettingsMap(elems []interface{}) PkgSettingsMap {
