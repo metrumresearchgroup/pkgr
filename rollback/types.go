@@ -10,11 +10,13 @@ import (
 
 // RollbackPlan maintains information about what's being changed on an install, which it can use to "undo" the application of an InstallPlan.
 type RollbackPlan struct {
-	AllPackages []string
-	NewPackages []string
-	UpdateRollbacks []UpdateAttempt
-	InstallPlan gpsr.InstallPlan
-	Library string
+	AllPackages            []string
+	NewPackages            []string
+	UpdateRollbacks        []UpdateAttempt
+	AdditionalPkgRollbacks []UpdateAttempt
+	PreinstalledPackages   map[string]desc.Desc
+	InstallPlan            gpsr.InstallPlan
+	Library                string
 }
 
 // CreateRollbackPlan creates a RollbackPlan to track changes to the package environment and undo those changes if necessary.
@@ -27,12 +29,13 @@ func CreateRollbackPlan (library string, installPlan gpsr.InstallPlan, preinstal
 	return RollbackPlan {
 			AllPackages: ap,
 			NewPackages: np,
+			PreinstalledPackages: preinstalledPackages,
 			InstallPlan: installPlan,
 			Library: library,
 		}
 }
 
-// PreparePackagesForUpdate backs up outdated packages in the library by renaming them, thus making space for the updated versions to install.
+// createUpdateBackupFolders backs up outdated packages in the library by renaming them, thus making space for the updated versions to install.
 func (rp *RollbackPlan) PreparePackagesForUpdate(fs afero.Fs, library string) {
 
 	//InstallPlan is aware of _all_ preinstalled packages, even if they're not in pkgr.yml. We don't want to touch
@@ -46,8 +49,37 @@ func (rp *RollbackPlan) PreparePackagesForUpdate(fs afero.Fs, library string) {
 	}
 
 	// Wrap this function for now until we're ready to move it over.
-	updateAttempts := PreparePackagesForUpdate(fs, library, opFiltered)
+	updateAttempts := createUpdateBackupFolders(fs, library, opFiltered)
 	rp.UpdateRollbacks = updateAttempts
+}
+
+func (rp *RollbackPlan) PrepareAdditionalPackagesForOverwrite(fs afero.Fs, library string) {
+	var overwriteAttempts []UpdateAttempt
+	for pkg := range rp.InstallPlan.AdditionalPackageSources {
+		preinstPkg, isPreinstalled := rp.PreinstalledPackages[pkg]
+		if isPreinstalled {
+			overwriteAttempt := tagOldInstallation(fs, library, cran.OutdatedPackage{
+				Package: pkg,
+				OldVersion: preinstPkg.Version,
+				NewVersion: "[from tarball]",
+			})
+			overwriteAttempts = append(overwriteAttempts, overwriteAttempt)
+		}
+	}
+	rp.AdditionalPkgRollbacks = overwriteAttempts
+}
+
+func (rp *RollbackPlan) DeleteBackupPackageFolders(fs afero.Fs) []error {
+	var errSlice []error
+	err1 := DeleteBackupPackageFolders(fs, rp.UpdateRollbacks)
+	if err1 != nil {
+		errSlice = append(errSlice, err1)
+	}
+	err2 := DeleteBackupPackageFolders(fs, rp.AdditionalPkgRollbacks)
+	if err2 != nil {
+		errSlice = append(errSlice, err2)
+	}
+	return errSlice
 }
 
 // Helper function to determine which packages out of a list are not already installed. Used to determine which packages pkgr specifically will be installing fresh.

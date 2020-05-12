@@ -1,0 +1,22 @@
+Version: 1
+# top level packages
+
+Tarballs:
+  - "../../localrepos/tarballs/R6_2.4.0.tar.gz"
+
+Packages:
+  - pillar
+  - crayon
+
+# any repositories, order matters
+Repos:
+  - CRAN: "../../localrepos/simple-no-R6"
+
+Cache: localcache
+
+Library: "test-library"
+
+Customizations:
+  Repos:
+    - CRAN:
+        Type: source

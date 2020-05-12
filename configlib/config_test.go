@@ -7,6 +7,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 	"testing"
@@ -19,6 +20,164 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestExpandTilde(t *testing.T) {
+	homeDirectory, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatal("error determining home directory to use for testing: ", err)
+	}
+
+	type testCase struct {
+		path string
+		expectedResult string
+	}
+
+	tests := map[string]testCase {
+		"expands tilde" : {
+			path : filepath.Join("~/Desktop/folderA"),
+			expectedResult: filepath.Join(homeDirectory, "Desktop", "folderA"),
+		},
+		"does not modify regular path" : {
+			path : filepath.Join("A/B/C"),
+			expectedResult : filepath.Join("A/B/C"),
+		},
+		"does not modify local path" : {
+			path : filepath.Join("../A/B/C"),
+			expectedResult: filepath.Join("../A/B/C"),
+		},
+		"tilde must be prefix" : {
+			path : filepath.Join("A/B/~/C"),
+			expectedResult: filepath.Join("A/B/~/C"),
+		},
+		"works with empty path" : {
+			path: "",
+			expectedResult: "",
+		},
+	}
+
+	for testName, tc := range tests {
+		t.Run(testName, func(t *testing.T) {
+			actualResult := expandTilde(tc.path)
+			assert.Equal(t, tc.expectedResult, actualResult)
+		})
+	}
+}
+
+func TestExpandTildes(t *testing.T) {
+	homeDirectory, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatal("error determining home directory to use for testing: ", err)
+	}
+
+	type testCase struct {
+		paths []string
+		expectedResults []string
+	}
+
+	tests := map[string]testCase {
+		"expands tildes" : {
+			paths : []string{
+				filepath.Join("~/Desktop/folderA"),
+				filepath.Join("~/Documents/folderB"),
+		},
+			expectedResults: []string{
+				filepath.Join(homeDirectory, "Desktop", "folderA",),
+				filepath.Join(homeDirectory, "Documents", "folderB",),
+			},
+		},
+		"expands tildes but not others" : {
+			paths : []string{
+				filepath.Join("~/Desktop/folderA",),
+				filepath.Join("/TopDir/Documents/folderB",),
+			},
+			expectedResults: []string{
+				filepath.Join(homeDirectory, "Desktop", "folderA",),
+				filepath.Join("/TopDir", "Documents", "folderB",),
+			},
+		},
+		"does not modify non-tilde repos" : {
+			paths : []string{
+				filepath.Join("A", "B", "C"),
+				filepath.Join("D"),
+				filepath.Join("/srv", "shiny-server", "log.txt"),
+				"",
+				filepath.Join("..", "E", "F"),
+			},
+			expectedResults: []string{
+				filepath.Join("A", "B", "C"),
+				filepath.Join("D"),
+				filepath.Join("/srv", "shiny-server", "log.txt"),
+				"",
+				filepath.Join("..", "E", "F"),
+			},
+		},
+	}
+
+	for testName, tc := range tests {
+		t.Run(testName, func(t *testing.T) {
+			actualResults := expandTildes(tc.paths)
+			assert.Equal(t, tc.expectedResults, actualResults)
+		})
+	}
+}
+
+func TestExpandTildesRepo (t *testing.T) {
+	homeDirectory, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatal("error determining home directory to use for testing: ", err)
+	}
+
+	type testCase struct {
+		repos           []map[string]string
+		expectedResults []map[string]string
+	}
+
+	tests := map[string]testCase {
+		"expands tildes" : {
+			repos: []map[string]string{
+				{"A" : filepath.Join("~/Desktop/folderA"),},
+				{"B" : filepath.Join("~/Documents/folderB"),},
+			},
+			expectedResults:[]map[string]string{
+				{"A" : filepath.Join(homeDirectory, "Desktop/folderA"),},
+				{"B" : filepath.Join(homeDirectory, "Documents/folderB"),},
+			},
+		},
+		"expands tildes but not others" : {
+			repos: []map[string]string{
+				{"A" : filepath.Join("~/Desktop/folderA"),},
+				{"B" : filepath.Join("/TopDir/Documents/folderB"),},
+			},
+			expectedResults: []map[string]string{
+				{ "A" : filepath.Join(homeDirectory, "Desktop", "folderA"),},
+				{ "B" : filepath.Join("/TopDir", "Documents", "folderB")},
+			},
+		},
+		"does not modify non-tilde repos" : {
+			repos: []map[string]string{
+				{ "1" : filepath.Join("A", "B", "C"),},
+				{ "2" : filepath.Join("D"),},
+				{ "3" : filepath.Join("/srv", "shiny-server", "log.txt"),},
+				{ "4" : "",},
+				{ "5" : filepath.Join("..", "E", "F"),},
+			},
+			expectedResults: []map[string]string{
+				{ "1" : filepath.Join("A", "B", "C"),},
+				{ "2" : filepath.Join("D"),},
+				{ "3" : filepath.Join("/srv", "shiny-server", "log.txt"),},
+				{ "4" : "",},
+				{ "5" : filepath.Join("..", "E", "F"),},
+			},
+		},
+	}
+
+	for testName, tc := range tests {
+		t.Run(testName, func(t *testing.T) {
+			actualResults := expandTildesRepos(tc.repos)
+			assert.Equal(t, tc.expectedResults, actualResults)
+		})
+	}
+}
 
 func TestAddRemovePackage(t *testing.T) {
 	tests := []struct {
@@ -337,8 +496,7 @@ func TestNewConfigPackrat(t *testing.T) {
 	for _, tt := range tests {
 		var cfg PkgrConfig
 		_ = os.Chdir(getTestFolder(t, tt.folder))
-		_ = LoadConfigFromPath(viper.GetString("config"))
-		NewConfig(&cfg)
+		NewConfig(viper.GetString("config"), &cfg)
 		assert.Equal(t, tt.expected, cfg.Lockfile.Type, fmt.Sprintf("Fail:%s", tt.message))
 	}
 }
@@ -359,8 +517,7 @@ func TestNewConfigNoLockfile(t *testing.T) {
 	for _, tt := range tests {
 		var cfg PkgrConfig
 		_ = os.Chdir(getTestFolder(t, tt.folder))
-		_ = LoadConfigFromPath(viper.GetString("config"))
-		NewConfig(&cfg)
+		NewConfig(viper.GetString("config"), &cfg)
 		assert.Equal(t, tt.expected, cfg.Lockfile.Type, fmt.Sprintf("Fail:%s", tt.message))
 	}
 }
@@ -414,7 +571,9 @@ func TestSetCustomizations(t *testing.T) {
 	}
 	for _, tt := range tests {
 		var cfg PkgrConfig
-		NewConfig(&cfg)
+		_ = os.Chdir(getTestFolder(t, "simple"))
+		NewConfig(viper.GetString("config"), &cfg) // Just need to slurp in misc stuff to keep tests working.
+		cfg.Packages = []string{tt.pkg} // Overwrites whatever packages were in "simple"
 		cfg.Customizations.Packages = map[string]PkgConfig{
 			tt.pkg: PkgConfig{
 				Env: map[string]string{
@@ -443,9 +602,9 @@ func TestSetCfgCustomizations(t *testing.T) {
 	for _, tt := range tests {
 		dependencyConfigurations := gpsr.NewDefaultInstallDeps()
 		var cfg PkgrConfig
-		NewConfig(&cfg)
+		//NewConfig(viper.GetString("config"), &cfg) // Don't need to load full config for this test
 		cfg.Suggests = true
-		cfg.Packages = []string{
+		cfg.Packages = []string{ // Overwrites
 			tt.pkg,
 		}
 		setCfgCustomizations(cfg, &dependencyConfigurations)
@@ -483,7 +642,7 @@ func TestSetViperCustomizations(t *testing.T) {
 
 	for _, tt := range tests {
 		var cfg PkgrConfig
-		NewConfig(&cfg)
+		//NewConfig(viper.GetString("config"), &cfg) // Not needed for test to run.
 		cfg.Customizations.Packages = map[string]PkgConfig{
 			tt.pkg: PkgConfig{
 				Env: map[string]string{
@@ -581,7 +740,7 @@ func TestSetViperCustomizations2(t *testing.T) {
 
 	for _, tt := range tests {
 		var cfg PkgrConfig
-		NewConfig(&cfg)
+		//NewConfig(viper.GetString("config"), &cfg) // Not needed for test to run
 		cfg.Customizations.Packages = map[string]PkgConfig{
 			tt.pkg: PkgConfig{
 				Env: map[string]string{
@@ -675,7 +834,7 @@ func TestSetPkgConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		var cfg PkgrConfig
-		NewConfig(&cfg)
+		//NewConfig(viper.GetString("config"), &cfg) // not needed for test to run
 		cfg.Customizations.Packages = map[string]PkgConfig{
 			tt.pkg: PkgConfig{
 				Env: map[string]string{
@@ -730,6 +889,92 @@ func TestSetPkgConfig(t *testing.T) {
 		val2 := pkgSettings2[tt.pkg].Suggests
 		assert.Equal(t, val2, val, fmt.Sprintf("Suggests error for pkg %s", tt.pkg))
 	}
+}
+
+func TestNewConfigSimple(t *testing.T) {
+	//type testCase struct {
+	//	testSet string
+	//
+	//}
+	testYamlFile := filepath.Join(getTestFolder(t, "simple"), "pkgr.yml")
+
+	var cfg PkgrConfig
+	NewConfig(testYamlFile, &cfg)
+
+	//cfg.Library -
+	//cfg.Packages -
+	//cfg.Version
+	//cfg.Cache
+	//cfg.Tarballs
+	//cfg.RPath
+	//cfg.Logging
+	//cfg.Update
+	//cfg.Suggests
+	//cfg.Customizations
+	//cfg.Repos
+	//cfg.Strict
+	//cfg.Lockfile
+	//cfg.Rollback
+	//cfg.Threads
+	//cfg.NoRecommended
+
+	assert.Contains(t, cfg.Packages,"R6" )
+	assert.Contains(t, cfg.Packages, "pillar")
+	assert.Equal(t, cfg.Library, "test-library", cfg.Library)
+	assert.Equal(t, 1, cfg.Version)
+	assert.Equal(t, "", cfg.Cache)
+	assert.Empty(t, cfg.Tarballs)
+	assert.Equal(t, "R", filepath.Base(cfg.RPath)) // Just make sure the path ends in R executable. May not work on Windows.
+	assert.Equal(t, LogConfig{}, cfg.Logging)
+	assert.Equal(t, false, cfg.Update)
+	assert.Equal(t, false, cfg.Suggests)
+	assert.Empty(t, cfg.Customizations)
+	assert.Equal(t, []map[string]string{ {"CRAN": "https://cran.microsoft.com/snapshot/2019-05-01"}}, cfg.Repos)
+	assert.Equal(t, false, cfg.Strict)
+	assert.Equal(t, Lockfile{}, cfg.Lockfile)
+	assert.Equal(t, true, cfg.Rollback)
+	assert.True(t, reflect.TypeOf(cfg.Threads).String() == "int")
+	assert.Equal(t, false, cfg.NoRecommended)
+
+}
+
+func TestNewConfigNonDefaults(t *testing.T) {
+	//type testCase struct {
+	//	testSet string
+	//
+	//}
+	testYamlFile := filepath.Join(getTestFolder(t, "many-settings"), "pkgr.yml")
+
+	var cfg PkgrConfig
+	NewConfig(testYamlFile, &cfg)
+
+	assert.Contains(t, cfg.Packages,"R6" )
+	assert.Contains(t, cfg.Packages, "pillar")
+	
+	assert.True(t, strings.Contains(cfg.Library, "renv/")) // Should be set because of Lockfile setting.
+
+	assert.Equal(t, 1, cfg.Version)
+	assert.Equal(t, "./localcache", cfg.Cache)
+	assert.True(t, strings.Contains(cfg.Tarballs[0], "folder/tarball.tar.gz")) // Should be set somewhere in the homedir.
+	// assert.Equal(t, "../R", cfg.RPath) // Disabling this to make the test easier.
+	assert.Equal(t, LogConfig{
+		All: "log/log.txt",
+		Install: "log/install.txt",
+		Level: "debug",
+		Overwrite: true,
+	}, cfg.Logging)
+	assert.Equal(t, true, cfg.Update)
+	assert.Equal(t, true, cfg.Suggests)
+	assert.Empty(t, cfg.Customizations) // Customizations are tested elsewhere.
+	assert.Equal(t, []map[string]string{ {"CRAN": "https://cran.microsoft.com/snapshot/2019-05-01"}}, cfg.Repos)
+	assert.Equal(t, true, cfg.Strict)
+	assert.Equal(t, Lockfile{
+		Type: "renv",
+	}, cfg.Lockfile)
+	assert.Equal(t, false, cfg.Rollback)
+	assert.Equal(t, 9, cfg.Threads)
+	assert.Equal(t, true, cfg.NoRecommended)
+
 }
 
 func getPkgSettingsMap(elems []interface{}) PkgSettingsMap {

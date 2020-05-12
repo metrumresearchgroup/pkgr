@@ -12,6 +12,7 @@ import (
 func ResolveInstallationReqs(
 		pkgs []string,
 		preinstalledPkgs map[string]desc.Desc,
+		//tarballDependencies []desc.Desc,
 		dependencyConfigs InstallDeps,
 		pkgNexus *cran.PkgNexus,
 		update bool,
@@ -33,20 +34,20 @@ func ResolveInstallationReqs(
 	depDb := make(map[string][]string)
 
 	for _, p := range pkgs {
-		pkg, _, _ := pkgNexus.GetPackage(p)
-		appendToGraph(workingGraph, pkg, dependencyConfigs, pkgNexus)
+		pkgDesc, _, _ := pkgNexus.GetPackage(p)
+		appendToGraph(workingGraph, pkgDesc, dependencyConfigs, pkgNexus)
 	}
 	resolved, err := ResolveLayers(workingGraph, noRecommended)
 	if err != nil {
 		fmt.Println("error resolving graph")
 		return InstallPlan{}, err
 	}
-	for i, l := range resolved {
+	for i, layer := range resolved { //resolved is a 2d slice, a "list of lists", each sublist being a layer of packages that can be installed
 		if i == 0 {
 			// don't need to know dep tree for first layer as shouldn't have any deps
 			continue
 		}
-		for _, p := range l {
+		for _, p := range layer {
 			workingGraph := NewGraph()
 			pkg, _, _ := pkgNexus.GetPackage(p)
 			// for dependencies don't want to propogate custom config such as suggests TRUE/FALSE

@@ -18,7 +18,8 @@ func InitializeEmptyTestSiteWorking() {
 }
 
 
-func InitializeGoldenTestSiteWorking(goldenSet string) {
+// Returns path to working test directory
+func InitializeGoldenTestSiteWorking(goldenSet string) string {
 	fileSystem := afero.NewOsFs()
 	goldenSetPath := filepath.Join("testsite", "golden", goldenSet)
 	testWorkDir := filepath.Join("testsite", "working")
@@ -33,6 +34,52 @@ func InitializeGoldenTestSiteWorking(goldenSet string) {
 	if err != nil {
 		panic(err)
 	}
+
+	return filepath.Join(testWorkDir)
+}
+
+func InitGlobalConfig(libraryPath, localRepo string, update, suggests bool, installType string, packages []string) {
+
+	cfg = configlib.PkgrConfig{
+		Threads: 5,
+		Update: update,
+		Rollback: false,
+		Strict: false,
+		Packages: packages,
+		Library: libraryPath,
+		Version: 1,
+		//Logging: configlib.LogConfig{Level: "debug"}, // Controlled before cfg unmarshalling, I think
+		Cache: "./testsite/working/localcache",
+		Customizations: configlib.Customizations{
+			Repos: map[string]configlib.RepoConfig {
+				"testRepo" : configlib.RepoConfig{
+					Type: installType,
+				},
+			},
+		},
+		//LibPaths: nil,
+		//Lockfile: nil,
+		Repos: []map[string]string{
+			{
+				"testRepo" : localRepo,
+			},
+		},
+		//RPath: nil,
+		Suggests: suggests,
+	}
+}
+
+
+func InitializeGlobalsForTest() {
+	// Overwrite the global root cmd to "fake" the parts we need for cobra.
+	RootCmd = &cobra.Command{
+		Use:   "pkgr",
+		Short: "package manager",
+	}
+
+	// Run the "set globals" function to init the "fs" object.
+	setGlobals()
+	//logger.SetLogLevel("trace") // Overwriting what's done in setGlobals() if we need to for testing.
 }
 
 func TestPackagesInstalled(t *testing.T) {
@@ -96,58 +143,125 @@ func TestPackagesInstalled(t *testing.T) {
 
 }
 
-func checkError(t *testing.T, err error) {
-	if err != nil {
-		t.Error(err)
-		t.Fail()
+func TestTarballInstall(t *testing.T) {
+
+	libraryPath := filepath.Join("testsite", "working", "libs")
+	localReposDir, err := filepath.Abs(filepath.Join("..", "localrepos"))
+	checkError(t, err)
+
+	type TestCase struct {
+		localRepoName string
+		installUpdates bool
+		installSuggests bool
+		toInstall []string // Equivalent to  "Packages" in pkgr.yml
+		toInstallTarballs []string
+		expectedInstalled []string
 	}
-}
 
-func InitializeGlobalsForTest() {
-	// Overwrite the global root cmd to "fake" the parts we need for cobra.
-	RootCmd = &cobra.Command{
-		Use:   "pkgr",
-		Short: "package manager",
-	}
-
-	// Run the "set globals" function to init the "fs" object.
-	setGlobals()
-}
-
-func InitGlobalConfig(libraryPath, localRepo string, update, suggests bool, installType string, packages []string) {
-
-	cfg = configlib.PkgrConfig{
-		Threads: 5,
-		Update: update,
-		Rollback: false,
-		Strict: false,
-		Packages: packages,
-		Library: libraryPath,
-		Version: 1,
-		//Logging: nil,
-		//Cache: nil,
-		Customizations: configlib.Customizations{
-			Repos: map[string]configlib.RepoConfig {
-				"testRepo" : configlib.RepoConfig{
-					Type: installType,
-				},
+	testCases := map[string]TestCase {
+		"Tarball no dependencies" : TestCase {
+			localRepoName : "simple-no-R6",
+			installUpdates : false,
+			installSuggests : false,
+			toInstall : []string{
+				"pillar",
+			},
+			toInstallTarballs: []string {
+				filepath.Join(localReposDir, "tarballs", "R6_2.4.0.tar.gz"),
+			},
+			expectedInstalled: []string {
+				"assertthat",
+				"cli",
+				"crayon",
+				"fansi",
+				"pillar",
+				"R6", //Should be installed through tarball
+				"rlang",
+				"utf8",
 			},
 		},
-		//LibPaths: nil,
-		//Lockfile: nil,
-		Repos: []map[string]string{
-			{
-				"testRepo" : localRepo,
+		"Tarball with dependencies" : TestCase {
+			localRepoName : "testthat_deps",
+			installUpdates : false,
+			installSuggests : false,
+			toInstall : []string{
+				"pillar",
+			},
+			toInstallTarballs: []string {
+				filepath.Join(localReposDir, "tarballs", "testthat_2.1.1.tar.gz"),
+			},
+			expectedInstalled: []string {
+				"assertthat",
+				"cli",
+				"crayon",
+				"digest",
+				"fansi",
+				"magrittr",
+				"pillar",
+				"praise",
+				"R6",
+				"rlang",
+				"testthat", //Should be installed through tarball
+				"utf8",
+				"withr",
 			},
 		},
-		//RPath: nil,
-		Suggests: suggests,
+		// Right after release 1.0.0, we found a bug on a specific tarball.
+		// For this tarball, the root archive folder was not the first thing read by our tarball reader. This caused problems,
+		// as our tarball-unpacker function would try to extract files (which it found first) into folders that we hadn't created
+		// yet.
+		// This automated test is meant to regression-test the aforementioned bug. We created the test file for this by using
+		// "devtools::build()" on MacOS Mojave for the R6 package, pulled from GitHub (commit 8e0b3182cdcc5047343e9c590816578472ec9dfa)
+		"Unordered tarball" : TestCase {
+			localRepoName : "simple-no-R6",
+			installUpdates : false,
+			installSuggests : false,
+			toInstall : []string{
+				"utf8",
+			},
+			toInstallTarballs: []string {
+				filepath.Join(localReposDir, "tarballs", "R6_unordered_tarball_read.tar.gz"),
+			},
+			expectedInstalled: []string {
+				"utf8",
+				"R6",
+			},
+		},
 	}
+
+	for testName, tc := range testCases {
+		t.Run(testName, func(t *testing.T) {
+
+			// Setup
+			InitializeEmptyTestSiteWorking()
+			InitializeGlobalsForTest()
+
+			localRepoPath := filepath.Join(localReposDir, tc.localRepoName)
+
+			InitGlobalConfig(libraryPath, localRepoPath, tc.installUpdates, tc.installSuggests, "source", tc.toInstall)
+			cfg.Tarballs = tc.toInstallTarballs
+
+			// Execution
+			_ = rInstall(nil, []string{})
+
+			//Validation
+			libSubDirectories, err := afero.ReadDir(fs, libraryPath)
+			checkError(t, err)
+			numInstalled := len(libSubDirectories)
+			assert.Equalf(t, len(tc.expectedInstalled), numInstalled, "Expected %d packages to be installed but found %d", len(tc.expectedInstalled), numInstalled)
+
+			for _, p := range tc.expectedInstalled {
+				assert.DirExists(t, filepath.Join(libraryPath, p), "Package missing from final results: "+ p)
+			}
+		})
+	}
+
 }
+
 
 func TestInstallWithoutRollback(t *testing.T) {
 	// Setup
-	InitializeGoldenTestSiteWorking("rollback-disabled")
+	_ = InitializeGoldenTestSiteWorking("rollback-disabled")
 	testLibrary := filepath.Join("testsite", "working", "libs")
 
 	// Overwrite the global root cmd to "fake" the parts we need for cobra.
@@ -217,4 +331,14 @@ func TestInstallWithoutRollback(t *testing.T) {
 	assert.False(t, dirExistsCheck, "Package was not properly removed or was installed when it shouldn't have been")
 	dirExistsCheck, _ = afero.DirExists(fs, filepath.Join(testLibrary, "flatxml"))
 	assert.False(t, dirExistsCheck, "Package was not properly removed or was installed when it shouldn't have been")
+}
+
+// Utility
+
+
+func checkError(t *testing.T, err error) {
+	if err != nil {
+		t.Error(err)
+		t.Fail()
+	}
 }

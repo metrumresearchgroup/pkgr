@@ -1,0 +1,29 @@
+Version: 1
+# top level packages
+
+Tarballs:
+  - "../../localrepos/tarballs/rlang_0.3.4.tar.gz" # Should install but be removed
+  - "../../localrepos/tarballs/crayon_1.3.4.tar.gz" # should install but be removed
+  - "../../localrepos/tarballs/R6_corrupt.tar.gz" # should not install
+
+Packages:
+  - fansi
+  - cli
+  - utf8
+  - assertthat
+  - crayon
+
+Threads: 1 # Just to make it easy to see what's happening
+
+# any repositories, order matters
+Repos:
+  - CRAN: "../../localrepos/simple-no-R6"
+
+Cache: localcache
+
+Library: "test-library"
+
+Customizations:
+  Repos:
+    - CRAN:
+        Type: source

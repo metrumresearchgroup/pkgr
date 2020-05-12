@@ -2,13 +2,9 @@
 tags: rollback-disabled
 
 ## Description
-Testing area to demonstrate that the entire package environment is rolled back
-whenever a package fails to install. In other words, If anything goes wrong
-during a run of pkgr install or pkgr install --update, then the user's Library
-should revert to exactly how it was prior to running.
-
-## Justification
-To make sure that rollback functionality works as intended, we need a repeatable way to check that package environments rollback correctly.
+Testing area to demonstrate that the rollback feature can be turned off, thereby
+leaving all successfully installed packages intact after a `pkgr install` command
+fails and exits.
 
 ## Default Setup
 From this directory:
@@ -24,7 +20,6 @@ to set up all tests.
 ## Note
 **Important:**
 This test assumes that attemtpting to install **xml2** from source will FAIL on your machine. If this is not the case, please replace xml2 in pkgr.yml with a package that _will_ fail to install on your machine.
-
 
 "Setup" for this test includes adding four packages to the test-library, each of
 which has been configured in some way to test a different case.
@@ -56,20 +51,9 @@ Dependency tree (via `pkgr install --deps`):
 }
 ```
 
-## Current behavior observed:
-`pkgr install`:
-* R6 and Rcpp update successfully
-* fansi, bitops, and RCurl are installed
-* xml2 fails to install and says `ERRO[0000] installation failed for packages: xml2`     
-* flaxtml does not install, but there is no message saying the installation failed.
-
-
 ## Expected Behavior:
-
-* `pkgr install` will fail to install xml2, but all other packages will be installed successfully, and no updates will be applied.
-* `pkgr install --update` will fail to install xml2, but will install and update other packages.
-
-
-## Possible test cases not covered here:
-* What if an **update** fails to install instead of just a regular installation?
-  - Since updates are treated like regular installations, I think it's safe to exclude this.
+`pkgr install --update --rollback=false`
+* R6 and Rcpp will update successfully.
+* fansi, bitops, and RCurl will be installed.
+* xml2 fails to install and says `ERRO[0000] installation failed for packages: xml2`   
+* flaxtml will not be installed, as one of its dependencies will not be installed.

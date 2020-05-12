@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
@@ -30,14 +31,74 @@ func packratPlatform(p string) string {
 }
 
 // NewConfig initialize a PkgrConfig passed in by caller
-func NewConfig(cfg *PkgrConfig) {
-	_ = viper.Unmarshal(cfg)
+func NewConfig(cfgPath string, cfg *PkgrConfig) {
+	err := loadConfigFromPath(cfgPath)
+	if err != nil {
+		log.Fatal("could not detect config at supplied path: " + cfgPath)
+	}
+	err = viper.Unmarshal(cfg)
+	if err != nil {
+		log.Fatalf("error parsing pkgr.yml: %s\n", err)
+	}
+
 	if len(cfg.Library) == 0 {
 		rs := rcmd.NewRSettings(cfg.RPath)
 		rVersion := rcmd.GetRVersion(&rs)
 		cfg.Library = getLibraryPath(cfg.Lockfile.Type, cfg.RPath, rVersion, rs.Platform, cfg.Library)
 	}
+
+	// For all cfg	values that can be repos, make sure that ~ is expanded to the home directory.
+	cfg.Library = expandTilde(cfg.Library)
+	cfg.RPath = expandTilde(cfg.RPath)
+	cfg.Tarballs = expandTildes(cfg.Tarballs)
+	cfg.Repos = expandTildesRepos(cfg.Repos)
+	cfg.Logging.All = expandTilde(cfg.Logging.All)
+	cfg.Logging.Install = expandTilde(cfg.Logging.Install)
+	cfg.Cache = expandTilde(cfg.Cache)
+
 	return
+}
+
+/// expand the ~ at the beginning of a path to the home directory.
+/// consider any problems a fatal error.
+func expandTilde(p string) string {
+	expanded, err := homedir.Expand(p)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"path": p,
+			"error": err,
+		}).Fatal("problem parsing config file -- could not expand path")
+	}
+	return expanded
+}
+
+/// For a list of repos, expand the ~ at the beginning of each path to the home directory.
+/// consider any problems a fatal error.
+func expandTildes(paths []string) []string {
+	var expanded []string
+	for _, p := range paths {
+		newPath := expandTilde(p)
+		expanded = append(expanded, newPath)
+	}
+	return expanded
+}
+
+/// In the PkgrConfig object, Repos are stored as a list of key-value pairs.
+/// Keys are repo names and values are repos to those repos
+/// For each key-value pair, expand the prefix ~ to be the home directory, if applicable.
+/// consider any problems a fatal error.
+func expandTildesRepos(repos []map[string]string) []map[string]string {
+	var expanded []map[string]string
+	//expanded := make(map[string]string)
+	for _, keyValuePair := range repos {
+		kvpExpanded := make(map[string]string)
+		for key, p := range keyValuePair { // should only be one pair, but loop just in case
+			kvpExpanded[key] = expandTilde(p)
+		}
+		expanded = append(expanded, kvpExpanded)
+	}
+
+	return expanded
 }
 
 func getLibraryPath(lockfileType string, rpath string, rversion cran.RVersion, platform string, library string) string {
@@ -56,8 +117,8 @@ func getLibraryPath(lockfileType string, rpath string, rversion cran.RVersion, p
 	return library
 }
 
-// LoadConfigFromPath loads pkc configuration into the global Viper
-func LoadConfigFromPath(configFilename string) error {
+// loadConfigFromPath loads pkc configuration into the global Viper
+func loadConfigFromPath(configFilename string) error {
 	if configFilename == "" {
 		configFilename = "pkgr.yml"
 	}
@@ -97,7 +158,7 @@ func loadDefaultSettings() {
 	viper.SetDefault("loglevel", "info")
 	// path to R on system, defaults to R in path
 	viper.SetDefault("rpath", "R")
-	viper.SetDefault("threads", 0)
+	viper.SetDefault("threads", runtime.NumCPU())
 	viper.SetDefault("strict", false)
 	viper.SetDefault("rollback", true)
 }
@@ -118,6 +179,7 @@ func IsCustomizationSet(key string, elems []interface{}, elem string) bool {
 	return false
 }
 
+
 // AddPackage add a package to the Package section of the yml config file
 func AddPackage(name string) error {
 	cfgname := viper.ConfigFileUsed()
@@ -125,7 +187,7 @@ func AddPackage(name string) error {
 	if err != nil {
 		return err
 	}
-	err = LoadConfigFromPath(cfgname)
+	err = loadConfigFromPath(cfgname)
 	if err != nil {
 		return err
 	}
@@ -233,7 +295,8 @@ func SetPlanCustomizations(cfg PkgrConfig, dependencyConfigurations gpsr.Install
 
 	setCfgCustomizations(cfg, &dependencyConfigurations)
 
-	if viper.Sub("Customizations") != nil && viper.Sub("Customizations").AllSettings()["packages"] != nil {
+	//if viper.Sub("Customizations") != nil && viper.Sub("Customizations").AllSettings()["packages"] != nil {
+	if len(cfg.Customizations.Packages) > 0 {
 		pkgSettings := viper.Sub("Customizations").AllSettings()["packages"].([]interface{})
 		setViperCustomizations(cfg, pkgSettings, dependencyConfigurations, pkgNexus)
 	}

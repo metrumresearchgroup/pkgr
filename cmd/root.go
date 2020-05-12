@@ -28,7 +28,8 @@ import (
 )
 
 // VERSION is the current pkgr version
-var VERSION = "0.6.0"
+var VERSION = "1.0.1"
+
 
 var fs afero.Fs
 var cfg configlib.PkgrConfig
@@ -103,14 +104,15 @@ func initConfig() {
 	// if cfgFile != "" { // enable ability to specify config file via flag
 	// 	viper.SetConfigFile(cfgFile)
 	// }
-	_ = configlib.LoadConfigFromPath(viper.GetString("config"))
 
 	setGlobals()
 
 	if viper.GetBool("debug") {
 		viper.Debug()
 	}
-	configlib.NewConfig(&cfg)
+
+	log.Trace("attempting to load config file")
+	configlib.NewConfig(viper.GetString("config"), &cfg)
 
 	configFilePath, _ := filepath.Abs(viper.ConfigFileUsed())
 	cwd, _ := os.Getwd()

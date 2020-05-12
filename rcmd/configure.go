@@ -2,6 +2,7 @@ package rcmd
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -50,7 +51,7 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 				continue
 			}
 			if evs[0] == "R_LIBS_SITE" {
-				log.WithField("path", evs[1]).Debug("overriding system R_LIBS_USER")
+				log.WithField("path", evs[1]).Debug("overriding system R_LIBS_SITE")
 				continue
 			}
 			if evs[0] == "PATH" {
@@ -74,6 +75,19 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 			}
 		}
 	}
+
+	// Force R_LIBS_USER to be an empty dir so that we can be sure it won't get overridden by default R paths.
+	tmpdir := filepath.Join(
+		os.TempDir(),
+		randomString(12),
+	)
+	err := os.MkdirAll(tmpdir, 0777)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Warn("error making temporary directory while overriding R_LIBS_USER for install.")
+	}
+	envList.Append("R_LIBS_USER", tmpdir)
 
 	ok, lp := rs.LibPathsEnv()
 	if ok {

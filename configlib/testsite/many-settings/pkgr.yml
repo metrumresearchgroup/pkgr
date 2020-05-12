@@ -1,0 +1,37 @@
+Version: 1
+
+Tarballs:
+  - ~/folder/tarball.tar.gz
+
+# top level packages
+Packages:
+  - R6
+  - pillar
+
+# any repositories, order matters
+Repos:
+  - CRAN: "https://cran.microsoft.com/snapshot/2019-05-01"
+
+Cache: ./localcache
+
+# Rpath: "../R"
+
+Logging:
+  all: log/log.txt
+  install: log/install.txt
+  level: debug
+  overwrite: true
+
+Update: true
+Strict: true
+Suggests: true
+Rollback: false
+NoRecommended: true
+
+Threads: 9
+
+Lockfile:
+  Type: renv
+
+
+
