@@ -254,6 +254,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		"to_install": toInstall,
 		"to_update":  pkgsToUpdateCount,
 	}).Info("package installation plan")
+	log.Infof("Library path to install packages: %s\n", cfg.Library)
 
 	if toInstall > 0 && toInstall != totalPackagesRequired {
 		// log which packages to install, but only if doing an incremental install
