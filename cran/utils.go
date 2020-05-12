@@ -63,9 +63,12 @@ func SupportsCranBinary() bool {
 		return false
 	}
 }
-func cranBinaryURL() string {
+func cranBinaryURL(rv RVersion) string {
 	switch runtime.GOOS {
 	case "darwin":
+		if rv.Major == 4 {
+			return "macosx"
+		}
 		return "macosx/el-capitan"
 	case "windows":
 		return "windows"

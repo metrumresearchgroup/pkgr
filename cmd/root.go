@@ -28,7 +28,7 @@ import (
 )
 
 // VERSION is the current pkgr version
-var VERSION = "1.0.1"
+var VERSION = "1.0.2"
 
 
 var fs afero.Fs
