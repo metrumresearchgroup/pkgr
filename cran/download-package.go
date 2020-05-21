@@ -153,7 +153,7 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 	} else {
 		pkgdl = fmt.Sprintf("%s/bin/%s/contrib/%s/%s",
 			strings.TrimSuffix(d.Config.Repo.URL, "/"),
-			cranBinaryURL(),
+			cranBinaryURL(rv),
 			rv.ToString(),
 			filepath.Base(dest))
 	}
