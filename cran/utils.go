@@ -4,10 +4,17 @@ import (
 	"crypto/md5"
 	"fmt"
 	"io"
+	"log"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 )
+
+const supportedDistros := map[string]bool {
+	"bionic": true,
+	"xenial": true,
+}
 
 // these are also duplicated in rcmd for now
 func binaryName(pkg, version string) string {
@@ -46,6 +53,8 @@ func DefaultType() SourceType {
 		return Binary
 	case "windows":
 		return Binary
+	case "linux":
+
 	default:
 		return Source
 	}
@@ -59,10 +68,34 @@ func SupportsCranBinary() bool {
 		return true
 	case "windows":
 		return true
+	case "linux":
+		return linuxSupportsBinary()
 	default:
 		return false
 	}
 }
+
+// LinuxSupportsBinary tells if a distro supports binaries
+// namely, Ubuntu 16.04 and 18.04
+func linuxSupportsBinary() bool {
+	codename := getLinuxCodename()
+	if supportedDistros[codename] {
+		return true
+	}
+	log.Info("The running version of Linux does not support binary packages")
+	return false
+}
+
+func getLinuxCodename() string {
+	out, err := exec.Command("lsb_release", "-cs").Output()
+	if err != nil {
+		codename := strings.TrimSuffix(string(out), "\n")
+		return codename
+	}
+	log.Warn("lsb_release is not installed and is needed for binary detection")
+	return ""
+}
+
 func cranBinaryURL(rv RVersion) string {
 	switch runtime.GOOS {
 	case "darwin":
@@ -72,6 +105,8 @@ func cranBinaryURL(rv RVersion) string {
 		return "macosx/el-capitan"
 	case "windows":
 		return "windows"
+	case "linux":
+		return getLinuxCodename()
 	default:
 		fmt.Println("platform not supported for binary detection")
 		return ""
