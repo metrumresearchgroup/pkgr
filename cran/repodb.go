@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -92,7 +93,12 @@ func GetPackagesFileURL(r RepoURL, st SourceType, rv RVersion) string {
 		return fmt.Sprintf("%s/src/contrib/PACKAGES", strings.TrimSuffix(r.URL, "/"))
 		// TODO: fix so isn't hard coded to 3.5 binaries
 	}
-	return fmt.Sprintf("%s/bin/%s/contrib/%s/PACKAGES", strings.TrimSuffix(r.URL, "/"), cranBinaryURL(rv), rv.ToString())
+	switch runtime.GOOS {
+		case "linux":
+			return fmt.Sprintf("%s/__linux__/%s/PACKAGES", strings.TrimSuffix(r.URL, "/"), cranBinaryURL(rv))
+		default:
+			return fmt.Sprintf("%s/bin/%s/contrib/%s/PACKAGES", strings.TrimSuffix(r.URL, "/"), cranBinaryURL(rv), rv.ToString())
+	}
 }
 
 // FetchPackages gets the packages for  RepoDb

@@ -4,14 +4,15 @@ import (
 	"crypto/md5"
 	"fmt"
 	"io"
-	"log"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
-const supportedDistros := map[string]bool {
+var supportedDistros = map[string]bool {
 	"bionic": true,
 	"xenial": true,
 }
@@ -54,7 +55,12 @@ func DefaultType() SourceType {
 	case "windows":
 		return Binary
 	case "linux":
-
+		fmt.Println("SupportsCranBinary: %s\n")
+		if SupportsCranBinary() {
+			return Binary
+		} else {
+			return Source
+		}
 	default:
 		return Source
 	}
@@ -69,7 +75,11 @@ func SupportsCranBinary() bool {
 	case "windows":
 		return true
 	case "linux":
-		return linuxSupportsBinary()
+		if linuxSupportsBinary() {
+			return true
+		} else {
+			return false
+		}
 	default:
 		return false
 	}
@@ -89,11 +99,11 @@ func linuxSupportsBinary() bool {
 func getLinuxCodename() string {
 	out, err := exec.Command("lsb_release", "-cs").Output()
 	if err != nil {
-		codename := strings.TrimSuffix(string(out), "\n")
-		return codename
+		log.Warn("lsb_release is not installed and is needed for binary detection")
+		return ""
 	}
-	log.Warn("lsb_release is not installed and is needed for binary detection")
-	return ""
+	codename := strings.TrimSuffix(string(out), "\n")
+	return codename
 }
 
 func cranBinaryURL(rv RVersion) string {
