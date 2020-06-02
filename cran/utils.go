@@ -1,16 +1,34 @@
 package cran
 
 import (
+	"bytes"
 	"crypto/md5"
 	"fmt"
 	"io"
-	"os/exec"
+	"io/ioutil"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+
 )
+
+type OsRelease struct {
+	Name            string `mapstructure:"NAME"`
+	Version         string `mapstructure:"VERSION"`
+	Id              string `mapstructure:"ID"`
+	IdLike          string `mapstructure:"ID_LIKE"`
+	LtsRelease      string
+	PrettyName      string `mapstructure:"PRETTY_NAME"`
+	VersionId       string `mapstructure:"VERSION_ID"`
+	VersionCodename string `mapstructure:"VERSION_CODENAME"`
+	UbuntuCodename  string `mapstructure:"UBUNTU_CODENAME"`
+}
+
+var osRelease *OsRelease
 
 var supportedDistros = map[string]bool {
 	"bionic": true,
@@ -55,12 +73,7 @@ func DefaultType() SourceType {
 	case "windows":
 		return Binary
 	case "linux":
-		fmt.Println("SupportsCranBinary: %s\n")
-		if SupportsCranBinary() {
-			return Binary
-		} else {
-			return Source
-		}
+		return Source
 	default:
 		return Source
 	}
@@ -97,13 +110,13 @@ func linuxSupportsBinary() bool {
 }
 
 func getLinuxCodename() string {
-	out, err := exec.Command("lsb_release", "-cs").Output()
-	if err != nil {
-		log.Warn("lsb_release is not installed and is needed for binary detection")
-		return ""
-	}
-	codename := strings.TrimSuffix(string(out), "\n")
-	return codename
+	ReadOsRelease()
+	return osRelease.VersionCodename
+}
+
+func getLinuxLtsRelease() string {
+	ReadOsRelease()
+	return osRelease.LtsRelease
 }
 
 func cranBinaryURL(rv RVersion) string {
@@ -116,7 +129,7 @@ func cranBinaryURL(rv RVersion) string {
 	case "windows":
 		return "windows"
 	case "linux":
-		return getLinuxCodename()
+		return fmt.Sprintf("linux/ubuntu/%s/%s", getLinuxCodename(), getLinuxLtsRelease())
 	default:
 		fmt.Println("platform not supported for binary detection")
 		return ""
@@ -131,4 +144,35 @@ func RepoURLHash(r RepoURL) string {
 	io.WriteString(h, r.URL)
 	urlHash := fmt.Sprintf("%x", h.Sum(nil))
 	return r.Name + "-" + urlHash[:12]
+}
+
+func ReadOsRelease() {
+	if osRelease != nil {
+		// Already cached
+		return
+	}
+	//os-release doesn't consistently quote variables, so we need to manipulate it a little bit
+	configData, err := ioutil.ReadFile("/etc/os-release")
+
+	//Find all unquoted strings and quote them
+	re := regexp.MustCompile(`(.*?=)([^"].*)`)
+	fixedConfig := re.ReplaceAll(configData, []byte("${1}\"${2}\""))
+
+	//Let viper map it in otherwise it defaults to yaml
+	viper.SetConfigType("toml")
+	err = viper.ReadConfig(bytes.NewReader(fixedConfig))
+
+	if err != nil {
+		log.Fatal("%v", err)
+	}
+
+	err = viper.Unmarshal(osRelease)
+
+	if err != nil {
+		log.Fatal("%v\n", err)
+	}
+
+	ltsReleaseMatcher := regexp.MustCompile(`^\d.*?\.(\d+)\s.*`)
+	ltsRelease := ltsReleaseMatcher.ReplaceAllString(osRelease.Version, "$1")
+	osRelease.LtsRelease = ltsRelease
 }

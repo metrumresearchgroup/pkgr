@@ -152,19 +152,11 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 		}
 		pkgdl = fmt.Sprintf("%s/src/contrib/%s", strings.TrimSuffix(d.Config.Repo.URL, "/"), filepath.Base(dest))
 	} else {
-		switch runtime.GOOS {
-			case "linux":
-				pkgdl = fmt.Sprintf("%s/__linux__/%s/%s",
-					strings.TrimSuffix(d.Config.Repo.URL, "/"),
-					cranBinaryURL(rv),
-					filepath.Base(dest))
-			default:
-				pkgdl = fmt.Sprintf("%s/bin/%s/contrib/%s/%s",
-					strings.TrimSuffix(d.Config.Repo.URL, "/"),
-					cranBinaryURL(rv),
-					rv.ToString(),
-					filepath.Base(dest))
-		}
+		pkgdl = fmt.Sprintf("%s/bin/%s/contrib/%s/%s",
+			strings.TrimSuffix(d.Config.Repo.URL, "/"),
+			cranBinaryURL(rv),
+			rv.ToString(),
+			filepath.Base(dest))
 	}
 
 	log.WithField("package", d.Package.Package).Info("downloading package ")
