@@ -14,7 +14,8 @@ type PkgSettingsMap map[string]PkgConfig
 // RepoConfig provides information about custom repository settings
 type RepoConfig struct {
 	//Suggests bool
-	Type string `yaml:"Type,omitempty"`
+	Type     string `yaml:"Type,omitempty"`
+	RepoType string `yaml:"RepoType,omitempty"`
 }
 
 // LogConfig stores information for logging purposes

@@ -85,3 +85,15 @@ type OutdatedPackage struct {
 	NewVersion string
 }
 
+type OsRelease struct {
+	Name            string `mapstructure:"NAME"`
+	Version         string `mapstructure:"VERSION"`
+	Id              string `mapstructure:"ID"`
+	IdLike          string `mapstructure:"ID_LIKE"`
+	LtsRelease      string
+	PrettyName      string `mapstructure:"PRETTY_NAME"`
+	VersionId       string `mapstructure:"VERSION_ID"`
+	VersionCodename string `mapstructure:"VERSION_CODENAME"`
+	UbuntuCodename  string `mapstructure:"UBUNTU_CODENAME"`
+}
+
