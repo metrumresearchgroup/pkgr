@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -29,6 +28,7 @@ func (s SourceType) String() string {
 	}
 	return "source"
 }
+
 
 // Constraints on package deps
 // Least to most constraining

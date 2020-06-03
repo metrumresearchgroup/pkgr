@@ -93,7 +93,7 @@ type OsRelease struct {
 	LtsRelease      string
 	PrettyName      string `mapstructure:"PRETTY_NAME"`
 	VersionId       string `mapstructure:"VERSION_ID"`
-	VersionCodename string `mapstructure:"VERSION_CODENAME"`
-	UbuntuCodename  string `mapstructure:"UBUNTU_CODENAME"`
+	VersionCodename *string `mapstructure:"VERSION_CODENAME"`
+	UbuntuCodename  *string `mapstructure:"UBUNTU_CODENAME"`
 }
 
