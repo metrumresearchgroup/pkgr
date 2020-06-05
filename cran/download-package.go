@@ -16,6 +16,24 @@ import (
 	"github.com/spf13/afero"
 )
 
+type RepoType int
+
+func (r RepoType) String() string {
+	if r == MPN {
+		return "mpn"
+	}
+	if r == RSPM {
+		return "rspm"
+	}
+	return "cran"
+}
+
+const (
+	CRAN = 10
+	MPN = 11
+	RSPM = 12
+)
+
 // SourceType represents the type of package to download
 type SourceType int
 

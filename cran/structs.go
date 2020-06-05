@@ -32,6 +32,8 @@ type InstallConfig struct {
 // RepoConfig contains settings for a repo
 type RepoConfig struct {
 	DefaultSourceType SourceType
+	RepoType          string
+	RepoSuffix        string
 }
 
 //PkgConfig stores configuration information about a given package

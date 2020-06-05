@@ -70,6 +70,7 @@ func plan(cmd *cobra.Command, args []string) error {
 			fmt.Println(deps)
 		}
 	}
+	log.Fatal("%#v\n", cfg)
 	return nil
 }
 
@@ -125,12 +126,20 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	st := cran.DefaultType()
 	cic := cran.NewInstallConfig()
 	for rn, val := range cfg.Customizations.Repos {
+		rc := cran.RepoConfig{}
 		if strings.EqualFold(val.Type, "binary") {
-			cic.Repos[rn] = cran.RepoConfig{DefaultSourceType: cran.Binary}
+			rc.DefaultSourceType = cran.Binary
 		}
 		if strings.EqualFold(val.Type, "source") {
-			cic.Repos[rn] = cran.RepoConfig{DefaultSourceType: cran.Source}
+			rc.DefaultSourceType = cran.Source
 		}
+		if val.RepoType != "" {
+			rc.RepoType = val.RepoType
+		}
+		if val.RepoSuffix != "" {
+			rc.RepoSuffix = val.RepoSuffix
+		}
+		cic.Repos[rn] = rc
 	}
 	pkgNexus, err := cran.NewPkgDb(repos, st, cic, rv)
 	if err != nil {

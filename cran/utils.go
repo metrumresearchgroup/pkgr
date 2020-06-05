@@ -56,7 +56,6 @@ func DefaultType() SourceType {
 	}
 }
 
-
 // SupportsCranBinary tells if a platform supports binaries
 // namely, windows/mac to, but linux does not
 func SupportsCranBinary() bool {
@@ -79,6 +78,7 @@ func SupportsCranBinary() bool {
 // LinuxSupportsBinary tells if a distro supports binaries
 // namely, Ubuntu 16.04 and 18.04
 func linuxSupportsBinary() bool {
+	ReadOsRelease()
 	if supportedDistros[*osRelease.VersionCodename] || supportedDistros[osRelease.Id] {
 		return true
 	}
