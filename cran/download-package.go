@@ -169,6 +169,11 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 			log.WithField("package", d.Package.Package).Debug("CRAN binary not supported, downloading source instead ")
 		}
 		pkgdl = fmt.Sprintf("%s/src/contrib/%s", strings.TrimSuffix(d.Config.Repo.URL, "/"), filepath.Base(dest))
+	} else if (d.Config.Repo.Suffix != "") {
+		pkgdl = fmt.Sprintf("%s/bin/%s/%s",
+			strings.TrimSuffix(d.Config.Repo.URL, "/"),
+			d.Config.Repo.Suffix,
+			filepath.Base(dest))
 	} else {
 		pkgdl = fmt.Sprintf("%s/bin/%s/contrib/%s/%s",
 			strings.TrimSuffix(d.Config.Repo.URL, "/"),

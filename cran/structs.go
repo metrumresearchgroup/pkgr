@@ -11,8 +11,9 @@ import (
 // CRAN = https://cran.rstudio.com would be
 // RepoUrl{URL: "https://cran.rstudio.com", Name: "CRAN"}
 type RepoURL struct {
-	URL  string
-	Name string
+	URL    string
+	Name   string
+	Suffix string
 }
 
 // RepoDb represents a Db
@@ -21,6 +22,7 @@ type RepoDb struct {
 	Time                     time.Time
 	Repo                     RepoURL
 	DefaultSourceType        SourceType
+	RepoSuffix				 string
 }
 
 // InstallConfig contains custom settings for a full install

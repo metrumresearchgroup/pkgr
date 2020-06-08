@@ -35,6 +35,11 @@ func NewRepoDb(url RepoURL, dst SourceType, rc RepoConfig, rv RVersion) (*RepoDb
 		repoDatabasePointer.DescriptionsBySourceType[Binary] = make(map[string]desc.Desc)
 	}
 
+	if rc.RepoSuffix != "" {
+		repoDatabasePointer.RepoSuffix = rc.RepoSuffix
+		url.Suffix = rc.RepoSuffix
+	}
+
 	repoDatabasePointer.DescriptionsBySourceType[Source] = make(map[string]desc.Desc)
 
 	return repoDatabasePointer, repoDatabasePointer.FetchPackages(rv)
@@ -87,12 +92,15 @@ func (repoDb *RepoDb) Hash(rVersion string) string {
 }
 
 // GetPackagesFileURL provides the base URL for a package in a cran-like repo given the source type and version of R
-func GetPackagesFileURL(r RepoURL, st SourceType, rv RVersion) string {
+func GetPackagesFileURL(r *RepoDb, st SourceType, rv RVersion) string {
 	if st == Source {
-		return fmt.Sprintf("%s/src/contrib/PACKAGES", strings.TrimSuffix(r.URL, "/"))
+		return fmt.Sprintf("%s/src/contrib/PACKAGES", strings.TrimSuffix(r.Repo.URL, "/"))
 		// TODO: fix so isn't hard coded to 3.5 binaries
 	}
-	return fmt.Sprintf("%s/bin/%s/contrib/%s/PACKAGES", strings.TrimSuffix(r.URL, "/"), cranBinaryURL(rv), rv.ToString())
+	if r.RepoSuffix != "" {
+		return fmt.Sprintf("%s/bin/%s/PACKAGES", strings.TrimSuffix(r.Repo.URL, "/"), r.RepoSuffix)
+	}
+	return fmt.Sprintf("%s/bin/%s/contrib/%s/PACKAGES", strings.TrimSuffix(r.Repo.URL, "/"), cranBinaryURL(rv), rv.ToString())
 }
 
 // FetchPackages gets the packages for  RepoDb
@@ -124,7 +132,7 @@ func (repoDb *RepoDb) FetchPackages(rVersion RVersion) error {
 	for sourceType := range repoDb.DescriptionsBySourceType {
 		go func(st SourceType) {
 			descriptionMap := make(map[string]desc.Desc)
-			pkgURL := GetPackagesFileURL(repoDb.Repo, st, rVersion)
+			pkgURL := GetPackagesFileURL(repoDb, st, rVersion)
 
 			var body []byte
 
