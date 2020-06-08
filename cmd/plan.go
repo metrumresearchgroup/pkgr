@@ -70,6 +70,7 @@ func plan(cmd *cobra.Command, args []string) error {
 			fmt.Println(deps)
 		}
 	}
+	log.Fatal("%#v\n", cfg)
 	return nil
 }
 
