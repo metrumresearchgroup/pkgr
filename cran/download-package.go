@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -15,6 +14,24 @@ import (
 	"github.com/dpastoor/goutils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
+)
+
+type RepoType int
+
+func (r RepoType) String() string {
+	if r == MPN {
+		return "mpn"
+	}
+	if r == RSPM {
+		return "rspm"
+	}
+	return "cran"
+}
+
+const (
+	CRAN = 10
+	MPN = 11
+	RSPM = 12
 )
 
 // SourceType represents the type of package to download
@@ -29,6 +46,7 @@ func (s SourceType) String() string {
 	}
 	return "source"
 }
+
 
 // Constraints on package deps
 // Least to most constraining

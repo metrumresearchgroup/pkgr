@@ -31,7 +31,7 @@ func NewRepoDb(url RepoURL, dst SourceType, rc RepoConfig, rv RVersion) (*RepoDb
 		repoDatabasePointer.DefaultSourceType = rc.DefaultSourceType
 	}
 
-	if SupportsCranBinary() {
+	if SupportsCranBinary() && rc.RepoType == MPN {
 		repoDatabasePointer.DescriptionsBySourceType[Binary] = make(map[string]desc.Desc)
 	}
 
@@ -137,7 +137,6 @@ func (repoDb *RepoDb) FetchPackages(rVersion RVersion) error {
 						Err:                   fmt.Errorf("failed fetching PACKAGES file from %s, with status %s", pkgURL, res.Status)}
 					return
 				}
-
 				if err != nil {
 					err = fmt.Errorf("problem getting packages from url %s: %s", pkgURL, err)
 					downloadChannel <- downloadDatabase{St: st, AvailableDescriptions: descriptionMap, Err: err}

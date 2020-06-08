@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"path/filepath"
 	"regexp"
 	"runtime"
 	"strings"
@@ -21,6 +20,7 @@ var osRelease *OsRelease
 var supportedDistros = map[string]bool {
 	"bionic": true,
 	"xenial": true,
+	"centos": false,
 }
 
 // these are also duplicated in rcmd for now
@@ -29,23 +29,12 @@ func binaryName(pkg, version string) string {
 	case "darwin":
 		return fmt.Sprintf("%s_%s.tgz", pkg, version)
 	case "linux":
+		if strings.Contains(osRelease.IdLike, "rhel") {
+			return fmt.Sprintf("%s_%s_R_x86_64-redhat-linux-gnu.tar.gz", pkg, version)
+		}
 		return fmt.Sprintf("%s_%s_R_x86_64-pc-linux-gnu.tar.gz", pkg, version)
 	case "windows":
 		return fmt.Sprintf("%s_%s.zip", pkg, version)
-	default:
-		fmt.Println("platform not supported for binary detection")
-		return ""
-	}
-}
-
-func binaryExt(p string) string {
-	switch runtime.GOOS {
-	case "darwin":
-		return strings.Replace(filepath.Base(p), "tar.gz", "tgz", 1)
-	case "linux":
-		return strings.Replace(filepath.Base(p), ".tar.gz", "_R_x86_64-pc-linux-gnu.tar.gz", 1)
-	case "windows":
-		return strings.Replace(filepath.Base(p), "tar.gz", "zip", 1)
 	default:
 		fmt.Println("platform not supported for binary detection")
 		return ""
@@ -89,15 +78,15 @@ func SupportsCranBinary() bool {
 // LinuxSupportsBinary tells if a distro supports binaries
 // namely, Ubuntu 16.04 and 18.04
 func linuxSupportsBinary() bool {
-	codename := getLinuxCodename()
-	if supportedDistros[codename] {
+	ReadOsRelease()
+	if supportedDistros[*osRelease.VersionCodename] || supportedDistros[osRelease.Id] {
 		return true
 	}
 	log.Info("The running version of Linux does not support binary packages")
 	return false
 }
 
-func getLinuxCodename() string {
+func getLinuxCodename() *string {
 	ReadOsRelease()
 	return osRelease.VersionCodename
 }
@@ -105,6 +94,13 @@ func getLinuxCodename() string {
 func getLinuxLtsRelease() string {
 	ReadOsRelease()
 	return osRelease.LtsRelease
+}
+
+func getLinuxBinaryUri() string {
+	if osRelease.VersionCodename != nil {
+		return fmt.Sprintf("%s/%s/%s", osRelease.Id, *osRelease.VersionCodename, osRelease.LtsRelease)
+	}
+	return fmt.Sprintf("%s/%s", osRelease.Id, osRelease.LtsRelease)
 }
 
 func cranBinaryURL(rv RVersion) string {
@@ -117,7 +113,7 @@ func cranBinaryURL(rv RVersion) string {
 	case "windows":
 		return "windows"
 	case "linux":
-		return fmt.Sprintf("linux/ubuntu/%s/%s", getLinuxCodename(), getLinuxLtsRelease())
+		return fmt.Sprintf("linux/%s", getLinuxBinaryUri())
 	default:
 		fmt.Println("platform not supported for binary detection")
 		return ""
@@ -147,20 +143,23 @@ func ReadOsRelease() {
 	fixedConfig := re.ReplaceAll(configData, []byte("${1}\"${2}\""))
 
 	//Let viper map it in otherwise it defaults to yaml
-	viper.SetConfigType("toml")
-	err = viper.ReadConfig(bytes.NewReader(fixedConfig))
-
+	//Don't pollute the global viper instance or we'll segfault later trying to read pkgr.yml
+	vp := viper.New()
+	vp.SetConfigType("toml")
+	err = vp.ReadConfig(bytes.NewReader(fixedConfig))
 	if err != nil {
 		log.Fatal("%v", err)
 	}
 
-	err = viper.Unmarshal(osRelease)
+	err = vp.Unmarshal(&osRelease)
 
 	if err != nil {
 		log.Fatal("%v\n", err)
 	}
 
-	ltsReleaseMatcher := regexp.MustCompile(`^\d.*?\.(\d+)\s.*`)
+	// simplify this so it also works on EL distros
+	ltsReleaseMatcher := regexp.MustCompile(`^.*?(\d+)\s.*`)
+
 	ltsRelease := ltsReleaseMatcher.ReplaceAllString(osRelease.Version, "$1")
 	osRelease.LtsRelease = ltsRelease
 }
