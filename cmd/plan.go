@@ -126,17 +126,18 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	cic := cran.NewInstallConfig()
 	for rn, val := range cfg.Customizations.Repos {
 		rc := cran.RepoConfig{}
+		if strings.EqualFold(val.RepoType, "MPN") {
+			rc.RepoType = cran.MPN
+			rc.DefaultSourceType = cran.Binary
+		}
+		if strings.EqualFold(val.RepoType, "RSPM") {
+			rc.RepoType = cran.RSPM
+		}
 		if strings.EqualFold(val.Type, "binary") {
 			rc.DefaultSourceType = cran.Binary
 		}
 		if strings.EqualFold(val.Type, "source") {
 			rc.DefaultSourceType = cran.Source
-		}
-		if strings.EqualFold(val.RepoType, "MPN") {
-			rc.RepoType = cran.MPN
-		}
-		if strings.EqualFold(val.RepoType, "RSPM") {
-			rc.RepoType = cran.RSPM
 		}
 		if val.RepoSuffix != "" {
 			rc.RepoSuffix = val.RepoSuffix
