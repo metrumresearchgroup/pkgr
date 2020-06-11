@@ -164,10 +164,12 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 	var pkgdl string
 	if d.Config.Type == Source {
 		pkgdl = fmt.Sprintf("%s/src/contrib/%s", strings.TrimSuffix(d.Config.Repo.URL, "/"), filepath.Base(dest))
+
 	} else if d.Config.Repo.Suffix != "" {
 		pkgdl = fmt.Sprintf("%s/bin/%s/%s",
 			strings.TrimSuffix(d.Config.Repo.URL, "/"),
 			d.Config.Repo.Suffix,
+			rv.toString(),
 			filepath.Base(dest))
 	} else {
 		pkgdl = fmt.Sprintf("%s/bin/%s/contrib/%s/%s",
@@ -175,6 +177,7 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 			cranBinaryURL(rv),
 			rv.ToString(),
 			filepath.Base(dest))
+		log.Info(pkgdl)
 	}
 
 	log.WithField("package", d.Package.Package).Info("downloading package ")
