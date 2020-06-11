@@ -65,11 +65,12 @@ func SupportsCranBinary() bool {
 	case "windows":
 		return true
 	case "linux":
-		if linuxSupportsBinary() {
-			return true
-		} else {
-			return false
-		}
+		return false // CRAN does not support linux binaries.
+		//if linuxSupportsBinary() {
+		//	return true
+		//} else {
+		//	return false
+		//}
 	default:
 		return false
 	}
@@ -148,13 +149,13 @@ func ReadOsRelease() {
 	vp.SetConfigType("toml")
 	err = vp.ReadConfig(bytes.NewReader(fixedConfig))
 	if err != nil {
-		log.Fatal("%v", err)
+		log.Fatalf("%v", err)
 	}
 
 	err = vp.Unmarshal(&osRelease)
 
 	if err != nil {
-		log.Fatal("%v\n", err)
+		log.Fatalf("%v\n", err)
 	}
 
 	// simplify this so it also works on EL distros
