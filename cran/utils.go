@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/md5"
 	"fmt"
+	"github.com/pelletier/go-toml"
 	"io"
 	"io/ioutil"
 	"regexp"
@@ -147,14 +148,10 @@ func ReadOsRelease() {
 	vp := viper.New()
 	vp.SetConfigType("toml")
 	err = vp.ReadConfig(bytes.NewReader(fixedConfig))
+	osRelease := OsRelease{}
+	err = toml.Unmarshal(fixedConfig, &osRelease)
 	if err != nil {
 		log.Fatal("%v", err)
-	}
-
-	err = vp.Unmarshal(&osRelease)
-
-	if err != nil {
-		log.Fatal("%v\n", err)
 	}
 
 	// simplify this so it also works on EL distros
