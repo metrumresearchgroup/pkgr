@@ -111,6 +111,9 @@ func getLibraryPath(lockfileType string, rpath string, rversion cran.RVersion, p
 	case "pkgr":
 	default:
 	}
+	if library == "" {
+		log.Fatal("must specify either a Lockfile Type or  Library path")
+	}
 	return library
 }
 

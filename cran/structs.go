@@ -11,8 +11,9 @@ import (
 // CRAN = https://cran.rstudio.com would be
 // RepoUrl{URL: "https://cran.rstudio.com", Name: "CRAN"}
 type RepoURL struct {
-	URL  string
-	Name string
+	URL    string
+	Name   string
+	Suffix string
 }
 
 // RepoDb represents a Db
@@ -21,6 +22,7 @@ type RepoDb struct {
 	Time                     time.Time
 	Repo                     RepoURL
 	DefaultSourceType        SourceType
+	RepoSuffix				 string
 }
 
 // InstallConfig contains custom settings for a full install
@@ -32,6 +34,8 @@ type InstallConfig struct {
 // RepoConfig contains settings for a repo
 type RepoConfig struct {
 	DefaultSourceType SourceType
+	RepoType          RepoType
+	RepoSuffix        string
 }
 
 //PkgConfig stores configuration information about a given package
@@ -83,5 +87,17 @@ type OutdatedPackage struct {
 	Package    string
 	OldVersion string
 	NewVersion string
+}
+
+type OsRelease struct {
+	Name            string `mapstructure:"NAME"`
+	Version         string `mapstructure:"VERSION"`
+	Id              string `mapstructure:"ID"`
+	IdLike          string `mapstructure:"ID_LIKE"`
+	LtsRelease      string
+	PrettyName      string `mapstructure:"PRETTY_NAME"`
+	VersionId       string `mapstructure:"VERSION_ID"`
+	VersionCodename *string `mapstructure:"VERSION_CODENAME"`
+	UbuntuCodename  *string `mapstructure:"UBUNTU_CODENAME"`
 }
 

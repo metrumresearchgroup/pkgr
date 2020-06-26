@@ -16,6 +16,24 @@ import (
 	"github.com/spf13/afero"
 )
 
+type RepoType int
+
+func (r RepoType) String() string {
+	if r == MPN {
+		return "mpn"
+	}
+	if r == RSPM {
+		return "rspm"
+	}
+	return "cran"
+}
+
+const (
+	CRAN = 10
+	MPN  = 11
+	RSPM = 12
+)
+
 // SourceType represents the type of package to download
 type SourceType int
 
@@ -144,18 +162,22 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 		}, nil
 	}
 	var pkgdl string
-	if d.Config.Type == Source || !SupportsCranBinary() {
-		d.Config.Type = Source // in case was originally set to binary
-		if !SupportsCranBinary() {
-			log.WithField("package", d.Package.Package).Debug("CRAN binary not supported, downloading source instead ")
-		}
+	if d.Config.Type == Source {
 		pkgdl = fmt.Sprintf("%s/src/contrib/%s", strings.TrimSuffix(d.Config.Repo.URL, "/"), filepath.Base(dest))
+	} else if (d.Config.Repo.Suffix != "") {
+		pkgdl = fmt.Sprintf("%s/bin/%s/%s/contrib/%s/%s",
+			strings.TrimSuffix(d.Config.Repo.URL, "/"),
+			cranBinaryURL(rv, SuffixUri),
+			d.Config.Repo.Suffix,
+			rv.ToString(),
+			filepath.Base(dest))
 	} else {
 		pkgdl = fmt.Sprintf("%s/bin/%s/contrib/%s/%s",
 			strings.TrimSuffix(d.Config.Repo.URL, "/"),
-			cranBinaryURL(),
+			cranBinaryURL(rv),
 			rv.ToString(),
 			filepath.Base(dest))
+		log.Info(pkgdl)
 	}
 
 	log.WithField("package", d.Package.Package).Info("downloading package ")

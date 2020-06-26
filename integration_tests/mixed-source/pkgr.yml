@@ -1,16 +1,12 @@
 Version: 1
 # top level packages
 Packages:
-  - rmarkdown
-  - shiny
-  - devtools
-  - pmplots
-  #- mrgsolve
-
+- R6
+- pillar
+- tibble
 # any repositories, order matters
 Repos:
-  - r_validated: "https://metrumresearchgroup.github.io/r_validated"
-  - CRAN-Micro: "https://cran.microsoft.com/snapshot/2018-11-18"
+  - MPN: "https://mpn.metworx.com/snapshots/stable/2020-06-08"
   - CRAN: "https://cran.rstudio.com"
 
 Library: "test-library"
@@ -22,14 +18,11 @@ Logging:
 
 Customizations:
   Packages:
-    - devtools:
+    - R6:
         Type: source
-    - pmplots:
-        Type: source
-    - shiny:
+    - tibble:
         Repo: CRAN
   Repos:
-    - CRAN-Micro:
+    - CRAN:
         Type: source
-    - r_validated:
-        Type: source
+

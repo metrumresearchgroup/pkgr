@@ -125,12 +125,24 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	st := cran.DefaultType()
 	cic := cran.NewInstallConfig()
 	for rn, val := range cfg.Customizations.Repos {
+		rc := cran.RepoConfig{}
+		if strings.EqualFold(val.RepoType, "MPN") {
+			rc.RepoType = cran.MPN
+			rc.DefaultSourceType = cran.Binary
+		}
+		if strings.EqualFold(val.RepoType, "RSPM") {
+			rc.RepoType = cran.RSPM
+		}
 		if strings.EqualFold(val.Type, "binary") {
-			cic.Repos[rn] = cran.RepoConfig{DefaultSourceType: cran.Binary}
+			rc.DefaultSourceType = cran.Binary
 		}
 		if strings.EqualFold(val.Type, "source") {
-			cic.Repos[rn] = cran.RepoConfig{DefaultSourceType: cran.Source}
+			rc.DefaultSourceType = cran.Source
 		}
+		if val.RepoSuffix != "" {
+			rc.RepoSuffix = val.RepoSuffix
+		}
+		cic.Repos[rn] = rc
 	}
 	pkgNexus, err := cran.NewPkgDb(repos, st, cic, rv)
 	if err != nil {
@@ -138,7 +150,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	}
 	log.Infoln("Default package installation type: ", st.String())
 	for _, db := range pkgNexus.Db {
-		log.Infoln(fmt.Sprintf("%v:%v (binary:source) packages available in for %s from %s", len(db.DescriptionsBySourceType[st]), len(db.DescriptionsBySourceType[cran.Source]), db.Repo.Name, db.Repo.URL))
+		log.Infoln(fmt.Sprintf("%v:%v (binary:source) packages available in for %s from %s", len(db.DescriptionsBySourceType[cran.Binary]), len(db.DescriptionsBySourceType[cran.Source]), db.Repo.Name, db.Repo.URL))
 	}
 
 	dependencyConfigurations := gpsr.NewDefaultInstallDeps()
@@ -254,6 +266,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		"to_install": toInstall,
 		"to_update":  pkgsToUpdateCount,
 	}).Info("package installation plan")
+	log.Infof("Library path to install packages: %s\n", cfg.Library)
 
 	if toInstall > 0 && toInstall != totalPackagesRequired {
 		// log which packages to install, but only if doing an incremental install
