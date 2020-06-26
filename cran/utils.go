@@ -12,7 +12,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-
 )
 
 type BinaryUriType int
@@ -24,7 +23,7 @@ const (
 
 var osRelease *OsRelease
 
-var supportedDistros = map[string]bool {
+var supportedDistros = map[string]bool{
 	"bionic": true,
 	"xenial": true,
 	"centos": false,
@@ -63,16 +62,16 @@ func DefaultType() SourceType {
 	}
 }
 
-// SupportsCranBinary tells if a platform supports binaries
+// SupportsBinary tells if a platform supports binaries
 // namely, windows/mac to, but linux does not
-func SupportsCranBinary() bool {
+func SupportsBinary(rt RepoType) bool {
 	switch runtime.GOOS {
 	case "darwin":
 		return true
 	case "windows":
 		return true
 	case "linux":
-		if linuxSupportsBinary() {
+		if linuxSupportsBinary() && rt == MPN {
 			return true
 		} else {
 			return false

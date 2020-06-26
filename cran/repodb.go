@@ -31,7 +31,7 @@ func NewRepoDb(url RepoURL, dst SourceType, rc RepoConfig, rv RVersion) (*RepoDb
 		repoDatabasePointer.DefaultSourceType = rc.DefaultSourceType
 	}
 
-	if SupportsCranBinary() && rc.RepoType == MPN {
+	if SupportsBinary(rc.RepoType) {
 		repoDatabasePointer.DescriptionsBySourceType[Binary] = make(map[string]desc.Desc)
 	}
 

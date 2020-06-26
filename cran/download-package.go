@@ -30,7 +30,7 @@ func (r RepoType) String() string {
 
 const (
 	CRAN = 10
-	MPN = 11
+	MPN  = 11
 	RSPM = 12
 )
 
@@ -46,7 +46,6 @@ func (s SourceType) String() string {
 	}
 	return "source"
 }
-
 
 // Constraints on package deps
 // Least to most constraining
@@ -163,11 +162,7 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 		}, nil
 	}
 	var pkgdl string
-	if d.Config.Type == Source || !SupportsCranBinary() {
-		d.Config.Type = Source // in case was originally set to binary
-		if !SupportsCranBinary() {
-			log.WithField("package", d.Package.Package).Debug("CRAN binary not supported, downloading source instead ")
-		}
+	if d.Config.Type == Source {
 		pkgdl = fmt.Sprintf("%s/src/contrib/%s", strings.TrimSuffix(d.Config.Repo.URL, "/"), filepath.Base(dest))
 	} else if (d.Config.Repo.Suffix != "") {
 		pkgdl = fmt.Sprintf("%s/bin/%s/%s/contrib/%s/%s",
