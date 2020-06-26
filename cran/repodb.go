@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -97,7 +99,8 @@ func GetPackagesFileURL(r *RepoDb, st SourceType, rv RVersion) string {
 		return fmt.Sprintf("%s/src/contrib/PACKAGES", strings.TrimSuffix(r.Repo.URL, "/"))
 		// TODO: fix so isn't hard coded to 3.5 binaries
 	}
-	if r.RepoSuffix != "" {
+	if r.RepoSuffix != "" && runtime.GOOS == "linux" {
+		// reposuffix should only be noted if on linux
 		return fmt.Sprintf("%s/bin/%s/%s/contrib/%s/PACKAGES", strings.TrimSuffix(r.Repo.URL, "/"), cranBinaryURL(rv, SuffixUri), r.RepoSuffix, rv.ToString())
 	}
 	return fmt.Sprintf("%s/bin/%s/contrib/%s/PACKAGES", strings.TrimSuffix(r.Repo.URL, "/"), cranBinaryURL(rv), rv.ToString())
@@ -110,7 +113,17 @@ func (repoDb *RepoDb) FetchPackages(rVersion RVersion) error {
 	pkgdbFile := repoDb.GetRepoDbCacheFilePath(rVersion.ToFullString())
 
 	if fi, err := os.Stat(pkgdbFile); !os.IsNotExist(err) {
-		if fi.ModTime().Add(1*time.Hour).Unix() > time.Now().Unix() {
+		maxSecs := 3600
+		maxAge, ok := os.LookupEnv("R_AVAILABLE_PACKAGES_CACHE_CONTROL_MAX_AGE")
+		if ok {
+			ms, err := strconv.ParseInt(maxAge, 10, 0);
+			if err != nil {
+				log.Warnf("improper R_AVAILABLE_PACKAGES_CACHE_CONTROL_MAX_AGE set with error: %s, ignoring...", err)
+			} else {
+			 maxSecs = int(ms)
+			}
+		}
+		if fi.ModTime().Add(time.Duration(maxSecs)*time.Second).Unix() > time.Now().Unix() {
 			// only read if was cached in the last hour
 			return repoDb.Decode(pkgdbFile)
 		}
@@ -133,7 +146,7 @@ func (repoDb *RepoDb) FetchPackages(rVersion RVersion) error {
 		go func(st SourceType) {
 			descriptionMap := make(map[string]desc.Desc)
 			pkgURL := GetPackagesFileURL(repoDb, st, rVersion)
-
+			log.Debugf("packages database - type: %s, url: %s\n",st,  pkgURL)
 			var body []byte
 
 			if strings.HasPrefix(pkgURL, "http") {
