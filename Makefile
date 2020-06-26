@@ -3,14 +3,9 @@ LDFLAGS=-ldflags "-X main.buildTime=${BUILD}"
 MAKE_HOME=${PWD}
 TEST_HOME=${MAKE_HOME}/integration_tests
 
-export GOPATH=$(shell pwd)/go
-export GOBIN=$(shell pwd)/go/bin
-export PATH := $(PATH):${GOBIN}
-
 .PHONY: all ci clean install simple test-multiple log-test log-test-reset test-master test-master-reset test-mixed test-mixed-reset
 
 install:
-	mkdir -p go/
 	cd cmd/pkgr; go get; go install ${LDFLAGS}
 
 all: install test-simple
