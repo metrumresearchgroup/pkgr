@@ -7,6 +7,7 @@ require (
 	github.com/fatih/structtag v1.0.0
 	github.com/mholt/archiver/v3 v3.3.0
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/pelletier/go-toml v1.2.0
 	github.com/sajari/fuzzy v1.0.0
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/afero v1.2.2

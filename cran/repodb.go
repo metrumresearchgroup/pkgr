@@ -98,7 +98,7 @@ func GetPackagesFileURL(r *RepoDb, st SourceType, rv RVersion) string {
 		// TODO: fix so isn't hard coded to 3.5 binaries
 	}
 	if r.RepoSuffix != "" {
-		return fmt.Sprintf("%s/bin/%s/contrib/%s/PACKAGES", strings.TrimSuffix(r.Repo.URL, "/"), r.RepoSuffix, rv.toString())
+		return fmt.Sprintf("%s/bin/%s/%s/contrib/%s/PACKAGES", strings.TrimSuffix(r.Repo.URL, "/"), cranBinaryURL(rv, SuffixUri), r.RepoSuffix, rv.ToString())
 	}
 	return fmt.Sprintf("%s/bin/%s/contrib/%s/PACKAGES", strings.TrimSuffix(r.Repo.URL, "/"), cranBinaryURL(rv), rv.ToString())
 }

@@ -14,6 +14,13 @@ import (
 	"github.com/spf13/viper"
 )
 
+type BinaryUriType int
+
+const (
+	DefaultUri = 20
+	SuffixUri = 21
+)
+
 var osRelease *OsRelease
 
 var supportedDistros = map[string]bool{
@@ -95,14 +102,18 @@ func getLinuxLtsRelease() string {
 	return osRelease.LtsRelease
 }
 
-func getLinuxBinaryUri() string {
-	if osRelease.VersionCodename != nil {
+func getLinuxBinaryUri(params ...BinaryUriType) string {
+	if len(params) > 0 && params[0] == SuffixUri {
+		return fmt.Sprintf("%s/%s", osRelease.Id, *osRelease.VersionCodename)
+	}
+	if osRelease.VersionCodename != nil && !strings.Contains(osRelease.IdLike, "rhel") {
 		return fmt.Sprintf("%s/%s/%s", osRelease.Id, *osRelease.VersionCodename, osRelease.LtsRelease)
 	}
-	return fmt.Sprintf("%s/%s", osRelease.Id, osRelease.LtsRelease)
+	// EL distros keep the right naming as it is
+	return fmt.Sprintf("%s/%s", osRelease.Id, osRelease.VersionId)
 }
 
-func cranBinaryURL(rv RVersion) string {
+func cranBinaryURL(rv RVersion, params ...BinaryUriType) string {
 	switch runtime.GOOS {
 	case "darwin":
 		if rv.Major == 4 {
@@ -112,6 +123,9 @@ func cranBinaryURL(rv RVersion) string {
 	case "windows":
 		return "windows"
 	case "linux":
+		if len(params) > 0 && params[0] == SuffixUri {
+			return fmt.Sprintf("linux/%s", getLinuxBinaryUri(params[0]))
+		}
 		return fmt.Sprintf("linux/%s", getLinuxBinaryUri())
 	default:
 		fmt.Println("platform not supported for binary detection")
@@ -146,6 +160,7 @@ func ReadOsRelease() {
 	vp := viper.New()
 	vp.SetConfigType("toml")
 	err = vp.ReadConfig(bytes.NewReader(fixedConfig))
+
 	if err != nil {
 		log.Fatal("%v", err)
 	}
