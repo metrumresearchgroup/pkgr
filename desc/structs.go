@@ -77,11 +77,6 @@ type Desc struct {
 func (d *Desc) GetCombinedDependencies(suggests bool) map[string]Dep {
 	combined := map[string]Dep{}
 
-	// I previously thought that "Depends" were another place to list dependencies,
-	// but apparently this field is always for the R version dependency itself.
-	//for key, value := range d.Depends {
-	//	combined[key] = value
-	//}
 	for key, value := range d.Imports {
 		combined[key] = value
 	}

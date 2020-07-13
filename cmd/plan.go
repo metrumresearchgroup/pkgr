@@ -174,6 +174,22 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	}
 	// end tarball deps
 
+	// Set dependencies from Descriptions files as user-packages, for convenience.
+	var descDescriptions []desc.Desc
+
+	if len(cfg.Descriptions) > 0 {
+		descDescriptions = unpackDescriptions(fs, cfg.Descriptions)
+		for _, desc := range descDescriptions {
+			descDeps := desc.GetCombinedDependencies(false)
+			for _, d := range descDeps {
+				if !funk.Contains(cfg.Packages, d.Name) {
+					cfg.Packages = append(cfg.Packages, d.Name)
+				}
+			}
+		}
+	}
+	// end Descriptions deps
+
 	cfg.Packages = removeBasePackages(cfg.Packages)
 
 	availableUserPackages := pkgNexus.GetPackages(cfg.Packages)

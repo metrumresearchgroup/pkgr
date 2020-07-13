@@ -51,6 +51,7 @@ func NewConfig(cfgPath string, cfg *PkgrConfig) {
 	cfg.Library = expandTilde(cfg.Library)
 	cfg.RPath = expandTilde(cfg.RPath)
 	cfg.Tarballs = expandTildes(cfg.Tarballs)
+	cfg.Descriptions = expandTildes(cfg.Descriptions)
 	cfg.Repos = expandTildesRepos(cfg.Repos)
 	cfg.Logging.All = expandTilde(cfg.Logging.All)
 	cfg.Logging.Install = expandTilde(cfg.Logging.Install)

@@ -43,6 +43,7 @@ type PkgrConfig struct {
 	Version        int                 `yaml:"Version,omitempty"`
 	Packages       []string            `yaml:"Packages,omitempty"`
 	Tarballs	   []string			   `yaml:"Tarballs,omitempty"`
+	Descriptions   []string			   `yaml:"Descriptions,omitempty"`
 	Suggests       bool                `yaml:"Suggests,omitempty"`
 	NoRecommended  bool                `yaml:"NoRecommended",omitempty"`
 	Repos          []map[string]string `yaml:"Repos,omitempty"`
