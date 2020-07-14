@@ -180,7 +180,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	if len(cfg.Descriptions) > 0 {
 		descDescriptions = unpackDescriptions(fs, cfg.Descriptions)
 		for _, desc := range descDescriptions {
-			descDeps := desc.GetCombinedDependencies(false)
+			descDeps := desc.GetCombinedDependencies(true)
 			for _, d := range descDeps {
 				if !funk.Contains(cfg.Packages, d.Name) {
 					cfg.Packages = append(cfg.Packages, d.Name)
