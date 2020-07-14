@@ -5,8 +5,8 @@ import (
 	"encoding/hex"
 	"github.com/metrumresearchgroup/pkgr/desc"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
-	"github.com/sirupsen/logrus"
 	"github.com/mholt/archiver/v3"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"io"
 	"os"
@@ -22,10 +22,8 @@ func unpackTarballs(fs afero.Fs, tarballs []string, cache string) ([]desc.Desc, 
 
 	for _, tarballPath := range tarballs {
 
-
 		// replace
 		untarredFolder := untar(fs, tarballPath, cacheDir)
-
 
 		reader, err := fs.Open(filepath.Join(untarredFolder, "DESCRIPTION"))
 		if err != nil {
@@ -44,7 +42,7 @@ func unpackTarballs(fs afero.Fs, tarballs []string, cache string) ([]desc.Desc, 
 			}).Fatal("error parsing DESCRIPTION file for tarball package")
 		}
 		descriptions = append(descriptions, desc)
-		untarredMap[desc.Package] = gpsr.AdditionalPkg{ InstallPath: untarredFolder, OriginPath: tarballPath, Type: "tarball"}
+		untarredMap[desc.Package] = gpsr.AdditionalPkg{InstallPath: untarredFolder, OriginPath: tarballPath, Type: "tarball"}
 	}
 
 	return descriptions, untarredMap
@@ -84,8 +82,8 @@ func untar(fs afero.Fs, path string, cacheDir string) string {
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"cached_location": tarballDirectoryPath,
-			"source_tarball": path,
-			"error": err,
+			"source_tarball":  path,
+			"error":           err,
 		}).Warn("encountered problem checking cache for existing tarball. Extracting tarball to cache_location anyway.")
 	}
 	if tarballInCache {
@@ -118,9 +116,9 @@ func untar(fs afero.Fs, path string, cacheDir string) string {
 			extractedDirs = append(extractedDirs, entry)
 		} else {
 			logrus.WithFields(logrus.Fields{
-				"tarball": path,
+				"tarball":           path,
 				"untarredDirectory": tarballDirectoryPath,
-				"item": entry.Name(),
+				"item":              entry.Name(),
 			}).Trace("extraneous item found in untarred directory. If you have previously installed this tarball via pkgr, it may be a build artifact from the last installation")
 		}
 	}
@@ -155,4 +153,3 @@ func getHashedTarballName(tgzFile afero.File) (string, error) {
 	// Hashing code adapted from https://mrwaggel.be/post/generate-md5-hash-of-a-file-in-golang/
 	return tarballDirectoryName, err
 }
-

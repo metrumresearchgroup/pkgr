@@ -35,5 +35,3 @@ func unpackDescriptions(fs afero.Fs, descPaths []string) []desc.Desc {
 
 	return descriptions
 }
-
-

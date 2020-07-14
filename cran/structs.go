@@ -22,7 +22,7 @@ type RepoDb struct {
 	Time                     time.Time
 	Repo                     RepoURL
 	DefaultSourceType        SourceType
-	RepoSuffix				 string
+	RepoSuffix               string
 }
 
 // InstallConfig contains custom settings for a full install
@@ -95,9 +95,8 @@ type OsRelease struct {
 	Id              string `mapstructure:"ID"`
 	IdLike          string `mapstructure:"ID_LIKE"`
 	LtsRelease      string
-	PrettyName      string `mapstructure:"PRETTY_NAME"`
-	VersionId       string `mapstructure:"VERSION_ID"`
+	PrettyName      string  `mapstructure:"PRETTY_NAME"`
+	VersionId       string  `mapstructure:"VERSION_ID"`
 	VersionCodename *string `mapstructure:"VERSION_CODENAME"`
 	UbuntuCodename  *string `mapstructure:"UBUNTU_CODENAME"`
 }
-

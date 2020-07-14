@@ -11,7 +11,7 @@ import (
 type CleanCacheSuite struct {
 	suite.Suite
 	FileSystemOs afero.Fs
-	FilePrefix string
+	FilePrefix   string
 }
 
 func (suite *CleanCacheSuite) SetupTest() {
@@ -68,7 +68,6 @@ func (suite *CleanCacheSuite) TestCleanCache_DoesNotDeleteNonEmptyRepoFolders() 
 	InitializeTestEnvironment2(suite.FileSystemOs, "cache", "cache")
 	cacheDirectory := filepath.Join(suite.FilePrefix, "cache")
 
-
 	repo1, _ := filepath.Abs(filepath.Join(suite.FilePrefix, "cache", "CRAN"))
 	repo2, _ := filepath.Abs(filepath.Join(suite.FilePrefix, "cache", "CRAN-Micro"))
 	repo3, _ := filepath.Abs(filepath.Join(suite.FilePrefix, "cache", "r_validated"))
@@ -78,8 +77,8 @@ func (suite *CleanCacheSuite) TestCleanCache_DoesNotDeleteNonEmptyRepoFolders() 
 
 	suite.True(actual == nil)
 	suite.False(afero.Exists(suite.FileSystemOs, repo1)) // Only has binary, should be deleted
-	suite.True(afero.Exists(suite.FileSystemOs, repo2)) // Has binary and src, should remain
-	suite.True(afero.Exists(suite.FileSystemOs, repo3)) // Has binary and src, should remain.
+	suite.True(afero.Exists(suite.FileSystemOs, repo2))  // Has binary and src, should remain
+	suite.True(afero.Exists(suite.FileSystemOs, repo3))  // Has binary and src, should remain.
 	suite.False(afero.Exists(suite.FileSystemOs, repo4)) // Empty, should get removed as part of this process
 
 }
@@ -103,7 +102,6 @@ func (suite *CleanCacheSuite) TestCleanCache_DeletesSpecificRepos() {
 	suite.False(afero.Exists(suite.FileSystemOs, repo1)) //CRAN should be deleted
 	suite.True(afero.Exists(suite.FileSystemOs, repo2))
 	suite.False(afero.Exists(suite.FileSystemOs, repo3)) //r_validated should be deleted
-	suite.True(afero.Exists(suite.FileSystemOs, repo4)) //Empty repo should be ignored in this case
+	suite.True(afero.Exists(suite.FileSystemOs, repo4))  //Empty repo should be ignored in this case
 
 }
-

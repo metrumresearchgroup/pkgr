@@ -18,7 +18,7 @@ type BinaryUriType int
 
 const (
 	DefaultUri = 20
-	SuffixUri = 21
+	SuffixUri  = 21
 )
 
 var osRelease *OsRelease

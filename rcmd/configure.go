@@ -69,7 +69,7 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 				_, isCensored := censoredVars[strings.ToUpper(evs[0])]
 
 				if isCensored {
-					 displayValue = "**HIDDEN**"
+					displayValue = "**HIDDEN**"
 				}
 				envList.Append(evs[0], displayValue)
 			}
@@ -102,21 +102,20 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 	return envVars
 }
 
-
 // Returns a constant set of env vars to be hidden in logs.
 // Calling function may pass in additional values to include in the censor list.
 func censoredEnvVars(add []string) map[string]string {
 	censoredVarsMap := map[string]string{
-		"GITHUB_TOKEN" : "GITHUB_TOKEN",
-		"GITHUB_PAT" : "GITHUB_PAT",
-		"GHE_TOKEN" : "GHE_TOKEN",
-		"GHE_PAT" : "GHE_PAT",
-		"AWS_ACCESS_KEY_ID" : "AWS_ACCESS_KEY_ID",
-		"AWS_SECRET_KEY" : "AWS_SECRET_KEY",
+		"GITHUB_TOKEN":      "GITHUB_TOKEN",
+		"GITHUB_PAT":        "GITHUB_PAT",
+		"GHE_TOKEN":         "GHE_TOKEN",
+		"GHE_PAT":           "GHE_PAT",
+		"AWS_ACCESS_KEY_ID": "AWS_ACCESS_KEY_ID",
+		"AWS_SECRET_KEY":    "AWS_SECRET_KEY",
 	}
 	if add != nil {
 		for _, v := range add {
-			censoredVarsMap[strings.ToUpper(v)] = strings.ToUpper(v)// append(censoredVars, strings.ToUpper(v))
+			censoredVarsMap[strings.ToUpper(v)] = strings.ToUpper(v) // append(censoredVars, strings.ToUpper(v))
 		}
 	}
 	return censoredVarsMap

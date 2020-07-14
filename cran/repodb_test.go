@@ -9,20 +9,20 @@ import (
 type RepoDbTestSuite struct {
 	suite.Suite
 	highVersionFixture desc.Version
-	lowVersionFixture desc.Version
+	lowVersionFixture  desc.Version
 }
 
 func (suite *RepoDbTestSuite) SetupTest() {
 	suite.highVersionFixture = desc.Version{
-		Major: 99,
-		Minor: 99,
-		Patch: 99,
+		Major:  99,
+		Minor:  99,
+		Patch:  99,
 		String: "99.99.99",
 	}
 	suite.lowVersionFixture = desc.Version{
-		Major: 0,
-		Minor: 1,
-		Patch: 0,
+		Major:  0,
+		Minor:  1,
+		Patch:  0,
 		String: "0.1.0",
 	}
 }
@@ -33,15 +33,15 @@ func TestRepoDbTestSuite(t *testing.T) {
 
 func (suite *RepoDbTestSuite) TestIsRVersionCompatible_GTEInstalledVersionGreaterThan() {
 
-	rVersionFixture := RVersion {
+	rVersionFixture := RVersion{
 		Major: suite.highVersionFixture.Major,
 		Minor: suite.highVersionFixture.Minor,
 		Patch: suite.highVersionFixture.Patch,
 	}
 
 	depFixture := desc.Dep{
-		Version: suite.lowVersionFixture,
-		Name: "CatsAndOranges",
+		Version:    suite.lowVersionFixture,
+		Name:       "CatsAndOranges",
 		Constraint: desc.GTE,
 	}
 
@@ -53,15 +53,15 @@ func (suite *RepoDbTestSuite) TestIsRVersionCompatible_GTEInstalledVersionGreate
 
 func (suite *RepoDbTestSuite) TestIsRVersionCompatible_GTEInstalledVersionEquals() {
 
-	rVersionFixture := RVersion {
+	rVersionFixture := RVersion{
 		Major: suite.highVersionFixture.Major,
 		Minor: suite.highVersionFixture.Minor,
 		Patch: suite.highVersionFixture.Patch,
 	}
 
 	depFixture := desc.Dep{
-		Version: suite.highVersionFixture,
-		Name: "CatsAndOranges",
+		Version:    suite.highVersionFixture,
+		Name:       "CatsAndOranges",
 		Constraint: desc.GTE,
 	}
 
@@ -73,15 +73,15 @@ func (suite *RepoDbTestSuite) TestIsRVersionCompatible_GTEInstalledVersionEquals
 
 func (suite *RepoDbTestSuite) TestIsRVersionCompatible_LTEInstalledVersionEquals() {
 
-	rVersionFixture := RVersion {
+	rVersionFixture := RVersion{
 		Major: suite.highVersionFixture.Major,
 		Minor: suite.highVersionFixture.Minor,
 		Patch: suite.highVersionFixture.Patch,
 	}
 
 	depFixture := desc.Dep{
-		Version: suite.highVersionFixture,
-		Name: "CatsAndOranges",
+		Version:    suite.highVersionFixture,
+		Name:       "CatsAndOranges",
 		Constraint: desc.LTE,
 	}
 
@@ -93,15 +93,15 @@ func (suite *RepoDbTestSuite) TestIsRVersionCompatible_LTEInstalledVersionEquals
 
 func (suite *RepoDbTestSuite) TestIsRVersionCompatible_LTInstalledVersionLessThan() {
 
-	rVersionFixture := RVersion {
+	rVersionFixture := RVersion{
 		Major: suite.lowVersionFixture.Major,
 		Minor: suite.lowVersionFixture.Minor,
 		Patch: suite.lowVersionFixture.Patch,
 	}
 
 	depFixture := desc.Dep{
-		Version: suite.highVersionFixture,
-		Name: "CatsAndOranges",
+		Version:    suite.highVersionFixture,
+		Name:       "CatsAndOranges",
 		Constraint: desc.LT,
 	}
 
@@ -113,15 +113,15 @@ func (suite *RepoDbTestSuite) TestIsRVersionCompatible_LTInstalledVersionLessTha
 
 func (suite *RepoDbTestSuite) TestIsRVersionCompatible_EqualsInstalledVersionEquals() {
 
-	rVersionFixture := RVersion {
+	rVersionFixture := RVersion{
 		Major: suite.lowVersionFixture.Major,
 		Minor: suite.lowVersionFixture.Minor,
 		Patch: suite.lowVersionFixture.Patch,
 	}
 
 	depFixture := desc.Dep{
-		Version: suite.lowVersionFixture,
-		Name: "CatsAndOranges",
+		Version:    suite.lowVersionFixture,
+		Name:       "CatsAndOranges",
 		Constraint: desc.Equals,
 	}
 
@@ -131,21 +131,19 @@ func (suite *RepoDbTestSuite) TestIsRVersionCompatible_EqualsInstalledVersionEqu
 	suite.True(actual, "R package is valid")
 }
 
-
-
 /// Invalid cases
 
 func (suite *RepoDbTestSuite) TestIsRVersionCompatible_InvalidGTEInstalledVersionLower() {
 
-	rVersionFixture := RVersion {
+	rVersionFixture := RVersion{
 		Major: suite.lowVersionFixture.Major,
 		Minor: suite.lowVersionFixture.Minor,
 		Patch: suite.lowVersionFixture.Patch,
 	}
 
 	depFixture := desc.Dep{
-		Version: suite.highVersionFixture,
-		Name: "CatsAndOranges",
+		Version:    suite.highVersionFixture,
+		Name:       "CatsAndOranges",
 		Constraint: desc.GTE,
 	}
 
@@ -157,15 +155,15 @@ func (suite *RepoDbTestSuite) TestIsRVersionCompatible_InvalidGTEInstalledVersio
 
 func (suite *RepoDbTestSuite) TestIsRVersionCompatible_InvalidGTInstalledVersionLower() {
 
-	rVersionFixture := RVersion {
+	rVersionFixture := RVersion{
 		Major: suite.lowVersionFixture.Major,
 		Minor: suite.lowVersionFixture.Minor,
 		Patch: suite.lowVersionFixture.Patch,
 	}
 
 	depFixture := desc.Dep{
-		Version: suite.highVersionFixture,
-		Name: "CatsAndOranges",
+		Version:    suite.highVersionFixture,
+		Name:       "CatsAndOranges",
 		Constraint: desc.GT,
 	}
 

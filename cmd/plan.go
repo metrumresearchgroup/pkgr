@@ -82,7 +82,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	if err != nil {
 		log.WithFields(log.Fields{
 			"library": cfg.Library,
-			"error" : err,
+			"error":   err,
 		}).Error("unexpected error when checking existence of library")
 	}
 
@@ -323,9 +323,9 @@ func removeBasePackages(pkgList []string) []string {
 func logAdditionalPackageOrigins(additionalPackages map[string]gpsr.AdditionalPkg) {
 	for pkg, details := range additionalPackages {
 		log.WithFields(log.Fields{
-			"pkg": pkg,
-			"origin": details.OriginPath,
-			"method": details.Type,
+			"pkg":          pkg,
+			"origin":       details.OriginPath,
+			"method":       details.Type,
 			"install_from": details.InstallPath,
 		}).Debug("additional installation set")
 	}

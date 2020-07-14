@@ -111,7 +111,7 @@ func cleanCacheFolders() error {
 		err = fs.RemoveAll(filepath.Join(cfg.Cache, hashedDirectoryName))
 		if err != nil {
 			log.WithFields(log.Fields{
-				"file": tgzFile,
+				"file":  tgzFile,
 				"error": err,
 			}).Error("error removing tarball from cache")
 		}

@@ -12,9 +12,9 @@ import (
 
 type UtilsTestSuite struct {
 	suite.Suite
-	FileSystem afero.Fs
+	FileSystem   afero.Fs
 	FileSystemOs afero.Fs
-	FilePrefix string
+	FilePrefix   string
 }
 
 func (suite *UtilsTestSuite) SetupTest() {

@@ -3,9 +3,9 @@ package rpkg
 import (
 	"crypto/md5"
 	"fmt"
-	"io"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
+	"io"
 )
 
 // Hash a tarball

@@ -8,4 +8,3 @@ type UpdateAttempt struct {
 	OldVersion             string
 	NewVersion             string
 }
-

@@ -19,17 +19,17 @@ type InstallPlan struct {
 
 type AdditionalPkg struct {
 	InstallPath string
-	OriginPath string
-	Type string
+	OriginPath  string
+	Type        string
 }
 
 // PkgDeps contains which dependencies should be installed
 // for a particular package
 type PkgDeps struct {
-	Depends   bool
-	Imports   bool
-	Suggests  bool
-	LinkingTo bool
+	Depends       bool
+	Imports       bool
+	Suggests      bool
+	LinkingTo     bool
 	NoRecommended bool
 }
 
@@ -38,4 +38,3 @@ type InstallDeps struct {
 	Deps    map[string]PkgDeps
 	Default PkgDeps
 }
-

@@ -24,7 +24,6 @@ func init() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
 }
 
-
 // NewLogrusFileHook
 func NewLogrusFileHook(file string, flag int, chmod os.FileMode) (*LogrusFileHook, error) {
 
@@ -96,9 +95,9 @@ func AddLogFile(outputFile string, overwrite bool) {
 		var osFlag int
 
 		if overwrite {
-			osFlag = os.O_CREATE|os.O_TRUNC|os.O_APPEND|os.O_RDWR
+			osFlag = os.O_CREATE | os.O_TRUNC | os.O_APPEND | os.O_RDWR
 		} else {
-			osFlag = os.O_CREATE|os.O_APPEND|os.O_RDWR
+			osFlag = os.O_CREATE | os.O_APPEND | os.O_RDWR
 		}
 
 		fileHook, err := NewLogrusFileHook(outputFile, osFlag, 0666)

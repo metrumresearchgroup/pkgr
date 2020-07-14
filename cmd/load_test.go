@@ -15,17 +15,17 @@ import (
 func TestLoadSucceeds(t *testing.T) {
 	type testCase struct {
 		expectedToLoad []string
-		allOption bool
+		allOption      bool
 	}
 
-	testCases := map[string]testCase {
-		"load user packages" : testCase {
+	testCases := map[string]testCase{
+		"load user packages": testCase{
 			expectedToLoad: []string{"R6", "pillar"},
-			allOption: false,
+			allOption:      false,
 		},
-		"load dependencies" : testCase {
+		"load dependencies": testCase{
 			expectedToLoad: []string{"R6", "pillar", "cli", "assertthat", "crayon", "fansi", "rlang", "utf8"},
-			allOption: true,
+			allOption:      true,
 		},
 	}
 
@@ -38,7 +38,7 @@ func TestLoadSucceeds(t *testing.T) {
 			libraryPath := filepath.Join("testsite", "working", "test-library")
 			localRepoPath := filepath.Join("..", "localrepos", "simple")
 
-			userPackages := []string {
+			userPackages := []string{
 				"R6",
 				"pillar",
 			}
@@ -79,19 +79,19 @@ func TestLoadFails(t *testing.T) {
 	type testCase struct {
 		expectedToLoad []string
 		expectedToFail []string
-		allOption bool
+		allOption      bool
 	}
 
-	testCases := map[string]testCase {
-		"load user packages" : testCase {
+	testCases := map[string]testCase{
+		"load user packages": testCase{
 			expectedToLoad: []string{"pillar"},
 			expectedToFail: []string{"R6"},
-			allOption: false,
+			allOption:      false,
 		},
-		"load dependencies" : testCase {
-			expectedToLoad: []string{"pillar", "cli", "assertthat", "crayon", "rlang",},
+		"load dependencies": testCase{
+			expectedToLoad: []string{"pillar", "cli", "assertthat", "crayon", "rlang"},
 			expectedToFail: []string{"R6", "fansi", "utf8"},
-			allOption: true,
+			allOption:      true,
 		},
 	}
 
@@ -104,7 +104,7 @@ func TestLoadFails(t *testing.T) {
 			libraryPath := filepath.Join("testsite", "working", "test-library")
 			localRepoPath := filepath.Join("..", "localrepos", "simple")
 
-			userPackages := []string {
+			userPackages := []string{
 				"R6",
 				"pillar",
 			}
@@ -131,7 +131,7 @@ func TestLoadFails(t *testing.T) {
 				} else if entry.Message == "Package loaded successfully" {
 					pkg := entry.Data["pkg"]
 					loadedPackages = append(loadedPackages, fmt.Sprintf("%v", pkg))
-				} else if funk.Contains(entry.Message, "error loading package via"){
+				} else if funk.Contains(entry.Message, "error loading package via") {
 					pkg := entry.Data["pkg"]
 					failedPackages = append(failedPackages, fmt.Sprintf("%v", pkg))
 				}

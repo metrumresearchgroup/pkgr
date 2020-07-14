@@ -50,8 +50,8 @@ func (suite *OperationsTestSuite) TestRollbackPackageEnvironment_DeletesOnlyNewP
 	libraryPath, _ := filepath.Abs(filepath.Join(suite.FilePrefix, "test-library"))
 
 	rbpFixture := RollbackPlan{
-		NewPackages: []string {"R6"},
-		Library: libraryPath,
+		NewPackages: []string{"R6"},
+		Library:     libraryPath,
 	}
 
 	RollbackPackageEnvironment(suite.FileSystem, rbpFixture)
@@ -69,8 +69,8 @@ func (suite *OperationsTestSuite) TestRollbackPackageEnvironment_DeletesMultiple
 	libraryPath, _ := filepath.Abs(filepath.Join(suite.FilePrefix, "test-library"))
 
 	rbpFixture := RollbackPlan{
-		NewPackages: []string {"R6", "crayon"},
-		Library: libraryPath,
+		NewPackages: []string{"R6", "crayon"},
+		Library:     libraryPath,
 	}
 
 	RollbackPackageEnvironment(suite.FileSystem, rbpFixture)
@@ -88,11 +88,11 @@ func (suite *OperationsTestSuite) TestRollbackPackageEnvironment_HandlesEmptyLis
 	libraryPath, _ := filepath.Abs(filepath.Join(suite.FilePrefix, "test-library"))
 
 	rbpFixture := RollbackPlan{
-		NewPackages: []string {},
-		Library: libraryPath,
+		NewPackages: []string{},
+		Library:     libraryPath,
 	}
 
-	RollbackPackageEnvironment(suite.FileSystem, rbpFixture )
+	RollbackPackageEnvironment(suite.FileSystem, rbpFixture)
 
 	suite.True(afero.DirExists(suite.FileSystem, filepath.Join(suite.FilePrefix, "test-library", "R6")))
 	suite.True(afero.DirExists(suite.FileSystem, filepath.Join(suite.FilePrefix, "test-library", "crayon")))
@@ -140,7 +140,7 @@ func (suite *OperationsTestSuite) TestRollbackUpdatePackages_RestoresWhenNoActiv
 	suite.True(afero.DirExists(suite.FileSystem, filepath.Join(suite.FilePrefix, "test-library", "CatsAndOranges")))
 	suite.True(afero.Exists(suite.FileSystem, filepath.Join(suite.FilePrefix, "test-library", "CatsAndOranges", "DESCRIPTION")))
 	suite.False(afero.DirExists(suite.FileSystem, filepath.Join(suite.FilePrefix, "test-library", "__OLD__CatsAndOranges")))
-	suite.False(afero.Exists(suite.FileSystem, filepath.Join(suite.FilePrefix, "test-library" ,"__OLD__CatsAndOranges","DESCRIPTION")))
+	suite.False(afero.Exists(suite.FileSystem, filepath.Join(suite.FilePrefix, "test-library", "__OLD__CatsAndOranges", "DESCRIPTION")))
 
 }
 
@@ -167,6 +167,6 @@ func (suite *OperationsTestSuite) TestRollbackUpdatePackages_OverwritesFreshInst
 	suite.True(afero.Exists(suite.FileSystem, filepath.Join(suite.FilePrefix, "test-library", "CatsAndOranges", "DESCRIPTION")))
 	suite.False(afero.Exists(suite.FileSystem, filepath.Join(suite.FilePrefix, "test-library", "CatsAndOranges", "DESCRIPTION_New")))
 	suite.False(afero.DirExists(suite.FileSystem, filepath.Join(suite.FilePrefix, "test-library", "__OLD__CatsAndOranges")))
-	suite.False(afero.Exists(suite.FileSystem, filepath.Join(suite.FilePrefix, "test-library" ,"__OLD__CatsAndOranges","DESCRIPTION")))
+	suite.False(afero.Exists(suite.FileSystem, filepath.Join(suite.FilePrefix, "test-library", "__OLD__CatsAndOranges", "DESCRIPTION")))
 
 }
