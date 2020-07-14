@@ -69,8 +69,8 @@ func rInstall(cmd *cobra.Command, args []string) error {
 		err := fs.MkdirAll(cfg.Library, 0755)
 		if err != nil {
 			log.WithFields(log.Fields{
-				"library" : cfg.Library,
-				"error" : err,
+				"library": cfg.Library,
+				"error":   err,
 			}).Fatal("could not create library directory")
 		}
 	}
@@ -122,9 +122,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 		if err != nil || errInstallAdditional != nil {
 			errRollback := rollback.RollbackPackageEnvironment(fs, rollbackPlan)
 			if errRollback != nil {
-				log.WithFields(log.Fields{
-
-				}).Error("failed to reset package environment after bad installation. Your package Library will be in a corrupt state. It is recommended you delete your Library and reinstall all packages.")
+				log.WithFields(log.Fields{}).Error("failed to reset package environment after bad installation. Your package Library will be in a corrupt state. It is recommended you delete your Library and reinstall all packages.")
 			}
 		}
 	}
@@ -141,7 +139,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func installAdditionalPackages(installPlan gpsr.InstallPlan, rSettings rcmd.RSettings, library, cache string,) error {
+func installAdditionalPackages(installPlan gpsr.InstallPlan, rSettings rcmd.RSettings, library, cache string) error {
 
 	toInstallCount := len(installPlan.AdditionalPackageSources) - 1
 
@@ -153,7 +151,7 @@ func installAdditionalPackages(installPlan gpsr.InstallPlan, rSettings rcmd.RSet
 	if err != nil {
 		log.WithFields(log.Fields{
 			"lib_folder": library,
-			"error":   err,
+			"error":      err,
 		}).Error("error installing tarball -- could not find absolute path for library folder")
 		return err
 	}
@@ -190,7 +188,7 @@ func installAdditionalPackages(installPlan gpsr.InstallPlan, rSettings rcmd.RSet
 			rSettings,
 			rcmd.ExecSettings{
 				PkgrVersion: VERSION,
-				WorkDir: filepath.Dir(additionalPkg.InstallPath),
+				WorkDir:     filepath.Dir(additionalPkg.InstallPath),
 			},
 			rcmd.InstallRequest{
 				Package: pkgName,
@@ -198,16 +196,16 @@ func installAdditionalPackages(installPlan gpsr.InstallPlan, rSettings rcmd.RSet
 					BaseDir: userCache(cache),
 				},
 				InstallArgs: iargs,
-				ExecSettings: rcmd.ExecSettings{ 			// Needed for updating description file
-					PkgrVersion: VERSION, 					// Needed for updating description file
+				ExecSettings: rcmd.ExecSettings{ // Needed for updating description file
+					PkgrVersion: VERSION, // Needed for updating description file
 				},
-				Metadata: cran.Download {  					// Needed for updating description file
-					Metadata: cran.PkgDl{ 					// Needed for updating description file
-						Config: cran.PkgConfig{ 			// Needed for updating description file
-							Type: cran.Source, 				// Needed for updating description file
-							Repo: cran.RepoURL{ 			// Needed for updating description file
-								URL:  pkgSourcePathAbs,     // Needed for updating description file
-								Name: "IndividualPackage",  // Needed for updating description file
+				Metadata: cran.Download{ // Needed for updating description file
+					Metadata: cran.PkgDl{ // Needed for updating description file
+						Config: cran.PkgConfig{ // Needed for updating description file
+							Type: cran.Source, // Needed for updating description file
+							Repo: cran.RepoURL{ // Needed for updating description file
+								URL:  pkgSourcePathAbs,    // Needed for updating description file
+								Name: "IndividualPackage", // Needed for updating description file
 							},
 						},
 					},
@@ -217,36 +215,36 @@ func installAdditionalPackages(installPlan gpsr.InstallPlan, rSettings rcmd.RSet
 
 		if err != nil {
 			log.WithFields(log.Fields{
-				"pkg":       pkgName,
-				"source":	additionalPkg.OriginPath,
+				"pkg":           pkgName,
+				"source":        additionalPkg.OriginPath,
 				"installedFrom": additionalPkg.InstallPath,
-				"installType": additionalPkg.Type,
-				"error":     err,
+				"installType":   additionalPkg.Type,
+				"error":         err,
 			}).Error("error installing package")
 			log.WithFields(log.Fields{
-				"pkg":       pkgName,
-				"source":	additionalPkg.OriginPath,
+				"pkg":           pkgName,
+				"source":        additionalPkg.OriginPath,
 				"installedFrom": additionalPkg.InstallPath,
-				"installType": additionalPkg.Type,
-				"remaining": toInstallCount,
-				"stdout":    res.Stdout,
-				"stderr":    res.Stderr,
+				"installType":   additionalPkg.Type,
+				"remaining":     toInstallCount,
+				"stdout":        res.Stdout,
+				"stderr":        res.Stderr,
 			}).Debug("error installing package")
 			errorAggregator = append(errorAggregator, err)
 		} else {
 			log.WithFields(log.Fields{
-				"pkg":       pkgName,
-				"source": additionalPkg.OriginPath,
+				"pkg":         pkgName,
+				"source":      additionalPkg.OriginPath,
 				"installType": additionalPkg.Type,
-				"remaining": toInstallCount,
+				"remaining":   toInstallCount,
 			}).Info("Successfully Installed Package.")
 			log.WithFields(log.Fields{
-				"pkg":       pkgName,
-				"source":	additionalPkg.OriginPath,
+				"pkg":           pkgName,
+				"source":        additionalPkg.OriginPath,
 				"installedFrom": additionalPkg.InstallPath,
-				"installType": additionalPkg.Type,
-				"remaining": toInstallCount,
-				"stdout":    res.Stdout,
+				"installType":   additionalPkg.Type,
+				"remaining":     toInstallCount,
+				"stdout":        res.Stdout,
 			}).Trace("Successfully Installed Package.")
 		}
 

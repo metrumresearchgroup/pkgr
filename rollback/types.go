@@ -20,19 +20,19 @@ type RollbackPlan struct {
 }
 
 // CreateRollbackPlan creates a RollbackPlan to track changes to the package environment and undo those changes if necessary.
-func CreateRollbackPlan (library string, installPlan gpsr.InstallPlan, preinstalledPackages map[string]desc.Desc) RollbackPlan {
+func CreateRollbackPlan(library string, installPlan gpsr.InstallPlan, preinstalledPackages map[string]desc.Desc) RollbackPlan {
 	ap := installPlan.GetAllPackages()
 
 	// We need to determine which packages are both "new" AND part of the installPlan, otherwise we end up
 	// changing miscellaneous packages.
 	np := discernNewPackages(ap, preinstalledPackages)
-	return RollbackPlan {
-			AllPackages: ap,
-			NewPackages: np,
-			PreinstalledPackages: preinstalledPackages,
-			InstallPlan: installPlan,
-			Library: library,
-		}
+	return RollbackPlan{
+		AllPackages:          ap,
+		NewPackages:          np,
+		PreinstalledPackages: preinstalledPackages,
+		InstallPlan:          installPlan,
+		Library:              library,
+	}
 }
 
 // createUpdateBackupFolders backs up outdated packages in the library by renaming them, thus making space for the updated versions to install.
@@ -59,7 +59,7 @@ func (rp *RollbackPlan) PrepareAdditionalPackagesForOverwrite(fs afero.Fs, libra
 		preinstPkg, isPreinstalled := rp.PreinstalledPackages[pkg]
 		if isPreinstalled {
 			overwriteAttempt := tagOldInstallation(fs, library, cran.OutdatedPackage{
-				Package: pkg,
+				Package:    pkg,
 				OldVersion: preinstPkg.Version,
 				NewVersion: "[from tarball]",
 			})
@@ -95,6 +95,3 @@ func discernNewPackages(toInstallPackageNames []string, preinstalledPackages map
 
 	return newPackages
 }
-
-
-

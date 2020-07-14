@@ -17,7 +17,6 @@ func InitializeEmptyTestSiteWorking() {
 	fileSystem.MkdirAll(testWorkDir, 0755)
 }
 
-
 // Returns path to working test directory
 func InitializeGoldenTestSiteWorking(goldenSet string) string {
 	fileSystem := afero.NewOsFs()
@@ -25,7 +24,6 @@ func InitializeGoldenTestSiteWorking(goldenSet string) string {
 	testWorkDir := filepath.Join("testsite", "working")
 	fileSystem.RemoveAll(testWorkDir)
 	fileSystem.MkdirAll(testWorkDir, 0755)
-
 
 	fileSystem.MkdirAll(testWorkDir, 0755)
 
@@ -41,18 +39,18 @@ func InitializeGoldenTestSiteWorking(goldenSet string) string {
 func InitGlobalConfig(libraryPath, localRepo string, update, suggests bool, installType string, packages []string) {
 
 	cfg = configlib.PkgrConfig{
-		Threads: 5,
-		Update: update,
+		Threads:  5,
+		Update:   update,
 		Rollback: false,
-		Strict: false,
+		Strict:   false,
 		Packages: packages,
-		Library: libraryPath,
-		Version: 1,
+		Library:  libraryPath,
+		Version:  1,
 		//Logging: configlib.LogConfig{Level: "debug"}, // Controlled before cfg unmarshalling, I think
 		Cache: "./testsite/working/localcache",
 		Customizations: configlib.Customizations{
-			Repos: map[string]configlib.RepoConfig {
-				"testRepo" : configlib.RepoConfig{
+			Repos: map[string]configlib.RepoConfig{
+				"testRepo": configlib.RepoConfig{
 					Type: installType,
 				},
 			},
@@ -61,14 +59,13 @@ func InitGlobalConfig(libraryPath, localRepo string, update, suggests bool, inst
 		//Lockfile: nil,
 		Repos: []map[string]string{
 			{
-				"testRepo" : localRepo,
+				"testRepo": localRepo,
 			},
 		},
 		//RPath: nil,
 		Suggests: suggests,
 	}
 }
-
 
 func InitializeGlobalsForTest() {
 	// Overwrite the global root cmd to "fake" the parts we need for cobra.
@@ -85,23 +82,23 @@ func InitializeGlobalsForTest() {
 func TestPackagesInstalled(t *testing.T) {
 
 	type TestCase struct {
-		localRepoName string
-		installUpdates bool
-		installSuggests bool
-		toInstall []string // Equivalent to  "Packages" in pkgr.yml
+		localRepoName     string
+		installUpdates    bool
+		installSuggests   bool
+		toInstall         []string // Equivalent to  "Packages" in pkgr.yml
 		expectedInstalled []string
 	}
 
-	testCases := map[string]TestCase {
-		"Basic Check" : TestCase {
-			localRepoName : "simple",
-			installUpdates : false,
-			installSuggests : false,
-			toInstall : []string{
+	testCases := map[string]TestCase{
+		"Basic Check": TestCase{
+			localRepoName:   "simple",
+			installUpdates:  false,
+			installSuggests: false,
+			toInstall: []string{
 				"R6",
 				"pillar",
 			},
-			expectedInstalled : []string {
+			expectedInstalled: []string{
 				"assertthat",
 				"cli",
 				"crayon",
@@ -136,7 +133,7 @@ func TestPackagesInstalled(t *testing.T) {
 			assert.Equalf(t, len(tc.expectedInstalled), numInstalled, "Expected %d packages to be installed but found %d", len(tc.expectedInstalled), numInstalled)
 
 			for _, p := range tc.expectedInstalled {
-				assert.DirExists(t, filepath.Join(libraryPath, p), "Package missing from final results: "+ p)
+				assert.DirExists(t, filepath.Join(libraryPath, p), "Package missing from final results: "+p)
 			}
 		})
 	}
@@ -150,26 +147,26 @@ func TestTarballInstall(t *testing.T) {
 	checkError(t, err)
 
 	type TestCase struct {
-		localRepoName string
-		installUpdates bool
-		installSuggests bool
-		toInstall []string // Equivalent to  "Packages" in pkgr.yml
+		localRepoName     string
+		installUpdates    bool
+		installSuggests   bool
+		toInstall         []string // Equivalent to  "Packages" in pkgr.yml
 		toInstallTarballs []string
 		expectedInstalled []string
 	}
 
-	testCases := map[string]TestCase {
-		"Tarball no dependencies" : TestCase {
-			localRepoName : "simple-no-R6",
-			installUpdates : false,
-			installSuggests : false,
-			toInstall : []string{
+	testCases := map[string]TestCase{
+		"Tarball no dependencies": TestCase{
+			localRepoName:   "simple-no-R6",
+			installUpdates:  false,
+			installSuggests: false,
+			toInstall: []string{
 				"pillar",
 			},
-			toInstallTarballs: []string {
+			toInstallTarballs: []string{
 				filepath.Join(localReposDir, "tarballs", "R6_2.4.0.tar.gz"),
 			},
-			expectedInstalled: []string {
+			expectedInstalled: []string{
 				"assertthat",
 				"cli",
 				"crayon",
@@ -180,17 +177,17 @@ func TestTarballInstall(t *testing.T) {
 				"utf8",
 			},
 		},
-		"Tarball with dependencies" : TestCase {
-			localRepoName : "testthat_deps",
-			installUpdates : false,
-			installSuggests : false,
-			toInstall : []string{
+		"Tarball with dependencies": TestCase{
+			localRepoName:   "testthat_deps",
+			installUpdates:  false,
+			installSuggests: false,
+			toInstall: []string{
 				"pillar",
 			},
-			toInstallTarballs: []string {
+			toInstallTarballs: []string{
 				filepath.Join(localReposDir, "tarballs", "testthat_2.1.1.tar.gz"),
 			},
-			expectedInstalled: []string {
+			expectedInstalled: []string{
 				"assertthat",
 				"cli",
 				"crayon",
@@ -212,17 +209,17 @@ func TestTarballInstall(t *testing.T) {
 		// yet.
 		// This automated test is meant to regression-test the aforementioned bug. We created the test file for this by using
 		// "devtools::build()" on MacOS Mojave for the R6 package, pulled from GitHub (commit 8e0b3182cdcc5047343e9c590816578472ec9dfa)
-		"Unordered tarball" : TestCase {
-			localRepoName : "simple-no-R6",
-			installUpdates : false,
-			installSuggests : false,
-			toInstall : []string{
+		"Unordered tarball": TestCase{
+			localRepoName:   "simple-no-R6",
+			installUpdates:  false,
+			installSuggests: false,
+			toInstall: []string{
 				"utf8",
 			},
-			toInstallTarballs: []string {
+			toInstallTarballs: []string{
 				filepath.Join(localReposDir, "tarballs", "R6_unordered_tarball_read.tar.gz"),
 			},
-			expectedInstalled: []string {
+			expectedInstalled: []string{
 				"utf8",
 				"R6",
 			},
@@ -251,13 +248,12 @@ func TestTarballInstall(t *testing.T) {
 			assert.Equalf(t, len(tc.expectedInstalled), numInstalled, "Expected %d packages to be installed but found %d", len(tc.expectedInstalled), numInstalled)
 
 			for _, p := range tc.expectedInstalled {
-				assert.DirExists(t, filepath.Join(libraryPath, p), "Package missing from final results: "+ p)
+				assert.DirExists(t, filepath.Join(libraryPath, p), "Package missing from final results: "+p)
 			}
 		})
 	}
 
 }
-
 
 func TestInstallWithoutRollback(t *testing.T) {
 	// Setup
@@ -275,18 +271,18 @@ func TestInstallWithoutRollback(t *testing.T) {
 
 	// Create a fake config (will work for commands that don't use viper.Get[...])
 	cfg = configlib.PkgrConfig{
-		Threads: 5,
-		Update: true,
+		Threads:  5,
+		Update:   true,
 		Rollback: false,
-		Strict: false,
+		Strict:   false,
 		Packages: []string{"xml2", "crayon", "R6", "Rcpp", "crayon", "fansi", "flatxml"},
-		Library: testLibrary,
-		Version: 1,
+		Library:  testLibrary,
+		Version:  1,
 		//Logging: nil,
 		//Cache: nil,
 		Customizations: configlib.Customizations{
-			Repos: map[string]configlib.RepoConfig {
-				"local58" : configlib.RepoConfig{
+			Repos: map[string]configlib.RepoConfig{
+				"local58": configlib.RepoConfig{
 					Type: "source",
 				},
 			},
@@ -295,7 +291,7 @@ func TestInstallWithoutRollback(t *testing.T) {
 		//Lockfile: nil,
 		Repos: []map[string]string{
 			{
-				"local58" : "../localrepos/bad-xml2",
+				"local58": "../localrepos/bad-xml2",
 			},
 		},
 		//RPath: nil,
@@ -319,11 +315,11 @@ func TestInstallWithoutRollback(t *testing.T) {
 
 	// Outdated packages are still updated
 	assert.DirExists(t, filepath.Join(testLibrary, "R6"), "Package missing from final results")
-	fileExistsCheck, _  := afero.Exists(fs, filepath.Join(testLibrary, "R6", "THIS_PACKAGE_IS_OUTDATED"), )
+	fileExistsCheck, _ := afero.Exists(fs, filepath.Join(testLibrary, "R6", "THIS_PACKAGE_IS_OUTDATED"))
 	assert.False(t, fileExistsCheck)
 
 	assert.DirExists(t, filepath.Join(testLibrary, "Rcpp"), "Package missing from final results")
-	fileExistsCheck, _  = afero.Exists(fs, filepath.Join(testLibrary, "Rcpp", "THIS_PACKAGE_IS_OUTDATED"), )
+	fileExistsCheck, _ = afero.Exists(fs, filepath.Join(testLibrary, "Rcpp", "THIS_PACKAGE_IS_OUTDATED"))
 	assert.False(t, fileExistsCheck)
 
 	//Fail to install
@@ -334,7 +330,6 @@ func TestInstallWithoutRollback(t *testing.T) {
 }
 
 // Utility
-
 
 func checkError(t *testing.T, err error) {
 	if err != nil {

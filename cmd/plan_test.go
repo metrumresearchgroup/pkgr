@@ -140,8 +140,6 @@ func (suite *PlanTestSuite) TestGetPriorInstalledPackages_NoPreinstalledPackages
 //	}
 //}
 
-
-
 //////// Utility
 
 func installedPackagesAreEqual(expected, actual desc.Desc) bool {

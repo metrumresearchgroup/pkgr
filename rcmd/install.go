@@ -424,9 +424,9 @@ func InstallPackagePlan(
 				if iu.Result.ExitCode != -999 {
 					packagesNeeded = packagesNeeded - 1
 					log.WithFields(log.Fields{
-						"package": iu.Package,
-						"version": pkg.Metadata.Package.Version,
-						"repo":    pkg.Metadata.Config.Repo.Name,
+						"package":   iu.Package,
+						"version":   pkg.Metadata.Package.Version,
+						"repo":      pkg.Metadata.Config.Repo.Name,
 						"remaining": packagesNeeded,
 					}).Info("Successfully Installed.")
 				}
@@ -567,7 +567,7 @@ func writeUpdatedDescriptionFile(fs afero.Fs, filename string, update []string) 
 
 	if err != nil {
 		log.WithFields(log.Fields{
-			"filename" : filename,
+			"filename": filename,
 		}).Error("could not update DESCRIPTION file", err)
 		return err
 	}
@@ -593,7 +593,7 @@ func updateDescriptionInfoByLines(lines []string, version, installType, repoURL,
 
 		if strings.Contains(line, string("Repository:")) && !strings.Contains(line, repo) {
 			originalRepo := strings.Trim(strings.Split(line, ":")[1], " ")
-			newLines = append(newLines, "OriginalRepository: " + originalRepo)
+			newLines = append(newLines, "OriginalRepository: "+originalRepo)
 			line = "Repository: " + repo
 		}
 		newLines = append(newLines, line)

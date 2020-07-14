@@ -19,7 +19,7 @@ type configureArgsTestCase struct {
 }
 
 // Utility functions
-func checkEnvVarsValid(t *testing.T, testCase configureArgsTestCase, actualResults []string, ) {
+func checkEnvVarsValid(t *testing.T, testCase configureArgsTestCase, actualResults []string) {
 	rLibsUserFound := false
 	for _, envVar := range actualResults {
 		if strings.Contains(envVar, "R_LIBS_USER") {
@@ -46,7 +46,7 @@ func checkEnvVarsValid(t *testing.T, testCase configureArgsTestCase, actualResul
 	}
 }
 
-func checkIsTempDir(t *testing.T, tmpDir string,) {
+func checkIsTempDir(t *testing.T, tmpDir string) {
 	switch runtime.GOOS {
 	case "darwin":
 		assert.True(t, strings.Contains(tmpDir, "var/folders"), "R_LIBS_USER not set to temp directory: Dir found: %s", tmpDir)
@@ -61,6 +61,7 @@ func checkIsTempDir(t *testing.T, tmpDir string,) {
 		t.Skip("tmp dir check not implemented for detected os")
 	}
 }
+
 // end Utility functions
 
 func TestConfigureArgs(t *testing.T) {
@@ -68,7 +69,7 @@ func TestConfigureArgs(t *testing.T) {
 	// there should always be at least one libpath
 	defaultRS.LibPaths = []string{"path/to/install/lib"}
 	defaultRS.PkgEnvVars["dplyr"] = map[string]string{"DPLYR_ENV": "true"}
-	var installArgsTests = []configureArgsTestCase {
+	var installArgsTests = []configureArgsTestCase{
 		{
 			"minimal",
 			"",
@@ -133,13 +134,13 @@ func TestConfigureArgs(t *testing.T) {
 			"R_LIBS_SITE and R_LIBS_USER env set",
 			"dplyr",
 			[]string{"R_LIBS_USER=original/path", "R_LIBS_SITE=original/site/path", "MISC2=bar"},
-			[]string{"DPLYR_ENV=true", "MISC2=bar", "R_LIBS_SITE=path/to/install/lib", "R_LIBS_USER=SHOULD_BE_TMP_DIR",},
+			[]string{"DPLYR_ENV=true", "MISC2=bar", "R_LIBS_SITE=path/to/install/lib", "R_LIBS_USER=SHOULD_BE_TMP_DIR"},
 		},
 		{
 			"System contains sensitive information",
 			"",
 			[]string{"R_LIBS_USER=original/path", "GITHUB_PAT=should_get_hidden1", "ghe_token=should_get_hidden2", "ghe_PAT=should_get_hidden3", "github_token=should_get_hidden4"},
-			[]string{"GITHUB_PAT=**HIDDEN**", "ghe_token=**HIDDEN**", "ghe_PAT=**HIDDEN**", "github_token=**HIDDEN**", "R_LIBS_SITE=path/to/install/lib", "R_LIBS_USER=SHOULD_BE_TMP_DIR",},
+			[]string{"GITHUB_PAT=**HIDDEN**", "ghe_token=**HIDDEN**", "ghe_PAT=**HIDDEN**", "github_token=**HIDDEN**", "R_LIBS_SITE=path/to/install/lib", "R_LIBS_USER=SHOULD_BE_TMP_DIR"},
 		},
 	}
 	for _, tt := range installArgsTests {
@@ -162,7 +163,7 @@ func TestConfigureArgs2(t *testing.T) {
 	// there should always be at least one libpath
 	defaultRS.LibPaths = []string{"path/to/install/lib"}
 	defaultRS.PkgEnvVars["dplyr"] = map[string]string{"DPLYR_ENV": "true"}
-	var installArgsTests = []configureArgsTestCase {
+	var installArgsTests = []configureArgsTestCase{
 		{
 			"System contains sensitive information",
 			"",
@@ -174,7 +175,6 @@ func TestConfigureArgs2(t *testing.T) {
 				"github_token=should_get_hidden4",
 				"AWS_ACCESS_KEY_ID=should_get_hidden5",
 				"AWS_SECRET_KEY=should_get_hidden6",
-
 			},
 			[]string{
 				"GITHUB_PAT=**HIDDEN**",
@@ -197,55 +197,55 @@ func TestConfigureArgs2(t *testing.T) {
 }
 
 func TestCensoredEnvVars(t *testing.T) {
-	tests := map[string]struct{
+	tests := map[string]struct {
 		additionalVars []string
-		expected map[string]string
+		expected       map[string]string
 	}{
 		"Default": {
 			additionalVars: nil,
 			expected: map[string]string{
-				"GITHUB_TOKEN" : "GITHUB_TOKEN",
-				"GITHUB_PAT" : "GITHUB_PAT",
-				"GHE_TOKEN" : "GHE_TOKEN",
-				"GHE_PAT" : "GHE_PAT",
-				"AWS_ACCESS_KEY_ID" : "AWS_ACCESS_KEY_ID",
-				"AWS_SECRET_KEY" : "AWS_SECRET_KEY",
+				"GITHUB_TOKEN":      "GITHUB_TOKEN",
+				"GITHUB_PAT":        "GITHUB_PAT",
+				"GHE_TOKEN":         "GHE_TOKEN",
+				"GHE_PAT":           "GHE_PAT",
+				"AWS_ACCESS_KEY_ID": "AWS_ACCESS_KEY_ID",
+				"AWS_SECRET_KEY":    "AWS_SECRET_KEY",
 			},
 		},
 		"Empty arg": {
 			additionalVars: []string{},
 			expected: map[string]string{
-				"GITHUB_TOKEN" : "GITHUB_TOKEN",
-				"GITHUB_PAT" : "GITHUB_PAT",
-				"GHE_TOKEN" : "GHE_TOKEN",
-				"GHE_PAT" : "GHE_PAT",
-				"AWS_ACCESS_KEY_ID" : "AWS_ACCESS_KEY_ID",
-				"AWS_SECRET_KEY" : "AWS_SECRET_KEY",
+				"GITHUB_TOKEN":      "GITHUB_TOKEN",
+				"GITHUB_PAT":        "GITHUB_PAT",
+				"GHE_TOKEN":         "GHE_TOKEN",
+				"GHE_PAT":           "GHE_PAT",
+				"AWS_ACCESS_KEY_ID": "AWS_ACCESS_KEY_ID",
+				"AWS_SECRET_KEY":    "AWS_SECRET_KEY",
 			},
 		},
 		"Add one": {
 			additionalVars: []string{"cats"},
 			expected: map[string]string{
-				"GITHUB_TOKEN" : "GITHUB_TOKEN",
-				"GITHUB_PAT" : "GITHUB_PAT",
-				"GHE_TOKEN" : "GHE_TOKEN",
-				"GHE_PAT" : "GHE_PAT",
-				"AWS_ACCESS_KEY_ID" : "AWS_ACCESS_KEY_ID",
-				"AWS_SECRET_KEY" : "AWS_SECRET_KEY",
-				"CATS" : "CATS",
+				"GITHUB_TOKEN":      "GITHUB_TOKEN",
+				"GITHUB_PAT":        "GITHUB_PAT",
+				"GHE_TOKEN":         "GHE_TOKEN",
+				"GHE_PAT":           "GHE_PAT",
+				"AWS_ACCESS_KEY_ID": "AWS_ACCESS_KEY_ID",
+				"AWS_SECRET_KEY":    "AWS_SECRET_KEY",
+				"CATS":              "CATS",
 			},
 		},
 		"Add two": {
 			additionalVars: []string{"CATS", "and_oranges"},
 			expected: map[string]string{
-				"GITHUB_TOKEN" : "GITHUB_TOKEN",
-				"GITHUB_PAT" : "GITHUB_PAT",
-				"GHE_TOKEN" : "GHE_TOKEN",
-				"GHE_PAT" : "GHE_PAT",
-				"AWS_ACCESS_KEY_ID" : "AWS_ACCESS_KEY_ID",
-				"AWS_SECRET_KEY" : "AWS_SECRET_KEY",
-				"CATS" : "CATS",
-				"AND_ORANGES" : "AND_ORANGES",
+				"GITHUB_TOKEN":      "GITHUB_TOKEN",
+				"GITHUB_PAT":        "GITHUB_PAT",
+				"GHE_TOKEN":         "GHE_TOKEN",
+				"GHE_PAT":           "GHE_PAT",
+				"AWS_ACCESS_KEY_ID": "AWS_ACCESS_KEY_ID",
+				"AWS_SECRET_KEY":    "AWS_SECRET_KEY",
+				"CATS":              "CATS",
+				"AND_ORANGES":       "AND_ORANGES",
 			},
 		},
 	}

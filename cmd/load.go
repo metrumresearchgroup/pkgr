@@ -14,8 +14,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/spf13/cobra"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
 // loadCmd represents the load command
@@ -67,8 +67,8 @@ func load(userPackages []string, rs rcmd.RSettings, rDir string, threads int, al
 	}
 
 	log.WithFields(log.Fields{
-		"all_arg" :  all,
-		"json_arg" : toJson,
+		"all_arg":  all,
+		"json_arg": toJson,
 	}).Info("attempting to load packages")
 
 	log.Info("getting relevant packages via `pkgr plan`..................")
@@ -88,23 +88,23 @@ func load(userPackages []string, rs rcmd.RSettings, rDir string, threads int, al
 	report := InitLoadReport(getRSessionMetadata(rs, rDir))
 
 	resultsChannel := make(chan LoadResult, len(toLoad))
-	sem := make(chan int, threads * 2)
+	sem := make(chan int, threads*2)
 
 	log.WithFields(
 		log.Fields{
-		"num_to_load": len(toLoad),
-		"threads": threads * 2,
-		"all_arg" :  all,
-		"json_arg" : toJson,
-	}).Info("attempting to load packages")
+			"num_to_load": len(toLoad),
+			"threads":     threads * 2,
+			"all_arg":     all,
+			"json_arg":    toJson,
+		}).Info("attempting to load packages")
 
 	// Kick off every load request as a goroutine, each of which will wait on the availability of a semaphore wait group.
 	for _, pkg := range toLoad {
 		go attemptLoadConcurrent(
-			LoadRequest {
-			rs,
-			rDir,
-			pkg,
+			LoadRequest{
+				rs,
+				rDir,
+				pkg,
 			},
 			sem,
 			resultsChannel,
@@ -115,7 +115,7 @@ func load(userPackages []string, rs rcmd.RSettings, rDir string, threads int, al
 		lr := <-resultsChannel
 		log.WithFields(
 			log.Fields{
-				"pkg" : lr.Package,
+				"pkg":       lr.Package,
 				"succeeded": lr.Success,
 			}).Trace("completed load attempt and adding to load report.")
 		report.AddResult(lr.Package, lr)
@@ -132,7 +132,7 @@ func load(userPackages []string, rs rcmd.RSettings, rDir string, threads int, al
 	} else {
 		log.WithFields(log.Fields{
 			"working_directory": rDir,
-			"failures": report.Failures,
+			"failures":          report.Failures,
 		}).Error("some packages failed to load.")
 	}
 
@@ -160,11 +160,11 @@ func getRSessionLibPaths(rs rcmd.RSettings, rDir string) []string {
 
 	if cmdErr != nil || len(errLines) > 0 {
 		log.WithFields(log.Fields{
-			"session_working_dir" : rDir,
-			"cmd_err" :            cmdErr,
+			"session_working_dir": rDir,
+			"cmd_err":             cmdErr,
 			"std_error":           errLines,
 		}).Warn("could not get LibPaths -- there was a problem running `.LibPaths()` in an R session")
-		return []string {"could not retrieve libpaths"}
+		return []string{"could not retrieve libpaths"}
 	}
 	var trimmedOutLines []string
 	for _, line := range outLines {
@@ -178,7 +178,7 @@ func getRSessionLibPaths(rs rcmd.RSettings, rDir string) []string {
 func printJsonLoadReport(rpt LoadReport) {
 	jsonObj, err := JsonMarshal(rpt)
 	if err != nil {
-		log.WithFields(log.Fields{"err" : err}).Error("encountered problem marshalling load report to JSON")
+		log.WithFields(log.Fields{"err": err}).Error("encountered problem marshalling load report to JSON")
 		return
 	}
 	fmt.Printf("%s \n", jsonObj)
@@ -186,7 +186,7 @@ func printJsonLoadReport(rpt LoadReport) {
 
 // Worker function to perform work specified in LoadRequest.
 // Multiple workers may be launched concurrently to parallelize the process.
-func attemptLoadConcurrent(request LoadRequest, sem chan int, out chan LoadResult ) {
+func attemptLoadConcurrent(request LoadRequest, sem chan int, out chan LoadResult) {
 	sem <- 1 // write to semaphore, which is capped at threads*2. If semaphore is full, block until you can write.
 	out <- attemptLoad(request.Rs, request.RDir, request.Pkg)
 	<-sem // read from sempaphore to indicate that you are done running, thus opening the "slot" taken earlier.
@@ -194,7 +194,7 @@ func attemptLoadConcurrent(request LoadRequest, sem chan int, out chan LoadResul
 
 // Try to load the given R package in the rDir specified. Bundle the results in a LoadResults object and return.
 func attemptLoad(rs rcmd.RSettings, rDir, pkg string) LoadResult {
-	log.WithFields(log.Fields{"pkg": pkg, "rDir": rDir,}).Trace("attempting to load package.")
+	log.WithFields(log.Fields{"pkg": pkg, "rDir": rDir}).Trace("attempting to load package.")
 	outLines, errLines, cmdErr := runRCmd(fmt.Sprintf("library('%s')", pkg), rs, rDir, false)
 
 	var exitError *exec.ExitError
@@ -224,8 +224,8 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) LoadResult {
 			"r_dir": rDir,
 		}).Debug("Package loaded successfully")
 		log.WithFields(log.Fields{
-			"pkg":    pkg,
-			"r_dir":  rDir,
+			"pkg":     pkg,
+			"r_dir":   rDir,
 			"std_out": outLines,
 		}).Trace("Package loaded successfully")
 	}
@@ -247,23 +247,23 @@ func attemptLoad(rs rcmd.RSettings, rDir, pkg string) LoadResult {
 func getAdditionalPkgInfo(rs rcmd.RSettings, rDir, pkg string) pkgLoadMetadata {
 	outLines, errLines, cmdErr := runRCmd(fmt.Sprintf("find.package('%s'); as.character(packageVersion('%s'))", pkg, pkg), rs, rDir, true)
 
-	if cmdErr != nil {// || len(errLines) > 0 {
+	if cmdErr != nil { // || len(errLines) > 0 {
 		log.WithFields(log.Fields{
-			"pkg" :   pkg,
-			"r_dir" : rDir,
-			"err" :   cmdErr,
+			"pkg":    pkg,
+			"r_dir":  rDir,
+			"err":    cmdErr,
 			"stdout": outLines,
 			"stderr": errLines,
 		}).Warn("could not get package Path and Version info data during load")
-		return pkgLoadMetadata{"could not retrieve",	"could not retrieve",}
+		return pkgLoadMetadata{"could not retrieve", "could not retrieve"}
 	} else if len(outLines) != 2 {
 		log.WithFields(log.Fields{
-			"pkg" :    pkg,
-			"r_dir" :  rDir,
-			"output" : outLines,
-			"stderr" : errLines,
+			"pkg":    pkg,
+			"r_dir":  rDir,
+			"output": outLines,
+			"stderr": errLines,
 		}).Warn("could not parse R command output for package Path and Version info -- expected exactly two lines of output.")
-		return pkgLoadMetadata{"could not retrieve",	"could not retrieve",}
+		return pkgLoadMetadata{"could not retrieve", "could not retrieve"}
 	}
 
 	pkgPath := strings.ReplaceAll(outLines[0], "\"", "")
@@ -292,9 +292,7 @@ func runRCmd(rExpression string, rs rcmd.RSettings, rDir string, reducedOutput b
 	cmd.Stderr = &stderr
 	//cmd.Stdin = os.Stdin
 
-	log.WithFields(log.Fields{
-
-	})
+	log.WithFields(log.Fields{})
 	cmdErr := cmd.Run()
 
 	outLines := rp.ScanROutput(stdout.Bytes(), reducedOutput)
@@ -302,6 +300,3 @@ func runRCmd(rExpression string, rs rcmd.RSettings, rDir string, reducedOutput b
 
 	return outLines, errLines, cmdErr
 }
-
-
-

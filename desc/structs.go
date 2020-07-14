@@ -56,32 +56,27 @@ type Dep struct {
 
 // Desc represents a package description
 type Desc struct {
-	Package           string
-	Source            string
-	Version           string
-	Maintainer        string
-	Description       string
-	MD5sum            string
-	Remotes           []string
+	Package            string
+	Source             string
+	Version            string
+	Maintainer         string
+	Description        string
+	MD5sum             string
+	Remotes            []string
 	OriginalRepository string
-	Repository        string
-	Imports           map[string]Dep
-	Suggests          map[string]Dep
-	Depends           map[string]Dep
-	LinkingTo         map[string]Dep
-	PkgrVersion       string
-	PkgrInstallType   string
-	PkgrRepositoryURL string
+	Repository         string
+	Imports            map[string]Dep
+	Suggests           map[string]Dep
+	Depends            map[string]Dep
+	LinkingTo          map[string]Dep
+	PkgrVersion        string
+	PkgrInstallType    string
+	PkgrRepositoryURL  string
 }
 
 func (d *Desc) GetCombinedDependencies(suggests bool) map[string]Dep {
 	combined := map[string]Dep{}
 
-	// I previously thought that "Depends" were another place to list dependencies,
-	// but apparently this field is always for the R version dependency itself.
-	//for key, value := range d.Depends {
-	//	combined[key] = value
-	//}
 	for key, value := range d.Imports {
 		combined[key] = value
 	}
@@ -96,25 +91,24 @@ func (d *Desc) GetCombinedDependencies(suggests bool) map[string]Dep {
 	return combined
 }
 
-
 // TODO figure out unmarshalling pattern so can
 // implement that on Desc so don't need intermediate
 // desc struct
 type desc struct {
-	Package           string
-	Source            string
-	Version           string
-	Maintainer        string
-	Description       string
-	MD5sum            string
-	Remotes           []string `delim:"," strip:"\n\r\t "`
+	Package            string
+	Source             string
+	Version            string
+	Maintainer         string
+	Description        string
+	MD5sum             string
+	Remotes            []string `delim:"," strip:"\n\r\t "`
 	OriginalRepository string
-	Repository        string
-	Imports           []string `delim:"," strip:"\n\r\t "`
-	Suggests          []string `delim:"," strip:"\n\r\t "`
-	Depends           []string `delim:"," strip:"\n\r\t "`
-	LinkingTo         []string `delim:"," strip:"\n\r\t "`
-	PkgrVersion       string
-	PkgrInstallType   string
-	PkgrRepositoryURL string
+	Repository         string
+	Imports            []string `delim:"," strip:"\n\r\t "`
+	Suggests           []string `delim:"," strip:"\n\r\t "`
+	Depends            []string `delim:"," strip:"\n\r\t "`
+	LinkingTo          []string `delim:"," strip:"\n\r\t "`
+	PkgrVersion        string
+	PkgrInstallType    string
+	PkgrRepositoryURL  string
 }

@@ -63,18 +63,18 @@ func NewInstallQueue(n int,
 		ir InstallRequest,
 		pc PackageCache) (CmdResult, string, error),
 	updateFunc func(InstallUpdate)) *InstallQueue {
-		wq := make(chan InstallRequest, 2000)
-		uq := make(chan InstallUpdate, 500)
-		iq := InstallQueue{
-			WorkQueue:   wq,
-			UpdateQueue: uq,
-		}
-		for i := 0; i < n; i++ {
-			iq.RegisterNewWorker(i+1, installFunc)
-		}
-		go iq.HandleUpdates(updateFunc)
-		return &iq
+	wq := make(chan InstallRequest, 2000)
+	uq := make(chan InstallUpdate, 500)
+	iq := InstallQueue{
+		WorkQueue:   wq,
+		UpdateQueue: uq,
 	}
+	for i := 0; i < n; i++ {
+		iq.RegisterNewWorker(i+1, installFunc)
+	}
+	go iq.HandleUpdates(updateFunc)
+	return &iq
+}
 
 // HandleUpdates handles updates
 func (i *InstallQueue) HandleUpdates(fn func(InstallUpdate)) {

@@ -82,7 +82,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	if err != nil {
 		log.WithFields(log.Fields{
 			"library": cfg.Library,
-			"error" : err,
+			"error":   err,
 		}).Error("unexpected error when checking existence of library")
 	}
 
@@ -173,6 +173,22 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		}
 	}
 	// end tarball deps
+
+	// Set dependencies from Descriptions files as user-packages, for convenience.
+	var descDescriptions []desc.Desc
+
+	if len(cfg.Descriptions) > 0 {
+		descDescriptions = unpackDescriptions(fs, cfg.Descriptions)
+		for _, desc := range descDescriptions {
+			descDeps := desc.GetCombinedDependencies(true)
+			for _, d := range descDeps {
+				if !funk.Contains(cfg.Packages, d.Name) {
+					cfg.Packages = append(cfg.Packages, d.Name)
+				}
+			}
+		}
+	}
+	// end Descriptions deps
 
 	cfg.Packages = removeBasePackages(cfg.Packages)
 
@@ -307,9 +323,9 @@ func removeBasePackages(pkgList []string) []string {
 func logAdditionalPackageOrigins(additionalPackages map[string]gpsr.AdditionalPkg) {
 	for pkg, details := range additionalPackages {
 		log.WithFields(log.Fields{
-			"pkg": pkg,
-			"origin": details.OriginPath,
-			"method": details.Type,
+			"pkg":          pkg,
+			"origin":       details.OriginPath,
+			"method":       details.Type,
 			"install_from": details.InstallPath,
 		}).Debug("additional installation set")
 	}

@@ -39,5 +39,3 @@ func PrettyPrint(v interface{}) (err error) {
 	}
 	return
 }
-
-

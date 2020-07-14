@@ -116,11 +116,11 @@ func (repoDb *RepoDb) FetchPackages(rVersion RVersion) error {
 		maxSecs := 3600
 		maxAge, ok := os.LookupEnv("R_AVAILABLE_PACKAGES_CACHE_CONTROL_MAX_AGE")
 		if ok {
-			ms, err := strconv.ParseInt(maxAge, 10, 0);
+			ms, err := strconv.ParseInt(maxAge, 10, 0)
 			if err != nil {
 				log.Warnf("improper R_AVAILABLE_PACKAGES_CACHE_CONTROL_MAX_AGE set with error: %s, ignoring...", err)
 			} else {
-			 maxSecs = int(ms)
+				maxSecs = int(ms)
 			}
 		}
 		if fi.ModTime().Add(time.Duration(maxSecs)*time.Second).Unix() > time.Now().Unix() {
@@ -146,7 +146,7 @@ func (repoDb *RepoDb) FetchPackages(rVersion RVersion) error {
 		go func(st SourceType) {
 			descriptionMap := make(map[string]desc.Desc)
 			pkgURL := GetPackagesFileURL(repoDb, st, rVersion)
-			log.Debugf("packages database - type: %s, url: %s\n",st,  pkgURL)
+			log.Debugf("packages database - type: %s, url: %s\n", st, pkgURL)
 			var body []byte
 
 			if strings.HasPrefix(pkgURL, "http") {

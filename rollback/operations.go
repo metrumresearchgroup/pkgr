@@ -19,7 +19,7 @@ func RollbackPackageEnvironment(fileSystem afero.Fs, rbp RollbackPlan) error {
 		if err0 != nil {
 			logrus.WithFields(logrus.Fields{
 				"library": rbp.Library,
-				"error": err0,
+				"error":   err0,
 			}).Warn("failed to remove created library during rollback")
 			return err0
 		}
@@ -37,7 +37,6 @@ func RollbackPackageEnvironment(fileSystem afero.Fs, rbp RollbackPlan) error {
 			return err1
 		}
 	}
-
 
 	//Rollback updated packages -- we have to do this differently than the rest, because updated packages need to be
 	//restored from backups.
@@ -157,6 +156,3 @@ func tagOldInstallation(fileSystem afero.Fs, libraryPath string, outdatedPackage
 		NewVersion:             outdatedPackage.NewVersion,
 	}
 }
-
-
-

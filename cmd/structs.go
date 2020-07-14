@@ -5,9 +5,9 @@ import "github.com/metrumresearchgroup/pkgr/rcmd"
 //// Load Request Struct
 // Struct to hold the args that go into an attempted package load.
 type LoadRequest struct {
-	Rs rcmd.RSettings
+	Rs   rcmd.RSettings
 	RDir string
-	Pkg string
+	Pkg  string
 }
 
 //// Load report struct
@@ -32,7 +32,6 @@ func (report *LoadReport) AddResult(pkg string, result LoadResult) {
 	}
 }
 
-
 //// Load result struct
 type LoadResult struct {
 	Package string
@@ -47,7 +46,7 @@ type LoadResult struct {
 }
 
 type pkgLoadMetadata struct { // Used to help create LoadResult
-	pkgPath string
+	pkgPath    string
 	pkgVersion string
 }
 

@@ -37,19 +37,19 @@ func TestInstallArgs(t *testing.T) {
 }
 
 func TestUpdateDescriptionInfoByLines_RepoUpdated(t *testing.T) {
-	tests := map[string]struct{
+	tests := map[string]struct {
 		startingLines []string
-		version string
-		installType string
-		repoURL string
-		repo string
+		version       string
+		installType   string
+		repoURL       string
+		repo          string
 	}{
 		"Repository Upated": {
 			startingLines: []string{"Package: R6", "Version: 2.4.0", "Repository: CRAN"},
-			version: "pkgr0.0.test",
-			installType: "binary",
-			repoURL: "https://www.fakecranrepos.org",
-			repo: "AlCRAN_Mandragoran",
+			version:       "pkgr0.0.test",
+			installType:   "binary",
+			repoURL:       "https://www.fakecranrepos.org",
+			repo:          "AlCRAN_Mandragoran",
 		},
 	}
 	for testName, test := range tests {
@@ -59,31 +59,30 @@ func TestUpdateDescriptionInfoByLines_RepoUpdated(t *testing.T) {
 			assert.Equal(t, results[0], "Package: R6")
 			assert.Equal(t, results[1], "Version: 2.4.0")
 			assert.Equal(t, results[2], "OriginalRepository: CRAN")
-			assert.Equal(t, results[3], "Repository: " + test.repo)
-			assert.Equal(t, results[4], "PkgrVersion: " + test.version)
-			assert.Equal(t, results[5], "PkgrInstallType: " + test.installType)
-			assert.Equal(t, results[6], "PkgrRepositoryURL: " + test.repoURL)
+			assert.Equal(t, results[3], "Repository: "+test.repo)
+			assert.Equal(t, results[4], "PkgrVersion: "+test.version)
+			assert.Equal(t, results[5], "PkgrInstallType: "+test.installType)
+			assert.Equal(t, results[6], "PkgrRepositoryURL: "+test.repoURL)
 		})
 
 	}
 
-
 }
 
 func TestUpdateDescriptionInfoByLines_RepoTheSame(t *testing.T) {
-	tests := map[string]struct{
+	tests := map[string]struct {
 		startingLines []string
-		version string
-		installType string
-		repoURL string
-		repo string
+		version       string
+		installType   string
+		repoURL       string
+		repo          string
 	}{
 		"Repository Upated": {
 			startingLines: []string{"Package: R6", "Version: 2.4.0", "Repository: CRAN"},
-			version: "pkgr0.0.test",
-			installType: "binary",
-			repoURL: "https://www.fakecranrepos.org",
-			repo: "CRAN",
+			version:       "pkgr0.0.test",
+			installType:   "binary",
+			repoURL:       "https://www.fakecranrepos.org",
+			repo:          "CRAN",
 		},
 		"Pkgr Info Updated": {
 			startingLines: []string{
@@ -94,10 +93,10 @@ func TestUpdateDescriptionInfoByLines_RepoTheSame(t *testing.T) {
 				"PkgrInstallType: source",
 				"PkgrRepositoryURL: https://cran.r-project.org/",
 			},
-			version: "pkgr0.0.test",
+			version:     "pkgr0.0.test",
 			installType: "binary",
-			repoURL: "https://www.fakecranrepos.org",
-			repo: "CRAN",
+			repoURL:     "https://www.fakecranrepos.org",
+			repo:        "CRAN",
 		},
 		"Pkgr Info Partially Updated": {
 			startingLines: []string{
@@ -108,10 +107,10 @@ func TestUpdateDescriptionInfoByLines_RepoTheSame(t *testing.T) {
 				"PkgrInstallType: binary", // matches final result
 				"PkgrRepositoryURL: https://cran.r-project.org/",
 			},
-			version: "pkgr0.0.test",
+			version:     "pkgr0.0.test",
 			installType: "binary",
-			repoURL: "https://www.fakecranrepos.org",
-			repo: "CRAN",
+			repoURL:     "https://www.fakecranrepos.org",
+			repo:        "CRAN",
 		},
 		"Pkgr Info Not Upated": {
 			startingLines: []string{
@@ -122,10 +121,10 @@ func TestUpdateDescriptionInfoByLines_RepoTheSame(t *testing.T) {
 				"PkgrInstallType: binary", // matches final result
 				"PkgrRepositoryURL: https://www.fakecranrepos.org",
 			},
-			version: "pkgr0.0.test",
+			version:     "pkgr0.0.test",
 			installType: "binary",
-			repoURL: "https://www.fakecranrepos.org",
-			repo: "CRAN",
+			repoURL:     "https://www.fakecranrepos.org",
+			repo:        "CRAN",
 		},
 	}
 	for testName, test := range tests {
@@ -135,10 +134,10 @@ func TestUpdateDescriptionInfoByLines_RepoTheSame(t *testing.T) {
 			assert.Equal(t, results[0], "Package: R6")
 			assert.Equal(t, results[1], "Version: 2.4.0")
 			//assert.Equal(t, results[2], "OriginalRepository: CRAN")
-			assert.Equal(t, results[2], "Repository: " + test.repo)
-			assert.Equal(t, results[3], "PkgrVersion: " + test.version)
-			assert.Equal(t, results[4], "PkgrInstallType: " + test.installType)
-			assert.Equal(t, results[5], "PkgrRepositoryURL: " + test.repoURL)
+			assert.Equal(t, results[2], "Repository: "+test.repo)
+			assert.Equal(t, results[3], "PkgrVersion: "+test.version)
+			assert.Equal(t, results[4], "PkgrInstallType: "+test.installType)
+			assert.Equal(t, results[5], "PkgrRepositoryURL: "+test.repoURL)
 		})
 
 	}

@@ -6,10 +6,10 @@ func NewDefaultInstallDeps() InstallDeps {
 	return InstallDeps{
 		Deps: make(map[string]PkgDeps),
 		Default: PkgDeps{
-			Depends:   true,
-			Imports:   true,
-			LinkingTo: true,
-			Suggests:  false,
+			Depends:       true,
+			Imports:       true,
+			LinkingTo:     true,
+			Suggests:      false,
 			NoRecommended: false,
 		}}
 }

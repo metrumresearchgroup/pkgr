@@ -9,5 +9,4 @@ func (d Dep) ToString() string {
 	return fmt.Sprintf("%s (%s %s)", d.Name, d.Constraint.ToString(), d.Version.String)
 }
 
-
 // R (>= 3.6)

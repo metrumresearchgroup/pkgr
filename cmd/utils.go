@@ -44,7 +44,7 @@ func getWorkerCount(threadCount, numCpus int) int {
 		}
 	} else {
 		nworkers = threadCount
-		if nworkers > numCpus + 2 {
+		if nworkers > numCpus+2 {
 			log.Warn("number of workers exceeds the number of threads on machine by at least 2, this may result in degraded performance")
 		}
 	}
@@ -60,7 +60,7 @@ func stringInSlice(s string, slice []string) bool {
 	return false
 }
 
-func libraryExists(fileSystem afero.Fs, libraryPath string ) bool {
+func libraryExists(fileSystem afero.Fs, libraryPath string) bool {
 	result, _ := afero.Exists(fileSystem, libraryPath)
 	return result
 }
@@ -82,4 +82,3 @@ func extractNamesFromDesc(installedPackages map[string]desc.Desc) []string {
 	}
 	return installedPackageNames
 }
-

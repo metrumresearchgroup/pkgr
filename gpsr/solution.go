@@ -10,15 +10,15 @@ import (
 
 // ResolveInstallationReqs resolves all the installation requirements
 func ResolveInstallationReqs(
-		pkgs []string,
-		preinstalledPkgs map[string]desc.Desc,
-		//tarballDependencies []desc.Desc,
-		dependencyConfigs InstallDeps,
-		pkgNexus *cran.PkgNexus,
-		update bool,
-		libraryExists bool,
-		noRecommended bool,
-	) (InstallPlan, error) {
+	pkgs []string,
+	preinstalledPkgs map[string]desc.Desc,
+	//tarballDependencies []desc.Desc,
+	dependencyConfigs InstallDeps,
+	pkgNexus *cran.PkgNexus,
+	update bool,
+	libraryExists bool,
+	noRecommended bool,
+) (InstallPlan, error) {
 
 	workingGraph := NewGraph()
 	defaultDependencyConfigs := NewDefaultInstallDeps()
@@ -79,7 +79,6 @@ func ResolveInstallationReqs(
 			depDb[p] = allDeps
 		}
 	}
-
 
 	outdatedPackages := pacman.GetOutdatedPackages(preinstalledPkgs, pkgNexus.GetPackages(extractNamesFromDesc(preinstalledPkgs)).Packages)
 

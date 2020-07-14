@@ -6,7 +6,7 @@ import (
 )
 
 func TestDownloadFMethod_GetMegabytes(t *testing.T) {
-	testFixture := Download {
+	testFixture := Download{
 		Size: 1048576, //1024 * 1024 -- 1 MB
 	}
 

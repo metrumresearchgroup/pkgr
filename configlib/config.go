@@ -51,6 +51,7 @@ func NewConfig(cfgPath string, cfg *PkgrConfig) {
 	cfg.Library = expandTilde(cfg.Library)
 	cfg.RPath = expandTilde(cfg.RPath)
 	cfg.Tarballs = expandTildes(cfg.Tarballs)
+	cfg.Descriptions = expandTildes(cfg.Descriptions)
 	cfg.Repos = expandTildesRepos(cfg.Repos)
 	cfg.Logging.All = expandTilde(cfg.Logging.All)
 	cfg.Logging.Install = expandTilde(cfg.Logging.Install)
@@ -65,7 +66,7 @@ func expandTilde(p string) string {
 	expanded, err := homedir.Expand(p)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"path": p,
+			"path":  p,
 			"error": err,
 		}).Fatal("problem parsing config file -- could not expand path")
 	}
@@ -179,7 +180,6 @@ func IsCustomizationSet(key string, elems []interface{}, elem string) bool {
 	return false
 }
 
-
 // AddPackage add a package to the Package section of the yml config file
 func AddPackage(name string) error {
 	cfgname := viper.ConfigFileUsed()
@@ -206,7 +206,7 @@ func add(ymlfile string, packageName string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	var pc PkgrConfig
 	_ = yaml.Unmarshal(yf, &pc)
 

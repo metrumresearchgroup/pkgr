@@ -12,9 +12,9 @@ type DepTestSuite struct {
 
 func (suite *DepTestSuite) SetupTest() {
 	suite.versionFixture = Version{
-		Major: 2,
-		Minor: 3,
-		Patch: 1,
+		Major:  2,
+		Minor:  3,
+		Patch:  1,
 		String: "2.3.1",
 	}
 }
@@ -26,9 +26,9 @@ func TestDepTestSuite(t *testing.T) {
 func (suite *DepTestSuite) TestDepToString_GTConstraint() {
 
 	fixture := Dep{
-		Version: suite.versionFixture,
+		Version:    suite.versionFixture,
 		Constraint: GT,
-		Name: "CatsAndOranges",
+		Name:       "CatsAndOranges",
 	}
 
 	expected := "CatsAndOranges (> 2.3.1)"
@@ -40,9 +40,9 @@ func (suite *DepTestSuite) TestDepToString_GTConstraint() {
 func (suite *DepTestSuite) TestDepToString_GTEConstraint() {
 
 	fixture := Dep{
-		Version: suite.versionFixture,
+		Version:    suite.versionFixture,
 		Constraint: GTE,
-		Name: "CatsAndOranges",
+		Name:       "CatsAndOranges",
 	}
 
 	expected := "CatsAndOranges (>= 2.3.1)"
@@ -54,9 +54,9 @@ func (suite *DepTestSuite) TestDepToString_GTEConstraint() {
 func (suite *DepTestSuite) TestDepToString_LTConstaint() {
 
 	fixture := Dep{
-		Version: suite.versionFixture,
+		Version:    suite.versionFixture,
 		Constraint: LT,
-		Name: "CatsAndOranges",
+		Name:       "CatsAndOranges",
 	}
 
 	expected := "CatsAndOranges (< 2.3.1)"
@@ -68,9 +68,9 @@ func (suite *DepTestSuite) TestDepToString_LTConstaint() {
 func (suite *DepTestSuite) TestDepToString_LTEConstaint() {
 
 	fixture := Dep{
-		Version: suite.versionFixture,
+		Version:    suite.versionFixture,
 		Constraint: LTE,
-		Name: "CatsAndOranges",
+		Name:       "CatsAndOranges",
 	}
 
 	expected := "CatsAndOranges (<= 2.3.1)"
@@ -79,13 +79,12 @@ func (suite *DepTestSuite) TestDepToString_LTEConstaint() {
 	suite.Equal(expected, actual)
 }
 
-
 func (suite *DepTestSuite) TestDepToString_EqualsConstaint() {
 
 	fixture := Dep{
-		Version: suite.versionFixture,
+		Version:    suite.versionFixture,
 		Constraint: Equals,
-		Name: "CatsAndOranges",
+		Name:       "CatsAndOranges",
 	}
 
 	expected := "CatsAndOranges (== 2.3.1)"
@@ -101,9 +100,9 @@ func (suite *DepTestSuite) TestDepToString_VersionContainsDev() {
 	versionFixtureWithDev.String = "2.3.1.11"
 
 	fixture := Dep{
-		Version: versionFixtureWithDev,
+		Version:    versionFixtureWithDev,
 		Constraint: GTE,
-		Name: "CatsAndOranges",
+		Name:       "CatsAndOranges",
 	}
 
 	expected := "CatsAndOranges (>= 2.3.1.11)"
