@@ -177,8 +177,8 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 			cranBinaryURL(rv),
 			rv.ToString(),
 			filepath.Base(dest))
-		log.Info(pkgdl)
 	}
+	log.Trace(pkgdl)
 
 	log.WithField("package", d.Package.Package).Info("downloading package ")
 	var from io.ReadCloser
