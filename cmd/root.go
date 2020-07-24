@@ -27,8 +27,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-// VERSION is the current pkgr version
-var VERSION = "1.2.0"
+// VERSION is the current pkgr version, this is replaced at buildtime by goreleaser with the git tag
+var VERSION = "develop"
 
 var fs afero.Fs
 var cfg configlib.PkgrConfig
