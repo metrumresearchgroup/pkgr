@@ -1,8 +1,6 @@
 module github.com/metrumresearchgroup/pkgr
 
 require (
-	github.com/coreos/go-etcd v2.0.0+incompatible // indirect
-	github.com/cpuguy83/go-md2man v1.0.10 // indirect
 	github.com/deckarep/golang-set v1.7.1
 	github.com/dpastoor/goutils v1.2.0
 	github.com/fatih/structs v1.1.0

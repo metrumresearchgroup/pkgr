@@ -193,12 +193,12 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 			}).Warn("bad server response")
 			b, _ := ioutil.ReadAll(resp.Body)
 			log.WithField("package", d.Package.Package).Println("body: ", string(b))
-			return Download{}, err
+			return Download{Metadata: d}, err
 		}
 		// TODO: the response will often be valid, but return like a server 404 or other error
 		if err != nil {
 			log.WithField("package", d.Package).Warn("error downloading package")
-			return Download{}, err
+			return Download{Metadata: d}, err
 		}
 		from = resp.Body
 		defer resp.Body.Close()
@@ -224,7 +224,7 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 	defer file.Close()
 	size, err := io.Copy(file, from)
 	if err != nil {
-		return Download{}, err
+		return Download{Metadata: d}, err
 	}
 
 	return Download{

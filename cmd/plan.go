@@ -119,7 +119,13 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	var repos []cran.RepoURL
 	for _, r := range cfg.Repos {
 		for nm, url := range r {
-			repos = append(repos, cran.RepoURL{Name: nm, URL: url})
+			var suffix string
+			if _, found := cfg.Customizations.Repos[nm]; found {
+				if cfg.Customizations.Repos[nm].RepoSuffix != "" {
+					suffix = cfg.Customizations.Repos[nm].RepoSuffix
+				}
+			}
+			repos = append(repos, cran.RepoURL{Name: nm, URL: url, Suffix: suffix})
 		}
 	}
 	st := cran.DefaultType()
