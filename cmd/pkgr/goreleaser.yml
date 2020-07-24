@@ -3,16 +3,23 @@
 project_name: pkgr
 
 release:
-  prerelease: false
+  # in case there is an indicator for this in the tag e.g. v1.0.0-rc1
+  # If set to true, will mark the release as not ready for production.
+  # Default is false.
+  prerelease: auto
 
 build:
   binary: pkgr
+  env:
+    - CGO_ENABLED=0
+  ldflags:
+    - -s -w -extldflags "-static" -X 'github.com/metrumresearchgroup/pkgr/cmd.VERSION={{ .Env.VERSION }}'
   goos:
     - windows
     - darwin
     - linux
   goarch:
-    - amd64
+   - amd64
 
 # goreleaser.yml
 brews:
