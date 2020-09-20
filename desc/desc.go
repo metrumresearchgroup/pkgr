@@ -53,7 +53,10 @@ func NewDesc(d desc) Desc {
 		Version:           d.Version,
 		Maintainer:        d.Maintainer,
 		Description:       d.Description,
+		License:           d.License,
 		MD5sum:            d.MD5sum,
+		Path:              d.Path,
+		Priority:          d.Priority,
 		Remotes:           d.Remotes,
 		Repository:        d.Repository,
 		Imports:           make(map[string]Dep),
@@ -63,6 +66,9 @@ func NewDesc(d desc) Desc {
 		PkgrVersion:       d.PkgrVersion,
 		PkgrInstallType:   d.PkgrInstallType,
 		PkgrRepositoryURL: d.PkgrRepositoryURL,
+	}
+	if strings.EqualFold(d.NeedsCompilation, "yes") {
+		dsc.NeedsCompilation = true
 	}
 	if len(d.Imports) > 0 {
 		for _, dp := range d.Imports {

@@ -211,7 +211,11 @@ func (repoDb *RepoDb) FetchPackages(rVersion RVersion) error {
 
 				pkgRConstraint, packageValid := isRVersionCompatible(pkgDesc, rVersion)
 
-				if packageValid {
+				// the path will be set to a character if its a special version of the package,
+				// such as an older type, or a newer type in prep for a new R version release
+				// as such, for now we'll just discard if its one of those until we can
+				// more comprehensively teach pkgr what it should do in such a situation
+				if packageValid && pkgDesc.Path == "" {
 					descriptionMap[pkgDesc.Package] = pkgDesc
 				} else {
 					log.WithFields(log.Fields{
