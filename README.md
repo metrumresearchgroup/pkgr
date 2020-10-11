@@ -54,7 +54,7 @@ brew install pkgr
 To install pkgr on Linux systems, use the following commands:
 
 ```
-sudo wget https://github.com/metrumresearchgroup/pkgr/releases/download/v0.5.0-beta.3/pkgr_0.5.0-beta.3_linux_amd64.tar.gz -O /tmp/pkgr.tar.gz
+sudo wget https://github.com/metrumresearchgroup/pkgr/releases/download/v1.2.1/pkgr_1.2.1_linux_amd64.tar.gz -O /tmp/pkgr.tar.gz
 sudo tar xzf /tmp/pkgr.tar.gz pkgr
 sudo mv pkgr /usr/local/bin/pkgr
 sudo chmod +x /usr/local/bin/pkgr
@@ -99,11 +99,11 @@ Packages:
 
 # any repositories, order matters
 Repos:
-  - gh_dev: "https://metrumresearchgroup.github.io/rpkgs/gh_dev"
-  - CRAN: "https://cran.microsoft.com/snapshot/2018-11-18"
+  - MPN: "https://mpn.metworx.com/snapshots/stable/2020-09-20"
+  - CRAN: "https://cran.rstudio.com"
 
 # path to install packages to
-Library: "path/to/install/library"
+Library: "<path/to/install/library>"
 
 # package specific customizations
 Customizations:
@@ -114,8 +114,8 @@ Customizations:
 
 When you run `pkgr install` with this as your _pkgr.yml_ file, pkgr will download and
 install the packages rmarkdown, bitops, calToools, knitr, tidyverse, shiny, logrrr,
-and any dependencies that those packages require. Since the "gh_dev" repository is listed first,
-pkgr will search "gh_dev" for those packages before it looks to "CRAN".
+and any dependencies that those packages require. Since the "MPN" repository is listed first,
+pkgr will search "MPN" for those packages before it looks to "CRAN".
 
 If you want to see everything that pkgr is going to install before actually installing, simply run `pkgr plan` and take a look.
 
@@ -139,7 +139,7 @@ Packages:
 
 # any repositories, order matters
 Repos:
-   - CRAN: "https://cran.microsoft.com/snapshot/2018-11-18"
+  - MPN: "https://mpn.metworx.com/snapshots/stable/2020-09-20"
 
 Library: "path/to/install/library"
 
@@ -184,7 +184,7 @@ Packages:
 
 # any repositories, order matters
 Repos:
-  - CRAN: "https://cran.microsoft.com/snapshot/2018-11-18"
+  - MPN: "https://mpn.metworx.com/snapshots/stable/2020-09-20"
   - BioCsoft: "https://bioconductor.org/packages/3.8/bioc"
   - BioCann: "https://bioconductor.org/packages/3.8/data/annotation"
   - BioCexp: "https://bioconductor.org/packages/3.8/data/experiment"
