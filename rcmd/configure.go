@@ -55,6 +55,10 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 				continue
 			}
 			if evs[0] == "PATH" {
+				condaPath := "/opt/anaconda/bin"
+				if strings.HasPrefix(evs[1], condaPath) && !rs.PreservePath {
+					evs[1] = strings.TrimPrefix(evs[1], fmt.Sprintf("%s:", condaPath))
+				}
 				rDir := filepath.Dir(rs.Rpath)
 				if rDir != "" && rDir != "." && !strings.HasPrefix(evs[1], rDir) {
 					evs[1] = fmt.Sprintf("%s:%s", rDir, evs[1])
