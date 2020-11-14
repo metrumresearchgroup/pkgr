@@ -160,6 +160,7 @@ func loadDefaultSettings() {
 	viper.SetDefault("threads", runtime.NumCPU())
 	viper.SetDefault("strict", false)
 	viper.SetDefault("rollback", true)
+	viper.SetDefault("nosecure", false)
 }
 
 // IsCustomizationSet ...

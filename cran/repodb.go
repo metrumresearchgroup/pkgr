@@ -3,6 +3,7 @@ package cran
 import (
 	"bytes"
 	"crypto/md5"
+	"crypto/tls"
 	"encoding/gob"
 	"fmt"
 	"io"
@@ -21,7 +22,10 @@ import (
 )
 
 // NewRepoDb returns a new Repo database
-func NewRepoDb(url RepoURL, dst SourceType, rc RepoConfig, rv RVersion) (*RepoDb, error) {
+// noSecure will allow https fetching without validating the certificate chain.
+// This occasionally is needed for repos that have self signed or certs not fully verifiable
+// which will return errors such as x509: certificate signed by unknown authority
+func NewRepoDb(url RepoURL, dst SourceType, rc RepoConfig, rv RVersion, noSecure bool) (*RepoDb, error) {
 	repoDatabasePointer := &RepoDb{
 		DescriptionsBySourceType: make(map[SourceType]map[string]desc.Desc),
 		Time:                     time.Now(),
@@ -44,7 +48,7 @@ func NewRepoDb(url RepoURL, dst SourceType, rc RepoConfig, rv RVersion) (*RepoDb
 
 	repoDatabasePointer.DescriptionsBySourceType[Source] = make(map[string]desc.Desc)
 
-	return repoDatabasePointer, repoDatabasePointer.FetchPackages(rv)
+	return repoDatabasePointer, repoDatabasePointer.FetchPackages(rv, noSecure)
 }
 
 // Decode decodes the package database
@@ -108,7 +112,10 @@ func GetPackagesFileURL(r *RepoDb, st SourceType, rv RVersion) string {
 
 // FetchPackages gets the packages for  RepoDb
 // R_AVAILABLE_PACKAGES_CACHE_CONTROL_MAX_AGE controls the timing to requery the cache in R
-func (repoDb *RepoDb) FetchPackages(rVersion RVersion) error {
+// noSecure will allow https fetching without validating the certificate chain.
+// This occasionally is needed for repos that have self signed or certs not fully verifiable
+// which will return errors such as x509: certificate signed by unknown authority
+func (repoDb *RepoDb) FetchPackages(rVersion RVersion, noSecure bool) error {
 	var err error
 	pkgdbFile := repoDb.GetRepoDbCacheFilePath(rVersion.ToFullString())
 
@@ -139,6 +146,14 @@ func (repoDb *RepoDb) FetchPackages(rVersion RVersion) error {
 		Err                   error
 	}
 
+	client := &http.Client{}
+	if noSecure {
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify : true},
+		}
+		client = &http.Client{Transport: tr}
+	}
+
 	downloadChannel := make(chan downloadDatabase, len(repoDb.DescriptionsBySourceType))
 	defer close(downloadChannel)
 
@@ -150,7 +165,7 @@ func (repoDb *RepoDb) FetchPackages(rVersion RVersion) error {
 			var body []byte
 
 			if strings.HasPrefix(pkgURL, "http") {
-				res, err := http.Get(pkgURL)
+				res, err := client.Get(pkgURL)
 				if err != nil {
 					log.Error("error with http get to url: " + pkgURL)
 					log.Fatal(err)

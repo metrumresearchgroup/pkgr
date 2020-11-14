@@ -89,6 +89,9 @@ func rootInit() {
 	RootCmd.PersistentFlags().Bool("rollback", cfg.Rollback, "Enable rollback")
 	_ = viper.BindPFlag("rollback", RootCmd.PersistentFlags().Lookup("rollback"))
 
+	RootCmd.PersistentFlags().Bool("no-secure", cfg.Rollback, "disable TLS certificate verification")
+	_ = viper.BindPFlag("nosecure", RootCmd.PersistentFlags().Lookup("no-secure"))
+
 	RootCmd.PersistentFlags().Bool("strict", cfg.Strict, "Enable strict mode")
 	_ = viper.BindPFlag("strict", RootCmd.PersistentFlags().Lookup("strict"))
 }

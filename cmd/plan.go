@@ -150,7 +150,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		}
 		cic.Repos[rn] = rc
 	}
-	pkgNexus, err := cran.NewPkgDb(repos, st, cic, rv)
+	pkgNexus, err := cran.NewPkgDb(repos, st, cic, rv, cfg.NoSecure)
 	if err != nil {
 		log.Panicln("error getting pkgdb ", err)
 	}

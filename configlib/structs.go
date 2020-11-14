@@ -58,6 +58,7 @@ type PkgrConfig struct {
 	Update         bool                `yaml:"Update,omitempty"`
 	Lockfile       Lockfile            `yaml:"Lockfile,omitempty"`
 	Strict         bool                `yaml:"Strict,omitempty"`
+	NoSecure       bool                `yaml:"NoSecure,omitempty"`
 }
 
 /*	viper.SetDefault("debug", false)

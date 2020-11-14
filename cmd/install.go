@@ -88,7 +88,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	packageCache := rcmd.NewPackageCache(userCache(cfg.Cache), false)
 
 	//Create a pkgMap object, which helps us with parallel downloads (?)
-	pkgMap, err := cran.DownloadPackages(fs, installPlan.PackageDownloads, packageCache.BaseDir, rVersion)
+	pkgMap, err := cran.DownloadPackages(fs, installPlan.PackageDownloads, packageCache.BaseDir, rVersion, cfg.NoSecure)
 	if err != nil {
 		log.Fatalf("error downloading packages: %s", err)
 	}
