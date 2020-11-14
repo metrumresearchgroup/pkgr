@@ -151,6 +151,10 @@ func (repoDb *RepoDb) FetchPackages(rVersion RVersion) error {
 
 			if strings.HasPrefix(pkgURL, "http") {
 				res, err := http.Get(pkgURL)
+				if err != nil {
+					log.Error("error with http get to url: " + pkgURL)
+					log.Fatal(err)
+				}
 				if res.StatusCode != 200 {
 					downloadChannel <- downloadDatabase{
 						St:                    st,
