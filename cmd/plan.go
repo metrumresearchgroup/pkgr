@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"github.com/spf13/afero"
 	"github.com/thoas/go-funk"
+	"path/filepath"
 	"runtime"
 
 	"github.com/metrumresearchgroup/pkgr/rollback"
@@ -62,7 +63,7 @@ func plan(cmd *cobra.Command, args []string) error {
 	rs := rcmd.NewRSettings(cfg.RPath)
 	rVersion := rcmd.GetRVersion(&rs)
 	log.Infoln("R Version " + rVersion.ToFullString())
-	log.Debugln("OS Platform " + rs.Platform)
+	log.Infoln("OS Platform " + rs.Platform)
 	_, ip, _ := planInstall(rVersion, true)
 	if viper.GetBool("show-deps") {
 		for pkg, deps := range ip.DepDb {
@@ -158,6 +159,9 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	for _, db := range pkgNexus.Db {
 		log.Infoln(fmt.Sprintf("%v:%v (binary:source) packages available in for %s from %s", len(db.DescriptionsBySourceType[cran.Binary]), len(db.DescriptionsBySourceType[cran.Source]), db.Repo.Name, db.Repo.URL))
 	}
+	log.Infoln("Package installation cache directory: ", userCache(cfg.Cache))
+	log.Infoln("Database cache directory: ", filepath.Dir(pkgNexus.Db[0].GetRepoDbCacheFilePath(rv.ToFullString())))
+
 
 	dependencyConfigurations := gpsr.NewDefaultInstallDeps()
 	dependencyConfigurations.Default.NoRecommended = cfg.NoRecommended
