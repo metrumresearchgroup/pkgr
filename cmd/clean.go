@@ -17,6 +17,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/metrumresearchgroup/pkgr/logger"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -40,7 +41,9 @@ func init() {
 func clean(cmd *cobra.Command, args []string) error {
 
 	logger.AddLogFile(cfg.Logging.All, cfg.Logging.Overwrite)
-
+	// set the cache control to 0 to make sure will clear out existing caches to re-initialize to get fresh results
+	// before purging
+	os.Setenv("R_AVAILABLE_PACKAGES_CACHE_CONTROL_MAX_AGE", "0")
 	var err error
 
 	if !cleanAll {
