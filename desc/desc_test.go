@@ -9,6 +9,9 @@ import (
 
 func TestDescParsing(t *testing.T) {
 	assert := assert.New(t)
+	// TODO: add testdata element from recommended package that has Priority: recommended
+	// TODO: add testdata element that has a Path for PACKAGES file
+	// TODO: update new fields such as License
 	var data = []struct {
 		in       string
 		expected Desc

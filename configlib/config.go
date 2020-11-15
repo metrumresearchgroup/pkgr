@@ -3,8 +3,6 @@ package configlib
 import (
 	"bytes"
 	"fmt"
-	"github.com/thoas/go-funk"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -178,63 +176,6 @@ func IsCustomizationSet(key string, elems []interface{}, elem string) bool {
 		}
 	}
 	return false
-}
-
-// AddPackage add a package to the Package section of the yml config file
-func AddPackage(name string) error {
-	cfgname := viper.ConfigFileUsed()
-	err := add(cfgname, name)
-	if err != nil {
-		return err
-	}
-	err = loadConfigFromPath(cfgname)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// add add a package to the Package section of the yml config file
-func add(ymlfile string, packageName string) error {
-	appFS := afero.NewOsFs()
-	fi, _ := os.Stat(ymlfile)
-	yf, err := afero.ReadFile(appFS, ymlfile)
-	if err != nil {
-		return err
-	}
-	yf, err = Format(yf)
-	if err != nil {
-		return err
-	}
-
-	var pc PkgrConfig
-	_ = yaml.Unmarshal(yf, &pc)
-
-	if funk.Contains(pc.Packages, packageName) {
-		log.Info(fmt.Sprintf("Package <%s> already found in <%s>", packageName, ymlfile))
-		return nil
-	}
-
-	var out []byte
-	i := 0
-	lines := bytes.Split(yf, []byte("\n"))
-	for _, line := range lines {
-		i++
-		out = append(out, line...)
-		if i < len(lines) {
-			out = append(out, []byte("\n")...)
-		}
-		if bytes.HasPrefix(line, []byte("Packages:")) {
-			out = append(out, []byte("  - "+packageName)...)
-			out = append(out, []byte("\n")...)
-		}
-	}
-
-	err = afero.WriteFile(appFS, ymlfile, out, fi.Mode())
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // RemovePackage remove a package from the Package section of the yml config file

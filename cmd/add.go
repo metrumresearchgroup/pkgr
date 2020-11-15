@@ -52,13 +52,10 @@ func rAdd(ccmd *cobra.Command, args []string) error {
 		os.Exit(0)
 	}
 
-	for _, arg := range args {
-		err := configlib.AddPackage(arg)
-		if err != nil {
-			log.Fatalf("%s", err)
-		}
+    err := configlib.AddPackages(args)
+	if err != nil {
+		log.Fatal(err)
 	}
-
 	if install {
 		// if installing now, must call initConfig again for cobra to read in the yml file changes and see the new package/s
 		initConfig()

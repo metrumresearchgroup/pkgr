@@ -61,7 +61,11 @@ type Desc struct {
 	Version            string
 	Maintainer         string
 	Description        string
+	License            string
 	MD5sum             string
+	NeedsCompilation   bool
+	Path               string
+	Priority           string
 	Remotes            []string
 	OriginalRepository string
 	Repository         string
@@ -100,7 +104,14 @@ type desc struct {
 	Version            string
 	Maintainer         string
 	Description        string
+	License            string
 	MD5sum             string
+	NeedsCompilation   string
+	// Path: 4.1.0/Recommended
+	// Path: older
+	Path               string
+	// Priority: recommended
+	Priority           string
 	Remotes            []string `delim:"," strip:"\n\r\t "`
 	OriginalRepository string
 	Repository         string
