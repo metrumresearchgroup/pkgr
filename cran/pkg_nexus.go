@@ -11,7 +11,10 @@ import (
 )
 
 // NewPkgDb returns a new package database
-func NewPkgDb(urls []RepoURL, dst SourceType, cfgdb *InstallConfig, rv RVersion) (*PkgNexus, error) {
+// noSecure will allow https fetching without validating the certificate chain.
+// This occasionally is needed for repos that have self signed or certs not fully verifiable
+// which will return errors such as x509: certificate signed by unknown authority
+func NewPkgDb(urls []RepoURL, dst SourceType, cfgdb *InstallConfig, rv RVersion, noSecure bool) (*PkgNexus, error) {
 	pkgNexus := PkgNexus{
 		Config:            cfgdb,
 		DefaultSourceType: dst,
@@ -31,7 +34,7 @@ func NewPkgDb(urls []RepoURL, dst SourceType, cfgdb *InstallConfig, rv RVersion)
 	for _, url := range urls {
 		pkgNexus.Db = append(pkgNexus.Db, nil)
 		go func(url RepoURL, dst SourceType, ri int) {
-			rdb, err := NewRepoDb(url, dst, cfgdb.Repos[url.Name], rv)
+			rdb, err := NewRepoDb(url, dst, cfgdb.Repos[url.Name], rv, noSecure)
 			rdbc <- rd{url, rdb, ri, err}
 		}(url, dst, ri)
 		ri++

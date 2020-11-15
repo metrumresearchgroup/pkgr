@@ -1,6 +1,7 @@
 package cran
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -67,7 +68,10 @@ func getRepos(ds []PkgDl) map[string]RepoURL {
 }
 
 // DownloadPackages downloads a set of packages concurrently
-func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string, rv RVersion) (*PkgMap, error) {
+// noSecure will allow https fetching without validating the certificate chain.
+// This occasionally is needed for repos that have self signed or certs not fully verifiable
+// which will return errors such as x509: certificate signed by unknown authority
+func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string, rv RVersion, noSecure bool) (*PkgMap, error) {
 	startTime := time.Now()
 	result := NewPkgMap()
 	sem := make(chan struct{}, 10)
@@ -117,7 +121,7 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string, rv RVersion) (*Pk
 				pkgFile = filepath.Join(pkgdir, fmt.Sprintf("%s_%s.tar.gz", d.Package.Package, d.Package.Version))
 			}
 			startDl := time.Now()
-			dl, err := DownloadPackage(fs, d, pkgFile, rv)
+			dl, err := DownloadPackage(fs, d, pkgFile, rv, noSecure)
 			if err != nil {
 				// TODO:  should this cause a failure downstream rather than just printing
 				// as right now it keeps running and just doesn't install that package?
@@ -142,7 +146,11 @@ func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string, rv RVersion) (*Pk
 
 // DownloadPackage should download a package tarball if it doesn't exist and return
 // the path to the downloaded tarball
-func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, error) {
+//
+// noSecure will allow https fetching without validating the certificate chain.
+// This occasionally is needed for repos that have self signed or certs not fully verifiable
+// which will return errors such as x509: certificate signed by unknown authority
+func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion, noSecure bool) (Download, error) {
 	if !filepath.IsAbs(dest) {
 		cwd, _ := os.Getwd()
 		// turn to absolute
@@ -182,8 +190,23 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 
 	log.WithField("package", d.Package.Package).Info("downloading package ")
 	var from io.ReadCloser
+
+	client := &http.Client{}
+	if noSecure {
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify : true},
+		}
+		client = &http.Client{Transport: tr}
+	}
+
 	if strings.HasPrefix(pkgdl, "http") {
-		resp, err := http.Get(pkgdl)
+		resp, err := client.Get(pkgdl)
+		// TODO: the response will often be valid, but return like a server 404 or other error
+		if err != nil {
+			log.WithField("package", d.Package).Warn("error downloading package")
+			return Download{Metadata: d}, err
+		}
+		defer resp.Body.Close()
 		if resp.StatusCode != 200 {
 			log.WithFields(log.Fields{
 				"package":     d.Package.Package,
@@ -195,13 +218,9 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion) (Download, 
 			log.WithField("package", d.Package.Package).Println("body: ", string(b))
 			return Download{Metadata: d}, err
 		}
-		// TODO: the response will often be valid, but return like a server 404 or other error
-		if err != nil {
-			log.WithField("package", d.Package).Warn("error downloading package")
-			return Download{Metadata: d}, err
-		}
 		from = resp.Body
-		defer resp.Body.Close()
+		// not sure if we need to close both from and resp.Body but shouldn't be problematic to call twice just in case
+		defer from.Close()
 	} else {
 		from, err = fs.Open(pkgdl)
 		if err != nil {
