@@ -122,7 +122,14 @@ func loadConfigFromPath(configFilename string) error {
 		configFilename = "pkgr.yml"
 	}
 	viper.SetEnvPrefix("pkgr")
-	viper.BindEnv("rpath", "library")
+	err := viper.BindEnv("rpath")
+	if err != nil {
+		log.Fatalf("error binding env: %s\n",  err)
+	}
+	err = viper.BindEnv("library")
+	if err != nil {
+		log.Fatalf("error binding env: %s\n",  err)
+	}
 	configFilename, _ = homedir.Expand(filepath.Clean(configFilename))
 	viper.SetConfigFile(configFilename)
 	b, err := ioutil.ReadFile(configFilename)
