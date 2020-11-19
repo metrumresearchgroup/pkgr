@@ -48,11 +48,11 @@ type PkgrConfig struct {
 	NoRecommended  bool                `yaml:"NoRecommended",omitempty"`
 	Repos          []map[string]string `yaml:"Repos,omitempty"`
 	Rollback       bool                `yaml:"Rollback,omitempty"`
-	Library        string              `yaml:"Library,omitempty"`
+	Library        string              `yaml:"Library,omitempty" mapstructure:"library,omitempty"`
 	LibPaths       []string            `yaml:"LibPaths,omitempty"`
 	Customizations Customizations      `yaml:"Customizations,omitempty"`
 	Threads        int                 `yaml:"Threads,omitempty"`
-	RPath          string              `yaml:"RPath,omitempty"`
+	RPath          string              `yaml:"RPath,omitempty" mapstructure:"rpath,omitempty"`
 	Cache          string              `yaml:"Cache,omitempty"`
 	Logging        LogConfig           `yaml:"Logging,omitempty"`
 	Update         bool                `yaml:"Update,omitempty"`
