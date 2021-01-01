@@ -158,6 +158,13 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	log.Infoln("Default package installation type: ", st.String())
 	for _, db := range pkgNexus.Db {
 		log.Infoln(fmt.Sprintf("%v:%v (binary:source) packages available in for %s from %s", len(db.DescriptionsBySourceType[cran.Binary]), len(db.DescriptionsBySourceType[cran.Source]), db.Repo.Name, db.Repo.URL))
+		for _, pkg := range cfg.IgnorePackages {
+			// to "skip" packages, we'll just completely nuke them from the pkgdb so they'll never even come up in the plan
+			// this is probably overly hacky
+			log.Debugln("ignoring by deleting pkg: ", pkg)
+			delete(db.DescriptionsBySourceType[cran.Binary], pkg)
+			delete(db.DescriptionsBySourceType[cran.Source], pkg)
+		}
 	}
 	log.Infoln("Package installation cache directory: ", userCache(cfg.Cache))
 	log.Infoln("Database cache directory: ", filepath.Dir(pkgNexus.Db[0].GetRepoDbCacheFilePath(rv.ToFullString())))
