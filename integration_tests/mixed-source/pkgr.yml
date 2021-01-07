@@ -24,5 +24,5 @@ Customizations:
         Repo: CRAN
   Repos:
     - CRAN:
-        Type: source
+          Type: source
 

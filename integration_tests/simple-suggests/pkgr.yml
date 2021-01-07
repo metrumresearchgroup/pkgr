@@ -17,7 +17,7 @@ Cache: "pkgcache"
 Customizations:
   Packages:
     - R6:
-        Type: binary
+          Type: binary
   Repos:
     - CRAN:
-        Type: source
+          Type: source

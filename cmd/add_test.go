@@ -14,28 +14,15 @@
 
 package cmd
 
-import (
-	"bytes"
-	"fmt"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"testing"
-
-	"github.com/spf13/afero"
-	"github.com/spf13/cobra"
-	"github.com/stretchr/testify/assert"
-)
-
-type pkgData struct {
-	name   string
-	folder string
-}
-
-type testData struct {
-	ymlfolder string
-	data      []pkgData
-}
+//type pkgData struct {
+//	name   string
+//	folder string
+//}
+//
+//type testData struct {
+//	ymlfolder string
+//	data      []pkgData
+//}
 
 //func Test_rAddAndDelete(t *testing.T) {
 //	type args struct {
@@ -114,40 +101,40 @@ type testData struct {
 //	}
 //}
 
-func pkgrCommand(cmd string, test testData, flag string) (string, error) {
-	var stderr bytes.Buffer
-	pkgr := filepath.Join(os.Getenv("HOME"), "/go/bin/pkgr")
-	args := []string{cmd}
-	for _, d := range test.data {
-		args = append(args, d.name)
-	}
-
-	if len(flag) > 0 {
-		args = append(args, flag)
-	}
-
-	command := exec.Command(pkgr, args...)
-	command.Dir = test.ymlfolder
-	command.Stderr = &stderr
-
-	err := command.Run()
-	errstr := string(stderr.Bytes())
-	return errstr, err
-}
+//func pkgrCommand(cmd string, test testData, flag string) (string, error) {
+//	var stderr bytes.Buffer
+//	pkgr := filepath.Join(os.Getenv("HOME"), "/go/bin/pkgr")
+//	args := []string{cmd}
+//	for _, d := range test.data {
+//		args = append(args, d.name)
+//	}
+//
+//	if len(flag) > 0 {
+//		args = append(args, flag)
+//	}
+//
+//	command := exec.Command(pkgr, args...)
+//	command.Dir = test.ymlfolder
+//	command.Stderr = &stderr
+//
+//	err := command.Run()
+//	errstr := string(stderr.Bytes())
+//	return errstr, err
+//}
 
 // cleanWs removes blank lines and leading and trailing white space
 // it makes the above bytes.Compare(..) equivilent to: /usr/bin/diff -wB
-func cleanWs(b []byte) []byte {
-	var cb []byte
-	lines := bytes.Split(b, []byte("\n"))
-	for _, line := range lines {
-		tl := bytes.Trim(line, " ")
-		if len(tl) > 0 {
-			cb = append(cb, line...)
-		}
-	}
-	return cb
-}
+//func cleanWs(b []byte) []byte {
+//	var cb []byte
+//	lines := bytes.Split(b, []byte("\n"))
+//	for _, line := range lines {
+//		tl := bytes.Trim(line, " ")
+//		if len(tl) > 0 {
+//			cb = append(cb, line...)
+//		}
+//	}
+//	return cb
+//}
 
 // // saving in case ...
 // func diff(file1, file2 string) bool {

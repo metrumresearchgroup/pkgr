@@ -212,14 +212,16 @@ func TestAddRemovePackage(t *testing.T) {
 
 	appFS := afero.NewOsFs()
 	for _, tt := range tests {
+		t.Logf("Test filename: %s", tt.fileName)
 		fileName := filepath.Join(getIntegrationTestFolder(t, tt.fileName), "pkgr.yml")
+		viper.SetConfigFile(fileName)
 
 		b, _ := afero.Exists(appFS, fileName)
 		assert.Equal(t, true, b, fmt.Sprintf("yml file not found:%s", fileName))
 
 		ymlStart, _ := afero.ReadFile(appFS, fileName)
 
-		add(fileName, tt.packageName)
+		AddPackages([]string{tt.packageName})
 		b, _ = afero.FileContainsBytes(appFS, fileName, []byte(tt.packageName))
 		assert.Equal(t, true, b, fmt.Sprintf("Package not added:%s", fileName))
 
@@ -276,7 +278,8 @@ Library: "test-library"
 			t.Error("Could not write test pkgr.yml file in " + testCase.testFolder)
 			t.Fail()
 		}
-		resultErr := add(configFilePath, testCase.packageToAdd)
+		viper.SetConfigFile(configFilePath)
+		resultErr := AddPackages([]string{testCase.packageToAdd})
 		assert.Nil(t, resultErr, "failed to add package")
 
 		var actualResult PkgrConfig
@@ -337,7 +340,8 @@ Lockfile:
 			t.Error("Could not write test pkgr.yml file in " + testCase.testFolder)
 			t.Fail()
 		}
-		resultErr := add(configFilePath, testCase.packageToAdd)
+		viper.SetConfigFile(configFilePath)
+		resultErr := AddPackages([]string{testCase.packageToAdd})
 		assert.Nil(t, resultErr, "failed to add package")
 
 		// Find packageToRemove in yml file under Packages:
@@ -658,7 +662,7 @@ func TestSetViperCustomizations(t *testing.T) {
 				URL:  "https://cran.microsoft.com/snapshot/2018-11-11",
 			},
 		}
-		pkgNexus, _ := cran.NewPkgDb(urls, cran.Source, &installConfig, cran.RVersion{})
+		pkgNexus, _ := cran.NewPkgDb(urls, cran.Source, &installConfig, cran.RVersion{}, false)
 		dependencyConfigurations := gpsr.NewDefaultInstallDeps()
 
 		// build pkgSettings, normally read from the yml file, via viper
@@ -757,8 +761,8 @@ func TestSetViperCustomizations2(t *testing.T) {
 			},
 		}
 
-		pkgNexus, _ := cran.NewPkgDb(urls, cran.Source, &installConfig, cran.RVersion{})
-		pkgNexus2, _ := cran.NewPkgDb(urls, cran.Source, &installConfig, cran.RVersion{})
+		pkgNexus, _ := cran.NewPkgDb(urls, cran.Source, &installConfig, cran.RVersion{}, false)
+		pkgNexus2, _ := cran.NewPkgDb(urls, cran.Source, &installConfig, cran.RVersion{}, false)
 		dependencyConfigurations := gpsr.NewDefaultInstallDeps()
 		dependencyConfigurations2 := gpsr.NewDefaultInstallDeps()
 
@@ -851,8 +855,8 @@ func TestSetPkgConfig(t *testing.T) {
 			},
 		}
 
-		pkgNexus, _ := cran.NewPkgDb(urls, cran.Source, &installConfig, cran.RVersion{})
-		pkgNexus2, _ := cran.NewPkgDb(urls, cran.Source, &installConfig, cran.RVersion{})
+		pkgNexus, _ := cran.NewPkgDb(urls, cran.Source, &installConfig, cran.RVersion{}, false)
+		pkgNexus2, _ := cran.NewPkgDb(urls, cran.Source, &installConfig, cran.RVersion{}, false)
 		dependencyConfigurations := gpsr.NewDefaultInstallDeps()
 		dependencyConfigurations2 := gpsr.NewDefaultInstallDeps()
 
