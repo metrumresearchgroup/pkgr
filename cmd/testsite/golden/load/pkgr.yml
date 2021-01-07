@@ -6,7 +6,7 @@ Packages:
 
 # any repositories, order matters
 Repos:
-  - local: "../../localrepos/simple"
+  - local: "../../../../localrepos/simple"
 
 Threads: 2
 
@@ -15,4 +15,4 @@ Library: "test-library"
 Customizations:
   Repos:
     - local:
-        Type: source
+          Type: source

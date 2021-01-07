@@ -34,8 +34,9 @@ func TestLoadSucceeds(t *testing.T) {
 
 			// Setup
 			rDir := InitializeGoldenTestSiteWorking("load")
+			libraryPath := InitializeTestLibrary("load", filepath.Join("testsite", "golden", "load", "test-library-4.0"))// set library to "test-library-3.0" if user R 3.X
 			InitializeGlobalsForTest()
-			libraryPath := filepath.Join("testsite", "working", "test-library")
+
 			localRepoPath := filepath.Join("..", "localrepos", "simple")
 
 			userPackages := []string{
@@ -101,7 +102,7 @@ func TestLoadFails(t *testing.T) {
 			// Setup
 			rDir := InitializeGoldenTestSiteWorking("load-fail")
 			InitializeGlobalsForTest()
-			libraryPath := filepath.Join("testsite", "working", "test-library")
+			libraryPath := InitializeTestLibrary("load-fail", filepath.Join("testsite", "golden", "load-fail", "test-library-4.0"))// set library to "test-library-3.0" if user R 3.X
 			localRepoPath := filepath.Join("..", "localrepos", "simple")
 
 			userPackages := []string{
@@ -145,7 +146,7 @@ func TestLoadFails(t *testing.T) {
 				assert.Contains(t, tc.expectedToFail, p, "package did not fail")
 			}
 
-			assert.True(t, packageLoadFailed, "packages were not successfully loaded")
+			assert.True(t, packageLoadFailed, "packages succeeded in loading where they should have failed")
 		})
 	}
 }
