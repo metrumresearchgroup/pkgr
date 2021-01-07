@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/metrumresearchgroup/pkgr/configlib"
 	"github.com/metrumresearchgroup/pkgr/testhelper"
 	"github.com/spf13/afero"
@@ -36,7 +37,22 @@ func InitializeGoldenTestSiteWorking(goldenSet string) string {
 	return filepath.Join(testWorkDir)
 }
 
+// Initializes a symlink to "test-library" in the testsite for the goldenSet. Links to the provided LibraryToUse and returns the symlink.
+func InitializeTestLibrary(goldenSet, libraryToUse string) string {
+	fs := &afero.OsFs{}
+
+	testLibrary := filepath.Join("testsite", "working", goldenSet, "test-library")
+	err := fs.SymlinkIfPossible(testLibrary, libraryToUse)
+	if err != nil {
+		fmt.Errorf("error creating symlink for test library: %s", err)
+	}
+	return testLibrary
+
+}
+
 func InitGlobalConfig(libraryPath, localRepo string, update, suggests bool, installType string, packages []string) {
+
+
 
 	cfg = configlib.PkgrConfig{
 		Threads:  5,
