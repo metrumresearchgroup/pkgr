@@ -33,7 +33,7 @@ Maintainer: Kirill Müller <krlmlr+r@mailbox.org>
 OriginalRepository: CRAN
 Repository: local
 Date/Publication: 2018-12-15 17:00:03 UTC
-Built: R 4.0.2; ; 2021-01-07 00:22:04 UTC; unix
+Built: R 4.0.2; ; 2021-01-07 00:26:08 UTC; unix
 PkgrVersion: v2.0.1
 PkgrInstallType: binary
 PkgrRepositoryURL: ../../../../localrepos/simple
