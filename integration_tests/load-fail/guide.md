@@ -5,6 +5,11 @@ tags: load-fail
 ## Description
 Environment to help test `pkgr load` command.
 
+## Note
+This test will currently only work as written with R version 4.X (any) installed.
+If you need to run this test with R Version 3.X, delete `test-library` and re-create it, filling it with the contents of `preinstalled-library-R3`.
+
+
 ## Expected Behaviors
 * In the pkg-environment stored in preinstalled-library, packages `R6`, `pillar`\*, `utf8` and `fansi` should be unable to be loaded.
   - `R6` and `fansi` have had their "R" folders deleted.
