@@ -3,11 +3,13 @@ Version: 1
 Packages:
 - R6
 - pillar
-- tibble
+- fansi
 # any repositories, order matters
 Repos:
-  - MPN: "https://mpn.metworx.com/snapshots/stable/2020-06-08"
-  - CRAN: "https://cran.rstudio.com"
+  - MPN_Primary: "https://mpn.metworx.com/snapshots/stable/2020-06-08"
+  - MPN_Secondary: "https://mpn.metworx.com/snapshots/stable/2020-11-21"
+
+
 
 Library: "test-library"
 
@@ -19,9 +21,9 @@ Logging:
 Customizations:
   Packages:
     - R6:
-        Type: source
-    - tibble:
-        Repo: CRAN
+        Type: binary
+    - fansi:
+        Repo: MPN_Secondary
   Repos:
-    - CRAN:
+    - MPN_Primary:
         Type: source
