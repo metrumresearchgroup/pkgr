@@ -3,7 +3,8 @@ tags: bug-duplicate-repo, bug-repo-name
 
 ## Description
 
-Environment to verify that the "duplicate repo in description file "
+Environment to verify that the "duplicate repo in description file" bug and that
+repo names are assigned in the DESCRIPTION file correctly.
 
 ** DO NOT MODIFY THE [outdated-library](outdated-library) DIRECTORY OR YOU WILL DESTROY THIS ENVIRONMENT **
 
@@ -20,3 +21,4 @@ Run `pkgr install`. Pkgr will install an updated version of R6. Verify that the 
 OriginalRepository: CRAN
 Repository: CRAND_ALTHOR
 ```
+Make sure that the lines appear exactly as written here, with no additions.
