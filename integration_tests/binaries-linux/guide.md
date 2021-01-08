@@ -4,10 +4,10 @@ tags: linux-binaries
 
 ## Special Instructions
 
-This test must be run on a Linux machine.
+This test must be run on the Metworx 20.06 workflow.
 
 ## Description
-Test to make sure Linux binaries can be installed.
+Test to make sure Linux binaries can be installed on our Metworx workflows.
 
 ## Expected Behaviors
 1. `pkgr plan --loglevel=debug` will indicate that repositories have been set for package `R6`, `pillar`, and their dependencies. The install type for all packages will be as binaries.
@@ -20,3 +20,8 @@ Test to make sure Linux binaries can be installed.
   - fansi (dependency)
   - assertthat (dependency)
   - crayon (dependency)
+  - digest (dependency)
+  - ellipses (dependency)
+  - lifecycle (dependency)
+  - vctrs (dependency)
+  - glue (dependency)
