@@ -22,24 +22,7 @@ Install a 3.X version of R and verify the following. When you are done, install 
 4.X version of R and verify the following again.
 
 1. `pkgr plan` will indicate that repositories have been set for packages "R6" and "pillar".
-2. `pkgr inspect --deps` will print the following object:
-```
-  {
-  "cli": [
-    "assertthat",
-    "crayon"
-  ],
-  "pillar": [
-    "fansi",
-    "rlang",
-    "utf8",
-    "assertthat",
-    "crayon",
-    "cli"
-  ]
-}
-```
-3. `pkgr install` will install the following packages, using the system default to determine whether those packages are installed through source or binary:
+2. `pkgr install` will install the following packages, using the system default to determine whether those packages are installed through source or binary:
   - R6 (**user package**)
   - pillar (**user package**)
   - rlang (dependency)
@@ -48,3 +31,8 @@ Install a 3.X version of R and verify the following. When you are done, install 
   - fansi (dependency)
   - assertthat (dependency)
   - crayon (dependency)
+  - digest (dependency)
+  - ellipses (dependency)
+  - lifecycle (dependency)
+  - vctrs (dependency)
+  - glue (dependency)
