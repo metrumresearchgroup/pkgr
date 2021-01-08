@@ -10,6 +10,9 @@ files within each folder.
 For the time being, these environments are meant to be used for manual testing
 as a way to help sanity-check any changes.
 
+Unless otherwise specified, it should be assumed that theses tests are to be run
+in a 4.X version of R.
+
 ## Quick setup
 * To quickly set your tests to a basic-state, set your working directory to
 `pkgr/integration_tests` and run `make test-setup`. Please note:
