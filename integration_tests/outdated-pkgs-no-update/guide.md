@@ -1,17 +1,13 @@
 # outdated-pkgs-no-update
-tags: pkg-update, pkg-outdated, command-flags
+tags: pkg-update, pkg-outdated
 
-## Description
+## Old Description
 
-Environment to help test the "--update" [flag or config setting]. The environment is configured for the same packages as [simple](../simple/guide.md), plus the base-R package `Matrix`\*.
-
-\* Note: We included the "Matrix" package here because a user had trouble using this feature with Matrix. It's mainly here as a regression test.
-
-** DO NOT MODIFY THE [outdated-library](outdated-library) DIRECTORY OR YOU WILL DESTROY THIS ENVIRONMENT **
+Environment specifically to verify that the "update" feature is disabled by default.
 
 ## Expected behavior
 
-You can modify the [pkgr.yml](pkgr.yml) file by setting the `Update` value to `true` or `false`. By default, this test case does not specify, so it should default to FALSE.
+Without any flags passed, `pkgr plan` and `pkgr install` will behave as if --update was set to false. This is all that's needed for this test.
 
 * **Update True**:
   - `pkgr plan` indicates that four packages are outdated: `R6`, `pillar`, and `Matrix`, plus `crayon`, which is a dependency of pillar.
