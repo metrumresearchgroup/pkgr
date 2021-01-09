@@ -1,139 +1,25 @@
 # simple-suggests
 tags: suggests, inspect, cache-local
 
-todo: instructions for cache test.
-
 ## Description
 
-Environment to help test the "Suggests" field in a pkgr.yml file. This environment is configured for the same packages as [simple](../simple/guide.md).
+Environment to help test the "Suggests" field in a pkgr.yml file, as well as to test that local pkgr caches caches work.
 
 ## Expected Behavior
 
-* `pkgr plan` should indicate that ~40 packages need to be installed.
-* `pkgr install` should install all of the same packages as [simple](../simple/guide.md), plus ~32 other packages.
-*  `pkgr inspect --deps` should return a large object that reflects the "Suggested" packages for R6 and pillar.
+* `pkgr plan --loglevel=debug` should indicate that the package `ellipsis`, its dependencies, and its suggested packages will be installed, as well as any other sub-dependencies.
+* `pkgr install` should install `ellipsis`, its dependencies, and its suggested packages (and their subdependencies).
+* `pkgr inspect --deps` should return a large object that includes both dependencies and suggested packages of `ellipsis`
+* Instead of the default cache (`~/Library/Caches/pkgr/MPN...` on MacOS), pkgr should use a local `pkgcache` folder. You will
+see a subfolder prefixed with `MPN` in `pkgcache`, and you will _not_ see such a folder in the regular directory from this test.
+  * To verify that this cache is being used, immediately after installing, delete `test-library` and install again. No new packages should be downloaded, as they should already be in the cache.
+* pkgr will still utilize the default location for pkgdbs (`~/Library/Caches/pkgr/r_packagedb_caches` on MacOS)
 
-```
-{
-  "cli": [
-    "assertthat",
-    "crayon"
-  ],
-  "ggplot2": [
-    "pkgconfig",
-    "withr",
-    "RColorBrewer",
-    "utf8",
-    "labeling",
-    "gtable",
-    "lazyeval",
-    "stringi",
-    "R6",
-    "glue",
-    "rlang",
-    "magrittr",
-    "assertthat",
-    "crayon",
-    "viridisLite",
-    "digest",
-    "colorspace",
-    "Rcpp",
-    "fansi",
-    "stringr",
-    "plyr",
-    "cli",
-    "munsell",
-    "pillar",
-    "scales",
-    "reshape2",
-    "tibble"
-  ],
-  "knitr": [
-    "magrittr",
-    "highr",
-    "mime",
-    "evaluate",
-    "stringi",
-    "xfun",
-    "glue",
-    "yaml",
-    "markdown",
-    "stringr"
-  ],
-  "lubridate": [
-    "magrittr",
-    "stringi",
-    "glue",
-    "Rcpp",
-    "stringr"
-  ],
-  "markdown": [
-    "mime"
-  ],
-  "munsell": [
-    "colorspace"
-  ],
-  "pillar": [
-    "utf8",
-    "assertthat",
-    "crayon",
-    "fansi",
-    "rlang",
-    "cli"
-  ],
-  "plyr": [
-    "Rcpp"
-  ],
-  "pryr": [
-    "Rcpp",
-    "magrittr",
-    "stringi",
-    "glue",
-    "stringr"
-  ],
-  "reshape2": [
-    "glue",
-    "magrittr",
-    "stringi",
-    "Rcpp",
-    "plyr",
-    "stringr"
-  ],
-  "scales": [
-    "Rcpp",
-    "viridisLite",
-    "labeling",
-    "colorspace",
-    "R6",
-    "RColorBrewer",
-    "munsell"
-  ],
-  "stringr": [
-    "stringi",
-    "glue",
-    "magrittr"
-  ],
-  "testthat": [
-    "praise",
-    "digest",
-    "R6",
-    "crayon",
-    "rlang",
-    "assertthat",
-    "withr",
-    "magrittr",
-    "cli"
-  ],
-  "tibble": [
-    "crayon",
-    "rlang",
-    "utf8",
-    "assertthat",
-    "pkgconfig",
-    "fansi",
-    "cli",
-    "pillar"
-  ]
-}
 
-```
+At the time of this writing, these are the packages we expect to be involved:
+* ellipsis (**user package**)
+* rlang (dependency)
+* covr (_suggested_ package)
+* testthat (_suggested_ package)
+* All of the dependencies for `covr` and `testthat`, but NOT their suggested dependencies.
+  - To quickly check that sub-suggested suggestions aren't installed, verify that `shiny`, which is a suggestion of testthat, is not included.
