@@ -44,7 +44,7 @@ Environment to help test basic pkgr functionality, such as the `plan`, `install`
   ]
 }
 ```
-3. `pkgr install` will install the following packages, using the system default to determine whether those packages are installed through source or binary:
+3. `pkgr install` will install the following packages to `test-library`, using the system default to determine whether those packages are installed through source or binary:
   - R6 (**user package**)
   - pillar (**user package**)
   - rlang (dependency)
