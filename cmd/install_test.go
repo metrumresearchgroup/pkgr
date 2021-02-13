@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -39,12 +40,14 @@ func InitializeGoldenTestSiteWorking(goldenSet string) string {
 
 // Initializes a symlink to "test-library" in the testsite for the goldenSet. Links to the provided LibraryToUse and returns the symlink.
 func InitializeTestLibrary(goldenSet, libraryToUse string) string {
-	fs := &afero.OsFs{}
+	//fs := &afero.OsFs{}
 
-	testLibrary := filepath.Join("testsite", "working", goldenSet, "test-library")
-	err := fs.SymlinkIfPossible(testLibrary, libraryToUse)
+	testLibrary := filepath.Join("testsite", "working", "test-library")
+	err := os.Symlink(libraryToUse, testLibrary)
+	//err := fs.SymlinkIfPossible(testLibrary, libraryToUse)
 	if err != nil {
-		fmt.Errorf("error creating symlink for test library: %s", err)
+		fmt.Sprintf("error creating symlink for test library: %s", err)
+		panic("could not symlink test-library")
 	}
 	return testLibrary
 

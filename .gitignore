@@ -5,5 +5,4 @@ logfile.txt
 .idea
 pkgr
 pkgr.go
-pkgr.yml
 goreleaser.yml

@@ -7,7 +7,7 @@ Packages:
 
 # any repositories, order matters
 Repos:
-  - CRAND_ALTHOR: "https://cran.microsoft.com/snapshot/2019-08-14"
+  - CRAND_ALTHOR: "https://mpn.metworx.com/snapshots/stable/2020-11-21" ## updating to MPN so that we can grab R6 Mac Binaries for R version 4.
 
 Update: true
 

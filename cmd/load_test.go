@@ -34,7 +34,14 @@ func TestLoadSucceeds(t *testing.T) {
 
 			// Setup
 			rDir := InitializeGoldenTestSiteWorking("load")
-			libraryPath := InitializeTestLibrary("load", filepath.Join("testsite", "golden", "load", "test-library-4.0"))// set library to "test-library-3.0" if user R 3.X
+
+			// Needed for symlinking library
+			globalPathPrefix, err := filepath.Abs("./")
+			if err != nil {
+				t.Fail()
+			}
+
+			libraryPath := InitializeTestLibrary("load", filepath.Join(globalPathPrefix, "testsite", "golden", "load", "test-library-4.0"))// set library to "test-library-3.0" if user R 3.X
 			InitializeGlobalsForTest()
 
 			localRepoPath := filepath.Join("..", "localrepos", "simple")
@@ -102,7 +109,14 @@ func TestLoadFails(t *testing.T) {
 			// Setup
 			rDir := InitializeGoldenTestSiteWorking("load-fail")
 			InitializeGlobalsForTest()
-			libraryPath := InitializeTestLibrary("load-fail", filepath.Join("testsite", "golden", "load-fail", "test-library-4.0"))// set library to "test-library-3.0" if user R 3.X
+
+			// Needed for symlinking library
+			globalPathPrefix, err := filepath.Abs("./")
+			if err != nil {
+				t.Fail()
+			}
+
+			libraryPath := InitializeTestLibrary("load", filepath.Join(globalPathPrefix, "testsite", "golden", "load-fail", "test-library-4.0"))// set library to "test-library-3.0" if user R 3.X
 			localRepoPath := filepath.Join("..", "localrepos", "simple")
 
 			userPackages := []string{

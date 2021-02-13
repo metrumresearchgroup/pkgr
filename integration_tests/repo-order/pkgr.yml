@@ -12,6 +12,6 @@ Library: "test-library"
 
 # mrgsolve is only available in r_validated as source
 Customizations:
-    Packages:
-        - mrgsolve:
-            Type: source
+  Packages:
+    - mrgsolve:
+        Type: source

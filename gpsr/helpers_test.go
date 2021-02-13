@@ -33,7 +33,7 @@ func TestAppendGraph(t *testing.T) {
 	var installConfig = cran.InstallConfig{
 		Packages: packages,
 	}
-	pkgNexus, _ := cran.NewPkgDb(urls, cran.Source, &installConfig, cran.RVersion{})
+	pkgNexus, _ := cran.NewPkgDb(urls, cran.Source, &installConfig, cran.RVersion{}, false)
 
 	// call the function to test
 	appendToGraph(workingGraph, pkgDesc, dependencyConfigurations, pkgNexus)

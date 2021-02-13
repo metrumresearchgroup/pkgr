@@ -27,7 +27,7 @@ Maintainer: Gábor Csárdi <csardi.gabor@gmail.com>
 OriginalRepository: CRAN
 Repository: local
 Date/Publication: 2019-03-19 10:43:26 UTC
-Built: R 3.6.0; ; 2020-02-19 22:05:48 UTC; unix
-PkgrVersion: 0.5.0-rc.1-2020-02-17T12:08:07-0500
+Built: R 4.0.2; ; 2021-01-08 18:53:15 UTC; unix
+PkgrVersion: v2.0.1
 PkgrInstallType: source
 PkgrRepositoryURL: ../../localrepos/simple

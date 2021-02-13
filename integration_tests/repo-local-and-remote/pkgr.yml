@@ -7,14 +7,14 @@ Packages:
 
 # any repositories, order matters
 Repos:
-  - miniCRAN: "../integration_tests/minicran"
+  - miniCRAN: "../minicran"
   - CRAN: "https://cran.microsoft.com/snapshot/2018-11-18"
 
 Library: "test-library"
 
 Customizations:
-    Repos:
-      - miniCRAN:
-            Type: source
-      - CRAN:
-            Type: source
+  Repos:
+    - miniCRAN:
+        Type: source
+    - CRAN:
+        Type: source

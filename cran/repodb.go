@@ -93,7 +93,8 @@ func (repoDb *RepoDb) Hash(rVersion string) string {
 	for st := range repoDb.DescriptionsBySourceType {
 		stsum += st + 1
 	}
-	io.WriteString(h, repoDb.Repo.Name+repoDb.Repo.URL+string(stsum)+rVersion)
+
+	io.WriteString(h, repoDb.Repo.Name+repoDb.Repo.URL+fmt.Sprint(stsum)+rVersion)
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 

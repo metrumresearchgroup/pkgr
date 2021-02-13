@@ -1,0 +1,11 @@
+Version: 1
+# top level packages
+Packages:
+  - R6
+  - pillar
+
+# any repositories, order matters
+Repos:
+  - MPN_Nov_2020: "https://mpn.metworx.com/snapshots/stable/2020-11-21"
+
+Library: "test-library"
