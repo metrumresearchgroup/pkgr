@@ -1,4 +1,5 @@
 # outdated-pkgs
+tags: bug-duplicate-repo, bug-repo-name
 
 tags: bug-duplicate-repo, bug-repo-name
 
