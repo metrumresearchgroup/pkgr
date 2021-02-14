@@ -177,6 +177,7 @@ func ReadOsRelease() error {
 	if err != nil {
 		return err
 	}
+	log.WithField("config", string(configData)).Trace("got config data from /etc/os-release")
 	//Find all unquoted strings and quote them
 	re := regexp.MustCompile(`(.*?=)([^"].*)`)
 	fixedConfig := re.ReplaceAll(configData, []byte("${1}\"${2}\""))
@@ -202,6 +203,6 @@ func ReadOsRelease() error {
 
 	ltsRelease := ltsReleaseMatcher.ReplaceAllString(osRelease.Version, "$1")
 	osRelease.LtsRelease = ltsRelease
-	osRelease.checked = false
+	osRelease.checked = true
 	return nil
 }
