@@ -4,14 +4,12 @@ import (
 	"bytes"
 	"crypto/md5"
 	"fmt"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"io"
 	"io/ioutil"
 	"regexp"
 	"runtime"
-	"strings"
-
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 type BinaryUriType int
@@ -21,12 +19,15 @@ const (
 	SuffixUri  = 21
 )
 
-var osRelease *OsRelease
+var osRelease OsRelease
 
 var supportedDistros = map[string]bool{
+	"focal": true,
 	"bionic": true,
 	"xenial": true,
-	"centos": false,
+	"centos": true,
+	"rhel": true,
+	"ubuntu": true,
 }
 
 // these are also duplicated in rcmd for now
@@ -35,9 +36,11 @@ func binaryName(pkg, version string) string {
 	case "darwin":
 		return fmt.Sprintf("%s_%s.tgz", pkg, version)
 	case "linux":
-		if strings.Contains(osRelease.IdLike, "rhel") {
+		if osRelease.Id == "rhel" {
 			return fmt.Sprintf("%s_%s_R_x86_64-redhat-linux-gnu.tar.gz", pkg, version)
 		}
+		// checked centos docker container and returned
+		// packaged installation of ‘R6’ as ‘R6_2.5.0_R_x86_64-pc-linux-gnu.tar.gz’
 		return fmt.Sprintf("%s_%s_R_x86_64-pc-linux-gnu.tar.gz", pkg, version)
 	case "windows":
 		return fmt.Sprintf("%s_%s.zip", pkg, version)
@@ -71,7 +74,7 @@ func SupportsBinary(rt RepoType) bool {
 	case "windows":
 		return true
 	case "linux":
-		if linuxSupportsBinary() && rt == MPN {
+		if linuxKnownSupportsBinary() && rt == MPN {
 			return true
 		} else {
 			return false
@@ -81,39 +84,62 @@ func SupportsBinary(rt RepoType) bool {
 	}
 }
 
-// LinuxSupportsBinary tells if a distro supports binaries
+// linuxKnownSupportsBinary tells if a distro supports binaries
 // namely, Ubuntu 16.04 and 18.04
-func linuxSupportsBinary() bool {
-	ReadOsRelease()
-	if supportedDistros[*osRelease.VersionCodename] || supportedDistros[osRelease.Id] {
+func linuxKnownSupportsBinary() bool {
+	err := ReadOsRelease()
+	if err != nil {
+		log.Warnf("error reading linux binary information: %s\n", err)
+		return false
+	}
+	if osRelease.Id == "" {
+		return false
+	}
+	if supportedDistros[osRelease.VersionCodename] || supportedDistros[osRelease.Id] {
 		return true
 	}
-	log.Info("The running version of Linux does not support binary packages")
-	return false
+	log.Info("The running version of Linux might not support binary packages, please contact the pkgr development team")
+	return true
 }
 
-func getLinuxCodename() *string {
+func getLinuxCodename() string {
 	ReadOsRelease()
 	return osRelease.VersionCodename
 }
 
-func getLinuxLtsRelease() string {
-	ReadOsRelease()
-	return osRelease.LtsRelease
-}
 
-func getLinuxBinaryUri(params ...BinaryUriType) string {
-	if len(params) > 0 && params[0] == SuffixUri {
-		return fmt.Sprintf("%s/%s", osRelease.Id, *osRelease.VersionCodename)
+func getLinuxBinaryUri() string {
+	if !osRelease.checked {
+		err := ReadOsRelease()
+		if err != nil {
+			log.Warnf("could not get derive linux information with error: %s\n", err)
+			return ""
+		}
 	}
-	if osRelease.VersionCodename != nil && !strings.Contains(osRelease.IdLike, "rhel") {
-		return fmt.Sprintf("%s/%s/%s", osRelease.Id, *osRelease.VersionCodename, osRelease.LtsRelease)
+	if osRelease.Id == "" {
+		return ""
 	}
-	// EL distros keep the right naming as it is
+	// ubuntu should follow ubuntu/focal ubuntu/bionic  etc...
+	if osRelease.Id == "ubuntu" {
+		return fmt.Sprintf("%s/%s", osRelease.Id, osRelease.VersionCodename)
+	}
+
+	// centos/redhat should follow centos/<majorversion> eg centos/8 centos/7
+	// for centos version_id is just a single digit, eg 7 or 8, but for redhat will be major.minor
+	// rstudio package manager seems confident just 7 vs 8 is sufficient as a default therefore will follow
+	// given the compat with redhat can normalize to centos
+	if osRelease.Id == "centos" || osRelease.Id == "rhel" {
+		// reminder that go indices on strings pull their byte representation, not the string value
+		// either coerce back to string or work with runes
+		version := string(osRelease.VersionId[0])
+		return fmt.Sprintf("centos/%s", version)
+	}
+
+	// default for other distros in case wants to fall through
 	return fmt.Sprintf("%s/%s", osRelease.Id, osRelease.VersionId)
 }
 
-func cranBinaryURL(rv RVersion, params ...BinaryUriType) string {
+func cranBinaryURL(rv RVersion) string {
 	switch runtime.GOOS {
 	case "darwin":
 		if rv.Major == 4 {
@@ -123,9 +149,6 @@ func cranBinaryURL(rv RVersion, params ...BinaryUriType) string {
 	case "windows":
 		return "windows"
 	case "linux":
-		if len(params) > 0 && params[0] == SuffixUri {
-			return fmt.Sprintf("linux/%s", getLinuxBinaryUri(params[0]))
-		}
 		return fmt.Sprintf("linux/%s", getLinuxBinaryUri())
 	default:
 		fmt.Println("platform not supported for binary detection")
@@ -143,14 +166,17 @@ func RepoURLHash(r RepoURL) string {
 	return r.Name + "-" + urlHash[:12]
 }
 
-func ReadOsRelease() {
-	if osRelease != nil {
-		// Already cached
-		return
+func ReadOsRelease() error {
+
+	if osRelease.checked {
+		// Already checked
+		return nil
 	}
 	//os-release doesn't consistently quote variables, so we need to manipulate it a little bit
 	configData, err := ioutil.ReadFile("/etc/os-release")
-
+	if err != nil {
+		return err
+	}
 	//Find all unquoted strings and quote them
 	re := regexp.MustCompile(`(.*?=)([^"].*)`)
 	fixedConfig := re.ReplaceAll(configData, []byte("${1}\"${2}\""))
@@ -162,13 +188,13 @@ func ReadOsRelease() {
 	err = vp.ReadConfig(bytes.NewReader(fixedConfig))
 
 	if err != nil {
-		log.Fatalf("%v", err)
+		return err
 	}
 
 	err = vp.Unmarshal(&osRelease)
 
 	if err != nil {
-		log.Fatalf("%v\n", err)
+	   return err
 	}
 
 	// simplify this so it also works on EL distros
@@ -176,4 +202,6 @@ func ReadOsRelease() {
 
 	ltsRelease := ltsReleaseMatcher.ReplaceAllString(osRelease.Version, "$1")
 	osRelease.LtsRelease = ltsRelease
+	osRelease.checked = false
+	return nil
 }

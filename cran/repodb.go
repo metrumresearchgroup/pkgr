@@ -106,7 +106,7 @@ func GetPackagesFileURL(r *RepoDb, st SourceType, rv RVersion) string {
 	}
 	if r.RepoSuffix != "" && runtime.GOOS == "linux" {
 		// reposuffix should only be noted if on linux
-		return fmt.Sprintf("%s/bin/%s/%s/contrib/%s/PACKAGES", strings.TrimSuffix(r.Repo.URL, "/"), cranBinaryURL(rv, SuffixUri), r.RepoSuffix, rv.ToString())
+		return fmt.Sprintf("%s/bin/%s/%s/contrib/%s/PACKAGES", strings.TrimSuffix(r.Repo.URL, "/"), cranBinaryURL(rv), r.RepoSuffix, rv.ToString())
 	}
 	return fmt.Sprintf("%s/bin/%s/contrib/%s/PACKAGES", strings.TrimSuffix(r.Repo.URL, "/"), cranBinaryURL(rv), rv.ToString())
 }
