@@ -5,12 +5,15 @@ LDFLAGS=-ldflags "-X main.buildTime=${BUILD}"
 BUILD_HOME=${PWD}/../cmd/pkgr
 TEST_HOME=${PWD}
 
-.PHONY: install test-setup test-mixed-source-reset test-simple-reset test-threads-reset test-logging-config-reset test-outdated-pkgs-reset test-repo-order-reset test-repo-local-reset test-repo-local-and-remote-reset test-rollback-reset test-simple-suggests-reset test-rollback-reset test-rollback-disabled-reset test-create-library-reset test-strict-mode-reset test-outdated-pkgs-no-update-reset test-misc-reset test-bad-customizations-reset test-description-repo-bug-reset test-load-reset test-load-fail-reset test-recommended-reset test-tarball-install-reset test-tarball-rollback-reset test-tilde-expansion-reset
+.PHONY: install test-setup test-mixed-source-reset test-simple-reset test-threads-reset test-logging-config-reset test-outdated-pkgs-reset test-repo-order-reset test-repo-local-reset test-repo-local-and-remote-reset test-rollback-reset test-simple-suggests-reset test-rollback-reset test-rollback-disabled-reset test-create-library-reset test-strict-mode-reset test-outdated-pkgs-no-update-reset test-misc-reset test-bad-customizations-reset test-description-repo-bug-reset test-load-reset test-load-fail-reset test-recommended-reset test-tarball-install-reset test-tarball-rollback-reset test-tilde-expansion-reset test-binaries-mac-reset test-binaries-linux-reset test-path-bug-reset test-env-vars-reset env-unset
 
 install:
 	cd ${BUILD_HOME}; go install ${LDFLAGS}
 
-test-setup: test-mixed-source-reset test-simple-reset test-threads-reset test-logging-config-reset test-outdated-pkgs-reset test-outdated-pkgs-stress-reset test-repo-order-reset test-repo-local-reset test-repo-local-and-remote-reset test-simple-suggests-reset test-rollback-reset test-rollback-disabled-reset test-create-library-reset test-strict-mode-reset test-outdated-pkgs-no-update-reset test-misc-reset test-bad-customizations-reset test-description-repo-bug-reset test-load-reset test-load-fail-reset test-recommended-reset test-tarball-install-reset test-tarball-rollback-reset test-tilde-expansion-reset install
+env-unset:
+	export PKGR_RPATH=""
+
+test-setup: test-mixed-source-reset test-simple-reset test-threads-reset test-logging-config-reset test-outdated-pkgs-reset test-outdated-pkgs-stress-reset test-repo-order-reset test-repo-local-reset test-repo-local-and-remote-reset test-simple-suggests-reset test-rollback-reset test-rollback-disabled-reset test-create-library-reset test-strict-mode-reset test-outdated-pkgs-no-update-reset test-misc-reset test-bad-customizations-reset test-description-repo-bug-reset test-load-reset test-load-fail-reset test-recommended-reset test-tarball-install-reset test-tarball-rollback-reset test-tilde-expansion-reset test-binaries-mac-reset test-binaries-linux-reset test-path-bug-reset test-env-vars-reset install
 
 test-mixed-source-reset:
 	cd ${TEST_HOME}/mixed-source; rm -rf test-library/
@@ -137,3 +140,19 @@ test-tilde-expansion-reset:
 	rm -rf ${TEST_HOME}/tilde-expansion/localcache/
 	rm -rf ${TEST_HOME}/tilde-expansion/logs
 	mkdir ${TEST_HOME}/tilde-expansion/logs
+
+test-binaries-mac-reset:
+	rm -rf ${TEST_HOME}/binaries-mac/test-library
+	mkdir ${TEST_HOME}/binaries-mac/test-library
+
+test-binaries-linux-reset:
+	rm -rf ${TEST_HOME}/binaries-linux/test-library
+	mkdir ${TEST_HOME}/binaries-linux/test-library
+
+test-path-bug-reset:
+	rm -rf ${TEST_HOME}/path-bug/test-library
+	mkdir ${TEST_HOME}/path-bug/test-library
+
+test-env-vars-reset:
+	rm -rf ${TEST_HOME}/env-vars/test-library
+	mkdir ${TEST_HOME}/env-vars/test-library

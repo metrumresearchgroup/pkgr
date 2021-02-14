@@ -19,7 +19,7 @@ to set up all tests.
 
 ## Note
 **Important:**
-This test assumes that attemtpting to install **xml2** from source will FAIL on your machine. If this is not the case, please replace xml2 in pkgr.yml with a package that _will_ fail to install on your machine.
+This test assumes that attempting to install **xml2** from source will FAIL on your machine. If this is not the case, please replace xml2 in pkgr.yml with a package that _will_ fail to install on your machine.
 
 "Setup" for this test includes adding four packages to the test-library, each of
 which has been configured in some way to test a different case.

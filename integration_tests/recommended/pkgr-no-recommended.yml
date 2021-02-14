@@ -14,3 +14,5 @@ Customizations:
     Repos:
       - miniCRAN:
             Type: source
+      - MPN:
+            Type: source

@@ -1,5 +1,5 @@
 # Recommended
-tags: recommended 
+tags: recommended
 
 ## Description
 Test whether pkgr will ignore or attempt to install recommended packages in the dependency tree
@@ -7,7 +7,8 @@ Test whether pkgr will ignore or attempt to install recommended packages in the 
 
 ## Expected Behaviors
 * `pkgr plan --loglevel=debug` will indicate that survival is one of the dependencies to install
-* `pkgr plan --config=pkgr-no-recommended.yml` will not show survival
+* `pkgr plan --config=pkgr-no-recommended.yml --loglevel=debug` will not show survival
+* `pkgr plan --config=pkgr-survival-direct.yml --loglevel=debug` will indicate that `survival` is to be installed, even though NoRecommended is true, because `survival` is a user-package.
 
 ```
 pkgr plan --loglevel=trace --config=pkgr.yml  
@@ -18,8 +19,8 @@ INFO[0000] R Version 3.6.2
 DEBU[0000] OS Platform x86_64-apple-darwin15.6.0        
 INFO[0000] Package Library will be created               path=test-library
 INFO[0000] Default package installation type:  binary   
-INFO[0000] 0:11 (binary:source) packages available in for miniCRAN from ../minicran 
-INFO[0000] 833:833 (binary:source) packages available in for MPN from https://mpn.metworx.com/snapshots/stable/2020-02-18 
+INFO[0000] 0:11 (binary:source) packages available in for miniCRAN from ../minicran
+INFO[0000] 833:833 (binary:source) packages available in for MPN from https://mpn.metworx.com/snapshots/stable/2020-02-18
 DEBU[0000] package repository set                        pkg=survivalrec relationship="user package" repo=miniCRAN type=source version=0.0.1
 TRAC[0000] dep config                                    config="{true true false true false}" pkg=survivalrec
 TRAC[0000] dep config                                    config="{true true false true false}" pkg=magrittr
@@ -122,8 +123,8 @@ INFO[0000] R Version 3.6.2
 DEBU[0000] OS Platform x86_64-apple-darwin15.6.0        
 INFO[0000] Package Library will be created               path=test-library
 INFO[0000] Default package installation type:  binary   
-INFO[0000] 0:11 (binary:source) packages available in for miniCRAN from ../minicran 
-INFO[0000] 833:833 (binary:source) packages available in for MPN from https://mpn.metworx.com/snapshots/stable/2020-02-18 
+INFO[0000] 0:11 (binary:source) packages available in for miniCRAN from ../minicran
+INFO[0000] 833:833 (binary:source) packages available in for MPN from https://mpn.metworx.com/snapshots/stable/2020-02-18
 DEBU[0000] package repository set                        pkg=survivalrec relationship="user package" repo=miniCRAN type=source version=0.0.1
 TRAC[0000] dep config                                    config="{true true false true true}" pkg=survivalrec
 TRAC[0000] skipping Imports dep                          dep=survival pkg=survivalrec
@@ -135,5 +136,5 @@ DEBU[0000] package repository set                        pkg=magrittr relationsh
 INFO[0000] package installation status                   installed=0 not_from_pkgr=0 outdated=0 total_packages_required=2
 INFO[0000] package installation sources                  MPN=1 miniCRAN=1
 INFO[0000] package installation plan                     to_install=2 to_update=0
-INFO[0000] resolution time 16.197121ms 
+INFO[0000] resolution time 16.197121ms
 ```

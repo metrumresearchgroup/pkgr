@@ -15,3 +15,8 @@ Very simple pkgr environment meant to easily test the `threads` setting in pkgr.
   - fansi (dependency)
   - assertthat (dependency)
   - crayon (dependency)
+  - digest (dependency)
+  - ellipses (dependency)
+  - lifecycle (dependency)
+  - vctrs (dependency)
+  - glue (dependency)

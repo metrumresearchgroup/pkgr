@@ -31,7 +31,7 @@ func TestSetType2(t *testing.T) {
 		Packages: map[string]PkgConfig{},
 	}
 
-	pkgNexus, _ := NewPkgDb(urls, Source, &installConfig, RVersion{})
+	pkgNexus, _ := NewPkgDb(urls, Source, &installConfig, RVersion{}, false)
 	_, pkgCfg, _ := pkgNexus.GetPackage(pkgName)
 	assert.Equal(t, Source, pkgCfg.Type, "Error getting type source")
 
@@ -61,7 +61,7 @@ func TestSetRepo(t *testing.T) {
 		Packages: map[string]PkgConfig{},
 	}
 
-	pkgNexus, _ := NewPkgDb(urls, Source, &installConfig, RVersion{})
+	pkgNexus, _ := NewPkgDb(urls, Source, &installConfig, RVersion{}, false)
 
 	_, pkgCfg, _ := pkgNexus.GetPackage(pkgName)
 	assert.Equal(t, "CRAN_2018_11_11", pkgCfg.Repo.Name, "Error getting repo CRAN_2018_11_11")

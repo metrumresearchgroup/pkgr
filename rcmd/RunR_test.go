@@ -30,9 +30,9 @@ func TestRunRBatch(t *testing.T) {
 					"--version",
 				},
 			},
-			want: []byte(`R version 3.6.0 (2019-04-26) -- "Planting of a Tree"
-Copyright (C) 2019 The R Foundation for Statistical Computing
-Platform: x86_64-apple-darwin15.6.0 (64-bit)
+			want: []byte(`R version 4.0.2 (2020-06-22) -- "Taking Off Again"
+Copyright (C) 2020 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under the terms of the
@@ -40,7 +40,21 @@ GNU General Public License versions 2 or 3.
 For more information about these matters see
 https://www.gnu.org/licenses/.
 
-`),
+`,
+
+
+//			want: []byte(`R version 3.6.0 (2019-04-26) -- "Planting of a Tree"
+//Copyright (C) 2019 The R Foundation for Statistical Computing
+//Platform: x86_64-apple-darwin15.6.0 (64-bit)
+//
+//R is free software and comes with ABSOLUTELY NO WARRANTY.
+//You are welcome to redistribute it under the terms of the
+//GNU General Public License versions 2 or 3.
+//For more information about these matters see
+//https://www.gnu.org/licenses/.
+//
+//`
+			),
 			wantErr: false,
 		},
 	}

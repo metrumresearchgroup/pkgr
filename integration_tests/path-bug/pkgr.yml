@@ -1,0 +1,15 @@
+Version: 1
+# top level packages
+Packages:
+  - XML
+
+# any repositories, order matters
+Repos:
+  - CRAN_WITH_2_XMLS: "https://cran.microsoft.com/snapshot/2021-01-07/"
+
+Library: "test-library"
+
+Customizations:
+  Packages:
+    - XML:
+        Type: source

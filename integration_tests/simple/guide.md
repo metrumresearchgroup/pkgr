@@ -2,29 +2,49 @@
 
 tags: basic, dependencies, cache-system, local-library, clean-cache, clean-pkgdb, inspect, install-type
 
- ## Description
+## Description
 Environment to help test basic pkgr functionality, such as the `plan`, `install`, `inspect --deps`
 
- ## Expected Behaviors
-1. `pkgr plan` will indicate that repositories have been set for packages "R6" and "pillar".
+## Expected Behaviors
+1. `pkgr plan --loglevel=debug` will indicate that `R6`, `pillar`, and their dependencies will be installed.
 2. `pkgr inspect --deps` will print the following object:
 ```
-  {
+{
   "cli": [
     "assertthat",
-    "crayon"
+    "crayon",
+    "glue",
+    "fansi"
+  ],
+  "ellipsis": [
+    "rlang"
+  ],
+  "lifecycle": [
+    "glue",
+    "rlang"
   ],
   "pillar": [
-    "fansi",
-    "rlang",
-    "utf8",
+    "digest",
+    "glue",
     "assertthat",
     "crayon",
-    "cli"
+    "utf8",
+    "fansi",
+    "rlang",
+    "cli",
+    "ellipsis",
+    "lifecycle",
+    "vctrs"
+  ],
+  "vctrs": [
+    "glue",
+    "rlang",
+    "digest",
+    "ellipsis"
   ]
 }
 ```
-3. `pkgr install` will install the following packages, using the system default to determine whether those packages are installed through source or binary:
+3. `pkgr install` will install the following packages to `test-library`, using the system default to determine whether those packages are installed through source or binary:
   - R6 (**user package**)
   - pillar (**user package**)
   - rlang (dependency)
@@ -33,6 +53,11 @@ Environment to help test basic pkgr functionality, such as the `plan`, `install`
   - fansi (dependency)
   - assertthat (dependency)
   - crayon (dependency)
+  - digest (dependency)
+  - ellipses (dependency)
+  - lifecycle (dependency)
+  - vctrs (dependency)
+  - glue (dependency)
 
 4. After running `pkgr install`, you should see a pkgr cache-folder created in an appropriate temp directory. On Mac, for example, it might be `/Users/<user>/Library/Caches/pkgr`. Look in the install logs for a line such as: `INFO[0004] downloading required packages within directory   dir=/Users/johncarlos/Library/Caches/pkgr`
   - Inside the top-level pkgr cache folder, you should see at least two folders:

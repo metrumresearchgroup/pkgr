@@ -1,5 +1,5 @@
 # outdated-pkgs
-tags: pkg-update, pkg-outdated, plan, existing-pkgs
+tags: pkg-update, pkg-outdated, plan, existing-pkgs, command-flags
 
 ## Description
 

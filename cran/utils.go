@@ -162,13 +162,13 @@ func ReadOsRelease() {
 	err = vp.ReadConfig(bytes.NewReader(fixedConfig))
 
 	if err != nil {
-		log.Fatal("%v", err)
+		log.Fatalf("%v", err)
 	}
 
 	err = vp.Unmarshal(&osRelease)
 
 	if err != nil {
-		log.Fatal("%v\n", err)
+		log.Fatalf("%v\n", err)
 	}
 
 	// simplify this so it also works on EL distros

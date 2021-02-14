@@ -21,8 +21,8 @@ Repo2.
 
 ## Expected Behavior:
 
-* `pkgr plan` and `pkgr install` will both indicate that mrgsolve is being pulled
+* `pkgr plan --loglevel=debug` indicates that mrgsolve is being pulled
 from CRAN and not r_validated:
 ```
-INFO[0000] package repository set                        pkg=mrgsolve relationship="user package" repo=CRAN type=source version=0.9.0
+DEBU[0000] package repository set                        pkg=mrgsolve relationship="user package" repo=CRAN type=source version=0.10.1
 ```

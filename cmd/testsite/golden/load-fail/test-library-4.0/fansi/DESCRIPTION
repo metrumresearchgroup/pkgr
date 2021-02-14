@@ -32,7 +32,11 @@ Maintainer: Brodie Gaslam <brodie.gaslam@yahoo.com>
 OriginalRepository: CRAN
 Repository: local
 Date/Publication: 2018-10-05 05:10:12 UTC
+<<<<<<< HEAD
+Built: R 4.0.2; x86_64-apple-darwin17.0; 2021-01-07 00:25:54 UTC; unix
+=======
 Built: R 4.0.2; x86_64-apple-darwin17.0; 2021-01-07 00:21:49 UTC; unix
+>>>>>>> 6f8974c7c9c01336945cf593ab9aec45a17955c5
 PkgrVersion: v2.0.1
 PkgrInstallType: binary
 PkgrRepositoryURL: ../../../../localrepos/simple

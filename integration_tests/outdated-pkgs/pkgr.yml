@@ -5,10 +5,10 @@ Packages:
   - pillar
   - Matrix
 
-# Update: true
+Update: false
 
 # any repositories, order matters
 Repos:
-  - CRAN: "https://cran.microsoft.com/snapshot/2019-08-14"
+  - CRAN: "https://mpn.metworx.com/snapshots/stable/2020-11-21"
 
 Library: "test-library"

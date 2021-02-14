@@ -16,3 +16,8 @@ it does not exist.
   - fansi (dependency)
   - assertthat (dependency)
   - crayon (dependency)
+  - digest (dependency)
+  - ellipses (dependency)
+  - lifecycle (dependency)
+  - vctrs (dependency)
+  - glue (dependency)

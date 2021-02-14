@@ -22,7 +22,11 @@ Maintainer: Hadley Wickham <hadley@rstudio.com>
 OriginalRepository: CRAN
 Repository: local
 Date/Publication: 2019-03-21 14:53:46 UTC
+<<<<<<< HEAD
+Built: R 4.0.2; ; 2021-01-07 00:26:02 UTC; unix
+=======
 Built: R 4.0.2; ; 2021-01-07 00:21:58 UTC; unix
+>>>>>>> 6f8974c7c9c01336945cf593ab9aec45a17955c5
 PkgrVersion: v2.0.1
 PkgrInstallType: binary
 PkgrRepositoryURL: ../../../../localrepos/simple
