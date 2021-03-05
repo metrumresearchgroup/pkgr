@@ -6,7 +6,7 @@ require (
 	github.com/fatih/structs v1.1.0
 	github.com/fatih/structtag v1.2.0
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
-	github.com/google/go-cmp v0.3.0
+	github.com/google/go-cmp v0.5.5
 	github.com/mholt/archiver/v3 v3.3.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/sajari/fuzzy v1.0.0
