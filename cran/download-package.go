@@ -175,7 +175,7 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion, noSecure bo
 	} else if d.Config.Repo.Suffix != "" {
 		pkgdl = fmt.Sprintf("%s/bin/%s/%s/contrib/%s/%s",
 			strings.TrimSuffix(d.Config.Repo.URL, "/"),
-			cranBinaryURL(rv, SuffixUri),
+			cranBinaryURL(rv),
 			d.Config.Repo.Suffix,
 			rv.ToString(),
 			filepath.Base(dest))

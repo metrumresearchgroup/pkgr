@@ -90,6 +90,7 @@ type OutdatedPackage struct {
 }
 
 type OsRelease struct {
+	checked         bool
 	Name            string `mapstructure:"NAME"`
 	Version         string `mapstructure:"VERSION"`
 	Id              string `mapstructure:"ID"`
@@ -97,6 +98,8 @@ type OsRelease struct {
 	LtsRelease      string
 	PrettyName      string  `mapstructure:"PRETTY_NAME"`
 	VersionId       string  `mapstructure:"VERSION_ID"`
-	VersionCodename *string `mapstructure:"VERSION_CODENAME"`
-	UbuntuCodename  *string `mapstructure:"UBUNTU_CODENAME"`
+	// at one point these were pointers prior to 2.0.1 for some crazy reason
+	// I think potentially to use a nil value as TRUE/FALSE/notset
+	VersionCodename string `mapstructure:"VERSION_CODENAME"`
+	UbuntuCodename  string `mapstructure:"UBUNTU_CODENAME"`
 }
