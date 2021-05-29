@@ -42,6 +42,7 @@ type Lockfile struct {
 type PkgrConfig struct {
 	Version        int                 `yaml:"Version,omitempty"`
 	Packages       []string            `yaml:"Packages,omitempty"`
+	IgnorePackages   []string          `mapstructure:"ignore_packages,yaml:"ignore_packages,omitempty"`
 	Tarballs       []string            `yaml:"Tarballs,omitempty"`
 	Descriptions   []string            `yaml:"Descriptions,omitempty"`
 	Suggests       bool                `yaml:"Suggests,omitempty"`

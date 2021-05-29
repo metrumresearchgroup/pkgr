@@ -108,7 +108,15 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	//
 	// Install the packages
 	//
-	err = rcmd.InstallPackagePlan(fs, installPlan, pkgMap, packageCache, pkgInstallArgs, rSettings, rcmd.ExecSettings{PkgrVersion: VERSION}, nworkers)
+	err = rcmd.InstallPackagePlan(fs,
+		installPlan,
+		pkgMap,
+		packageCache,
+		pkgInstallArgs,
+		rSettings,
+		rcmd.ExecSettings{PkgrVersion: VERSION},
+		nworkers,
+	)
 
 	//
 	// Install the tarballs, if applicable.
