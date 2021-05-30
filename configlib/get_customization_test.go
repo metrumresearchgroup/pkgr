@@ -20,7 +20,6 @@ func TestGetPackageCustomizationByName(t *testing.T) {
 		want  PkgConfig
 		want1 bool
 	}{
-		// TODO: Add test cases.
 		{
 			name: "no customization",
 			args: args{
