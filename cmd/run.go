@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"github.com/metrumresearchgroup/pkgr/configlib"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
 
 	"github.com/spf13/cobra"
@@ -39,11 +40,9 @@ func rRun(cmd *cobra.Command, args []string) error {
 	// at least for experimentation for now. If necessary can refactor out the
 	// specifics so could be run here exactly.
 	rs.LibPaths = append(rs.LibPaths, cfg.Library)
-	pc := cfg.Customizations.Packages
-	for n, v := range pc {
-		if v.Env != nil {
-			rs.PkgEnvVars[n] = v.Env
-		}
+	pc, exists := configlib.GetPackageCustomizationByName(pkg, cfg.Customizations)
+	if exists {
+		rs.PkgEnvVars[pkg] = pc.Env
 	}
 	rcmd.StartR(fs, pkg, rs, "")
 	return nil

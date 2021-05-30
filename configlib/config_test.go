@@ -577,10 +577,12 @@ func TestSetCustomizations(t *testing.T) {
 		_ = os.Chdir(getTestFolder(t, "simple"))
 		NewConfig(viper.GetString("config"), &cfg) // Just need to slurp in misc stuff to keep tests working.
 		cfg.Packages = []string{tt.pkg}            // Overwrites whatever packages were in "simple"
-		cfg.Customizations.Packages = map[string]PkgConfig{
-			tt.pkg: PkgConfig{
-				Env: map[string]string{
-					tt.name: tt.value,
+		cfg.Customizations.Packages = []map[string]PkgConfig{
+			{
+				tt.pkg: PkgConfig{
+					Env: map[string]string{
+						tt.name: tt.value,
+					},
 				},
 			},
 		}
@@ -646,7 +648,7 @@ func TestSetViperCustomizations(t *testing.T) {
 	for _, tt := range tests {
 		var cfg PkgrConfig
 		//NewConfig(viper.GetString("config"), &cfg) // Not needed for test to run.
-		cfg.Customizations.Packages = map[string]PkgConfig{
+		cfg.Customizations.Packages = []map[string]PkgConfig{ {
 			tt.pkg: PkgConfig{
 				Env: map[string]string{
 					"": "",
@@ -655,6 +657,7 @@ func TestSetViperCustomizations(t *testing.T) {
 				Type:     tt.stype,
 				Suggests: tt.suggests,
 			},
+		},
 		}
 		var urls = []cran.RepoURL{
 			cran.RepoURL{
@@ -744,14 +747,16 @@ func TestSetViperCustomizations2(t *testing.T) {
 	for _, tt := range tests {
 		var cfg PkgrConfig
 		//NewConfig(viper.GetString("config"), &cfg) // Not needed for test to run
-		cfg.Customizations.Packages = map[string]PkgConfig{
-			tt.pkg: PkgConfig{
-				Env: map[string]string{
-					"": "",
+		cfg.Customizations.Packages = []map[string]PkgConfig{
+			{
+				tt.pkg: PkgConfig{
+					Env: map[string]string{
+						"": "",
+					},
+					Repo:     tt.repo,
+					Type:     tt.stype,
+					Suggests: tt.suggests,
 				},
-				Repo:     tt.repo,
-				Type:     tt.stype,
-				Suggests: tt.suggests,
 			},
 		}
 		var urls = []cran.RepoURL{
@@ -838,14 +843,16 @@ func TestSetPkgConfig(t *testing.T) {
 	for _, tt := range tests {
 		var cfg PkgrConfig
 		//NewConfig(viper.GetString("config"), &cfg) // not needed for test to run
-		cfg.Customizations.Packages = map[string]PkgConfig{
-			tt.pkg: PkgConfig{
-				Env: map[string]string{
-					"": "",
+		cfg.Customizations.Packages = []map[string]PkgConfig{
+			{
+				tt.pkg: PkgConfig{
+					Env: map[string]string{
+						"": "",
+					},
+					Repo:     tt.repo,
+					Type:     tt.stype,
+					Suggests: tt.suggests,
 				},
-				Repo:     tt.repo,
-				Type:     tt.stype,
-				Suggests: tt.suggests,
 			},
 		}
 		var urls = []cran.RepoURL{
@@ -1003,28 +1010,30 @@ func getPkgSettingsMap(elems []interface{}) PkgSettingsMap {
 }
 
 func setViperCustomizations2(cfg PkgrConfig, pkgSettings PkgSettingsMap, dependencyConfigurations gpsr.InstallDeps, pkgNexus *cran.PkgNexus) {
-	for pkg, v := range cfg.Customizations.Packages {
-		if pkgSettings[pkg].Suggests {
-			pkgDepTypes := dependencyConfigurations.Default
-			pkgDepTypes.Suggests = v.Suggests
-			dependencyConfigurations.Deps[pkg] = pkgDepTypes
-		}
-		if len(pkgSettings[pkg].Repo) > 0 {
-			err := pkgNexus.SetPackageRepo(pkg, v.Repo)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"pkg":  pkg,
-					"repo": v.Repo,
-				}).Fatal("error finding custom repo to set")
+	for _, pkgArray := range cfg.Customizations.Packages {
+		for pkg, v := range pkgArray {
+			if pkgSettings[pkg].Suggests {
+				pkgDepTypes := dependencyConfigurations.Default
+				pkgDepTypes.Suggests = v.Suggests
+				dependencyConfigurations.Deps[pkg] = pkgDepTypes
 			}
-		}
-		if len(pkgSettings[pkg].Type) > 0 {
-			err := pkgNexus.SetPackageType(pkg, v.Type)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"pkg":  pkg,
-					"repo": v.Repo,
-				}).Fatal("error finding custom repo to set")
+			if len(pkgSettings[pkg].Repo) > 0 {
+				err := pkgNexus.SetPackageRepo(pkg, v.Repo)
+				if err != nil {
+					log.WithFields(log.Fields{
+						"pkg":  pkg,
+						"repo": v.Repo,
+					}).Fatal("error finding custom repo to set")
+				}
+			}
+			if len(pkgSettings[pkg].Type) > 0 {
+				err := pkgNexus.SetPackageType(pkg, v.Type)
+				if err != nil {
+					log.WithFields(log.Fields{
+						"pkg":  pkg,
+						"repo": v.Repo,
+					}).Fatal("error finding custom repo to set")
+				}
 			}
 		}
 	}
