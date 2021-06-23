@@ -9,6 +9,10 @@ import (
 	"pault.ag/go/debian/control"
 )
 
+// TODO: This belongs in dep.go
+// TODO: The portion of parsing the various formatters is näive, and can be expressed as a set of matchers.
+// TODO: REGEXP: /\(([<>=]+)\s+([0-9\-\.]+)\)/
+
 // ParseDep parses the dep to a struct
 // R package names follow .standard_regexps(), which
 // shows that it should be at minimum digit+.digit+

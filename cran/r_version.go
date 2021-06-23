@@ -8,6 +8,7 @@ func (rv RVersion) ToFullString() string {
 }
 
 // ToString provides the major/minor version of R
+// TODO: So long as your canonical output is this string, you may simply call this "String()"
 func (rv RVersion) ToString() string {
 	return fmt.Sprintf("%v.%v", rv.Major, rv.Minor)
 }

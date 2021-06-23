@@ -106,6 +106,7 @@ func RunR(
 
 // RunRBatch runs a non-interactive R command
 func RunRBatch(
+	// TODO: use or remove fs
 	fs afero.Fs,
 	rs RSettings,
 	cmdArgs []string,

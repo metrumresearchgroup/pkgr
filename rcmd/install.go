@@ -17,11 +17,12 @@ import (
 	"github.com/dpastoor/goutils"
 	"github.com/fatih/structs"
 	"github.com/fatih/structtag"
-	"github.com/metrumresearchgroup/pkgr/cran"
-	"github.com/metrumresearchgroup/pkgr/gpsr"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	funk "github.com/thoas/go-funk"
+
+	"github.com/metrumresearchgroup/pkgr/cran"
+	"github.com/metrumresearchgroup/pkgr/gpsr"
 )
 
 // NewDefaultInstallArgs provides a set of sane default installation args
@@ -277,11 +278,15 @@ func InstallThroughBinary(
 		// don't pass binaryball path back since already in cache
 		return res, "", err
 	}
-
+	// TODO: The function os.MkdirTemp(dir, pattern) (string, error) with an empty dir will create a new temp path
+	//  and return it from this function.
+	// TODO: filepath.Join and randomString in  after performing this change, it has no other uses.
 	tmpdir := filepath.Join(
 		os.TempDir(),
 		randomString(12),
 	)
+	// TODO: replace this call with `dir, err := os.MkdirTemp("", "pkgr")`, handling appropriately
+	// TODO: defer a function to be run that cleans up the directory.
 	err := fs.MkdirAll(tmpdir, 0777)
 	if err != nil {
 		log.Fatalf("could not make tmpdir at: %s to install package", tmpdir)

@@ -6,6 +6,8 @@ import (
 	"github.com/metrumresearchgroup/pkgr/desc"
 )
 
+// TODO: with the format of this packages, the types should be in go files of the same name
+
 // RepoURL represents the URL and name for a repo
 // to match the R convention of specifying a repository name
 // CRAN = https://cran.rstudio.com would be

@@ -6,10 +6,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/metrumresearchgroup/pkgr/cran"
-	"github.com/metrumresearchgroup/pkgr/rcmd/rp"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
+
+	"github.com/metrumresearchgroup/pkgr/cran"
+	"github.com/metrumresearchgroup/pkgr/rcmd/rp"
 )
 
 // NewRSettings initializes RSettings
@@ -52,17 +53,30 @@ func (rs RSettings) R(os string) string {
 // as if it is not defined, it will shell out to R to determine the version, and mutate itself
 // to set that value, while also returning the RVersion.
 // This will keep any program using rs from needing to shell out multiple times
+// TODO: this serves two purposes
+// TODO: extract returning the cran.RVersion as an accessor or direct read access.
+// TODO: extract generating the value, closer to initialization; a new close to `func (rs *RSettings) generate() error`
 func GetRVersion(rs *RSettings) cran.RVersion {
 	if rs.Version.ToString() == "0.0" {
+		// os.Exec(
 		res, err := RunRBatch(afero.NewOsFs(), *rs, []string{"--version"})
 		if err != nil {
+			// TODO: avoid deep log.Fatal() or os.exit()
 			log.Fatal("error getting R version info")
+			// TODO: technically unreachable code
 			return cran.RVersion{}
 		}
+		// TODO: this would be the generate function's job
 		rs.Version, rs.Platform = parseVersionData(res)
 	}
 	return rs.Version
 }
+
+// TODO: this function serves two purposes.
+// TODO: One purpose is to roll through lines looking for R version text.
+// TODO: The second purpose is to continue on to read the platform data.
+// TODO: Uses a complex method (ScanLines) to parse out lines specifically.
+// TODO: Could just read a string line and getting the version if it starts with 'R version'
 
 func parseVersionData(data []byte) (version cran.RVersion, platform string) {
 	lines := rp.ScanLines(data)
@@ -74,6 +88,7 @@ func parseVersionData(data []byte) (version cran.RVersion, platform string) {
 			}
 			rsp := strings.Split(spl[2], ".")
 			if len(rsp) == 3 {
+				// TODO: range over rsp, saving into `rspi []int`, catching error (if they happen) in the loop
 				maj, _ := strconv.Atoi(rsp[0])
 				min, _ := strconv.Atoi(rsp[1])
 				pat, _ := strconv.Atoi(rsp[2])

@@ -18,10 +18,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/metrumresearchgroup/pkgr/configlib"
-	"github.com/metrumresearchgroup/pkgr/logger"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/metrumresearchgroup/pkgr/configlib"
+	"github.com/metrumresearchgroup/pkgr/logger"
 )
 
 // installCmd represents the R CMD install command
@@ -48,6 +49,7 @@ func rAdd(ccmd *cobra.Command, args []string) error {
 	startTime := time.Now()
 
 	if len(args) == 0 {
+		// TODO: Help doesn't need to return error
 		ccmd.Help()
 		os.Exit(0)
 	}
@@ -59,6 +61,9 @@ func rAdd(ccmd *cobra.Command, args []string) error {
 	if install {
 		// if installing now, must call initConfig again for cobra to read in the yml file changes and see the new package/s
 		initConfig()
+		// TODO: handle err, most likely by exiting. by lifting errors to this level instead of handling inside of rInstall.
+		// rInstall, belonging to what is essentially a main() can os.Exit like this function
+		// if it provides a satisfactory message to the user.
 		rInstall(nil, nil)
 	}
 

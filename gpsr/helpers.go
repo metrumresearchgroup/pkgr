@@ -1,12 +1,15 @@
 package gpsr
 
 import (
+	log "github.com/sirupsen/logrus"
+
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/desc"
-	log "github.com/sirupsen/logrus"
 )
 
+// TODO: noRecommended should be termed more positively: skipRecommended
 func isExcludedPackage(pkg string, noRecommended bool) bool {
+	// TODO: idiomatically, exists is 'ok' in most packages. This is called the "comma-ok pattern"
 	pkgType, exists := DefaultPackages[pkg]
 	if exists && !noRecommended && pkgType == "recommended" {
 		return false

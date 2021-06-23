@@ -1,8 +1,9 @@
 package rcmd
 
 import (
-	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/spf13/afero"
+
+	"github.com/metrumresearchgroup/pkgr/cran"
 )
 
 // CmdResult stores information about the executed cmd
@@ -94,7 +95,10 @@ type InstallQueue struct {
 
 // Nvp name-value pair, each of type string
 type Nvp struct {
+	// TODO: Name being empty is weird.
+	// TODO: json name of Name being global_env_vars_name is weird.
 	Name  string `json:"global_env_vars_name,omitempty"`
+	// TODO: similar concern.
 	Value string `json:"global_env_vars_value,omitempty"`
 }
 

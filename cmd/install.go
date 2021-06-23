@@ -16,18 +16,20 @@ package cmd
 
 import (
 	"errors"
-	"github.com/metrumresearchgroup/pkgr/gpsr"
-	"github.com/metrumresearchgroup/pkgr/rollback"
 	"path/filepath"
 	"runtime"
 	"time"
+
+	"github.com/metrumresearchgroup/pkgr/gpsr"
+	"github.com/metrumresearchgroup/pkgr/rollback"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 
 	"github.com/metrumresearchgroup/pkgr/configlib"
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/logger"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 )
 
 // installCmd represents the R CMD install command
@@ -48,8 +50,12 @@ func rInstall(cmd *cobra.Command, args []string) error {
 
 	// Initialize log and start time.
 	initInstallLog()
+	// TODO: have initInstallLog return a stop function that can be deferred.
+	// TODO: defer calling the stop function so it happens regardless of exit point.
+	// TODO: this time-related line can be then tracked via the closure returned in the previous to do.
 	startTime := time.Now()
 	rSettings := rcmd.NewRSettings(cfg.RPath)
+	// TODO: bind to type RSettings
 	rVersion := rcmd.GetRVersion(&rSettings)
 	log.Infoln("R Version " + rVersion.ToFullString())
 	// most people should know what platform they are on
@@ -265,6 +271,8 @@ func installAdditionalPackages(installPlan gpsr.InstallPlan, rSettings rcmd.RSet
 }
 
 func initInstallLog() {
+	// TODO: global state is confounding, especially for testing.
+	// TODO: Pass (or bind) cfg to show what it deals with.
 	//Init install-specific log, if one has been set. This overwrites the default log.
 	if cfg.Logging.Install != "" {
 		logger.AddLogFile(cfg.Logging.Install, cfg.Logging.Overwrite)

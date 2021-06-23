@@ -9,6 +9,9 @@ import (
 func ParseVersion(v string) Version {
 	ver := Version{String: v}
 	parts := regexp.MustCompile(`[\.-]`).Split(v, 4)
+	// TODO: handle error
+	// TODO: switch on len(parts) in reverse order, default setting major/minor, with fallthrough on three
+	//  larger conditionals.
 	ver.Major, _ = strconv.Atoi(parts[0])
 	ver.Minor, _ = strconv.Atoi(parts[1])
 	if len(parts) > 2 {

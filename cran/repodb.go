@@ -16,9 +16,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/metrumresearchgroup/pkgr/desc"
 	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/metrumresearchgroup/pkgr/desc"
 )
 
 // NewRepoDb returns a new Repo database
@@ -93,7 +94,7 @@ func (repoDb *RepoDb) Hash(rVersion string) string {
 	for st := range repoDb.DescriptionsBySourceType {
 		stsum += st + 1
 	}
-
+	// TODO: handle error and pass it back upward
 	io.WriteString(h, repoDb.Repo.Name+repoDb.Repo.URL+fmt.Sprint(stsum)+rVersion)
 	return fmt.Sprintf("%x", h.Sum(nil))
 }

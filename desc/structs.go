@@ -22,6 +22,7 @@ func (c Constraint) ToString() string {
 
 // Constraints on package deps
 // Least to most constraining
+// TODO: Think what the default constraint is, and set it to the zero value.
 const (
 	None Constraint = iota
 	GTE
@@ -43,6 +44,7 @@ type Version struct {
 	Dev   int
 	// max amount detected on CRAN was 5
 	Other int
+	// TODO: idiomatically, this is generally called 'raw'
 	// So Can Store the Original version in case needed
 	String string
 }
@@ -96,8 +98,8 @@ func (d *Desc) GetCombinedDependencies(suggests bool) map[string]Dep {
 }
 
 // TODO figure out unmarshalling pattern so can
-// implement that on Desc so don't need intermediate
-// desc struct
+//  implement that on Desc so don't need intermediate
+//  desc struct
 type desc struct {
 	Package            string
 	Source             string

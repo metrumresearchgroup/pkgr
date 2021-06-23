@@ -76,6 +76,9 @@ func configureEnv(sysEnvVars []string, rs RSettings, pkg string) []string {
 		}
 	}
 
+	// TODO: as noted in install.go, the use of the next few lines could be replaced with a os.MkdirTemp call.
+	//  `tmpdir, err := os.MkdirTemp("", "pkgr")` which will return a full path to the directory. Defer a delete of
+	//  the directory.
 	// Force R_LIBS_USER to be an empty dir so that we can be sure it won't get overridden by default R paths.
 	tmpdir := filepath.Join(
 		os.TempDir(),
