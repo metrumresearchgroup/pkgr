@@ -354,7 +354,7 @@ func logUserPackageRepos(packageDownloads []cran.PkgDl) {
 			"repo":         pkg.Config.Repo.Name,
 			"type":         pkg.Config.Type,
 			"version":      pkg.Package.Version,
-			"relationship": "user package",
+			"relationship": "user_defined",
 		}).Debug("package repository set")
 	}
 }
