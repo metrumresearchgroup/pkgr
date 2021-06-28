@@ -7,9 +7,12 @@ require (
 	github.com/fatih/structtag v1.2.0
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/google/go-cmp v0.3.0
+	github.com/metrumresearchgroup/command v0.0.0-20210625131153-92d2ad31ca2e // indirect
 	github.com/mholt/archiver/v3 v3.3.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/sajari/fuzzy v1.0.0
+	github.com/sebdah/goldie/v2 v2.5.3 // indirect
+	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/afero v1.5.1
 	github.com/spf13/cobra v1.0.0
