@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -73,7 +74,6 @@ func Install(
 	es ExecSettings,
 	ir InstallRequest,
 ) (CmdResult, error) {
-
 	// Get rdir and check that it exists
 	rdir := es.WorkDir
 	if rdir == "" {
@@ -148,13 +148,15 @@ func Install(
 	)
 	cmd.Env = envVars
 	cmd.Dir = rdir
-	var outbuf, errbuf bytes.Buffer
-	cmd.Stdout = &outbuf
-	cmd.Stderr = &errbuf
-
-	err = cmd.Run()
+	var outbuf, errbuf, combinedBuf bytes.Buffer
+	stdoutWriter := io.MultiWriter(&outbuf, &combinedBuf)
+	stderrWriter := io.MultiWriter(&errbuf, &combinedBuf)
+	cmd.Stdout = stdoutWriter
+	cmd.Stderr = stderrWriter
+    err = cmd.Run()
 	stdout := outbuf.String()
 	stderr := errbuf.String()
+	output := combinedBuf.String()
 	exitCode := defaultSuccessCode
 	if err != nil {
 		// try to get the exit code
@@ -182,6 +184,7 @@ func Install(
 
 	cmdResult := CmdResult{
 		Stdout:   stdout,
+		Output: output,
 		Stderr:   stderr,
 		ExitCode: exitCode,
 	}
@@ -190,17 +193,29 @@ func Install(
 			log.Fields{
 				"stdout":   stdout,
 				"stderr":   stderr,
-				"exitCode": exitCode,
+				"output": output,
+				"exit_code": exitCode,
 				"package":  pkg,
 			}).Error("cmd output")
 	} else {
-		log.WithFields(
-			log.Fields{
-				"stdout":   stdout,
-				"stderr":   stderr,
-				"exitCode": exitCode,
-				"package":  pkg,
-			}).Debug("cmd output")
+		// for trace level will also give the separated stdout and stderror
+		if log.GetLevel() == log.TraceLevel {
+			log.WithFields(
+				log.Fields{
+					"stdout":   stdout,
+					"stderr":   stderr,
+					"exit_code": exitCode,
+					"output": output,
+					"package":  pkg,
+				}).Trace("cmd output")
+		} else {
+			log.WithFields(
+				log.Fields{
+					"exitCode": exitCode,
+					"output": output,
+					"package":  pkg,
+				}).Debug("cmd output")
+		}
 	}
 	return cmdResult, err
 }

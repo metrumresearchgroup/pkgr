@@ -7,6 +7,7 @@ import (
 
 // CmdResult stores information about the executed cmd
 type CmdResult struct {
+	Output   string `json:output,omitempty`
 	Stdout   string `json:"stdout,omitempty"`
 	Stderr   string `json:"stderr,omitempty"`
 	ExitCode int    `json:"exit_code,omitempty"`

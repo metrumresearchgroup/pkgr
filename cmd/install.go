@@ -172,8 +172,8 @@ func installAdditionalPackages(installPlan gpsr.InstallPlan, rSettings rcmd.RSet
 	for pkgName, additionalPkg := range installPlan.AdditionalPackageSources {
 
 		log.WithFields(log.Fields{
-			"package":   pkgName,
-			"pkgSource": additionalPkg.InstallPath,
+			"package":    pkgName,
+			"pkg_source": additionalPkg.InstallPath,
 		}).Debug("installing tarball")
 
 		// Need to use absolute path or else we encounter a weird bug from filepath.Clean in the Install function.
@@ -181,9 +181,9 @@ func installAdditionalPackages(installPlan gpsr.InstallPlan, rSettings rcmd.RSet
 		pkgSourcePathAbs, err := filepath.Abs(additionalPkg.InstallPath)
 		if err != nil {
 			log.WithFields(log.Fields{
-				"pkg":       pkgName,
-				"pkgSource": additionalPkg.InstallPath,
-				"error":     err,
+				"pkg":        pkgName,
+				"pkg_source": additionalPkg.InstallPath,
+				"error":      err,
 			}).Error("error installing tarball -- could not find absolute path for tarball")
 			errorAggregator = append(errorAggregator, err)
 		}
@@ -222,38 +222,36 @@ func installAdditionalPackages(installPlan gpsr.InstallPlan, rSettings rcmd.RSet
 		)
 
 		if err != nil {
-			log.WithFields(log.Fields{
-				"pkg":           pkgName,
-				"source":        additionalPkg.OriginPath,
-				"installedFrom": additionalPkg.InstallPath,
-				"installType":   additionalPkg.Type,
-				"error":         err,
-			}).Error("error installing package")
-			log.WithFields(log.Fields{
-				"pkg":           pkgName,
-				"source":        additionalPkg.OriginPath,
-				"installedFrom": additionalPkg.InstallPath,
-				"installType":   additionalPkg.Type,
-				"remaining":     toInstallCount,
-				"stdout":        res.Stdout,
-				"stderr":        res.Stderr,
-			}).Debug("error installing package")
+			logFields := log.Fields{
+				"pkg":            pkgName,
+				"source":         additionalPkg.OriginPath,
+				"installed_from": additionalPkg.InstallPath,
+				"install_type":   additionalPkg.Type,
+				"remaining":      toInstallCount,
+				"error":          err,
+			}
+
+			switch log.GetLevel() {
+			case log.DebugLevel:
+				logFields["output"] = res.Output
+			case log.TraceLevel:
+				logFields["stdout"] = res.Stdout
+				logFields["stderr"] = res.Stderr
+			}
+
+			log.WithFields(logFields).Error("error installing package")
 			errorAggregator = append(errorAggregator, err)
 		} else {
-			log.WithFields(log.Fields{
+			logFields := log.Fields{
 				"pkg":         pkgName,
 				"source":      additionalPkg.OriginPath,
-				"installType": additionalPkg.Type,
+				"install_type": additionalPkg.Type,
 				"remaining":   toInstallCount,
-			}).Info("Successfully Installed Package.")
-			log.WithFields(log.Fields{
-				"pkg":           pkgName,
-				"source":        additionalPkg.OriginPath,
-				"installedFrom": additionalPkg.InstallPath,
-				"installType":   additionalPkg.Type,
-				"remaining":     toInstallCount,
-				"stdout":        res.Stdout,
-			}).Trace("Successfully Installed Package.")
+			}
+			if log.GetLevel() == log.TraceLevel {
+				logFields["output"] = res.Output
+			}
+			log.WithFields(logFields).Info("Successfully Installed Package.")
 		}
 
 		toInstallCount--
