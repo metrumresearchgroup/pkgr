@@ -120,36 +120,35 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	var repos []cran.RepoURL
 	for _, r := range cfg.Repos {
 		for nm, url := range r {
-			var suffix string
-			if _, found := cfg.Customizations.Repos[nm]; found {
-				if cfg.Customizations.Repos[nm].RepoSuffix != "" {
-					suffix = cfg.Customizations.Repos[nm].RepoSuffix
-				}
-			}
-			repos = append(repos, cran.RepoURL{Name: nm, URL: url, Suffix: suffix})
+			repo, _ := configlib.GetRepoCustomizationByName(nm, cfg.Customizations)
+			// for now no need to check if customization exists as the repo will have a default empty string
+			// regardless so no additional logic needed
+			repos = append(repos, cran.RepoURL{Name: nm, URL: url, Suffix: repo.RepoSuffix})
 		}
 	}
 	st := cran.DefaultType()
 	cic := cran.NewInstallConfig()
-	for rn, val := range cfg.Customizations.Repos {
-		rc := cran.RepoConfig{}
-		if strings.EqualFold(val.RepoType, "MPN") {
-			rc.RepoType = cran.MPN
-			rc.DefaultSourceType = cran.Binary
+	for _, repoSlice := range cfg.Customizations.Repos {
+		for rn, val := range repoSlice {
+			rc := cran.RepoConfig{}
+			if strings.EqualFold(val.RepoType, "MPN") {
+				rc.RepoType = cran.MPN
+				rc.DefaultSourceType = cran.Binary
+			}
+			if strings.EqualFold(val.RepoType, "RSPM") {
+				rc.RepoType = cran.RSPM
+			}
+			if strings.EqualFold(val.Type, "binary") {
+				rc.DefaultSourceType = cran.Binary
+			}
+			if strings.EqualFold(val.Type, "source") {
+				rc.DefaultSourceType = cran.Source
+			}
+			if val.RepoSuffix != "" {
+				rc.RepoSuffix = val.RepoSuffix
+			}
+			cic.Repos[rn] = rc
 		}
-		if strings.EqualFold(val.RepoType, "RSPM") {
-			rc.RepoType = cran.RSPM
-		}
-		if strings.EqualFold(val.Type, "binary") {
-			rc.DefaultSourceType = cran.Binary
-		}
-		if strings.EqualFold(val.Type, "source") {
-			rc.DefaultSourceType = cran.Source
-		}
-		if val.RepoSuffix != "" {
-			rc.RepoSuffix = val.RepoSuffix
-		}
-		cic.Repos[rn] = rc
 	}
 	pkgNexus, err := cran.NewPkgDb(repos, st, cic, rv, cfg.NoSecure)
 	if err != nil {

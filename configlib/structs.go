@@ -29,8 +29,8 @@ type LogConfig struct {
 
 // Customizations contains various custom configurations
 type Customizations struct {
-	Packages map[string]PkgConfig  `yaml:"Packages,omitempty"`
-	Repos    map[string]RepoConfig `yaml:"Repos,omitempty"`
+	Packages []map[string]PkgConfig  `yaml:"Packages,omitempty"`
+	Repos    []map[string]RepoConfig `yaml:"Repos,omitempty"`
 }
 
 // Lockfile struct hold values for packrat lockfile support

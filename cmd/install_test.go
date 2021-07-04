@@ -68,10 +68,11 @@ func InitGlobalConfig(libraryPath, localRepo string, update, suggests bool, inst
 		//Logging: configlib.LogConfig{Level: "debug"}, // Controlled before cfg unmarshalling, I think
 		Cache: "./testsite/working/localcache",
 		Customizations: configlib.Customizations{
-			Repos: map[string]configlib.RepoConfig{
+			Repos: []map[string]configlib.RepoConfig{{
 				"testRepo": configlib.RepoConfig{
 					Type: installType,
 				},
+			},
 			},
 		},
 		//LibPaths: nil,
@@ -300,9 +301,11 @@ func TestInstallWithoutRollback(t *testing.T) {
 		//Logging: nil,
 		//Cache: nil,
 		Customizations: configlib.Customizations{
-			Repos: map[string]configlib.RepoConfig{
-				"local58": configlib.RepoConfig{
-					Type: "source",
+			Repos: []map[string]configlib.RepoConfig{
+				{
+					"local58": configlib.RepoConfig{
+						Type: "source",
+					},
 				},
 			},
 		},
