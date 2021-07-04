@@ -26,6 +26,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 	pault.ag/go/debian v0.0.0-20180722221659-90aeb542bd40
 	pault.ag/go/topsort v0.0.0-20160530003732-f98d2ad46e1a // indirect
+
 )
 
 go 1.13
