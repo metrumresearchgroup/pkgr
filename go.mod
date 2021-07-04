@@ -6,7 +6,7 @@ require (
 	github.com/fatih/structs v1.1.0
 	github.com/fatih/structtag v1.2.0
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
-	github.com/google/go-cmp v0.3.0
+	github.com/metrumresearchgroup/command v0.0.0-20210625131153-92d2ad31ca2e // indirect
 	github.com/mholt/archiver/v3 v3.3.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/sajari/fuzzy v1.0.0
@@ -23,6 +23,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 	pault.ag/go/debian v0.0.0-20180722221659-90aeb542bd40
 	pault.ag/go/topsort v0.0.0-20160530003732-f98d2ad46e1a // indirect
+
 )
 
 go 1.13

@@ -16,10 +16,10 @@ type LogrusFileHook struct {
 }
 
 // Log Reinstantiable log to be used globally in the application.
-//var Log *log.Logger
+// var Log *log.Logger
 
 func init() {
-	//Log = log.New()
+	// Log = log.New()
 	log.SetOutput(os.Stdout)
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
 }
@@ -30,7 +30,7 @@ func NewLogrusFileHook(file string, flag int, chmod os.FileMode) (*LogrusFileHoo
 	jsonFormatter := &log.JSONFormatter{}
 	logFile, err := os.OpenFile(file, flag, chmod)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "unable to write file on filehook %v", err)
+		_, _ = fmt.Fprintf(os.Stderr, "unable to write file on filehook %v", err)
 		return nil, err
 	}
 
@@ -44,7 +44,7 @@ func (hook *LogrusFileHook) Fire(entry *log.Entry) error {
 	line := string(jsonformat)
 	_, err = hook.file.WriteString(line)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "unable to write file on filehook(entry.String)%v", err)
+		_, _ = fmt.Fprintf(os.Stderr, "unable to write file on filehook(entry.String)%v", err)
 		return err
 	}
 
@@ -64,8 +64,21 @@ func (hook *LogrusFileHook) Levels() []log.Level {
 
 }
 
+func SetLogJson(enabled bool) {
+	if enabled {
+		log.SetFormatter(&log.JSONFormatter{
+			TimestampFormat:   "",
+			DisableTimestamp:  true,
+			DisableHTMLEscape: false,
+			FieldMap:          nil,
+			CallerPrettyfier:  nil,
+			PrettyPrint:       false,
+		})
+	}
+}
+
 func SetLogLevel(level string) {
-	//We want the log to be reset whenever it is initialized.
+	// We want the log to be reset whenever it is initialized.
 	logLevel := strings.ToLower(level)
 
 	switch logLevel {

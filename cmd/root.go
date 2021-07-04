@@ -19,12 +19,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/metrumresearchgroup/pkgr/configlib"
-	"github.com/metrumresearchgroup/pkgr/logger"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/metrumresearchgroup/pkgr/configlib"
+	"github.com/metrumresearchgroup/pkgr/logger"
 )
 
 // VERSION is the current pkgr version
@@ -68,6 +69,9 @@ func rootInit() {
 	RootCmd.PersistentFlags().String("loglevel", "", "level for logging")
 	_ = viper.BindPFlag("loglevel", RootCmd.PersistentFlags().Lookup("loglevel"))
 
+	RootCmd.PersistentFlags().Bool("logjson", false, "log as json")
+	_ = viper.BindPFlag("logjson", RootCmd.PersistentFlags().Lookup("logjson"))
+
 	RootCmd.PersistentFlags().Int("threads", 0, "number of threads to execute with")
 	_ = viper.BindPFlag("threads", RootCmd.PersistentFlags().Lookup("threads"))
 
@@ -98,6 +102,7 @@ func rootInit() {
 
 func setGlobals() {
 	fs = afero.NewOsFs()
+	logger.SetLogJson(viper.GetBool("logjson"))
 	logger.SetLogLevel(viper.GetString("loglevel"))
 }
 
