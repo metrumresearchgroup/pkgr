@@ -18,10 +18,10 @@ func TestInstall(t *testing.T) {
 	}
 
 	t.Run("should install 11", func(t *testing.T) {
-		assert.Contains(t, installRes.Output, "to_install=11 to_update=0")
+		assert.Contains(t, string(installRes.Output), "to_install=11 to_update=0")
 	})
 	t.Run("should install to the test library", func(t *testing.T) {
-		assert.Contains(t, installRes.Output, "Library path to install packages: test-library")
+		assert.Contains(t, string(installRes.Output), "Library path to install packages: test-library")
 	})
 
 
@@ -36,6 +36,6 @@ func TestInstall(t *testing.T) {
 		  	t.Fatalf("failed to run Rscript command with err: %s", err)
 		}
 		g := goldie.New(t)
-		g.Assert(t, "install", []byte(testRes.Output))
+		g.Assert(t, "install", testRes.Output)
 	})
 }

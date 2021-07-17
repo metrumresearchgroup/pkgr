@@ -5,7 +5,7 @@ require (
 	github.com/dpastoor/goutils v1.2.0
 	github.com/fatih/structs v1.1.0
 	github.com/fatih/structtag v1.2.0
-	github.com/metrumresearchgroup/command v0.0.1
+	github.com/metrumresearchgroup/command v0.0.2-0.20210716145028-d3194efebb33
 	github.com/mholt/archiver/v3 v3.5.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/sajari/fuzzy v1.0.0

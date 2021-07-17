@@ -18,13 +18,13 @@ func TestInspectDeps(t *testing.T) {
 	}
 	t.Run("get dependencies as json", func(t *testing.T) {
 		g := goldie.New(t)
-		g.Assert(t, "inspect-deps", []byte(res.Output))
+		g.Assert(t, "inspect-deps", res.Output)
 	})
 
 	// the situation that can arise is if log messages slip in, so the output would be some logrus message + json
 	t.Run("dependencies are valid json", func(t *testing.T) {
 		jsonMap := make(map[string]interface{})
-		err := json.Unmarshal([]byte(res.Output), &jsonMap)
+		err := json.Unmarshal(res.Output, &jsonMap)
 		if err != nil {
 			t.Errorf("could not unmarshal dependency json with error %s", err)
 		}
@@ -40,7 +40,7 @@ func TestInspectReverseDeps(t *testing.T) {
 	}
 	t.Run("reverse dependencies are valid json", func(t *testing.T) {
 		jsonMap := make(map[string]interface{})
-		err := json.Unmarshal([]byte(res.Output), &jsonMap)
+		err := json.Unmarshal(res.Output, &jsonMap)
 		if err != nil {
 			t.Errorf("could not unmarshal reverse dependency json with error %s", err)
 		}
@@ -48,7 +48,7 @@ func TestInspectReverseDeps(t *testing.T) {
 	// the situation that can arise is if log messages slip in, so the output would be some logrus message + json
 	t.Run("get reverse dependencies as json", func(t *testing.T) {
 		g := goldie.New(t)
-		g.Assert(t, "inspect-reverse-deps", []byte(res.Output))
+		g.Assert(t, "inspect-reverse-deps", res.Output)
 	})
 }
 

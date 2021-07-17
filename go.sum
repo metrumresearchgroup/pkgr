@@ -204,6 +204,8 @@ github.com/mattn/go-colorable v0.0.9/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaO
 github.com/mattn/go-isatty v0.0.3/go.mod h1:M+lRXTBqGeGNdLjl/ufCoiOlB5xdOkqRJdNxMWT7Zi4=
 github.com/metrumresearchgroup/command v0.0.1 h1:GKOmZN7jIQALPtVQ9g3dx+o8IkpUaXceE/keunP36NQ=
 github.com/metrumresearchgroup/command v0.0.1/go.mod h1:RN0GpeHtPOEpPGT7LrXrxsfzHr4Q8sbFZvpRlV20mys=
+github.com/metrumresearchgroup/command v0.0.2-0.20210716145028-d3194efebb33 h1:mWlNMsqkEIKU2qMwwm1MnRAb8ZQLgERazUZY7BfrMX0=
+github.com/metrumresearchgroup/command v0.0.2-0.20210716145028-d3194efebb33/go.mod h1:RN0GpeHtPOEpPGT7LrXrxsfzHr4Q8sbFZvpRlV20mys=
 github.com/mholt/archiver/v3 v3.5.0 h1:nE8gZIrw66cu4osS/U7UW7YDuGMHssxKutU8IfWxwWE=
 github.com/mholt/archiver/v3 v3.5.0/go.mod h1:qqTTPUK/HZPFgFQ/TJ3BzvTpF/dPtFVJXdQbCmeMxwc=
 github.com/miekg/dns v1.0.14/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
