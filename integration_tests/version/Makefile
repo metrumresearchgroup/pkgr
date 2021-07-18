@@ -1,6 +1,6 @@
 TEST_HOME=${PWD}
 
-.PHONY: clean
+.PHONY: clean update test test-json
 
 clean:
 	go clean -testcache

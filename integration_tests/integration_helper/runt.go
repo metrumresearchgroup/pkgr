@@ -35,7 +35,7 @@ func RunTest(tgt targets.Target) error {
 		return err
 	}
 
-	if strings.Contains(r.Output, "FAIL:") {
+	if strings.Contains(string(r.Output), "FAIL:") {
 		return errors.New("found FAIL message")
 	}
 
