@@ -3,8 +3,6 @@ TEST_HOME=${PWD}
 .PHONY: clean update test test-json
 
 clean:
-	rm -rf test-library
-	rm -rf test-cache
 	go clean -testcache
 
 update: clean

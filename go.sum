@@ -202,8 +202,6 @@ github.com/magiconair/properties v1.8.5 h1:b6kJs+EmPFMYGkow9GiUyCyOvIwYetYJ3fSaW
 github.com/magiconair/properties v1.8.5/go.mod h1:y3VJvCyxH9uVvJTWEGAELF3aiYNyPKd5NZ3oSwXrF60=
 github.com/mattn/go-colorable v0.0.9/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=
 github.com/mattn/go-isatty v0.0.3/go.mod h1:M+lRXTBqGeGNdLjl/ufCoiOlB5xdOkqRJdNxMWT7Zi4=
-github.com/metrumresearchgroup/command v0.0.1 h1:GKOmZN7jIQALPtVQ9g3dx+o8IkpUaXceE/keunP36NQ=
-github.com/metrumresearchgroup/command v0.0.1/go.mod h1:RN0GpeHtPOEpPGT7LrXrxsfzHr4Q8sbFZvpRlV20mys=
 github.com/metrumresearchgroup/command v0.0.2-0.20210716145028-d3194efebb33 h1:mWlNMsqkEIKU2qMwwm1MnRAb8ZQLgERazUZY7BfrMX0=
 github.com/metrumresearchgroup/command v0.0.2-0.20210716145028-d3194efebb33/go.mod h1:RN0GpeHtPOEpPGT7LrXrxsfzHr4Q8sbFZvpRlV20mys=
 github.com/mholt/archiver/v3 v3.5.0 h1:nE8gZIrw66cu4osS/U7UW7YDuGMHssxKutU8IfWxwWE=
