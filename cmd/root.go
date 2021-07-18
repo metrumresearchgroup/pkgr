@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
@@ -28,24 +29,25 @@ import (
 	"github.com/metrumresearchgroup/pkgr/logger"
 )
 
-// VERSION is the current pkgr version
-var VERSION = "3.0.0"
+// version should be injected at build time, if completely development version will just give a timestamp
+var VERSION = "dev-" + time.Now().String()
 
 var fs afero.Fs
 var cfg configlib.PkgrConfig
+var printVersion bool
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "pkgr",
 	Short: "package manager",
+	Version: VERSION,
 }
+
 
 // Execute adds all child commands to the root command sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute(build string) {
-	if build != "" {
-		VERSION = fmt.Sprintf("%s-%s", VERSION, build)
-	}
+func Execute() {
+	RootCmd.SetVersionTemplate(VERSION)
 	RootCmd.Long = fmt.Sprintf("pkgr cli version %s", VERSION)
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
@@ -63,6 +65,8 @@ func rootInit() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports Persistent Flags, which, if defined here,
 	// will be global for your application.
+	RootCmd.Flags().BoolVarP(&printVersion, "version", "v", false, "print the version")
+
 	RootCmd.PersistentFlags().String("config", "", "config file (default is pkgr.yml)")
 	_ = viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
 
