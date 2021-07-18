@@ -1,9 +1,48 @@
+---
 kind: pipeline
 type: docker
-name: default
-
+name: integration-tests
 steps:
-- name: test
-  image: evol262/pkgr
-  commands:
-  - make test-mixed
+  - name: pull
+    image: omerxx/drone-ecr-auth
+    commands:
+      - $(aws ecr get-login --no-include-email --region us-east-1)
+      - docker pull 906087756158.dkr.ecr.us-east-1.amazonaws.com/r-dev-ci:4.1.0
+    volumes:
+      - name: docker.sock
+        path: /var/run/docker.sock
+  - name: build
+    image: golang:1.16
+    commands:
+      - make install
+      - go get ./...
+    volumes:
+      - name: go
+        path: /go
+  - name: baseline
+    image: 906087756158.dkr.ecr.us-east-1.amazonaws.com/r-dev-ci:4.1.0
+    pull: never
+    volumes:
+      - name: go
+        path: /go
+    commands:
+      - export PATH=/go/bin:$PATH
+      - cd integration_tests/baseline
+      - make test
+  - name: version
+    image: 906087756158.dkr.ecr.us-east-1.amazonaws.com/r-dev-ci:4.1.0
+    pull: never
+    volumes:
+      - name: go
+        path: /go
+    commands:
+      - export PATH=/go/bin:$PATH
+      - cd integration_tests/version
+      - make test
+
+volumes:
+  - name: docker.sock
+    host:
+      path: /var/run/docker.sock
+  - name: go
+    temp: { }

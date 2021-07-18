@@ -1,13 +1,14 @@
 BUILD=`date +%FT%T%z`
-LDFLAGS=-ldflags "-X main.buildTime=${BUILD}"
 MAKE_HOME=${PWD}
 TEST_HOME=${MAKE_HOME}/integration_tests
 
 .PHONY: all ci clean install simple test-multiple log-test log-test-reset test-master test-master-reset test-mixed test-mixed-reset
 
 install:
-	cd cmd/pkgr; go get; go install ${LDFLAGS}
+	cd cmd/pkgr; go get; go install
 
+build:
+	cd cmd/pkgr; goreleaser build --snapshot --rm-dist --single-target
 all: install test-simple
 
 ci: install test-mixed
