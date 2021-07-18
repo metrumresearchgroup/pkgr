@@ -19,6 +19,16 @@ steps:
     volumes:
       - name: go
         path: /go
+  - name: baseline
+    image: 906087756158.dkr.ecr.us-east-1.amazonaws.com/r-dev-ci:4.1.0
+    pull: never
+    volumes:
+      - name: go
+        path: /go
+    commands:
+      - export PATH=/go/bin:$PATH
+      - cd integration_tests/baseline
+      - make test
   - name: version
     image: 906087756158.dkr.ecr.us-east-1.amazonaws.com/r-dev-ci:4.1.0
     pull: never
