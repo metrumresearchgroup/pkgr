@@ -16,21 +16,19 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-	"time"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"os"
+	"path/filepath"
 
 	"github.com/metrumresearchgroup/pkgr/configlib"
 	"github.com/metrumresearchgroup/pkgr/logger"
 )
 
 // version should be injected at build time, if completely development version will just give a timestamp
-var VERSION = "dev-" + time.Now().String()
+var VERSION = "dev"
 
 var fs afero.Fs
 var cfg configlib.PkgrConfig

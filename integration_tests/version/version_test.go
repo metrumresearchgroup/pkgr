@@ -17,7 +17,7 @@ func TestVersion(t *testing.T) {
 			t.Fatal(err)
 		}
 		// this will always get the git tag for regular releases
-		assert.Contains(t, string(res.Output), "dev-")
+		assert.Equal(t, "dev", string(res.Output))
 	})
 
 	t.Run("short flag -v works", func(t *testing.T) {
@@ -26,7 +26,7 @@ func TestVersion(t *testing.T) {
 			t.Fatal(err)
 		}
 		// this will always get the git tag for regular releases
-		assert.Contains(t, string(res.Output), "dev-")
+		assert.Equal(t,"dev",  string(res.Output))
 	})
 
 }
