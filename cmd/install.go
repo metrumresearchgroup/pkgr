@@ -125,7 +125,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 
 	log.WithField("duration", time.Since(startTime)).Info("total package install time")
 
-	if cfg.Rollback {
+	if !cfg.NoRollback {
 		//If anything went wrong during the installation, rollback the environment.
 		if err != nil || errInstallAdditional != nil {
 			errRollback := rollback.RollbackPackageEnvironment(fs, rollbackPlan)

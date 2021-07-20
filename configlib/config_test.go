@@ -942,7 +942,7 @@ func TestNewConfigSimple(t *testing.T) {
 	assert.Equal(t, []map[string]string{{"CRAN": "https://cran.microsoft.com/snapshot/2020-05-01"}}, cfg.Repos)
 	assert.Equal(t, false, cfg.Strict)
 	assert.Equal(t, Lockfile{}, cfg.Lockfile)
-	assert.Equal(t, true, cfg.Rollback)
+	assert.Equal(t, false, cfg.NoRollback)
 	assert.True(t, reflect.TypeOf(cfg.Threads).String() == "int")
 	assert.Equal(t, false, cfg.NoRecommended)
 
@@ -981,7 +981,7 @@ func TestNewConfigNonDefaults(t *testing.T) {
 	assert.Equal(t, Lockfile{
 		Type: "renv",
 	}, cfg.Lockfile)
-	assert.Equal(t, false, cfg.Rollback)
+	assert.Equal(t, true, cfg.NoRollback)
 	assert.Equal(t, 9, cfg.Threads)
 	assert.Equal(t, true, cfg.NoRecommended)
 

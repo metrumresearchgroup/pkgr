@@ -60,7 +60,7 @@ func InitGlobalConfig(libraryPath, localRepo string, update, suggests bool, inst
 	cfg = configlib.PkgrConfig{
 		Threads:  5,
 		Update:   update,
-		Rollback: false,
+		NoRollback: false,
 		Strict:   false,
 		Packages: packages,
 		Library:  libraryPath,
