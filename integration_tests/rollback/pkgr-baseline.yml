@@ -9,4 +9,5 @@ Repos:
   - MPN: https://mpn.metworx.com/snapshots/stable/2021-06-20
 
 Library: "test-library"
+# make sure won't affect subsequent rollback install/caches
 Cache: "initial-cache"
