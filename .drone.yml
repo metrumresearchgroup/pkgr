@@ -57,7 +57,7 @@ steps:
         path: /go
     commands:
       - export PATH=/go/bin:$PATH
-      - cd integration_tests/outdated
+      - cd integration_tests/outdated-pkgs
       - make test
 
 volumes:
