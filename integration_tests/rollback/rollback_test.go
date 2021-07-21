@@ -14,17 +14,31 @@ const (
 	RollbackDisabledInstalled = "rollback-disabled-installed"
 )
 
-func TestRollback(t *testing.T) {
-	installCmd := command.New()
-	testCmd := command.New(command.WithDir("Rscripts"))
+func setupBaseline(t *testing.T) {
+	err := os.RemoveAll("test-library")
+	if err != nil {
+		t.Fatalf("failed to cleanup test-library")
+	}
 	ctx := context.TODO()
-	// should have some setup to make sure the test-library is cleared out
-
-	_, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr-baseline.yml")
+	installCmd := command.New()
+	_, err = installCmd.Run(ctx, "pkgr", "install", "--config=pkgr-baseline.yml")
 	if err != nil {
 		t.Fatalf("could not install baseline packages with err: %s", err)
 	}
+}
 
+func TestRollback(t *testing.T) {
+	testCmd := command.New(command.WithDir("Rscripts"))
+	installCmd := command.New()
+	ctx := context.TODO()
+	// should have some setup to make sure the test-library is cleared out
+
+	setupBaseline(t)
+
+	// this test is really just a sanity check to make sure the baseline is really set up properly to reflect the
+	// future tests. This feels like a reasonable middleground to checking
+	// its set up like that after each setupBaseline() call, especially since
+	// setupBaseline doesn't do any assertions/checks within it
 	t.Run("the baseline package was installed", func(t *testing.T) {
 		testRes, err := testCmd.Run(ctx, "Rscript", "--quiet", "install_test.R")
 		if err != nil {
@@ -42,8 +56,10 @@ func TestRollback(t *testing.T) {
 		rollbackOutputCheckHelper(t, res, BaselineInstalled)
 	})
 
+
 	t.Run("will not rollback on failure to install tarball when rollback disabled", func(t *testing.T) {
 		t.Run("in configuration file", func(t *testing.T) {
+			setupBaseline(t)
 			res, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr-no-rollback-tarball.yml", "--logjson")
 			if err != nil {
 				t.Fatalf("could not install baseline packages with err: %s", err)
@@ -52,10 +68,7 @@ func TestRollback(t *testing.T) {
 		})
 
 		t.Run("as CLI flag", func(t *testing.T) {
-		    err := os.RemoveAll("test-library/ps")
-			if err != nil {
-				t.Fatalf("could not remove installed ps package to test rollback with err: %s", err)
-			}
+			setupBaseline(t)
 			res, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr-rollback-tarball.yml", "--logjson", "--no-rollback")
 			if err != nil {
 				t.Fatalf("could not install baseline packages with err: %s", err)
