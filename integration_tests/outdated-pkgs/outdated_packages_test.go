@@ -37,13 +37,6 @@ func setupBaseline(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error populating test-library with outdated packages: %s", err)
 	}
-
-	//ctx := context.TODO()
-	//installCmd := command.New()
-	//_, err = installCmd.Run(ctx, "pkgr", "install", "--config=pkgr-baseline.yml")
-	//if err != nil {
-	//	t.Fatalf("could not install baseline packages with err: %s")
-	//}
 }
 
 func TestOutdated(t *testing.T) {
@@ -80,7 +73,7 @@ func TestOutdated(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to install updated packages: %s", err)
 		}
-		rScriptRes, err := testCmd.Run(ctx, "Rscript", "--quiet", "get_installed.R")
+		rScriptRes, err := testCmd.Run(ctx, "Rscript", "--quiet", "install_test.R")
 		if err != nil {
 			t.Fatalf("failed to run Rscript command with err: %s", err)
 		}
@@ -114,7 +107,7 @@ func TestOutdated(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to install packages: %s", err)
 		}
-		rScriptRes, err := testCmd.Run(ctx, "Rscript", "--quiet", "get_installed.R")
+		rScriptRes, err := testCmd.Run(ctx, "Rscript", "--quiet", "install_test.R")
 		if err != nil {
 			t.Fatalf("failed to run Rscript command with err: %s", err)
 		}
@@ -128,7 +121,7 @@ func TestOutdated(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to install packages: %s", err)
 		}
-		rScriptRes, err := testCmd.Run(ctx, "Rscript", "--quiet", "get_installed.R")
+		rScriptRes, err := testCmd.Run(ctx, "Rscript", "--quiet", "install_test.R")
 		if err != nil {
 			t.Fatalf("failed to run Rscript command with err: %s: ", err)
 		}
