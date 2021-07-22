@@ -6,7 +6,7 @@ Packages:
 
 # any repositories, order matters
 Repos:
-  - local: "../../localrepos/simple"
+  - MPN_Feb_2020: "https://mpn.metworx.com/snapshots/stable/2020-02-18"
 
 Threads: 2
 
@@ -14,5 +14,5 @@ Library: "test-library"
 
 Customizations:
   Repos:
-    - local:
+    - MPN_Feb_2020:
         Type: source
