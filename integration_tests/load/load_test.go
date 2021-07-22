@@ -63,7 +63,7 @@ func TestLoad(t *testing.T) {
 			output := string(outputBytes.Output)
 
 			r6LoadRegex := `\{"level":"debug","msg":"Package loaded successfully","pkg":"R6","r_dir":".*"\}`
-			pillarLoadRegex := `\{"level":"debug","msg":"Package loaded successfully","pkg":"pillar","r_dir":".*"\}`
+			ellipsisLoadRegex := `\{"level":"debug","msg":"Package loaded successfully","pkg":"ellipsis","r_dir":".*"\}`
 			allPackagesLoadRegex := `\{"dependencies_attempted":false,"level":"info","msg":"all packages loaded successfully","user_packages_attempted":"true","working_directory":".*"\}`
 
 
@@ -77,7 +77,7 @@ func TestLoad(t *testing.T) {
 
 			// Built in option
 			assert.Regexp(t,  r6LoadRegex, output)
-			assert.Regexp(t,  pillarLoadRegex, output)
+			assert.Regexp(t,  ellipsisLoadRegex, output)
 			assert.Regexp(t,  allPackagesLoadRegex, output)
 
 			// Lazy option
@@ -100,26 +100,14 @@ func TestLoad(t *testing.T) {
 			output := string(outputBytes.Output)
 
 			r6LoadRegex := `\{"level":"debug","msg":"Package loaded successfully","pkg":"R6".*\}`
-			//r6LoadRegex := `\{"level":"debug","msg":"Package loaded successfully","pkg":"R6","r_dir":".*"\}`
-			pillarLoadRegex := `\{"level":"debug","msg":"Package loaded successfully","pkg":"pillar".*\}`
-			utf8LoadRegex := `\{"level":"debug","msg":"Package loaded successfully","pkg":"utf8".*\}`
-			fansiLoadRegex := `\{"level":"debug","msg":"Package loaded successfully","pkg":"fansi".*\}`
-			cliLoadRegex := `\{"level":"debug","msg":"Package loaded successfully","pkg":"cli".*\}`
-			assertthatLoadRegex := `\{"level":"debug","msg":"Package loaded successfully","pkg":"assertthat".*\}`
-			crayonLoadRegex := `\{"level":"debug","msg":"Package loaded successfully","pkg":"crayon".*\}`
+			ellipsisLoadRegex := `\{"level":"debug","msg":"Package loaded successfully","pkg":"ellipsis".*\}`
 			rlangLoadRegex := `\{"level":"debug","msg":"Package loaded successfully","pkg":"rlang".*\}`
 			allPackagesLoadRegex := `\{"dependencies_attempted":true,"level":"info","msg":"all packages loaded successfully","user_packages_attempted":"true","working_directory":".*"\}`
 
 			assert.Regexp(t,  r6LoadRegex, output)
-			assert.Regexp(t,  pillarLoadRegex, output)
-			assert.Regexp(t,  utf8LoadRegex, output)
-			assert.Regexp(t,  fansiLoadRegex, output)
-			assert.Regexp(t,  cliLoadRegex, output)
-			assert.Regexp(t,  assertthatLoadRegex, output)
-			assert.Regexp(t,  crayonLoadRegex, output)
+			assert.Regexp(t,  ellipsisLoadRegex, output)
 			assert.Regexp(t,  rlangLoadRegex, output)
 			assert.Regexp(t,  allPackagesLoadRegex, output)
-
 		})
 
 
@@ -139,12 +127,29 @@ func TestLoad(t *testing.T) {
 		//output := string(outputBytes.Output)
 		var loadReport *cmd.LoadReport
 
-		json.Unmarshal(outputBytes.Output, &loadReport)
+		err = json.Unmarshal(outputBytes.Output, &loadReport)
+		if err != nil {
+			t.Fatalf("could not unmarshal JSON into expected format: %s", err)
+		}
 
-		// Just trying this out for now.
-		assert.Len(t, loadReport.LoadResults, 12)
-
+		//loadResultsMap := loadReport.LoadResults
+		//r6, found := loadResultsMap["R6"]
+		//assert.True(t, found, "failed to find load results for R6 in report")
+		//assert.True(t, r6.Success, "R6 did not load successfully in report")
+		checkLoadReport(t, loadReport, "R6", true)
+		checkLoadReport(t, loadReport, "ellipsis", true)
+		checkLoadReport(t, loadReport, "rlang", true)
 	})
 
 
+}
+
+func checkLoadReport(t *testing.T, report *cmd.LoadReport, pkg string, expectSuccess bool) {
+	pkgLoadResults, found := report.LoadResults[pkg]
+	assert.True(t, found, fmt.Sprintf("failed to find load results for %s in report", pkg))
+	if expectSuccess {
+		assert.True(t, pkgLoadResults.Success, fmt.Sprintf("Report does not indicate that pkg '%s' loaded successfully", pkg))
+	} else {
+		assert.False(t, pkgLoadResults.Success, fmt.Sprintf("Report indicates that pkg '%s' loaded successfully, but we expected it to fail", pkg))
+	}
 }

@@ -2,7 +2,7 @@ Version: 1
 # top level packages
 Packages:
   - R6
-  - pillar
+  - ellipsis # depends on rlang
 
 # any repositories, order matters
 Repos:
