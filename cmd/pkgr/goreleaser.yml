@@ -7,6 +7,32 @@ release:
   # If set to true, will mark the release as not ready for production.
   # Default is false.
   prerelease: auto
+  footer: |
+    ## Installation Instructions
+
+    ### Mac
+
+    first time:
+
+    ```
+    brew tap metrumresearchgroup/tap
+    brew install pkgr
+    ```
+
+    upgrade:
+
+    ```
+    brew upgrade pkgr
+    ```
+
+    ### Linux
+
+    ```
+    sudo wget https://github.com/metrumresearchgroup/pkgr/releases/{{ .Tag }}/{{ .ArtifactName }} -O /tmp/pkgr.tar.gz
+    sudo tar xzf /tmp/pkgr.tar.gz pkgr
+    sudo mv pkgr /usr/local/bin/pkgr
+    sudo chmod +x /usr/local/bin/pkgr
+    ```
 
 build:
   binary: pkgr
