@@ -92,10 +92,10 @@ func rootInit() {
 	RootCmd.PersistentFlags().Bool("update", cfg.Update, "Update packages along with install")
 	_ = viper.BindPFlag("update", RootCmd.PersistentFlags().Lookup("update"))
 
-	RootCmd.PersistentFlags().Bool("rollback", cfg.Rollback, "Enable rollback")
-	_ = viper.BindPFlag("rollback", RootCmd.PersistentFlags().Lookup("rollback"))
+	RootCmd.PersistentFlags().Bool("no-rollback", cfg.NoRollback, "Disable rollback")
+	_ = viper.BindPFlag("no_rollback", RootCmd.PersistentFlags().Lookup("no-rollback"))
 
-	RootCmd.PersistentFlags().Bool("no-secure", cfg.Rollback, "disable TLS certificate verification")
+	RootCmd.PersistentFlags().Bool("no-secure", cfg.NoSecure, "disable TLS certificate verification")
 	_ = viper.BindPFlag("nosecure", RootCmd.PersistentFlags().Lookup("no-secure"))
 
 	RootCmd.PersistentFlags().Bool("strict", cfg.Strict, "Enable strict mode")

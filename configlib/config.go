@@ -158,16 +158,11 @@ func loadConfigFromPath(configFilename string) error {
 
 // loadDefaultSettings load default settings
 func loadDefaultSettings() {
-	viper.SetDefault("debug", false)
-	viper.SetDefault("preview", false)
 	// should be one of Debug,Info,Warn,Error,Fatal,Panic
 	viper.SetDefault("loglevel", "info")
 	// path to R on system, defaults to R in path
 	viper.SetDefault("rpath", "R")
 	viper.SetDefault("threads", runtime.NumCPU())
-	viper.SetDefault("strict", false)
-	viper.SetDefault("rollback", true)
-	viper.SetDefault("nosecure", false)
 }
 
 // IsCustomizationSet ...

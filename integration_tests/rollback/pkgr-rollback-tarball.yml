@@ -1,0 +1,15 @@
+Version: 1
+
+# top level packages
+Packages:
+  - R6
+  - ps
+# any repositories, order matters
+Repos:
+  - MPN: https://mpn.metworx.com/snapshots/stable/2021-06-20
+
+Tarballs:
+  - "failinstall_0.0.1.tar.gz"
+
+Library: "test-library"
+Cache: "test-cache"
