@@ -8,6 +8,7 @@ import (
 	"github.com/metrumresearchgroup/pkgr/cmd"
 	"github.com/stretchr/testify/assert"
 	"os"
+	. "path"
 	"testing"
 )
 
@@ -23,6 +24,31 @@ func setupEndToEndWithInstall(t *testing.T, pkgrConfig, testLibrary string) {
 	if err != nil {
 		t.Fatalf("could not install baseline packages to '%s' with config file '%s'. Error: %s", testLibrary, pkgrConfig, err)
 	}
+}
+
+func setupCorruptedPackageEnvironment(t *testing.T) {
+	testLibPath := "test-library"
+	setupEndToEndWithInstall(t, "pkgr-load-fail-setup.yml", testLibPath)
+
+	// Remove "R" folder from R6
+	err := os.RemoveAll(Join(testLibPath, "R6", "R"))
+	if err != nil {
+		t.Fatalf("error while corrupting R6 package during test setup: %s", err)
+	}
+
+	// Remove "R" folder from rlang, which ellipsis depends on.
+	err = os.RemoveAll(Join(testLibPath, "rlang", "R"))
+	if err != nil {
+		t.Fatalf("error while corrupting rlang package during test setup: %s", err)
+	}
+
+	// Desired end state:
+	// R6 is installed but can't be loaded
+	// rlang is installed but can't be loaded
+	// ellipsis is installed properly, but can't be loaded only because rlang can't be loaded
+	// fansi is not installed and therefore can't be loaded.
+	// glue is installed and can be loaded.
+
 }
 
 func makeTestName(testId, testName string) string {
@@ -139,8 +165,71 @@ func TestLoad(t *testing.T) {
 		checkLoadReport(t, loadReport, "R6", true)
 		checkLoadReport(t, loadReport, "ellipsis", true)
 		checkLoadReport(t, loadReport, "rlang", true)
+		assert.Equal(t, 0, loadReport.Failures)
 	})
 
+	t.Run(makeTestName(loadE2ETest3, "Load fails when a package can't load"), func(t *testing.T) {
+		setupCorruptedPackageEnvironment(t)
+
+		loadCmd := command.New()
+		ctx := context.TODO()
+
+		outputBytes, err := loadCmd.Run(ctx, "pkgr", "load", "--config=pkgr-load-fail-test.yml", "--all", "--loglevel=debug", "--logjson")
+		if err != nil {
+			t.Fatalf("error when executing pkgr load: %s", err)
+		}
+		output := string(outputBytes.Output)
+
+		// Note: Failure messages include backticks around library calls, which we are replacing with Regex periods for convenience.
+		r6FailRegex := `\{"go_error":"exit status 1","level":"error","msg":"error loading package via .library\(R6\)..*`
+		rlangFailRegex := `\{"go_error":"exit status 1","level":"error","msg":"error loading package via .library\(rlang\)..*`
+		ellipsisFailRegex := `\{"go_error":"exit status 1","level":"error","msg":"error loading package via .library\(ellipsis\)..*`
+		fansiFailRegex := `\{"go_error":"exit status 1","level":"error","msg":"error loading package via .library\(fansi\)..*`
+
+		glueSucceedRegex := `\{"level":"debug","msg":"Package loaded successfully","pkg":"glue".*\}`
+
+		overallFailRegex := `\{"failures":4,"level":"error","msg":"some packages failed to load.","working_directory":".*"\}`
+
+		assert.Regexp(t, r6FailRegex, output)
+		assert.Regexp(t, rlangFailRegex, output)
+		assert.Regexp(t, ellipsisFailRegex, output)
+		assert.Regexp(t, fansiFailRegex, output)
+		assert.Regexp(t, glueSucceedRegex, output)
+		assert.Regexp(t, overallFailRegex, output)
+
+	})
+
+	t.Run(makeTestName(loadE2ETest4, "Load JSON report captures failures"), func(t *testing.T) {
+		setupCorruptedPackageEnvironment(t)
+
+		loadCmd := command.New()
+		ctx := context.TODO()
+
+		outputBytes, err := loadCmd.Run(ctx, "pkgr", "load", "--config=pkgr-load-fail-test.yml", "--all", "--json")
+		if err != nil {
+			t.Fatalf("error when executing pkgr load: %s", err)
+		}
+
+		//output := string(outputBytes.Output)
+		var loadReport *cmd.LoadReport
+
+		err = json.Unmarshal(outputBytes.Output, &loadReport)
+		if err != nil {
+			t.Fatalf("could not unmarshal JSON into expected format: %s", err)
+		}
+
+		checkLoadReport(t, loadReport, "R6", false)
+		checkLoadReport(t, loadReport, "rlang", false)
+		checkLoadReport(t, loadReport, "ellipsis", false)
+		checkLoadReport(t, loadReport, "fansi", false)
+		checkLoadReport(t, loadReport, "glue", true)
+		assert.Equal(t, 4, loadReport.Failures, "incorrect number of failed loads")
+	})
+
+
+}
+
+func TestLoadFail(t *testing.T) {
 
 }
 
