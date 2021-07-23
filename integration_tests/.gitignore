@@ -1,4 +1,5 @@
 *.log
 **/test-library/*
+**/test-cache/*
 custom-cache/
 packrat-lock/

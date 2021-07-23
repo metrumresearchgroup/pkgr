@@ -69,7 +69,16 @@ steps:
       - export PATH=/go/bin:$PATH
       - cd integration_tests/load
       - make test
-
+  - name: multi-repo
+    image: 906087756158.dkr.ecr.us-east-1.amazonaws.com/r-dev-ci:4.1.0
+    pull: never
+    volumes:
+      - name: go
+        path: /go
+    commands:
+      - export PATH=/go/bin:$PATH
+      - cd integration_tests/multi-repo
+      - make test
 volumes:
   - name: docker.sock
     host:

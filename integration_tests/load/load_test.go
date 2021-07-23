@@ -6,29 +6,17 @@ import (
 	"fmt"
 	"github.com/metrumresearchgroup/command"
 	"github.com/metrumresearchgroup/pkgr/cmd"
+	"github.com/metrumresearchgroup/pkgr/testhelper"
 	"github.com/stretchr/testify/assert"
 	"os"
 	. "path"
 	"testing"
 )
 
-func setupEndToEndWithInstall(t *testing.T, pkgrConfig, testLibrary string) {
-	err := os.RemoveAll(testLibrary)
-	if err != nil {
-		t.Fatalf("failed to clean up test library at '%s'. Error: %s", testLibrary, err)
-	}
-	ctx := context.TODO()
-
-	installCmd := command.New()
-	_, err = installCmd.Run(ctx, "pkgr", "install", fmt.Sprintf("--config=%s", pkgrConfig))
-	if err != nil {
-		t.Fatalf("could not install baseline packages to '%s' with config file '%s'. Error: %s", testLibrary, pkgrConfig, err)
-	}
-}
 
 func setupCorruptedPackageEnvironment(t *testing.T) {
 	testLibPath := "test-library"
-	setupEndToEndWithInstall(t, "pkgr-load-fail-setup.yml", testLibPath)
+	testhelper.SetupEndToEndWithInstall(t, "pkgr-load-fail-setup.yml", testLibPath)
 
 	// Remove "R" folder from R6
 	err := os.RemoveAll(Join(testLibPath, "R6", "R"))
@@ -51,13 +39,7 @@ func setupCorruptedPackageEnvironment(t *testing.T) {
 
 }
 
-func makeTestName(testId, testName string) string {
-	return(fmt.Sprintf("[%s] %s", testId, testName))
-}
 
-func makeSubtestName(testId, subtestId, testName string) string {
-	return(fmt.Sprintf("[%s-%s] %s", testId, subtestId, testName))
-}
 
 // Test IDs
 const (
@@ -74,9 +56,9 @@ const (
 
 func TestLoad(t *testing.T) {
 
-	t.Run(makeTestName(loadE2ETest1, "load indicates that packages load successfully"), func(t *testing.T) {
-		t.Run(makeSubtestName(loadE2ETest1, "A", "user packages only"), func(t *testing.T) {
-			setupEndToEndWithInstall(t, "pkgr-load.yml", "test-library")
+	t.Run(testhelper.MakeTestName(loadE2ETest1, "load indicates that packages load successfully"), func(t *testing.T) {
+		t.Run(testhelper.MakeSubtestName(loadE2ETest1, "A", "user packages only"), func(t *testing.T) {
+			testhelper.SetupEndToEndWithInstall(t, "pkgr-load.yml", "test-library")
 
 			loadCmd := command.New()
 			ctx := context.TODO()
@@ -112,8 +94,8 @@ func TestLoad(t *testing.T) {
 			//assert.Contains(t, output, "all packages loaded successfully")
 		})
 
-		t.Run(makeSubtestName(loadE2ETest1, "B", "user packages and deps"), func(t *testing.T) {
-			setupEndToEndWithInstall(t, "pkgr-load.yml", "test-library")
+		t.Run(testhelper.MakeSubtestName(loadE2ETest1, "B", "user packages and deps"), func(t *testing.T) {
+			testhelper.SetupEndToEndWithInstall(t, "pkgr-load.yml", "test-library")
 
 			loadCmd := command.New()
 			ctx := context.TODO()
@@ -139,8 +121,8 @@ func TestLoad(t *testing.T) {
 
 	})
 
-	t.Run(makeTestName(loadE2ETest2, "Load outputs a JSON report"), func(t *testing.T) {
-		setupEndToEndWithInstall(t, "pkgr-load.yml", "test-library")
+	t.Run(testhelper.MakeTestName(loadE2ETest2, "Load outputs a JSON report"), func(t *testing.T) {
+		testhelper.SetupEndToEndWithInstall(t, "pkgr-load.yml", "test-library")
 
 		loadCmd := command.New()
 		ctx := context.TODO()
@@ -168,7 +150,7 @@ func TestLoad(t *testing.T) {
 		assert.Equal(t, 0, loadReport.Failures)
 	})
 
-	t.Run(makeTestName(loadE2ETest3, "Load fails when a package can't load"), func(t *testing.T) {
+	t.Run(testhelper.MakeTestName(loadE2ETest3, "Load fails when a package can't load"), func(t *testing.T) {
 		setupCorruptedPackageEnvironment(t)
 
 		loadCmd := command.New()
@@ -199,7 +181,7 @@ func TestLoad(t *testing.T) {
 
 	})
 
-	t.Run(makeTestName(loadE2ETest4, "Load JSON report captures failures"), func(t *testing.T) {
+	t.Run(testhelper.MakeTestName(loadE2ETest4, "Load JSON report captures failures"), func(t *testing.T) {
 		setupCorruptedPackageEnvironment(t)
 
 		loadCmd := command.New()

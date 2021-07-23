@@ -1,0 +1,34 @@
+Version: 1
+# top level packages
+Packages:
+  - openssl
+  - ellipsis
+  - R6
+
+# any repositories, order matters
+Repos:
+  - LOCALREPO: "./localrepo" # should install askpass, sys, R6
+  - REMOTEREPO: "https://mpn.metworx.com/snapshots/stable/2021-06-20" # should install openssl, ellipsis, rlang
+
+Library: "test-library"
+
+Cache: test-cache
+
+Customizations:
+  Repos:
+    - LOCALREPO:
+        Type: source
+    - REMOTEREPO:
+        Type: source
+
+# openssl imports askpass imports sys
+# ellipsis imports rlang
+
+# R6 -- Ensure a user package can be installed from local, ensure repo-order is respected when installing user packages.
+# ellipsis -- Ensure a user package can be installed from remote (all deps from remote)
+# rlang -- Ensure a dependency package can be installed from remote (dep. of ellipsis)
+# openssl -- Ensure that a user package can be installed from remote
+# askpass -- Ensure repo order is respected when installing dependencies (askpass is a dependency of openssl. Openssl is installed from second repo, askpass should be installed from first repo.)
+# sys -- Ensure a dependency package can be installed from local
+
+
