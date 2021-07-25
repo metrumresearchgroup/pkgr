@@ -2,6 +2,13 @@
 kind: pipeline
 type: docker
 name: integration-tests
+
+global-variables:
+  environment: &default_environment
+    GOPATH:     "/go"
+    GOCACHE:    "/go/.cache/go-build"
+    GOENV:      "/go/.config/go/env"
+    GOMODCACHE: "/go/pkg/mod"
 steps:
   - name: pull
     image: omerxx/drone-ecr-auth
@@ -13,6 +20,8 @@ steps:
         path: /var/run/docker.sock
   - name: build
     image: golang:1.16
+    environment:
+      <<: *default_environment
     commands:
       - make install
       - go get ./...
@@ -25,6 +34,8 @@ steps:
     volumes:
       - name: go
         path: /go
+    environment:
+      <<: *default_environment
     commands:
       - export PATH=/go/bin:$PATH
       - cd integration_tests/baseline
@@ -35,6 +46,8 @@ steps:
     volumes:
       - name: go
         path: /go
+    environment:
+      <<: *default_environment
     commands:
       - export PATH=/go/bin:$PATH
       - cd integration_tests/version
@@ -45,6 +58,8 @@ steps:
     volumes:
       - name: go
         path: /go
+    environment:
+      <<: *default_environment
     commands:
       - export PATH=/go/bin:$PATH
       - cd integration_tests/rollback
