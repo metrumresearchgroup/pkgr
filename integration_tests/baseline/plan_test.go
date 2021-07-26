@@ -6,6 +6,7 @@ import (
 	. "github.com/metrumresearchgroup/pkgr/testhelper"
 	"github.com/stretchr/testify/assert"
 	"os"
+	"path/filepath"
 	"regexp"
 	"testing"
 )
@@ -25,35 +26,35 @@ func TestPlan(t *testing.T) {
 		ctx := context.TODO()
 		planCmd := command.New()
 
-		outputBytes, err := planCmd.Run(ctx, "pkgr", "plan", "--loglevel=debug", "--logjson")
+		capture, err := planCmd.Run(ctx, "pkgr", "plan", "--loglevel=debug", "--logjson")
 		if err != nil {
 			t.Fatalf("error running pkgr plan: %s", err)
 		}
-		output := string(outputBytes.Output)
+		//output := string(capture.Output)
 
-		jsonRegexR6 := `\{"level":"debug","msg":"package repository set","pkg":"R6","relationship":"user_defined","repo":"CRAN","type":2,"version":"2.5.0"\}`
-		jsonRegexPillar := `\{"level":"debug","msg":"package repository set","pkg":"pillar","relationship":"user_defined","repo":"CRAN","type":2,"version":"1.6.1"\}`
-		jsonRegexGlue := `\{"level":"debug","msg":"package repository set","pkg":"glue","relationship":"dependency","repo":"CRAN","type":2,"version":"1.4.2"\}`
-		jsonRegexFansi := `\{"level":"debug","msg":"package repository set","pkg":"fansi","relationship":"dependency","repo":"CRAN","type":2,"version":"0.5.0"\}`
-		jsonRegexRlang := `\{"level":"debug","msg":"package repository set","pkg":"rlang","relationship":"dependency","repo":"CRAN","type":2,"version":"0.4.11"\}`
-		jsonRegexUtf8 := `\{"level":"debug","msg":"package repository set","pkg":"utf8","relationship":"dependency","repo":"CRAN","type":2,"version":"1.2.1"\}`
-		jsonRegexCrayon := `\{"level":"debug","msg":"package repository set","pkg":"crayon","relationship":"dependency","repo":"CRAN","type":2,"version":"1.4.1"\}`
-		jsonRegexLifecycle := `\{"level":"debug","msg":"package repository set","pkg":"lifecycle","relationship":"dependency","repo":"CRAN","type":2,"version":"1.0.0"\}`
-		jsonRegexVctrs := `\{"level":"debug","msg":"package repository set","pkg":"vctrs","relationship":"dependency","repo":"CRAN","type":2,"version":"0.3.8"\}`
-		jsonRegexEllipsis := `\{"level":"debug","msg":"package repository set","pkg":"ellipsis","relationship":"dependency","repo":"CRAN","type":2,"version":"0.3.2"\}`
-		jsonRegexCli := `\{"level":"debug","msg":"package repository set","pkg":"cli","relationship":"dependency","repo":"CRAN","type":2,"version":"2.5.0"\}`
+		type PkgRepoSetMsg struct {
+			//level string
+			Msg string
+			Pkg string
+			Relationship string
+			Repo string
+			//TypE int
+			Version string
+		}
 
-		assert.Regexp(t, jsonRegexR6, output)
-		assert.Regexp(t, jsonRegexPillar, output)
-		assert.Regexp(t, jsonRegexGlue, output)
-		assert.Regexp(t, jsonRegexFansi, output)
-		assert.Regexp(t, jsonRegexRlang, output)
-		assert.Regexp(t, jsonRegexUtf8, output)
-		assert.Regexp(t, jsonRegexCrayon, output)
-		assert.Regexp(t, jsonRegexLifecycle, output)
-		assert.Regexp(t, jsonRegexVctrs, output)
-		assert.Regexp(t, jsonRegexEllipsis, output)
-		assert.Regexp(t, jsonRegexCli, output)
+		pkgRepoSetLogs := CollectPkgRepoSetLogs(t, capture)
+		assert.True(t, pkgRepoSetLogs.Contains("R6", "2.5.0", "CRAN", "user_defined"), "failed to find expected log message")
+		assert.True(t, pkgRepoSetLogs.Contains("pillar", "1.6.1", "CRAN", "user_defined"), "failed to find expected log message")
+		assert.True(t, pkgRepoSetLogs.Contains("glue", "1.4.2", "CRAN", "dependency"), "failed to find expected log message")
+		assert.True(t, pkgRepoSetLogs.Contains("fansi", "0.5.0", "CRAN", "dependency"), "failed to find expected log message")
+		assert.True(t, pkgRepoSetLogs.Contains("rlang", "0.4.11", "CRAN", "dependency"), "failed to find expected log message")
+		assert.True(t, pkgRepoSetLogs.Contains("utf8", "1.2.1", "CRAN", "dependency"), "failed to find expected log message")
+		assert.True(t, pkgRepoSetLogs.Contains("crayon", "1.4.1", "CRAN", "dependency"), "failed to find expected log message")
+		assert.True(t, pkgRepoSetLogs.Contains("lifecycle", "1.0.0", "CRAN", "dependency"), "failed to find expected log message")
+		assert.True(t, pkgRepoSetLogs.Contains("vctrs", "0.3.8", "CRAN", "dependency"), "failed to find expected log message")
+		assert.True(t, pkgRepoSetLogs.Contains("ellipsis", "0.3.2", "CRAN", "dependency"), "failed to find expected log message")
+		assert.True(t, pkgRepoSetLogs.Contains("cli", "2.5.0", "CRAN", "dependency"), "failed to find expected log message")
+
 	})
 
 	t.Run(MakeTestName(baselinePlanTest2, "number of workers (threads) can be set"), func(t *testing.T) {
@@ -90,14 +91,14 @@ func TestPlan(t *testing.T) {
 		assert.Regexp(t, pkgCacheRegex, output)
 
 		// If that passed, we can assume this will work:
-		rPkgDbs := regexp.MustCompile(`\{"level":"info","msg":"Database cache directory: (.*)"\}`)
+		rPkgDbs := regexp.MustCompile(`\{"level":"info","msg":"Database cache directory:  (.*)"\}`)
 		pkgDbDir := rPkgDbs.FindStringSubmatch(output)[1]
-		rPkgCache := regexp.MustCompile(`\{"level":"info","msg":"Package installation cache directory: (.*)"\}`)
+		rPkgCache := regexp.MustCompile(`\{"level":"info","msg":"Package installation cache directory:  (.*)"\}`)
 		pkgCacheDir := rPkgCache.FindStringSubmatch(output)[1]
 
 		//t.Log(pkgDbDir)
 		//t.Log(pkgCacheDir)
-		pkgDbDirContents, err := os.ReadDir(pkgDbDir)
+		pkgDbDirContents, err := os.ReadDir(filepath.Clean(pkgDbDir))
 		if err != nil {
 			t.Fatalf("error attempting to read global pkgDb dir: %s", err)
 		}
@@ -106,7 +107,7 @@ func TestPlan(t *testing.T) {
 
 		pkgCacheDirContents, err := os.ReadDir(pkgCacheDir)
 		if err != nil {
-			t.Fatalf("error attempting to read global pkgDb dir: %s", err)
+			t.Fatalf("error attempting to read global package cache dir: %s", err)
 		}
 
 		assert.NotEmpty(t, pkgCacheDirContents)
