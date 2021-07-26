@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/metrumresearchgroup/command"
 	"os"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -81,12 +82,40 @@ type PkgRepoSetMsg struct {
 	Version string
 }
 
-type PkgRepoSetMsgCollection struct {
-	Logs []PkgRepoSetMsg
+func (prsm PkgRepoSetMsg) ToString() string {
+	return fmt.Sprintf(
+		"msg: '%s', pkg: '%s', version: '%s', repo: '%s', relationship: %s'",
+		prsm.Msg,
+		prsm.Pkg,
+		prsm.Version,
+		prsm.Repo,
+		prsm.Relationship,
+	)
 }
 
+// Returns -1 if A < B, 0 if A==B, and 1 if A > B
+func ComparePkgRepoSetMsg(a, b PkgRepoSetMsg) int {
+	if a.Pkg != b.Pkg {
+		return strings.Compare(a.Pkg, b.Pkg)
+	} else if a.Version != b.Version {
+		return strings.Compare(a.Version, b.Version)
+	} else if a.Repo != b.Repo {
+		return strings.Compare(a.Repo, b.Repo)
+	} else if a.Relationship != b.Relationship {
+		return strings.Compare(a.Relationship, b.Relationship)
+	} else {
+		return 0
+	}
+}
+
+//type PkgRepoSetMsgCollection struct {
+//	Logs []PkgRepoSetMsg
+//}
+
+type PkgRepoSetMsgCollection []PkgRepoSetMsg
+
 func (prsmc PkgRepoSetMsgCollection) Contains(pkg, version, repo, relationship string) bool {
-	for _, log := range prsmc.Logs {
+	for _, log := range prsmc {
 		if log.Pkg == pkg && log.Version == version && log.Repo == repo && log.Relationship == relationship {
 			return true
 		}
@@ -95,6 +124,19 @@ func (prsmc PkgRepoSetMsgCollection) Contains(pkg, version, repo, relationship s
 	return false
 }
 
+func (prsmc PkgRepoSetMsgCollection) ToString() string {
+	cleanStrings := []string{}
+	for _, log := range prsmc {
+		cleanStrings = append(cleanStrings, log.ToString())
+	}
+	return strings.Join(cleanStrings, "\n")
+}
+
+func (prsmc PkgRepoSetMsgCollection) ToBytes() []byte {
+	return []byte(prsmc.ToString())
+}
+
+// PkgRepoSetMsgCollection returned will be sorted for the purposes of making golden files.
 func CollectPkgRepoSetLogs(t *testing.T, capture command.Capture) PkgRepoSetMsgCollection {
 
 	parsedLines := []PkgRepoSetMsg{}
@@ -113,11 +155,11 @@ func CollectPkgRepoSetLogs(t *testing.T, capture command.Capture) PkgRepoSetMsgC
 		}
 	}
 
-	return PkgRepoSetMsgCollection{
-			Logs : parsedLines,
-		}
+	sort.Slice(parsedLines, func(i, j int) bool {
+		return ComparePkgRepoSetMsg(parsedLines[i], parsedLines[j]) < 0
+	})
 
-
+	return parsedLines
 }
 // ---------------------------------------------------------------------------------------------------------------------
 
