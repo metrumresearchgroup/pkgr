@@ -70,6 +70,8 @@ steps:
     volumes:
       - name: go
         path: /go
+    environment:
+      <<: *default_environment
     commands:
       - export PATH=/go/bin:$PATH
       - cd integration_tests/outdated-pkgs
@@ -80,6 +82,8 @@ steps:
     volumes:
       - name: go
         path: /go
+    environment:
+      <<: *default_environment
     commands:
       - export PATH=/go/bin:$PATH
       - cd integration_tests/load
@@ -90,6 +94,8 @@ steps:
     volumes:
       - name: go
         path: /go
+    environment:
+      <<: *default_environment
     commands:
       - export PATH=/go/bin:$PATH
       - cd integration_tests/multi-repo
