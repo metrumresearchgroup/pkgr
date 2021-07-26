@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 )
 
@@ -63,11 +64,11 @@ func TestPlan(t *testing.T) {
 		ctx := context.TODO()
 		planCmd := command.New()
 
-		outputBytes, err := planCmd.Run(ctx, "pkgr", "plan", "--threads=5", "--logjson")
+		capture, err := planCmd.Run(ctx, "pkgr", "plan", "--threads=5", "--logjson")
 		if err != nil {
 			t.Fatalf("error running pkgr plan: %s", err)
 		}
-		output := string(outputBytes.Output)
+		output := string(capture.Output)
 
 		jsonRegex := `\{"level":"info","msg":"Installation would launch 5 workers.*\}`
 		assert.Regexp(t, jsonRegex, output)
@@ -80,11 +81,11 @@ func TestPlan(t *testing.T) {
 		ctx := context.TODO()
 		installCmd := command.New()
 
-		outputBytes, err := installCmd.Run(ctx, "pkgr", "plan", "--config=pkgr-global-cache.yml", "--logjson")
+		capture, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr-global-cache.yml", "--logjson")
 		if err != nil {
 			t.Fatalf("error running pkgr plan: %s", err)
 		}
-		output := string(outputBytes.Output)
+		output := string(capture.Output)
 
 		pkgDbRegex := `\{"level":"info","msg":"Database cache directory: .*\}` // We can't determine this up front because it varies by OS and might be a temp dir.
 		pkgCacheRegex:= `\{"level":"info","msg":"Package installation cache directory: .*\}` // We can't determine this up front because it varies by OS and might be a temp dir.
@@ -97,21 +98,48 @@ func TestPlan(t *testing.T) {
 		rPkgCache := regexp.MustCompile(`\{"level":"info","msg":"Package installation cache directory:  (.*)"\}`)
 		pkgCacheDir := rPkgCache.FindStringSubmatch(output)[1]
 
-		//t.Log(pkgDbDir)
-		//t.Log(pkgCacheDir)
+
 		pkgDbDirContents, err := os.ReadDir(filepath.Clean(pkgDbDir))
 		if err != nil {
 			t.Fatalf("error attempting to read global pkgDb dir: %s", err)
 		}
 		assert.NotEmpty(t, pkgDbDirContents)
 
-
 		pkgCacheDirContents, err := os.ReadDir(pkgCacheDir)
 		if err != nil {
 			t.Fatalf("error attempting to read global package cache dir: %s", err)
 		}
 
-		assert.NotEmpty(t, pkgCacheDirContents)
+		// Find repo folder prefixed with GLOBAL_CACHE_REPO as specified in pkgr-global.cache.yml
+		found := false
+		for _, entry := range pkgCacheDirContents {
+			t.Log(entry.Name())
+			if(entry.IsDir() && strings.Contains(entry.Name(), "GLOBAL_CACHE_REPO")) {
+				found = true
+			}
+		}
+		assert.True(t, found, "pkgr failed to create a directory in the global pkgr cache for GLOBAL_CACHE_REPO")
+
+		cleanCmd := command.New()
+		_, err = cleanCmd.Run(ctx, "pkgr", "clean", "--all", "--config=pkgr-global-cache.yml", "--logjson")
+		if err != nil {
+			t.Fatalf("error occurred running 'clean' command: %s", err)
+		}
+
+		pkgDbDirContents2, err := os.ReadDir(filepath.Clean(pkgDbDir))
+		if err != nil {
+			t.Fatalf("error attempting to read global pkgDb dir: %s", err)
+		}
+		assert.NotEmpty(t, pkgDbDirContents)
+
+		pkgCacheDirContents2, err := os.ReadDir(pkgCacheDir)
+		if err != nil {
+			t.Fatalf("error attempting to read global package cache dir: %s", err)
+		}
+
+		assert.Empty(t, pkgDbDirContents2, "pkg database was not cleared")
+		assert.Len(t, pkgCacheDirContents2, 1, "expected exactly item in the pkgr global cache but found more/less.")
+		assert.Equal(t, pkgCacheDirContents2[0].Name(), "r_packagedb_caches", "expected r_packagedb_caches folder to remain in global cache")
 	})
 
 
