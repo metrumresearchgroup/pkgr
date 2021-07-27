@@ -10,7 +10,7 @@ import (
 )
 
 func TestInstall(t *testing.T) {
-	DeleteTestLibrary("test-library", t)
+	DeleteTestFolder(t, "test-library")
 	installCmd := command.New()
 	ctx := context.TODO()
 	// should have some setup to make sure the test-library is cleared out

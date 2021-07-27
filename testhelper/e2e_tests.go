@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/metrumresearchgroup/command"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 	"testing"
@@ -20,7 +21,7 @@ func MakeSubtestName(testId, subtestId, testName string) string {
 }
 
 func SetupEndToEndWithInstall(t *testing.T, pkgrConfig, testLibrary string) {
-	DeleteTestLibrary(testLibrary, t)
+	DeleteTestFolder(t, testLibrary)
 	ctx := context.TODO()
 	installCmd := command.New()
 	_, err := installCmd.Run(ctx, "pkgr", "install", fmt.Sprintf("--config=%s", pkgrConfig))
@@ -29,10 +30,10 @@ func SetupEndToEndWithInstall(t *testing.T, pkgrConfig, testLibrary string) {
 	}
 }
 
-func DeleteTestLibrary(testLibrary string, t *testing.T) {
-	err := os.RemoveAll(testLibrary)
+func DeleteTestFolder(t *testing.T, folderToDelete string) {
+	err := os.RemoveAll(folderToDelete)
 	if err != nil {
-		t.Fatalf("failed to clean up test library at '%s'. Error: %s", testLibrary, err)
+		t.Fatalf("failed to clean up test library at '%s'. Error: %s", folderToDelete, err)
 	}
 }
 
@@ -73,13 +74,11 @@ func (lo PkgrJsonLogOutput) Contains(search string) ([]string, bool, error) {
 
 // Helper objects  for "package repository set" logs. ------------------------------------------------------------------
 type PkgRepoSetMsg struct {
-	//level string
-	Msg string
-	Pkg string
-	Relationship string
-	Repo string
-	//TypE int
-	Version string
+	Msg string `json:"msg,omitempty"`
+	Pkg string `json:"pkg,omitempty"`
+	Relationship string `json:"relationship,omitempty"`
+	Repo string `json:"repo,omitempty"`
+	Version string `json:"version,omitempty"`
 }
 
 func (prsm PkgRepoSetMsg) ToString() string {
@@ -161,6 +160,56 @@ func CollectPkgRepoSetLogs(t *testing.T, capture command.Capture) PkgRepoSetMsgC
 
 	return parsedLines
 }
+
+// This type will be more "flexible" than PkgRepoSet messages and should only be used for object comparisons for which
+// it doesn't make sense to make a bunch of helper functions. Most of these fields will come back blank in most
+// test runs.
+// Basically, don't use this if you need golden files, use a more robust object with line-sorting.
+// This object is meant to remain flexible with whatever fields we may need for a given test.
+type GenericLog struct {
+	Level string `json:"level,omitempty"`
+	Msg string `json:"msg,omitempty"`
+	Pkg string `json:"pkg,omitempty"`
+	Relationship string `json:"relationship,omitempty"`
+	Repo string `json:"repo,omitempty"`
+	InstallType int `json:"type,omitempty"`
+	Version string `json:"version,omitempty"`
+}
+
+type GenericLogsCollection []GenericLog
+
+// Only write these filter functions as needed
+func (glc GenericLogsCollection) FilterByPackageTag(pkg string) GenericLogsCollection {
+	matched := []GenericLog{}
+	for _, obj := range glc {
+		if(obj.Pkg == pkg) {
+			matched = append(matched, obj)
+		}
+	}
+	return matched
+}
+
+func CollectGenericLogs(t *testing.T, capture command.Capture, messageRegex string) GenericLogsCollection {
+	re := regexp.MustCompile(messageRegex)
+
+	parsedLines := []GenericLog{}
+
+	outputLines := strings.Split(string(capture.Output), "\n")
+	for _, line := range outputLines {
+		if re.MatchString(line) {
+			var parsedLine GenericLog
+			err := json.Unmarshal([]byte(line), &parsedLine)
+			if err != nil {
+				t.Fatalf("error unmarshalling the following JSON line: '%s'. error was: %s", line, err)
+			}
+			parsedLines = append(parsedLines, parsedLine)
+		}
+	}
+
+	// Where sorting would happen, except don't, because it's not worth maintaining a sort function for a generic object.
+
+	return parsedLines
+}
 // ---------------------------------------------------------------------------------------------------------------------
 
 
@@ -171,7 +220,7 @@ func CollectPkgRepoSetLogs(t *testing.T, capture command.Capture) PkgRepoSetMsgC
 // "if err != nil { t.Fatalf(...) } code, and returning the err sort of defeats that purpose.
 // However, I'm including it for considation.
 //func SetupEndToEndWithInstall(t *testing.T, pkgrConfig, testLibrary string) error {
-//	err := DeleteTestLibrary(testLibrary, t)
+//	err := DeleteTestFolder(testLibrary, t)
 //	if err != nil {
 //		return err
 //	}
@@ -187,7 +236,7 @@ func CollectPkgRepoSetLogs(t *testing.T, capture command.Capture) PkgRepoSetMsgC
 //
 //}
 //
-//func DeleteTestLibrary(testLibrary string, t *testing.T) error {
+//func DeleteTestFolder(testLibrary string, t *testing.T) error {
 //	err := os.RemoveAll(testLibrary)
 //	if err != nil {
 //		t.Errorf("failed to clean up test library at '%s'. Error: %s", testLibrary, err)

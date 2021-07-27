@@ -25,7 +25,7 @@ func TestPlan(t *testing.T) {
 
 
 	t.Run(MakeTestName(baselinePlanTest1, "plan indicates packages to be installed, as well as version, source repo, and whether pkg is user-defined or a dependency"), func(t *testing.T) {
-		DeleteTestLibrary("test-library", t)
+		DeleteTestFolder(t, "test-library")
 		ctx := context.TODO()
 		planCmd := command.New()
 
@@ -56,7 +56,7 @@ func TestPlan(t *testing.T) {
 	})
 
 	t.Run(MakeTestName(baselinePlanTest2, "number of workers (threads) can be set"), func(t *testing.T) {
-		DeleteTestLibrary("test-library", t)
+		DeleteTestFolder(t, "test-library")
 		ctx := context.TODO()
 		planCmd := command.New()
 

@@ -22,7 +22,7 @@ func TestClean(t *testing.T) {
 	// We can't determine the specific global cache location up front because it varies by OS and might be a tempdir.
 	// So this test is only going to verify that it is printed out and used.
 	t.Run(MakeTestName(cacheTest1, "pkgr uses and cleans the global pkg/pkgdb caches"), func(t *testing.T) {
-		DeleteTestLibrary("test-library", t)
+		DeleteTestFolder(t, "test-library")
 
 
 		userCacheDir, err := os.UserCacheDir()
@@ -102,7 +102,7 @@ func TestClean(t *testing.T) {
 
 
 	t.Run(MakeTestName(cacheTest2, "pkgr uses and cleans local pkg cache"), func(t *testing.T) {
-		DeleteTestLibrary("test-library", t)
+		DeleteTestFolder(t, "test-library")
 
 		localPackageCacheDir := "test-cache"
 		err := os.RemoveAll(localPackageCacheDir)
