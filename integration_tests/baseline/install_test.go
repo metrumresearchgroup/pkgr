@@ -3,12 +3,14 @@ package baseline
 import (
 	"context"
 	"github.com/metrumresearchgroup/command"
+	. "github.com/metrumresearchgroup/pkgr/testhelper"
 	"github.com/sebdah/goldie/v2"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestInstall(t *testing.T) {
+	DeleteTestLibrary("test-library", t)
 	installCmd := command.New()
 	ctx := context.TODO()
 	// should have some setup to make sure the test-library is cleared out

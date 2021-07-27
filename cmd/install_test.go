@@ -293,7 +293,7 @@ func TestInstallWithoutRollback(t *testing.T) {
 	cfg = configlib.PkgrConfig{
 		Threads:  5,
 		Update:   true,
-		Rollback: false,
+		NoRollback: true,
 		Strict:   false,
 		Packages: []string{"xml2", "crayon", "R6", "Rcpp", "crayon", "fansi", "flatxml"},
 		Library:  testLibrary,
