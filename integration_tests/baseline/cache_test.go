@@ -95,7 +95,7 @@ func TestClean(t *testing.T) {
 			t.Fatalf("error attempting to read global package cache dir: %s", err)
 		}
 
-		assert.Empty(t, pkgDbDirContents2, "pkg database was not cleared")
+		assert.Empty(t, pkgDbDirContents2, fmt.Sprintf("pkg database at %s was not cleared", pkgDbDir))
 		assert.Len(t, pkgCacheDirContents2, 1, "expected exactly item in the pkgr global cache but found more/less.")
 		assert.Equal(t, pkgCacheDirContents2[0].Name(), "r_packagedb_caches", "expected r_packagedb_caches folder to remain in global cache")
 	})
