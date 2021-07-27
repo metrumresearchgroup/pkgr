@@ -47,7 +47,7 @@ func TestMultiRepoInstall(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error occurred when installing packages: %s", err)
 		}
-		
+
 		pkgRepoSetLogs := CollectPkgRepoSetLogs(t, capture)
 
 		// This line is in here to explicitly test the order repositories are listed in matters.
