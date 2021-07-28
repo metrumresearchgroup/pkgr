@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/metrumresearchgroup/command"
+	"github.com/metrumresearchgroup/pkgr/rcmd"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"regexp"
 	"sort"
@@ -34,6 +36,19 @@ func DeleteTestFolder(t *testing.T, folderToDelete string) {
 	err := os.RemoveAll(folderToDelete)
 	if err != nil {
 		t.Fatalf("failed to clean up test library at '%s'. Error: %s", folderToDelete, err)
+	}
+}
+
+func DeleteTestFile(t *testing.T, rpathSymlink string) {
+	err := os.Remove(rpathSymlink)
+	if err != nil {
+		// Just fail the test if we can't setup properly.
+		// It's a little more reliable than writing out own code to check for file existence.
+		assert.NoFileExistsf(
+			t,
+			rpathSymlink,
+			fmt.Sprintf("could not cleanup file (%s) from previous test run: %s", rpathSymlink, err),
+		)
 	}
 }
 
@@ -174,6 +189,9 @@ type GenericLog struct {
 	Repo string `json:"repo,omitempty"`
 	InstallType int `json:"type,omitempty"`
 	Version string `json:"version,omitempty"`
+	RSettings rcmd.RSettings `json:"RSettings,omitempty"` // "Do you want ciruclar dependencies? Because this is how you get circular dependencies."
+	CmdArgs []string `json:"cmdArgs,omitempty"`
+	RPath string `json:"rpath,omitempty"`
 }
 
 type GenericLogsCollection []GenericLog
