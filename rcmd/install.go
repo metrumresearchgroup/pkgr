@@ -135,6 +135,7 @@ func Install(
 			"RSettings": rs,
 			"env":       envVars,
 			"package":   pkg,
+			"rpath":	 rs.R(runtime.GOOS),
 		}).Trace("command args")
 
 	// --vanilla is a command for R and should be specified before the CMD, eg
