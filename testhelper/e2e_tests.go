@@ -198,6 +198,8 @@ type GenericLog struct {
 	LocalRepo int `json:"LOCALREPO,omitempty"` // Very specific to certain test cases
 	Tarballs int `json:"tarballs"` // Very specific to certain test cases
 	Library string `json:"library,omitempty"`
+	ToInstall int `json:"to_install,omitempty"`
+	ToUpdate int `json:"to_update,omitempty"`
 }
 
 type GenericLogsCollection []GenericLog

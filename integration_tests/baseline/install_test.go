@@ -24,6 +24,7 @@ const(
 const(
 	basicInstall = "install"
 	suggestsInstall = "suggests-install"
+	idempotenceInstall = "idempotence-install"
 )
 
 func TestInstall(t *testing.T) {
@@ -75,5 +76,42 @@ func TestInstall(t *testing.T) {
 
 		g := goldie.New(t)
 		g.Assert(t, suggestsInstall, testCapture.Output)
+	})
+}
+
+// Just making a separate function until I can refactor the first one into shape
+func TestInstall2(t *testing.T) {
+	t.Run(MakeTestName(baselineInstallE2ETest4, "installs are idempotent"), func(t *testing.T) {
+
+		//Setup
+		DeleteTestFolder(t, "test-cache")
+		SetupEndToEndWithInstall(t, "pkgr.yml", "test-library")
+		assert.DirExists(t, "test-library/fansi", "expected fansi to be installed, but couldn't find folder in test-library")
+		DeleteTestFolder(t, "test-library/fansi") // giving pkgr the need to install this package again
+
+
+		// Execute
+		ctx := context.TODO()
+		installCmd := command.New()
+		rScriptCommand := command.New(command.WithDir("Rscripts"))
+
+		capture, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr.yml", "--logjson")
+		if err != nil {
+			t.Fatalf("error occurred running pkgr install: %s", err)
+		}
+		installPlanLogs := CollectGenericLogs(t, capture, "package installation plan")
+
+		rScriptCapture, err := rScriptCommand.Run(ctx, "Rscript", "--quiet", "install_test.R")
+		if err != nil {
+			log.Fatalf("error occurred while using R to check installed packages: %s", err)
+		}
+
+		// Validate
+		assert.Len(t, installPlanLogs, 1)
+		assert.Equal(t, 1, installPlanLogs[0].ToInstall)
+		assert.Equal(t, 0, installPlanLogs[0].ToUpdate)
+
+		g := goldie.New(t)
+		g.Assert(t, idempotenceInstall, rScriptCapture.Output)
 	})
 }
