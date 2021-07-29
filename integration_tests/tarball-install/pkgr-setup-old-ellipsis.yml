@@ -1,15 +1,12 @@
 Version: 1
 # top level packages
 
-Tarballs:
-  - "./tarballs/ellipsis_0.3.2.tar.gz" # depends on rlang
-
 Packages:
-  - crayon
+  - ellipsis
 
 # any repositories, order matters
 Repos:
-  - LOCALREPO: "./localrepo"
+  - MPN_Older: "https://mpn.metworx.com/snapshots/stable/2021-04-15"
 
 Cache: test-cache
 
@@ -17,5 +14,5 @@ Library: "test-library"
 
 Customizations:
   Repos:
-    - LOCALREPO:
+    - MPN_Older:
         Type: source

@@ -22,12 +22,14 @@ const (
 // Golden file IDs
 const (
 	tarballBasicInstall = "tarball-basic-install"
+	tarballOverwriteInstallBefore = "tarball-overwrite-install-before"
+	tarballOverwriteInstallAfter = "tarball-overwrite-install-after"
 )
 
 //TODO
 func TestTarballInstall(t *testing.T) {
 
-	t.Run(MakeTestName(tarballInstallE2ETest1, "plan includes message about tarball installation"), func(t *testing.T) {
+	t.Run(MakeTestName(tarballInstallE2ETest1, "plan includes message about tarball installation and gets tarball deps from repo"), func(t *testing.T) {
 		DeleteTestFolder(t,"test-library")
 		DeleteTestFolder(t, "test-cache")
 
@@ -38,22 +40,25 @@ func TestTarballInstall(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error running pkgr plan: %s", err)
 		}
+		pkgRepoLogs := CollectPkgRepoSetLogs(t, capture)
+		// assert.True(t, pkgRepoLogs.Contains("ellipsis", "0.3.2", "local_tarball", "user_defined")) // This is covered in "additional installation set" logs.
+		assert.True(t, pkgRepoLogs.Contains("rlang", "0.3.4", "LOCALREPO", "dependency")) // Dependency of ellipsis
+		assert.True(t, pkgRepoLogs.Contains("crayon", "1.3.4", "LOCALREPO", "user_defined"))
+
 		logs1 := CollectGenericLogs(t, capture, "additional installation set")
-		logs2 := CollectGenericLogs(t, capture, "package installation sources")
-
 		assert.Len(t, logs1, 1, "expected exactly one 'additional installation set' log entry")
-
-		assert.Equal(t, "test-cache/b64f2bee6438d2bd/R6", logs1[0].InstallFrom)
+		assert.Equal(t, "test-cache/c453b4514da3717a/ellipsis", logs1[0].InstallFrom)
 		assert.Equal(t, "tarball", logs1[0].Method)
-		assert.Equal(t, "./tarballs/R6_2.4.0.tar.gz", logs1[0].Origin)
-		assert.Equal(t, "R6", logs1[0].Pkg)
+		assert.Equal(t, "./tarballs/ellipsis_0.3.2.tar.gz", logs1[0].Origin)
+		assert.Equal(t, "ellipsis", logs1[0].Pkg)
 
+		logs2 := CollectGenericLogs(t, capture, "package installation sources")
 		assert.Len(t, logs2, 1, "expected exactly one 'package installation sources' log entry")
-		assert.Equal(t, 7, logs2[0].LocalRepo)
+		assert.Equal(t, 2, logs2[0].LocalRepo)
 		assert.Equal(t, 1, logs2[0].Tarballs)
 	})
 
-	t.Run(MakeTestName(tarballInstallE2ETest2, "installs from tarballs directly"), func(t *testing.T){
+	t.Run(MakeTestName(tarballInstallE2ETest2, "installs from tarball directly"), func(t *testing.T){
 		DeleteTestFolder(t,"test-library")
 		DeleteTestFolder(t, "test-cache")
 
@@ -74,7 +79,36 @@ func TestTarballInstall(t *testing.T) {
 		g.Assert(t, tarballBasicInstall, testCapture.Output)
 	})
 
-	t.Run(MakeTestName(tarballInstallE2ETest3, "clean cleans the local cache"), func(t *testing.T) {
+	t.Run(MakeTestName(tarballInstallE2ETest3, "overwrites existing package with tarball"), func(t *testing.T) {
+		DeleteTestFolder(t, "test-cache")
+		SetupEndToEndWithInstall(t, "pkgr-setup-old-ellipsis.yml", "test-library")
+
+		g := goldie.New(t)
+		ctx := context.TODO()
+		installCmd := command.New()
+		rScriptCmdBefore := command.New(command.WithDir("Rscripts"))
+		rScriptCmdAfter := command.New(command.WithDir("Rscripts"))
+
+		preCapture, err := rScriptCmdBefore.Run(ctx,"Rscript", "--quiet", "install_test.R")
+		if err != nil {
+			t.Fatalf("error running Rscript to collect installed packages: %s", err)
+		}
+		g.Assert(t, tarballOverwriteInstallBefore, preCapture.Output)
+
+		_, err = installCmd.Run(ctx, "pkgr", "install")
+		if err != nil {
+			t.Fatalf("error during pkgr install: %s", err)
+		}
+
+		postCapture, err := rScriptCmdAfter.Run(ctx,"Rscript", "--quiet", "install_test.R")
+		if err != nil {
+			t.Fatalf("error running Rscript to collect installed packages: %s", err)
+		}
+
+		g.Assert(t, tarballOverwriteInstallAfter, postCapture.Output)
+	})
+
+	t.Run(MakeTestName(tarballInstallE2ETest4, "clean cleans the local cache"), func(t *testing.T) {
 		DeleteTestFolder(t, "test-cache")
 		SetupEndToEndWithInstall(t, "pkgr.yml", "test-library")
 
