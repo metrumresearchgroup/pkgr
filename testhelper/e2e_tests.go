@@ -188,10 +188,15 @@ type GenericLog struct {
 	Relationship string `json:"relationship,omitempty"`
 	Repo string `json:"repo,omitempty"`
 	InstallType int `json:"type,omitempty"`
+	InstallFrom string `json:"install_from,omitempty"`
+	Method string `json:"method,omitempty"`
+	Origin string `json:"origin,omitempty"`
 	Version string `json:"version,omitempty"`
 	RSettings rcmd.RSettings `json:"RSettings,omitempty"` // "Do you want ciruclar dependencies? Because this is how you get circular dependencies."
 	CmdArgs []string `json:"cmdArgs,omitempty"`
 	RPath string `json:"rpath,omitempty"`
+	LocalRepo int `json:"LOCALREPO,omitempty"` // Very specific to certain test cases
+	Tarballs int `json:"tarballs"` // Very specific to certain test cases
 }
 
 type GenericLogsCollection []GenericLog
@@ -229,35 +234,3 @@ func CollectGenericLogs(t *testing.T, capture command.Capture, messageRegex stri
 	return parsedLines
 }
 // ---------------------------------------------------------------------------------------------------------------------
-
-
-
-
-// Returns errors
-// I don't like this because part of the reason I wanted to pull this into functions was to reduce boilerplate
-// "if err != nil { t.Fatalf(...) } code, and returning the err sort of defeats that purpose.
-// However, I'm including it for considation.
-//func SetupEndToEndWithInstall(t *testing.T, pkgrConfig, testLibrary string) error {
-//	err := DeleteTestFolder(testLibrary, t)
-//	if err != nil {
-//		return err
-//	}
-//	ctx := context.TODO()
-//	installCmd := command.New()
-//	_, err = installCmd.Run(ctx, "pkgr", "install", fmt.Sprintf("--config=%s", pkgrConfig))
-//	if err != nil {
-//		t.Errorf("could not install baseline packages to '%s' with config file '%s'. Error: %s", testLibrary, pkgrConfig, err)
-//		return err
-//	}
-//	return nil
-//
-//
-//}
-//
-//func DeleteTestFolder(testLibrary string, t *testing.T) error {
-//	err := os.RemoveAll(testLibrary)
-//	if err != nil {
-//		t.Errorf("failed to clean up test library at '%s'. Error: %s", testLibrary, err)
-//	}
-//	return err
-//}
