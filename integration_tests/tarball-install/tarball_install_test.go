@@ -42,7 +42,11 @@ func TestTarballInstall(t *testing.T) {
 		}
 		pkgRepoLogs := CollectPkgRepoSetLogs(t, capture)
 		// assert.True(t, pkgRepoLogs.Contains("ellipsis", "0.3.2", "local_tarball", "user_defined")) // This is covered in "additional installation set" logs.
-		assert.True(t, pkgRepoLogs.Contains("rlang", "0.3.4", "LOCALREPO", "dependency")) // Dependency of ellipsis
+
+		// Note: even though rlang is a dependency of ellipsis, pkgr currently flags it as "user-defined."
+		// this is the result of a "shortcut" we took to ensure that tarball deps. were installed before the actual tarballs
+		// While this is not the "desired" behavior, for now, it is the "expected" behavior.
+		assert.True(t, pkgRepoLogs.Contains("rlang", "0.3.4", "LOCALREPO", "user_defined")) // Dependency of ellipsis
 		assert.True(t, pkgRepoLogs.Contains("crayon", "1.3.4", "LOCALREPO", "user_defined"))
 
 		logs1 := CollectGenericLogs(t, capture, "additional installation set")
