@@ -197,6 +197,7 @@ type GenericLog struct {
 	RPath string `json:"rpath,omitempty"`
 	LocalRepo int `json:"LOCALREPO,omitempty"` // Very specific to certain test cases
 	Tarballs int `json:"tarballs"` // Very specific to certain test cases
+	Library string `json:"library,omitempty"`
 }
 
 type GenericLogsCollection []GenericLog
