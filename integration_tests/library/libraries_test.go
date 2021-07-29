@@ -5,6 +5,8 @@ import (
 	"github.com/metrumresearchgroup/command"
 	. "github.com/metrumresearchgroup/pkgr/testhelper"
 	"github.com/stretchr/testify/assert"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -34,10 +36,42 @@ func TestLibrary(t *testing.T) {
 	})
 
 	t.Run(MakeTestName(librariesE2ETest2, "lockfile type renv installs to renv/library"), func(t *testing.T) {
+		DeleteTestFolder(t, "test-cache")
+		SetupEndToEndWithInstall(t, "pkgr-renv.yml", "renv")
 
+		r6FolderFound := false
+		err := filepath.Walk("renv/library", func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if info.IsDir() && info.Name() == "R6" {
+				r6FolderFound = true
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("error when walking renv folder to find installed pkgs: %s", err)
+		}
+		assert.True(t, r6FolderFound, "failed to find installation of R6")
 	})
 
 	t.Run(MakeTestName(librariesE2ETest3, "lockfile type packrat installs to packrat/library"), func(t *testing.T) {
+		DeleteTestFolder(t, "test-cache")
+		SetupEndToEndWithInstall(t, "pkgr-packrat.yml", "packrat")
 
+		r6FolderFound := false
+		err := filepath.Walk("packrat/lib", func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if info.IsDir() && info.Name() == "R6" {
+				r6FolderFound = true
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("error when walking renv folder to find installed pkgs: %s", err)
+		}
+		assert.True(t, r6FolderFound, "failed to find installation of R6")
 	})
 }
