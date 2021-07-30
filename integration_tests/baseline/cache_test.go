@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/metrumresearchgroup/command"
 	. "github.com/metrumresearchgroup/pkgr/testhelper"
+	"github.com/sebdah/goldie/v2"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"path/filepath"
@@ -16,6 +17,11 @@ import (
 const (
 	cacheTest1="BSLNCHE-E2E-001"
 	cacheTest2="BSLNCHE-E2E-002"
+	cacheTest3="BSLNCHE-E2E-003"
+)
+
+const(
+	cachePartialAndExtraneous = "cache-partial-and-extraneous"
 )
 
 func TestClean(t *testing.T) {
@@ -149,5 +155,40 @@ func TestClean(t *testing.T) {
 		}
 
 		assert.Empty(t, pkgCacheDirContents2, "found items in test-cache folder (expected empty after clean)")
+	})
+
+	t.Run(MakeTestName(cacheTest3, "pkgr works properly with missing and extraneous items in the cache"), func(t *testing.T) {
+		DeleteTestFolder(t, "test-cache")
+
+		// Installs R6, pillar, and purrr.
+		SetupEndToEndWithInstall(t, "pkgr-with-purrr.yml", "test-library")
+		DeleteTestFolder(t, "test-library/pillar") // giving pkgr the need to install this package again
+		DeleteTestFolder(t, "test-cache/CRAN-9a8e3d5f8621/binary") // Delete all binaries (deleting all for convenience)
+		DeleteTestFile(t, "test-cache/CRAN-9a8e3d5f8621/src/pillar_1.6.1.tar.gz") // giving pkgr the need to download this package again
+
+		ctx := context.TODO()
+		installCmd := command.New()
+		rScriptCmd := command.New(command.WithDir("Rscripts"))
+
+		capture, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr-no-purrr.yml", "--logjson")
+		if err != nil {
+			t.Fatalf("error running pkgr install: %s", err)
+		}
+		downloadLogs := CollectGenericLogs(t, capture, "downloading package")
+		assert.Len(t, downloadLogs, 1, "expected exactly one package to be downloaded")
+		assert.Equal(t, "pillar", downloadLogs[0].Package)
+		toInstallLogs := CollectGenericLogs(t, capture, "package installation plan")
+		assert.Len(t, toInstallLogs, 1, "expected exactly one 'package installation plan' log entry")
+		assert.Equal(t, 1, toInstallLogs[0].ToInstall)
+
+
+		rScriptCapture, err := rScriptCmd.Run(ctx, "Rscript", "--quiet", "install_test.R")
+		if err != nil {
+			t.Fatalf("error running RScript to get list of installed packages: %s, output: %s", err, string(rScriptCapture.Output))
+		}
+
+		g := goldie.New(t)
+		g.Assert(t, cachePartialAndExtraneous, rScriptCapture.Output)
+
 	})
 }

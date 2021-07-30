@@ -185,6 +185,7 @@ type GenericLog struct {
 	Level string `json:"level,omitempty"`
 	Msg string `json:"msg,omitempty"`
 	Pkg string `json:"pkg,omitempty"`
+	Package string `json:"package,omitempty"`
 	Relationship string `json:"relationship,omitempty"`
 	Repo string `json:"repo,omitempty"`
 	InstallType int `json:"type,omitempty"`

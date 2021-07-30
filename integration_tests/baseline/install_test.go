@@ -114,4 +114,5 @@ func TestInstall2(t *testing.T) {
 		g := goldie.New(t)
 		g.Assert(t, idempotenceInstall, rScriptCapture.Output)
 	})
+
 }
