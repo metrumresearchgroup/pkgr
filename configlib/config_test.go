@@ -950,7 +950,7 @@ func TestNewConfigSimple(t *testing.T) {
 	assert.Empty(t, cfg.Tarballs)
 	assert.Equal(t, "R", filepath.Base(cfg.RPath)) // Just make sure the path ends in R executable. May not work on Windows.
 	assert.Equal(t, LogConfig{}, cfg.Logging)
-	assert.Equal(t, false, cfg.Update)
+	assert.Equal(t, false, cfg.NoUpdate)
 	assert.Equal(t, false, cfg.Suggests)
 	assert.Empty(t, cfg.Customizations)
 	assert.Equal(t, []map[string]string{{"CRAN": "https://cran.microsoft.com/snapshot/2020-05-01"}}, cfg.Repos)
@@ -987,7 +987,7 @@ func TestNewConfigNonDefaults(t *testing.T) {
 		Level:     "debug",
 		Overwrite: true,
 	}, cfg.Logging)
-	assert.Equal(t, true, cfg.Update)
+	assert.Equal(t, true, cfg.NoUpdate)
 	assert.Equal(t, true, cfg.Suggests)
 	assert.Empty(t, cfg.Customizations) // Customizations are tested elsewhere.
 	assert.Equal(t, []map[string]string{{"CRAN": "https://cran.microsoft.com/snapshot/2020-05-01"}}, cfg.Repos)

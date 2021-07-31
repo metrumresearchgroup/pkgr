@@ -238,7 +238,7 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 		//tarballDescriptions,
 		dependencyConfigurations,
 		pkgNexus,
-		cfg.Update,
+		!cfg.NoUpdate,
 		libraryExists,
 		cfg.NoRecommended,
 	)
@@ -264,11 +264,11 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 			"installed_version": p.OldVersion,
 			"update_version":    p.NewVersion,
 		}
-		if cfg.Update {
+		if cfg.NoUpdate {
+			log.WithFields(updateLogFields).Warn("outdated package found")
+		} else {
 			log.WithFields(updateLogFields).Info("package will be updated")
 			pkgsToUpdateCount = len(installPlan.OutdatedPackages)
-		} else {
-			log.WithFields(updateLogFields).Warn("outdated package found")
 		}
 	}
 
