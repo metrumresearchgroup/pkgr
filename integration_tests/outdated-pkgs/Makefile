@@ -1,17 +1,20 @@
 TEST_HOME=${PWD}
 
-.PHONY: clean update test test-json
+.PHONY: clean setup update test test-json
 
 clean:
 	rm -rf test-library
 	rm -rf test-cache
 	go clean -testcache
 
-update: clean
+setup:
+	cp -r outdated-library test-library
+
+update: clean setup
 	go test ./... -update
 
-test: clean
+test: clean setup
 	go test ./... -v
 
-test-json: clean
+test-json: clean setup
 	go test ./... -json

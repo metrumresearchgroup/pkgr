@@ -37,11 +37,10 @@ var update bool
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "pkgr",
-	Short: "package manager",
+	Use:     "pkgr",
+	Short:   "package manager",
 	Version: VERSION,
 }
-
 
 // Execute adds all child commands to the root command sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
@@ -67,7 +66,7 @@ func rootInit() {
 	RootCmd.Flags().BoolVarP(&printVersion, "version", "v", false, "print the version")
 
 	// this is added to maintain legacy compatibility in case people use this flag
-	RootCmd.Flags().BoolVar(&update, "update", false, "whether to update installed packages")
+	RootCmd.PersistentFlags().BoolVar(&update, "update", false, "whether to update installed packages")
 
 	// this replaces the update
 	RootCmd.PersistentFlags().Bool("no-update", false, "don't update installed packages")

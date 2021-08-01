@@ -3,9 +3,6 @@ Version: 1
 Packages:
   - R6
   - pillar
-  - Matrix
-
-Update: true
 
 # any repositories, order matters
 Repos:
