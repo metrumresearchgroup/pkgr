@@ -28,7 +28,7 @@ release:
     ### Linux
 
     ```
-    sudo wget https://github.com/metrumresearchgroup/pkgr/releases/{{ .Tag }}/{{ .Name }} -O /tmp/pkgr.tar.gz
+    sudo wget https://github.com/metrumresearchgroup/pkgr/releases/download/{{ .Tag }}/pkgr_{{ .Version }}_linux_amd64.tar.gz -O /tmp/pkgr.tar.gz
     sudo tar xzf /tmp/pkgr.tar.gz pkgr
     sudo mv pkgr /usr/local/bin/pkgr
     sudo chmod +x /usr/local/bin/pkgr
