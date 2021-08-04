@@ -1,2 +1,3 @@
 R_LIBS_SITE=../test-library
 R_LIBS_USER=../test-library
+LC_ALL=en_US.UTF-8
