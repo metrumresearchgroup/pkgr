@@ -1061,11 +1061,8 @@ func getTestFolder(t *testing.T, folder string) string {
 	return testFolder
 }
 
-// NOTE: This should NOT be used, but I'm creating this function as a patch while we decide the best way to test these things.
-// It is only acceptable to use this function for tests that access ONLY the pkgr.yml files in the integration tests in
-// a read-only capacity.
 func getIntegrationTestFolder(t *testing.T, folder string) string {
 	_, filename, _, _ := runtime.Caller(0)
 	sa := strings.SplitAfter(filename, "/pkgr/")
-	return filepath.Join(filepath.Dir(sa[0]), "integration_tests", folder)
+	return filepath.Join(filepath.Dir(sa[0]), "configlib", "testsite", "integration_test_archive", folder)
 }

@@ -25,7 +25,7 @@ Logging:
 NoUpdate: true
 Strict: true
 Suggests: true
-Rollback: false
+NoRollback: true
 NoRecommended: true
 
 Threads: 9

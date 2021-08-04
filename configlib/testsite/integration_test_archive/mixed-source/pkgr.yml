@@ -1,0 +1,29 @@
+Version: 1
+# top level packages
+Packages:
+- R6
+- pillar
+- fansi
+# any repositories, order matters
+Repos:
+  - MPN_Primary: "https://mpn.metworx.com/snapshots/stable/2020-06-08"
+  - MPN_Secondary: "https://mpn.metworx.com/snapshots/stable/2020-11-21"
+
+
+
+Library: "test-library"
+
+Cache: "testsets/pkgcache"
+
+Logging:
+  File: mixed-source.log
+
+Customizations:
+  Packages:
+    - R6:
+        Type: binary
+    - fansi:
+        Repo: MPN_Secondary
+  Repos:
+    - MPN_Primary:
+        Type: source
