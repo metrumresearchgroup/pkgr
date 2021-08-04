@@ -33,14 +33,14 @@ var VERSION = "dev"
 var fs afero.Fs
 var cfg configlib.PkgrConfig
 var printVersion bool
+var update bool
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "pkgr",
-	Short: "package manager",
+	Use:     "pkgr",
+	Short:   "package manager",
 	Version: VERSION,
 }
-
 
 // Execute adds all child commands to the root command sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
@@ -64,6 +64,13 @@ func rootInit() {
 	// Cobra supports Persistent Flags, which, if defined here,
 	// will be global for your application.
 	RootCmd.Flags().BoolVarP(&printVersion, "version", "v", false, "print the version")
+
+	// this is added to maintain legacy compatibility in case people use this flag
+	RootCmd.PersistentFlags().BoolVar(&update, "update", false, "whether to update installed packages")
+
+	// this replaces the update
+	RootCmd.PersistentFlags().Bool("no-update", false, "don't update installed packages")
+	_ = viper.BindPFlag("noupdate", RootCmd.PersistentFlags().Lookup("no-update"))
 
 	RootCmd.PersistentFlags().String("config", "", "config file (default is pkgr.yml)")
 	_ = viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
@@ -89,11 +96,8 @@ func rootInit() {
 	RootCmd.PersistentFlags().String("library", "", "library to install packages")
 	_ = viper.BindPFlag("library", RootCmd.PersistentFlags().Lookup("library"))
 
-	RootCmd.PersistentFlags().Bool("update", cfg.Update, "Update packages along with install")
-	_ = viper.BindPFlag("update", RootCmd.PersistentFlags().Lookup("update"))
-
 	RootCmd.PersistentFlags().Bool("no-rollback", cfg.NoRollback, "Disable rollback")
-	_ = viper.BindPFlag("no_rollback", RootCmd.PersistentFlags().Lookup("no-rollback"))
+	_ = viper.BindPFlag("norollback", RootCmd.PersistentFlags().Lookup("no-rollback"))
 
 	RootCmd.PersistentFlags().Bool("no-secure", cfg.NoSecure, "disable TLS certificate verification")
 	_ = viper.BindPFlag("nosecure", RootCmd.PersistentFlags().Lookup("no-secure"))
@@ -123,6 +127,9 @@ func initConfig() {
 	log.Trace("attempting to load config file")
 	configlib.NewConfig(viper.GetString("config"), &cfg)
 
+	if update {
+		cfg.NoUpdate = false
+	}
 	configFilePath, _ := filepath.Abs(viper.ConfigFileUsed())
 	cwd, _ := os.Getwd()
 	log.WithFields(log.Fields{

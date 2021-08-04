@@ -22,7 +22,7 @@ Logging:
   level: debug
   overwrite: true
 
-Update: true
+NoUpdate: true
 Strict: true
 Suggests: true
 Rollback: false
