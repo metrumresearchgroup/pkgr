@@ -120,13 +120,12 @@ func CollectUpdateLogs(t *testing.T, capture command.Capture, msgType UpdateMsgT
 // end utililities
 
 func TestOutdated(t *testing.T) {
-	testCmd := command.New(command.WithDir("Rscripts"))
-	planCmd := command.New()
-	installCmd := command.New()
-	ctx := context.TODO()
 
 	t.Run("pkgr warns when updates are available and NoUpdate setting true", func(t *testing.T) {
 		setupBaseline(t)
+		planCmd := command.New()
+		ctx := context.TODO()
+
 
 		res, err := planCmd.Run(ctx, "pkgr", "plan", "--config=pkgr-no-update.yml", "--logjson")
 		if err != nil {
@@ -143,6 +142,10 @@ func TestOutdated(t *testing.T) {
 
 	t.Run("pkgr install does not update when update setting false", func(t *testing.T) {
 		setupBaseline(t)
+		testCmd := command.New(command.WithDir("Rscripts"))
+		installCmd := command.New()
+		ctx := context.TODO()
+
 
 		_, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr-no-update.yml", "--logjson")
 		if err != nil {
@@ -158,6 +161,9 @@ func TestOutdated(t *testing.T) {
 
 	t.Run("pkgr plan indicates that updates will be installed when noupdate setting is false", func(t *testing.T) {
 		setupBaseline(t)
+		planCmd := command.New()
+		ctx := context.TODO()
+
 
 		planRes, err := planCmd.Run(ctx, "pkgr", "plan", "--config=pkgr-update.yml", "--logjson")
 		if err != nil {
@@ -174,6 +180,10 @@ func TestOutdated(t *testing.T) {
 
 	t.Run("pkgr install installs updates when noupdate setting is false", func(t *testing.T) {
 		setupBaseline(t)
+		testCmd := command.New(command.WithDir("Rscripts"))
+		installCmd := command.New()
+		ctx := context.TODO()
+
 
 		_, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr-update.yml")
 		if err != nil {
@@ -191,6 +201,10 @@ func TestOutdated(t *testing.T) {
 	// have scripts or just by habit
 	t.Run("pkgr install --update flag overrides other config", func(t *testing.T) {
 		setupBaseline(t)
+		testCmd := command.New(command.WithDir("Rscripts"))
+		installCmd := command.New()
+		ctx := context.TODO()
+
 		installRes, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr-no-update.yml", "--update", "--logjson")
 		if err != nil {
 			t.Fatalf("failed to install packages: %s", err)
@@ -199,7 +213,6 @@ func TestOutdated(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to run Rscript command with err: %s: ", err)
 		}
-
 
 		updateLogs := CollectUpdateLogs(t, installRes, ToUpdateMsg)
 		assert.Len(t, updateLogs, 3, "expected exactly three update messages")
