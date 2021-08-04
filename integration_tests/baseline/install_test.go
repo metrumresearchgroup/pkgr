@@ -58,7 +58,7 @@ func TestInstall(t *testing.T) {
 		g.Assert(t, basicInstall, testRes.Output)
 	})
 
-	t.Run(MakeTestName(baselineInstallE2ETest1, "can install suggested dependencies for user packages"), func(t *testing.T){
+	t.Run(MakeTestName(baselineInstallE2ETest4, "can install suggested dependencies for user packages"), func(t *testing.T){
 		DeleteTestFolder(t, "test-library")
 		installCmd := command.New()
 		ctx := context.TODO()
@@ -81,7 +81,7 @@ func TestInstall(t *testing.T) {
 
 // Just making a separate function until I can refactor the first one into shape
 func TestInstall2(t *testing.T) {
-	t.Run(MakeTestName(baselineInstallE2ETest4, "installs are idempotent"), func(t *testing.T) {
+	t.Run(MakeTestName(baselineInstallE2ETest5, "installs are idempotent"), func(t *testing.T) {
 
 		//Setup
 		DeleteTestFolder(t, "test-cache")
