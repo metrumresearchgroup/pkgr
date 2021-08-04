@@ -15,6 +15,14 @@ import (
 )
 
 const (
+	outdatedPackagesE2ETest1 = "UPDT-E2E-001"
+	outdatedPackagesE2ETest2 = "UPDT-E2E-002"
+	outdatedPackagesE2ETest3 = "UPDT-E2E-003"
+	outdatedPackagesE2ETest4 = "UPDT-E2E-004"
+	outdatedPackagesE2ETest5 = "UPDT-E2E-005"
+)
+
+const (
 	OutdatedPackagesUpdate     = "outdated-packages-update"
 	OutdatedPackagesNoUpdate   = "outdated-packages-no-update"
 	OutdatedPackagesUpdateFlag = "outdated-packages-update-flag"
@@ -121,7 +129,7 @@ func CollectUpdateLogs(t *testing.T, capture command.Capture, msgType UpdateMsgT
 
 func TestOutdated(t *testing.T) {
 
-	t.Run("pkgr warns when updates are available and NoUpdate setting true", func(t *testing.T) {
+	t.Run(testhelper.MakeTestName(outdatedPackagesE2ETest1,"pkgr warns when updates are available and NoUpdate setting true"), func(t *testing.T) {
 		setupBaseline(t)
 		planCmd := command.New()
 		ctx := context.TODO()
@@ -140,7 +148,7 @@ func TestOutdated(t *testing.T) {
 		assert.True(t, outdatedLogs.Contains("R6", "2.0", "2.5.0", "warning"), "pkgr did not notify that package was outdated")
 	})
 
-	t.Run("pkgr install does not update when update setting false", func(t *testing.T) {
+	t.Run(testhelper.MakeTestName(outdatedPackagesE2ETest2,"pkgr install does not update when NoUpdate setting true"), func(t *testing.T) {
 		setupBaseline(t)
 		testCmd := command.New(command.WithDir("Rscripts"))
 		installCmd := command.New()
@@ -159,7 +167,7 @@ func TestOutdated(t *testing.T) {
 		g.Assert(t, OutdatedPackagesNoUpdate, rScriptRes.Output)
 	})
 
-	t.Run("pkgr plan indicates that updates will be installed when noupdate setting is false", func(t *testing.T) {
+	t.Run(testhelper.MakeTestName(outdatedPackagesE2ETest3,"pkgr plan indicates that updates will be installed when NoUpdate setting is false"), func(t *testing.T) {
 		setupBaseline(t)
 		planCmd := command.New()
 		ctx := context.TODO()
@@ -178,7 +186,7 @@ func TestOutdated(t *testing.T) {
 
 	})
 
-	t.Run("pkgr install installs updates when noupdate setting is false", func(t *testing.T) {
+	t.Run(testhelper.MakeTestName(outdatedPackagesE2ETest4,"pkgr install installs updates when NoUpdate setting is false"), func(t *testing.T) {
 		setupBaseline(t)
 		testCmd := command.New(command.WithDir("Rscripts"))
 		installCmd := command.New()
@@ -199,7 +207,7 @@ func TestOutdated(t *testing.T) {
 
 	// this maintains legacy behavior of using --update in case people
 	// have scripts or just by habit
-	t.Run("pkgr install --update flag overrides other config", func(t *testing.T) {
+	t.Run(testhelper.MakeTestName(outdatedPackagesE2ETest5,"pkgr install --update flag overrides other config"), func(t *testing.T) {
 		setupBaseline(t)
 		testCmd := command.New(command.WithDir("Rscripts"))
 		installCmd := command.New()
