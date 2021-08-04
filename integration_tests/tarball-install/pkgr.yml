@@ -9,7 +9,7 @@ Packages:
 
 # any repositories, order matters
 Repos:
-  - LOCALREPO: "./localrepo"
+  - LOCALREPO: "./localrepo_tarball_install"
 
 Cache: test-cache
 

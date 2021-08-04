@@ -8,7 +8,9 @@ clean:
 	go clean -testcache
 
 setup:
-	cp -r outdated-library test-library
+	rm -rf test-library
+	mkdir test-library
+	cp -r outdated-library/ test-library/
 
 update: clean setup
 	go test ./... -update

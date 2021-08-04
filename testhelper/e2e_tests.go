@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/metrumresearchgroup/command"
-	"github.com/metrumresearchgroup/pkgr/rcmd"
+	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"regexp"
@@ -193,7 +193,7 @@ type GenericLog struct {
 	Method string `json:"method,omitempty"`
 	Origin string `json:"origin,omitempty"`
 	Version string `json:"version,omitempty"`
-	RSettings rcmd.RSettings `json:"RSettings,omitempty"` // "Do you want ciruclar dependencies? Because this is how you get circular dependencies."
+	RSettings RSettingsDup `json:"RSettings,omitempty"` // "Do you want ciruclar dependencies? Because this is how you get circular dependencies."
 	CmdArgs []string `json:"cmdArgs,omitempty"`
 	RPath string `json:"rpath,omitempty"`
 	LocalRepo int `json:"LOCALREPO,omitempty"` // Very specific to certain test cases
@@ -201,7 +201,11 @@ type GenericLog struct {
 	Library string `json:"library,omitempty"`
 	ToInstall int `json:"to_install,omitempty"`
 	ToUpdate int `json:"to_update,omitempty"`
+	InstalledVersion string `json:"installed_version,omitempty"`
+	UpdateVersion string `json:"update_version,omitempty"`
 }
+
+
 
 type GenericLogsCollection []GenericLog
 
@@ -236,5 +240,28 @@ func CollectGenericLogs(t *testing.T, capture command.Capture, messageRegex stri
 	// Where sorting would happen, except don't, because it's not worth maintaining a sort function for a generic object.
 
 	return parsedLines
+}
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Need to duplicate these structs from Rcmd to avoid circular dependencies in Rcmd's unit tests.-----------------------
+// Since we are pulling out the Rcmd package anyway, I think this is an okay shortcut to take for now.
+type RSettingsDup struct {
+	Version       cran.RVersion                `json:"r_version,omitempty"`
+	LibPaths      []string                     `json:"lib_paths,omitempty"`
+	Rpath         string                       `json:"rpath,omitempty"`
+	GlobalEnvVars NvpListDup                      `json:"global_env_vars,omitempty"`
+	PkgEnvVars    map[string]map[string]string `json:"pkg_env_vars,omitempty"`
+	Platform      string                       `json:"platform,omitempty"`
+}
+
+// Nvp name-value pair, each of type string
+type NvpDup struct {
+	Name  string `json:"global_env_vars_name,omitempty"`
+	Value string `json:"global_env_vars_value,omitempty"`
+}
+
+// NvpList is a slice of Nvp. The slice maintains consistent ordering of the Nvp objects
+type NvpListDup struct {
+	Pairs []NvpDup `json:"global_env_vars_pairs,omitempty"`
 }
 // ---------------------------------------------------------------------------------------------------------------------

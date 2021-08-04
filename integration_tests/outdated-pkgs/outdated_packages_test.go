@@ -2,12 +2,15 @@ package outdated_pkgs
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/metrumresearchgroup/command"
 	"github.com/metrumresearchgroup/pkgr/testhelper"
 	"github.com/sebdah/goldie/v2"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"os"
+	"sort"
+	"strings"
 	"testing"
 )
 
@@ -39,32 +42,110 @@ func setupBaseline(t *testing.T) {
 	}
 }
 
-func TestOutdated(t *testing.T) {
-	testCmd := command.New(command.WithDir("Rscripts"))
-	planCmd := command.New()
-	installCmd := command.New()
-	ctx := context.TODO()
+// Utilities for this test suite only:
+type UpdateMsg struct {
+	InstalledVersion string `json:"installed_version,omitempty"`
+	UpdateVersion string `json:"update_version,omitempty"`
+	Package string `json:"pkg,omitempty"`
+	Msg string	`json:"msg, omitempty"`
+	Level string `json:"level,omitempty"`
+}
 
-	t.Run("pkgr warns when updates are available and update setting false", func(t *testing.T) {
+type UpdateLogs []UpdateMsg
+
+func (ul UpdateLogs) Contains(pkg, installedVersion, updateVersion, loglevel string) bool {
+	for _, msg := range ul {
+		if msg.Package == pkg && msg.InstalledVersion == installedVersion && msg.UpdateVersion == updateVersion && msg.Level == loglevel {
+			return true
+		}
+	}
+	return false
+}
+
+type UpdateMsgType int
+
+const (
+	OutdatedMsg UpdateMsgType = iota
+	ToUpdateMsg UpdateMsgType = iota
+)
+
+func CompareUpdateMsgs(a, b UpdateMsg) int {
+	if a.Level != b.Level {
+		return(strings.Compare(a.Level, b.Level))
+	} else if a.Msg != b.Msg {
+		return strings.Compare(a.Msg, b.Msg)
+	} else if a.Package != b.Package {
+		return strings.Compare(a.Package, b.Package)
+	} else if a.InstalledVersion != b.InstalledVersion {
+		return strings.Compare(a.InstalledVersion, b.InstalledVersion)
+	} else if a.UpdateVersion != b.UpdateVersion {
+		return strings.Compare(a.UpdateVersion, b.UpdateVersion)
+	} else{
+		return 0
+	}
+}
+
+func CollectUpdateLogs(t *testing.T, capture command.Capture, msgType UpdateMsgType) UpdateLogs {
+	parsedLines := []UpdateMsg{}
+
+	var msgKey string
+	if msgType == OutdatedMsg {
+		msgKey = "outdated package found"
+	} else if msgType == ToUpdateMsg {
+		msgKey = "package will be updated"
+	} else {
+		t.Fatalf("invalid msgType passed to 'CollectUpdateLogs'. MsgType: %d", msgType)
+	}
+
+	outputLines := strings.Split(string(capture.Output), "\n")
+
+	for _, line := range outputLines {
+		if strings.Contains(line, msgKey) {
+			var parsedLine UpdateMsg
+			err := json.Unmarshal([]byte(line), &parsedLine)
+			if err != nil {
+				t.Fatalf("error unmarshalling the following JSON line: '%s'. error was: %s", line, err)
+			}
+			parsedLines = append(parsedLines, parsedLine)
+		}
+	}
+
+	sort.Slice(parsedLines, func(i, j int) bool {
+		return CompareUpdateMsgs(parsedLines[i], parsedLines[j]) < 0
+	})
+
+	return parsedLines
+}
+
+// end utililities
+
+func TestOutdated(t *testing.T) {
+
+	t.Run("pkgr warns when updates are available and NoUpdate setting true", func(t *testing.T) {
 		setupBaseline(t)
+		planCmd := command.New()
+		ctx := context.TODO()
+
 
 		res, err := planCmd.Run(ctx, "pkgr", "plan", "--config=pkgr-no-update.yml", "--logjson")
 		if err != nil {
 			t.Fatalf("failed to successfully create pkgr plan: %s", err)
 		}
 
-		// Hmmm... I wonder if there's a way to go like "g.AssertContains()"
-		jsonLine1 := `{"installed_version":"1.2.1","level":"warning","msg":"outdated package found","pkg":"crayon","update_version":"1.4.1"}`
-		jsonLine2 := `{"installed_version":"2.0","level":"warning","msg":"outdated package found","pkg":"R6","update_version":"2.5.0"}`
-		jsonLine3 := `{"installed_version":"1.2.1","level":"warning","msg":"outdated package found","pkg":"pillar","update_version":"1.6.1"}`
+		outdatedLogs := CollectUpdateLogs(t, res, OutdatedMsg)
+		assert.Len(t, outdatedLogs, 3, "expected outdated messages for three packages")
 
-		assert.Contains(t, string(res.Output), jsonLine1, "missing expected warning message")
-		assert.Contains(t, string(res.Output), jsonLine2, "missing expected warning message")
-		assert.Contains(t, string(res.Output), jsonLine3, "missing expected warning message")
+		assert.True(t, outdatedLogs.Contains("pillar", "1.2.1", "1.6.1", "warning"), "pkgr did not notify that package was outdated")
+		assert.True(t, outdatedLogs.Contains("crayon", "1.2.1", "1.4.1", "warning"), "pkgr did not notify that package was outdated")
+		assert.True(t, outdatedLogs.Contains("R6", "2.0", "2.5.0", "warning"), "pkgr did not notify that package was outdated")
 	})
 
 	t.Run("pkgr install does not update when update setting false", func(t *testing.T) {
 		setupBaseline(t)
+		testCmd := command.New(command.WithDir("Rscripts"))
+		installCmd := command.New()
+		ctx := context.TODO()
+
 
 		_, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr-no-update.yml", "--logjson")
 		if err != nil {
@@ -80,23 +161,29 @@ func TestOutdated(t *testing.T) {
 
 	t.Run("pkgr plan indicates that updates will be installed when noupdate setting is false", func(t *testing.T) {
 		setupBaseline(t)
+		planCmd := command.New()
+		ctx := context.TODO()
+
 
 		planRes, err := planCmd.Run(ctx, "pkgr", "plan", "--config=pkgr-update.yml", "--logjson")
 		if err != nil {
 			t.Fatalf("error running pkgr plan %s", err)
 		}
 
-		jsonLine1 := `{"installed_version":"1.2.1","level":"info","msg":"package will be updated","pkg":"pillar","update_version":"1.6.1"}`
-		jsonLine2 := `{"installed_version":"1.2.1","level":"info","msg":"package will be updated","pkg":"crayon","update_version":"1.4.1"}`
-		jsonLine3 := `{"installed_version":"2.0","level":"info","msg":"package will be updated","pkg":"R6","update_version":"2.5.0"}`
+		updateLogs := CollectUpdateLogs(t, planRes, ToUpdateMsg)
+		assert.Len(t, updateLogs, 3, "expected updated messages for three packages")
+		assert.True(t, updateLogs.Contains("pillar", "1.2.1", "1.6.1", "info"), "pkgr did not confirm package would be updated")
+		assert.True(t, updateLogs.Contains("crayon", "1.2.1", "1.4.1", "info"), "pkgr did not confirm package would be updated")
+		assert.True(t, updateLogs.Contains("R6", "2.0", "2.5.0", "info"), "pkgr did not confirm package would be updated")
 
-		assert.Contains(t, string(planRes.Output), jsonLine1, "pkgr did not confirm package would be updated")
-		assert.Contains(t, string(planRes.Output), jsonLine2, "pkgr did not confirm package would be updated")
-		assert.Contains(t, string(planRes.Output), jsonLine3, "pkgr did not confirm package would be updated")
 	})
 
 	t.Run("pkgr install installs updates when noupdate setting is false", func(t *testing.T) {
 		setupBaseline(t)
+		testCmd := command.New(command.WithDir("Rscripts"))
+		installCmd := command.New()
+		ctx := context.TODO()
+
 
 		_, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr-update.yml")
 		if err != nil {
@@ -114,6 +201,10 @@ func TestOutdated(t *testing.T) {
 	// have scripts or just by habit
 	t.Run("pkgr install --update flag overrides other config", func(t *testing.T) {
 		setupBaseline(t)
+		testCmd := command.New(command.WithDir("Rscripts"))
+		installCmd := command.New()
+		ctx := context.TODO()
+
 		installRes, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr-no-update.yml", "--update", "--logjson")
 		if err != nil {
 			t.Fatalf("failed to install packages: %s", err)
@@ -123,13 +214,11 @@ func TestOutdated(t *testing.T) {
 			t.Fatalf("failed to run Rscript command with err: %s: ", err)
 		}
 
-		jsonLine1 := `{"installed_version":"1.2.1","level":"info","msg":"package will be updated","pkg":"pillar","update_version":"1.6.1"}`
-		jsonLine2 := `{"installed_version":"1.2.1","level":"info","msg":"package will be updated","pkg":"crayon","update_version":"1.4.1"}`
-		jsonLine3 := `{"installed_version":"2.0","level":"info","msg":"package will be updated","pkg":"R6","update_version":"2.5.0"}`
-
-		assert.Contains(t, string(installRes.Output), jsonLine1, "pkgr did not confirm package would be updated")
-		assert.Contains(t, string(installRes.Output), jsonLine2, "pkgr did not confirm package would be updated")
-		assert.Contains(t, string(installRes.Output), jsonLine3, "pkgr did not confirm package would be updated")
+		updateLogs := CollectUpdateLogs(t, installRes, ToUpdateMsg)
+		assert.Len(t, updateLogs, 3, "expected exactly three update messages")
+		assert.True(t, updateLogs.Contains("pillar", "1.2.1", "1.6.1", "info"), "pkgr did not confirm package would be updated")
+		assert.True(t, updateLogs.Contains("crayon", "1.2.1", "1.4.1", "info"), "pkgr did not confirm package would be updated")
+		assert.True(t, updateLogs.Contains("R6", "2.0", "2.5.0", "info"), "pkgr did not confirm package would be updated")
 
 		g := goldie.New(t)
 		g.Assert(t, OutdatedPackagesUpdateFlag, rScriptRes.Output)
