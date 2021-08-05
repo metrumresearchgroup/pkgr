@@ -160,7 +160,7 @@ func TestInstall2(t *testing.T) {
 		assert.Equal(t, 3, installationStatusLogs[0].Installed)
 		assert.Equal(t, 3, installationStatusLogs[0].NotFromPkgr)
 		assert.Equal(t, 0, installationStatusLogs[0].Outdated)
-		assert.Equal(t, 9, installationStatusLogs[0].TotalPackagesRequired)
+		assert.Equal(t, 11, installationStatusLogs[0].TotalPackagesRequired)
 
 		rScriptCapture, err := verifyInstalledCommand.Run(ctx, "Rscript", "--quiet", "install_test.R")
 		if err != nil {
