@@ -203,6 +203,7 @@ type GenericLog struct {
 	ToUpdate int `json:"to_update,omitempty"`
 	InstalledVersion string `json:"installed_version,omitempty"`
 	UpdateVersion string `json:"update_version,omitempty"`
+	Packages []string `json:"packages"`
 }
 
 

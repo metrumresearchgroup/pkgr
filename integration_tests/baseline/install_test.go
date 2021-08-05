@@ -7,6 +7,7 @@ import (
 	"github.com/sebdah/goldie/v2"
 	"github.com/stretchr/testify/assert"
 	"log"
+	"os"
 	"testing"
 )
 
@@ -25,6 +26,7 @@ const(
 	basicInstall = "install"
 	suggestsInstall = "suggests-install"
 	idempotenceInstall = "idempotence-install"
+	preinstalledInstall = "preinstalled-install"
 )
 
 func TestInstall(t *testing.T) {
@@ -113,6 +115,53 @@ func TestInstall2(t *testing.T) {
 
 		g := goldie.New(t)
 		g.Assert(t, idempotenceInstall, rScriptCapture.Output)
+	})
+
+	t.Run(MakeTestName(baselineInstallE2ETest6, "installs do not overwrite packages not installed by pkgr"), func(t *testing.T) {
+		//Setup
+		DeleteTestFolder(t, "test-cache")
+		DeleteTestFolder(t, "test-library")
+		err := os.MkdirAll("./test-library", 0777)
+		if err != nil {
+			t.Fatalf("error while creating empty test-library directory: %s", err)
+		}
+
+		// Execute
+		ctx := context.TODO()
+		rInstallCmd := command.New()
+		installCmd := command.New()
+		verifyInstalledCommand := command.New(command.WithDir("Rscripts"))
+
+		rInstallCapture, err := rInstallCmd.Run(ctx, "Rscript", "-e", "install.packages(c('ellipsis', 'digest'), lib='test-library', repos=c('https://mpn.metworx.com/snapshots/stable/2021-06-20'))")
+		if err != nil {
+			t.Fatalf("error while installing packages through non-pkgr means: %s\nOutput:\n%s", err, string(rInstallCapture.Output))
+		}
+
+		pkgrCapture, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr.yml", "--logjson")
+		if err != nil {
+			t.Fatalf("error occurred running pkgr install: %s", err)
+		}
+
+		// Validate
+		notInstalledByPkgLogs := CollectGenericLogs(t, pkgrCapture, "Packages not installed by pkgr")
+		assert.Len(t, notInstalledByPkgLogs, 1, "expected only one message containing all packages not installed by pkgr")
+		assert.Len(t, notInstalledByPkgLogs[0].Packages, 3, "expected exactly three entries in the 'not installed by pkgr' log entry")
+		assert.Contains(t, notInstalledByPkgLogs[0].Packages, "ellipsis", "ellipsis should have been listed under 'not installed by pkgr'")
+		assert.Contains(t, notInstalledByPkgLogs[0].Packages, "rlang", "rlang should have been listed under 'not installed by pkgr'")
+		assert.Contains(t, notInstalledByPkgLogs[0].Packages, "digest", "digest should have been listed under 'not installed by pkgr'") // Extraneous, shouldn't matter to pkgr.yml
+
+		installPlanLogs := CollectGenericLogs(t, pkgrCapture, "package installation plan")
+		assert.Len(t, installPlanLogs, 1, "expected exactly one message containing 'package installation plan' metadata")
+		assert.Equal(t, 9, installPlanLogs[0].ToInstall, "since two packages were already installed from pkgr's plan, we expect only 9 packages to be installed")
+		assert.Equal(t, 0, installPlanLogs[0].ToUpdate)
+
+		rScriptCapture, err := verifyInstalledCommand.Run(ctx, "Rscript", "--quiet", "install_test.R")
+		if err != nil {
+			log.Fatalf("error occurred while using R to check installed packages: %s", err)
+		}
+
+		g := goldie.New(t)
+		g.Assert(t, preinstalledInstall, rScriptCapture.Output)
 	})
 
 }

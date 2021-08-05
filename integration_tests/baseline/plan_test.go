@@ -6,6 +6,7 @@ import (
 	. "github.com/metrumresearchgroup/pkgr/testhelper"
 	"github.com/sebdah/goldie/v2"
 	"github.com/stretchr/testify/assert"
+	"os"
 	"testing"
 )
 
@@ -68,6 +69,34 @@ func TestPlan(t *testing.T) {
 
 		jsonRegex := `\{"level":"info","msg":"Installation would launch 5 workers.*\}`
 		assert.Regexp(t, jsonRegex, output)
+	})
+
+	t.Run(MakeTestName(baselinePlanTest3, "pkgr flags packages that were not installed by pkgr"), func(t *testing.T) {
+		DeleteTestFolder(t, "test-library")
+		err := os.MkdirAll("./test-library", 0777)
+		if err != nil {
+			t.Fatalf("error while creating empty test-library directory: %s", err)
+		}
+
+		ctx := context.TODO()
+		rInstallCmd := command.New()
+		planCmd := command.New()
+
+		rScriptCapture, err := rInstallCmd.Run(ctx, "Rscript", "-e", "install.packages('ellipsis', lib='test-library', repos=c('https://mpn.metworx.com/snapshots/stable/2021-06-20'))")
+		if err != nil {
+			t.Fatalf("error while installing packages through non-pkgr means: %s\nOutput:\n%s", err, string(rScriptCapture.Output))
+		}
+
+		planCapture, err := planCmd.Run(ctx, "pkgr", "plan", "--logjson")
+		if err != nil {
+			t.Fatalf("error running pkgr plan: %s", err)
+		}
+
+		logs := CollectGenericLogs(t, planCapture, "Packages not installed by pkgr")
+		assert.Len(t, logs, 1, "expected only one message containing all packages not installed by pkgr")
+		assert.Len(t, logs[0].Packages, 2, "expected exactly two entries in the 'not installed by pkgr' log entry")
+		assert.Contains(t, logs[0].Packages, "ellipsis", "ellipsis should have been listed under 'not installed by pkgr'")
+		assert.Contains(t, logs[0].Packages, "rlang", "rlang should have been listed under 'not installed by pkgr'")
 	})
 
 }
