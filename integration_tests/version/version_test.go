@@ -7,6 +7,11 @@ import (
 	"testing"
 )
 
+const (
+	versionE2ETest1 = "VSN-E2E-001"
+	versionE2ETest2 = "VSN-E2E-002"
+)
+
 func TestVersion(t *testing.T) {
 	testCmd := command.New()
 	ctx := context.TODO()

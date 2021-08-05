@@ -3,10 +3,20 @@ package rollback_test
 import (
 	"context"
 	"github.com/metrumresearchgroup/command"
+	"github.com/metrumresearchgroup/pkgr/testhelper"
 	"github.com/sebdah/goldie/v2"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+)
+
+const (
+	rollbackE2ETest1 = "RBK-E2E-001"
+	rollbackE2ETest2 = "RBK-E2E-002"
+	rollbackE2ETest3 = "RBK-E2E-003"
+	rollbackE2ETest4 = "RBK-E2E-004"
+	rollbackE2ETest5 = "RBK-E2E-005"
+	rollbackE2ETest6 = "RBK-E2E-006"
 )
 
 const (
@@ -39,7 +49,7 @@ func TestRollback(t *testing.T) {
 	// future tests. This feels like a reasonable middleground to checking
 	// its set up like that after each setupBaseline() call, especially since
 	// setupBaseline doesn't do any assertions/checks within it
-	t.Run("the baseline package was installed", func(t *testing.T) {
+	t.Run(testhelper.MakeTestName(rollbackE2ETest1, "the baseline package was installed"), func(t *testing.T) {
 		testRes, err := testCmd.Run(ctx, "Rscript", "--quiet", "install_test.R")
 		if err != nil {
 			t.Fatalf("failed to run Rscript command with err: %s", err)
@@ -48,7 +58,7 @@ func TestRollback(t *testing.T) {
 		g.Assert(t, "baseline-installed", testRes.Output)
 	})
 
-	t.Run("will rollback on failure to install tarball", func(t *testing.T) {
+	t.Run(testhelper.MakeTestName(rollbackE2ETest2, "will rollback on failure to install tarball"), func(t *testing.T) {
 		res, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr-rollback-tarball.yml", "--logjson")
 		if err != nil {
 			t.Fatalf("could not install baseline packages with err: %s", err)
@@ -57,8 +67,8 @@ func TestRollback(t *testing.T) {
 	})
 
 
-	t.Run("will not rollback on failure to install tarball when rollback disabled", func(t *testing.T) {
-		t.Run("in configuration file", func(t *testing.T) {
+	t.Run(testhelper.MakeTestName(rollbackE2ETest3, "will not rollback on failure to install tarball when rollback disabled"), func(t *testing.T) {
+		t.Run(testhelper.MakeSubtestName(rollbackE2ETest3, "A", "in configuration file"), func(t *testing.T) {
 			setupBaseline(t)
 			res, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr-no-rollback-tarball.yml", "--logjson")
 			if err != nil {
@@ -67,7 +77,7 @@ func TestRollback(t *testing.T) {
 			rollbackOutputCheckHelper(t, res, RollbackDisabledInstalled)
 		})
 
-		t.Run("as CLI flag", func(t *testing.T) {
+		t.Run(testhelper.MakeSubtestName(rollbackE2ETest3,"B", "as CLI flag"), func(t *testing.T) {
 			setupBaseline(t)
 			res, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr-rollback-tarball.yml", "--logjson", "--no-rollback")
 			if err != nil {
