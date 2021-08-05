@@ -155,6 +155,13 @@ func TestInstall2(t *testing.T) {
 		assert.Equal(t, 9, installPlanLogs[0].ToInstall, "since two packages were already installed from pkgr's plan, we expect only 9 packages to be installed")
 		assert.Equal(t, 0, installPlanLogs[0].ToUpdate)
 
+		installationStatusLogs := CollectGenericLogs(t, pkgrCapture, "package installation status")
+		assert.Len(t, installationStatusLogs, 1, "expected exactly one message containing `package installation status` metadata")
+		assert.Equal(t, 3, installationStatusLogs[0].Installed)
+		assert.Equal(t, 3, installationStatusLogs[0].NotFromPkgr)
+		assert.Equal(t, 0, installationStatusLogs[0].Outdated)
+		assert.Equal(t, 9, installationStatusLogs[0].TotalPackagesRequired)
+
 		rScriptCapture, err := verifyInstalledCommand.Run(ctx, "Rscript", "--quiet", "install_test.R")
 		if err != nil {
 			log.Fatalf("error occurred while using R to check installed packages: %s", err)

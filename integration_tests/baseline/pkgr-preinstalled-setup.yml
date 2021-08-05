@@ -1,0 +1,13 @@
+Version: 1
+# top level packages
+Packages:
+  - ellipsis
+  - rlang
+
+Repos:
+  - CRAN: "https://mpn.metworx.com/snapshots/stable/2021-04-15" # older
+
+Library: "test-library"
+Cache: "test-cache"
+
+Threads: 4

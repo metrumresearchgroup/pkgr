@@ -6,7 +6,6 @@ import (
 	. "github.com/metrumresearchgroup/pkgr/testhelper"
 	"github.com/sebdah/goldie/v2"
 	"github.com/stretchr/testify/assert"
-	"os"
 	"testing"
 )
 
@@ -14,6 +13,7 @@ const (
 	baselinePlanTest1="BSLNPLN-E2E-001"
 	baselinePlanTest2="BSLNPLN-E2E-002"
 	baselinePlanTest3="BSLNPLN-E2E-003"
+	baselinePlanTest4="BSLNPLN-E2E-004"
 )
 
 // Golden Test File Names
@@ -22,8 +22,6 @@ const (
 )
 
 func TestPlan(t *testing.T) {
-
-
 
 	t.Run(MakeTestName(baselinePlanTest1, "plan indicates packages to be installed, as well as version, source repo, and whether pkg is user-defined or a dependency"), func(t *testing.T) {
 		DeleteTestFolder(t, "test-library")
@@ -71,32 +69,43 @@ func TestPlan(t *testing.T) {
 		assert.Regexp(t, jsonRegex, output)
 	})
 
-	t.Run(MakeTestName(baselinePlanTest3, "pkgr flags packages that were not installed by pkgr"), func(t *testing.T) {
-		DeleteTestFolder(t, "test-library")
-		err := os.MkdirAll("./test-library", 0777)
-		if err != nil {
-			t.Fatalf("error while creating empty test-library directory: %s", err)
-		}
+	t.Run(MakeTestName(baselinePlanTest3, "pkgr accurately reports package installation status and packages that were not installed by pkgr"), func(t *testing.T) {
+		// Installs an outdated version of ellipsis, rlang
+		DeleteTestFolder(t, "test-cache")
+		SetupEndToEndWithInstall(t, "pkgr-preinstalled-setup.yml", "test-library")
 
 		ctx := context.TODO()
 		rInstallCmd := command.New()
 		planCmd := command.New()
 
-		rScriptCapture, err := rInstallCmd.Run(ctx, "Rscript", "-e", "install.packages('ellipsis', lib='test-library', repos=c('https://mpn.metworx.com/snapshots/stable/2021-06-20'))")
+		rInstallCapture, err := rInstallCmd.Run(ctx, "Rscript", "-e", "install.packages(c('digest', 'R6'), lib='test-library', repos=c('https://mpn.metworx.com/snapshots/stable/2021-06-20'))")
 		if err != nil {
-			t.Fatalf("error while installing packages through non-pkgr means: %s\nOutput:\n%s", err, string(rScriptCapture.Output))
+			t.Fatalf("error while installing packages through non-pkgr means: %s\nOutput:\n%s", err, string(rInstallCapture.Output))
 		}
 
-		planCapture, err := planCmd.Run(ctx, "pkgr", "plan", "--logjson")
+		planCapture, err := planCmd.Run(ctx, "pkgr", "plan", "--config=pkgr-preinstalled.yml", "--logjson")
 		if err != nil {
 			t.Fatalf("error running pkgr plan: %s", err)
 		}
 
-		logs := CollectGenericLogs(t, planCapture, "Packages not installed by pkgr")
-		assert.Len(t, logs, 1, "expected only one message containing all packages not installed by pkgr")
-		assert.Len(t, logs[0].Packages, 2, "expected exactly two entries in the 'not installed by pkgr' log entry")
-		assert.Contains(t, logs[0].Packages, "ellipsis", "ellipsis should have been listed under 'not installed by pkgr'")
-		assert.Contains(t, logs[0].Packages, "rlang", "rlang should have been listed under 'not installed by pkgr'")
+		notInstalledByPkgrListLogs := CollectGenericLogs(t, planCapture, "Packages not installed by pkgr")
+		assert.Len(t, notInstalledByPkgrListLogs, 1, "expected only one message containing all packages not installed by pkgr")
+		assert.Len(t, notInstalledByPkgrListLogs[0].Packages, 2, "expected exactly two entries in the 'not installed by pkgr' log entry")
+		assert.Contains(t, notInstalledByPkgrListLogs[0].Packages, "digest", "digest should have been listed under 'not installed by pkgr'")
+		assert.Contains(t, notInstalledByPkgrListLogs[0].Packages, "R6", "R6 should have been listed under 'not installed by pkgr'")
+
+		installationStatusLogs := CollectGenericLogs(t, planCapture, "package installation status")
+		assert.Len(t, installationStatusLogs, 1, "expected exactly one message containing `package installation status` metadata")
+		assert.Equal(t, 4, installationStatusLogs[0].Installed) // rlang and ellipsis from outdated pkgr.yml, digest (extraneous) and R6 from install.packages.
+		assert.Equal(t, 2, installationStatusLogs[0].NotFromPkgr)
+		assert.Equal(t, 2, installationStatusLogs[0].Outdated)
+		assert.Equal(t, 11, installationStatusLogs[0].TotalPackagesRequired)
+
+		packageInstallationPlanLogs := CollectGenericLogs(t, planCapture, "package installation plan")
+		assert.Len(t, packageInstallationPlanLogs, 1, "expected exactly one 'package installation plan' message")
+		assert.Equal(t, 8, packageInstallationPlanLogs[0].ToInstall, "expected plan to claim 8 package would be installed")
+		assert.Equal(t, 2, packageInstallationPlanLogs[0].ToUpdate, "expected plan to claim 2 packages would be updated")
+
 	})
 
 }
