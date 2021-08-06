@@ -94,21 +94,53 @@ type PkgRepoSetMsg struct {
 	Relationship string `json:"relationship,omitempty"`
 	Repo string `json:"repo,omitempty"`
 	Version string `json:"version,omitempty"`
+	Type int `json:"type,omitempty"`
 }
 
 func (prsm PkgRepoSetMsg) ToString() string {
+
+	var typeString string
+	if prsm.Type == 1 {
+		typeString = "source"
+	} else if prsm.Type == 2 {
+		typeString = "binary"
+	} else {
+		typeString = "unknown"
+	}
+
 	return fmt.Sprintf(
-		"msg: '%s', pkg: '%s', version: '%s', repo: '%s', relationship: %s'",
+		"msg: '%s', pkg: '%s', version: '%s', repo: '%s', relationship: %s', type: %s",
 		prsm.Msg,
 		prsm.Pkg,
 		prsm.Version,
 		prsm.Repo,
 		prsm.Relationship,
+		typeString,
 	)
 }
 
 // Returns -1 if A < B, 0 if A==B, and 1 if A > B
 func ComparePkgRepoSetMsg(a, b PkgRepoSetMsg) int {
+
+	// Is there not a bult in func like int.Compare? Couldn't find one on a brief search.
+	// Either way, this will sort things alphabetically.
+	var typeStringA string
+	if a.Type == 1 {
+		typeStringA = "source"
+	} else if a.Type == 2 {
+		typeStringA = "binary"
+	} else {
+		typeStringA = "unknown"
+	}
+	var typeStringB string
+	if b.Type == 1 {
+		typeStringB = "source"
+	} else if b.Type == 2 {
+		typeStringB = "binary"
+	} else {
+		typeStringB = "unknown"
+	}
+
 	if a.Pkg != b.Pkg {
 		return strings.Compare(a.Pkg, b.Pkg)
 	} else if a.Version != b.Version {
@@ -117,6 +149,8 @@ func ComparePkgRepoSetMsg(a, b PkgRepoSetMsg) int {
 		return strings.Compare(a.Repo, b.Repo)
 	} else if a.Relationship != b.Relationship {
 		return strings.Compare(a.Relationship, b.Relationship)
+	} else if a.Type != b.Type {
+		return( strings.Compare(typeStringA, typeStringB))
 	} else {
 		return 0
 	}
