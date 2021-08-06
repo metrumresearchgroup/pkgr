@@ -161,7 +161,7 @@ steps:
       - cd integration_tests/library
       - make test
   - name: mixed-source-and-customizations
-    image: 906087756158.dkr.ecr.us-east-1.amazonaws.com/r-dev-ci:4.0.0
+    image: 906087756158.dkr.ecr.us-east-1.amazonaws.com/r-dev-ci:4.1.0
     pull: never
     volumes:
       - name: go
