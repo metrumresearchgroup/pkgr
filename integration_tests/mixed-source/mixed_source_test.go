@@ -38,7 +38,7 @@ func TestMixedSource(t *testing.T) {
 			// Packages coming from MPNJuly2020 install from binaries, except digest, which should builid from source
 			// Packages coming from MPNJune2021 install from source. Yaml should come from this repo
 			// Yaml should also install its suggested packages (RUnit)
-			g.Assert(t, goldenPlanWithCustomizations, pkgRepoSettings.ToBytes())
+			g.Assert(t, goldenPlanWithCustomizations, pkgRepoSettings.ToBytesWithType())
 		})
 
 		t.Run(MakeSubtestName(mixedSourceE2ETest1, "B", "pkgr can install from both source and binary files"), func(t *testing.T){

@@ -85,8 +85,6 @@ func (lo PkgrJsonLogOutput) Contains(search string) ([]string, bool, error) {
 }
 
 
-
-
 // Helper objects  for "package repository set" logs. ------------------------------------------------------------------
 type PkgRepoSetMsg struct {
 	Msg string `json:"msg,omitempty"`
@@ -98,6 +96,19 @@ type PkgRepoSetMsg struct {
 }
 
 func (prsm PkgRepoSetMsg) ToString() string {
+	return fmt.Sprintf(
+		"msg: '%s', pkg: '%s', version: '%s', repo: '%s', relationship: %s'",
+		prsm.Msg,
+		prsm.Pkg,
+		prsm.Version,
+		prsm.Repo,
+		prsm.Relationship,
+	)
+}
+
+// Since the default installation type is different on Mac/Windows versus Linux,
+// we want to exclude type by default.
+func (prsm PkgRepoSetMsg) ToStringWithType() string {
 
 	var typeString string
 	if prsm.Type == 1 {
@@ -184,6 +195,18 @@ func (prsmc PkgRepoSetMsgCollection) ToBytes() []byte {
 	return []byte(prsmc.ToString())
 }
 
+func (prsmc PkgRepoSetMsgCollection) ToStringWithType() string {
+	cleanStrings := []string{}
+	for _, log := range prsmc {
+		cleanStrings = append(cleanStrings, log.ToStringWithType())
+	}
+	return strings.Join(cleanStrings, "\n")
+}
+
+func (prsmc PkgRepoSetMsgCollection) ToBytesWithType() []byte {
+	return []byte(prsmc.ToStringWithType())
+}
+
 // PkgRepoSetMsgCollection returned will be sorted for the purposes of making golden files.
 func CollectPkgRepoSetLogs(t *testing.T, capture command.Capture) PkgRepoSetMsgCollection {
 
@@ -243,8 +266,6 @@ type GenericLog struct {
 	Outdated int `json:"outdated,omitempty"`
 	TotalPackagesRequired int `json:"total_packages_required,omitempty"`
 }
-
-
 
 type GenericLogsCollection []GenericLog
 
