@@ -10,11 +10,13 @@ import (
 
 const (
 	mixedSourceE2ETest1 = "MXSRC-E2E-001"
+	mixedSourceE2ETest2 = "MXSRC-E2E-002"
 )
 
 const(
 	goldenPlanWithCustomizations    = "plan-customizations"
 	goldenInstallWithCustomizations = "install-customizations"
+	goldenCustomizationSync = "customization-sync"
 )
 
 func TestMixedSource(t *testing.T) {
@@ -51,6 +53,21 @@ func TestMixedSource(t *testing.T) {
 				t.Fatalf("error running R script to scan installed packages: %s\noutput:\n%s", err, string(testCapture.Output))
 			}
 			g.Assert(t, goldenInstallWithCustomizations, testCapture.Output)
+		})
+
+		t.Run(MakeTestName(mixedSourceE2ETest2,"repo and package customizations synchronize when compatible" ), func(t *testing.T) {
+			DeleteTestFolder(t, "test-library")
+			DeleteTestFolder(t, "test-cache")
+			ctx := context.TODO()
+			planCmd := command.New()
+			g := goldie.New(t)
+
+			planCapture, err := planCmd.Run(ctx, "pkgr", "plan", "--config=pkgr-issue-329.yml", "--loglevel=debug", "--logjson")
+			if err != nil {
+				t.Fatalf("error running pkgr plan: %s\noutput:\n%s", err, string(planCapture.Output))
+			}
+			pkgRepoSettings := CollectPkgRepoSetLogs(t, planCapture)
+			g.Assert(t, goldenCustomizationSync, pkgRepoSettings.ToBytesWithType())
 		})
 	})
 }

@@ -1,0 +1,27 @@
+Version: 1
+Packages:
+  - R6 # installing from repo with source customization
+  - digest # installing from repo with biniary customization
+Repos:
+  - MPNJuly2020: https://mpn.metworx.com/snapshots/stable/2020-07-19
+  - MPNJune2021: https://mpn.metworx.com/snapshots/stable/2021-06-20
+
+# this library path is customized for ubuntu linux systems like metworx
+# change it if you need to run this on a separate machine type
+Library: test-library
+
+Cache: test-cache
+
+Customizations:
+  Repos:
+    - MPNJuly2020:
+        Type: binary
+        RepoType: MPN
+        RepoSuffix: metworx/20.06
+    - MPNJune2021:
+        Type: source
+  Packages:
+    - digest:
+        Repo: MPNJuly2020
+    - R6:
+        Repo: MPNJune2021
