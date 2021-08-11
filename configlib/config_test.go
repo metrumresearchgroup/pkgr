@@ -44,33 +44,39 @@ func TestExpandTilde(t *testing.T) {
 		type testCase struct {
 			path           string
 			expectedResult string
+			testSubId 	   string
 		}
 
 		tests := map[string]testCase{
 			"expands tilde": {
 				path:           filepath.Join("~/Desktop/folderA"),
 				expectedResult: filepath.Join(homeDirectory, "Desktop", "folderA"),
+				testSubId: "1",
 			},
 			"does not modify regular path": {
 				path:           filepath.Join("A/B/C"),
 				expectedResult: filepath.Join("A/B/C"),
+				testSubId: "2",
 			},
 			"does not modify local path": {
 				path:           filepath.Join("../A/B/C"),
 				expectedResult: filepath.Join("../A/B/C"),
+				testSubId: "3",
 			},
 			"tilde must be prefix": {
 				path:           filepath.Join("A/B/~/C"),
 				expectedResult: filepath.Join("A/B/~/C"),
+				testSubId: "4",
 			},
 			"works with empty path": {
 				path:           "",
 				expectedResult: "",
+				testSubId: "5",
 			},
 		}
 
 		for testName, tc := range tests {
-			t.Run(testName, func(t *testing.T) {
+			t.Run(testhelper.MakeSubtestName(configUnitTest1, tc.testSubId, testName), func(t *testing.T) {
 				actualResult := expandTilde(tc.path)
 				assert.Equal(t, tc.expectedResult, actualResult)
 			})
@@ -86,6 +92,7 @@ func TestExpandTilde(t *testing.T) {
 		type testCase struct {
 			paths           []string
 			expectedResults []string
+			testSubId 	   string
 		}
 
 		tests := map[string]testCase{
@@ -98,6 +105,7 @@ func TestExpandTilde(t *testing.T) {
 					filepath.Join(homeDirectory, "Desktop", "folderA"),
 					filepath.Join(homeDirectory, "Documents", "folderB"),
 				},
+				testSubId : "1",
 			},
 			"expands tildes but not others": {
 				paths: []string{
@@ -108,6 +116,7 @@ func TestExpandTilde(t *testing.T) {
 					filepath.Join(homeDirectory, "Desktop", "folderA"),
 					filepath.Join("/TopDir", "Documents", "folderB"),
 				},
+				testSubId : "2",
 			},
 			"does not modify non-tilde repos": {
 				paths: []string{
@@ -124,11 +133,12 @@ func TestExpandTilde(t *testing.T) {
 					"",
 					filepath.Join("..", "E", "F"),
 				},
+				testSubId : "3",
 			},
 		}
 
 		for testName, tc := range tests {
-			t.Run(testName, func(t *testing.T) {
+			t.Run(testhelper.MakeSubtestName(configUnitTest1, string(tc.testSubId), testName), func(t *testing.T) {
 				actualResults := expandTildes(tc.paths)
 				assert.Equal(t, tc.expectedResults, actualResults)
 			})
@@ -144,6 +154,7 @@ func TestExpandTilde(t *testing.T) {
 		type testCase struct {
 			repos           []map[string]string
 			expectedResults []map[string]string
+			testSubId 		string
 		}
 
 		tests := map[string]testCase{
@@ -156,6 +167,7 @@ func TestExpandTilde(t *testing.T) {
 					{"A": filepath.Join(homeDirectory, "Desktop/folderA")},
 					{"B": filepath.Join(homeDirectory, "Documents/folderB")},
 				},
+				testSubId : "1",
 			},
 			"expands tildes but not others": {
 				repos: []map[string]string{
@@ -166,6 +178,7 @@ func TestExpandTilde(t *testing.T) {
 					{"A": filepath.Join(homeDirectory, "Desktop", "folderA")},
 					{"B": filepath.Join("/TopDir", "Documents", "folderB")},
 				},
+				testSubId : "2",
 			},
 			"does not modify non-tilde repos": {
 				repos: []map[string]string{
@@ -182,11 +195,12 @@ func TestExpandTilde(t *testing.T) {
 					{"4": ""},
 					{"5": filepath.Join("..", "E", "F")},
 				},
+				testSubId : "3",
 			},
 		}
 
 		for testName, tc := range tests {
-			t.Run(testName, func(t *testing.T) {
+			t.Run(testhelper.MakeSubtestName(configUnitTest3, tc.testSubId, testName), func(t *testing.T) {
 				actualResults := expandTildesRepos(tc.repos)
 				assert.Equal(t, tc.expectedResults, actualResults)
 			})
