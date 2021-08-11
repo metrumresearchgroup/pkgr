@@ -70,8 +70,6 @@ func TestPlan(t *testing.T) {
 	})
 
 	t.Run(MakeTestName(baselinePlanTest3, "pkgr accurately reports package installation status and packages that were not installed by pkgr"), func(t *testing.T) {
-		t.Skip("Test is currently skipped because it is failing. See issue #380")
-
 		// Installs an outdated version of ellipsis, rlang
 		DeleteTestFolder(t, "test-cache")
 		SetupEndToEndWithInstall(t, "pkgr-preinstalled-setup.yml", "test-library")
@@ -105,7 +103,7 @@ func TestPlan(t *testing.T) {
 
 		packageInstallationPlanLogs := CollectGenericLogs(t, planCapture, "package installation plan")
 		assert.Len(t, packageInstallationPlanLogs, 1, "expected exactly one 'package installation plan' message")
-		assert.Equal(t, 8, packageInstallationPlanLogs[0].ToInstall, "expected plan to claim 8 package would be installed")
+		assert.Equal(t, 10, packageInstallationPlanLogs[0].ToInstall, "expected plan to claim 10 package would be installed")
 		assert.Equal(t, 2, packageInstallationPlanLogs[0].ToUpdate, "expected plan to claim 2 packages would be updated")
 
 	})
