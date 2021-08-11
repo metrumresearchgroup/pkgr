@@ -130,6 +130,16 @@ func (prsm PkgRepoSetMsg) ToStringWithType() string {
 	)
 }
 
+func installTypeToString(installType int) string {
+	if installType == 1 {
+		return "source"
+	} else if installType == 2 {
+		return "binary"
+	} else {
+		return "unknown"
+	}
+}
+
 // Returns -1 if A < B, 0 if A==B, and 1 if A > B
 func ComparePkgRepoSetMsg(a, b PkgRepoSetMsg) int {
 
@@ -176,6 +186,16 @@ type PkgRepoSetMsgCollection []PkgRepoSetMsg
 func (prsmc PkgRepoSetMsgCollection) Contains(pkg, version, repo, relationship string) bool {
 	for _, log := range prsmc {
 		if log.Pkg == pkg && log.Version == version && log.Repo == repo && log.Relationship == relationship {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (prsmc PkgRepoSetMsgCollection) ContainsWithType(pkg, version, repo, relationship, installType string) bool {
+	for _, log := range prsmc {
+		if log.Pkg == pkg && log.Version == version && log.Repo == repo && log.Relationship == relationship && installTypeToString(log.Type) == installType {
 			return true
 		}
 	}
