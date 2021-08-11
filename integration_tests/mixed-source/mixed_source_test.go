@@ -2,9 +2,11 @@ package mixed_source
 
 import (
 	"context"
+	"fmt"
 	"github.com/metrumresearchgroup/command"
 	. "github.com/metrumresearchgroup/pkgr/testhelper"
 	"github.com/sebdah/goldie/v2"
+	"runtime"
 	"testing"
 )
 
@@ -14,8 +16,10 @@ const (
 )
 
 const(
-	goldenPlanWithCustomizations    = "plan-customizations"
-	goldenInstallWithCustomizations = "install-customizations"
+	goldenPlanWithCustomizationsLinux    = "plan-customizations-linux"
+	goldenPlanWithCustomizationsMac    = "plan-customizations-macos"
+	goldenInstallWithCustomizationsLinux = "install-customizations-linux"
+	goldenInstallWithCustomizationsMac = "install-customizations-macos"
 	goldenCustomizationSync = "customization-sync"
 )
 
@@ -29,8 +33,24 @@ func TestMixedSource(t *testing.T) {
 		testCmd := command.New(command.WithDir("Rscripts"))
 		g := goldie.New(t)
 
+		var pkgrConfig, goldenPlan, goldenInstall string
+		operatingSystem := runtime.GOOS
+		t.Logf("operating system: %s", operatingSystem)
+		switch operatingSystem {
+		case "linux":
+			pkgrConfig = "pkgr-linux.yml"
+			goldenPlan = goldenPlanWithCustomizationsLinux
+			goldenInstall = goldenInstallWithCustomizationsLinux
+		case "darwin":
+			pkgrConfig = "pkgr-mac.yml"
+			goldenPlan = goldenPlanWithCustomizationsMac
+			goldenInstall = goldenInstallWithCustomizationsMac
+		default:
+			t.Skipf("this test is only supported on Mac and Linux systems. Detected OS: %s", operatingSystem)
+		}
+
 		t.Run(MakeSubtestName(mixedSourceE2ETest1, "A", "repo and package customizations are set properly"), func(t *testing.T) {
-			planCapture, err := planCmd.Run(ctx, "pkgr", "plan", "--loglevel=debug", "--logjson")
+			planCapture, err := planCmd.Run(ctx, "pkgr", "plan", fmt.Sprintf("--config=%s", pkgrConfig),"--loglevel=debug", "--logjson")
 			if err != nil {
 				t.Fatalf("error running pkgr plan: %s\noutput:\n%s", err, string(planCapture.Output))
 			}
@@ -40,11 +60,11 @@ func TestMixedSource(t *testing.T) {
 			// Packages coming from MPNJuly2020 install from binaries, except digest, which should builid from source
 			// Packages coming from MPNJune2021 install from source. Yaml should come from this repo
 			// Yaml should also install its suggested packages (RUnit)
-			g.Assert(t, goldenPlanWithCustomizations, pkgRepoSettings.ToBytesWithType())
+			g.Assert(t, goldenPlan, pkgRepoSettings.ToBytesWithType())
 		})
 
 		t.Run(MakeSubtestName(mixedSourceE2ETest1, "B", "pkgr can install from both source and binary files"), func(t *testing.T){
-			installCapture, err := installCmd.Run(ctx, "pkgr", "install", "--logjson")
+			installCapture, err := installCmd.Run(ctx, "pkgr", "install", fmt.Sprintf("--config=%s", pkgrConfig), "--logjson")
 			if err != nil {
 				t.Fatalf("error running pkgr install: %s\n output:\n%s", err, string(installCapture.Output))
 			}
@@ -52,7 +72,7 @@ func TestMixedSource(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error running R script to scan installed packages: %s\noutput:\n%s", err, string(testCapture.Output))
 			}
-			g.Assert(t, goldenInstallWithCustomizations, testCapture.Output)
+			g.Assert(t, goldenInstall, testCapture.Output)
 		})
 
 		t.Run(MakeTestName(mixedSourceE2ETest2,"repo and package customizations synchronize when compatible" ), func(t *testing.T) {

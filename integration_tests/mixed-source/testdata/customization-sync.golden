@@ -1,2 +1,2 @@
-msg: 'package repository set', pkg: 'R6', version: '2.5.0', repo: 'MPNJune2021', relationship: user_defined', type: source
+msg: 'package repository set', pkg: 'R6', version: '2.5.0', repo: 'MPNJune2021', relationship: user_defined', type: binary
 msg: 'package repository set', pkg: 'digest', version: '0.6.25', repo: 'MPNJuly2020', relationship: user_defined', type: binary
