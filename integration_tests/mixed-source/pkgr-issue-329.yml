@@ -1,0 +1,27 @@
+Version: 1
+Packages:
+  - R6 # installing from repo with source customization
+  - digest # installing from repo with binary customization
+Repos:
+  - MPNBinary: https://mpn.metworx.com/snapshots/stable/2020-07-19
+  - MPNSource: https://mpn.metworx.com/snapshots/stable/2021-06-20
+
+# this library path is customized for ubuntu linux systems like metworx
+# change it if you need to run this on a separate machine type
+Library: test-library
+
+Cache: test-cache
+
+Customizations:
+  Repos:
+    - MPNBinary:
+        Type: binary
+        RepoType: MPN
+        RepoSuffix: metworx/20.06
+    - MPNSource:
+        Type: source
+  Packages:
+    - digest:
+        Repo: MPNBinary
+    - R6:
+        Repo: MPNSource

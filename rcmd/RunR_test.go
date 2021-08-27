@@ -1,14 +1,12 @@
 package rcmd
 
 import (
-	"bytes"
-	"fmt"
 	"testing"
 
 	"github.com/spf13/afero"
-	"github.com/stretchr/testify/assert"
 )
 
+/*
 func TestRunRBatch(t *testing.T) {
 	type args struct {
 		fs      afero.Fs
@@ -72,6 +70,7 @@ https://www.gnu.org/licenses/.
 		})
 	}
 }
+*/
 
 func BenchmarkRunR(b *testing.B) {
 	rs := NewRSettings("/usr/local/bin/R")

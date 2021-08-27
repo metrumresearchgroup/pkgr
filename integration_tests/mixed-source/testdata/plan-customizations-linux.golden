@@ -1,0 +1,6 @@
+msg: 'package repository set', pkg: 'R6', version: '2.4.1', repo: 'MPNJuly2020', relationship: user_defined', type: binary
+msg: 'package repository set', pkg: 'RUnit', version: '0.4.32', repo: 'MPNJuly2020', relationship: dependency', type: binary
+msg: 'package repository set', pkg: 'digest', version: '0.6.25', repo: 'MPNJuly2020', relationship: user_defined', type: source
+msg: 'package repository set', pkg: 'ellipsis', version: '0.3.1', repo: 'MPNJuly2020', relationship: user_defined', type: binary
+msg: 'package repository set', pkg: 'rlang', version: '0.4.7', repo: 'MPNJuly2020', relationship: dependency', type: binary
+msg: 'package repository set', pkg: 'yaml', version: '2.2.1', repo: 'MPNJune2021', relationship: user_defined', type: source

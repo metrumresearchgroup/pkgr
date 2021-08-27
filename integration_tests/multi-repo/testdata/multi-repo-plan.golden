@@ -1,0 +1,6 @@
+msg: 'package repository set', pkg: 'R6', version: '2.4.1', repo: 'LOCALREPO', relationship: user_defined'
+msg: 'package repository set', pkg: 'askpass', version: '1.1', repo: 'LOCALREPO', relationship: dependency'
+msg: 'package repository set', pkg: 'ellipsis', version: '0.3.2', repo: 'REMOTEREPO', relationship: user_defined'
+msg: 'package repository set', pkg: 'openssl', version: '1.4.4', repo: 'REMOTEREPO', relationship: user_defined'
+msg: 'package repository set', pkg: 'rlang', version: '0.4.11', repo: 'REMOTEREPO', relationship: dependency'
+msg: 'package repository set', pkg: 'sys', version: '3.4', repo: 'LOCALREPO', relationship: dependency'

@@ -7,11 +7,11 @@ MD5sum: a00d6599ff99f501534c1d965a1fd3b4
 NeedsCompilation: yes
 
 Package: R6
-Version: 2.5.0
+Version: 2.4.1
 Depends: R (>= 3.0)
 Suggests: knitr, microbenchmark, pryr, testthat, ggplot2, scales
 License: MIT + file LICENSE
-MD5sum: 463898e53d64b48716e695f20db423f4
+MD5sum: 78cabfb5a4e18fab29659752271ab4af
 NeedsCompilation: no
 
 Package: sys

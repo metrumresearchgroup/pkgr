@@ -1,6 +1,20 @@
 # simple
 
-tags: basic, dependencies, cache-system, local-library, clean-cache, clean-pkgdb, inspect, install-type
+tags: , , , , , , ,
+
+Addressed:
+inspect
+local-library
+dependencies
+basic (install)
+basic (inspect)
+
+Not addressed:
+basic (plan)
+cache-system
+clean-cache
+clean-pkgdb
+install-type
 
 ## Description
 Environment to help test basic pkgr functionality, such as the `plan`, `install`, `inspect --deps`

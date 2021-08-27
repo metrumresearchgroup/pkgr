@@ -3,6 +3,7 @@ package configlib
 import (
 	"bytes"
 	"fmt"
+	"github.com/metrumresearchgroup/pkgr/testhelper"
 	"github.com/thoas/go-funk"
 	"gopkg.in/yaml.v2"
 	"os"
@@ -21,162 +22,191 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Test names for tests that are relevant to validation.
+const (
+	configUnitTest1 = "CFG-UNIT-001"
+	configUnitTest2 = "CFG-UNIT-002"
+	configUnitTest3 = "CFG-UNIT-003"
+	configUnitTest4 = "CFG-UNIT-004"
+	configUnitTest5 = "CFG-UNIT-005"
+	configUnitTest6 = "CFG-UNIT-006"
+	configUnitTest7 = "CFG-UNIT-007"
+	configUnitTest8 = "CFG-UNIT-008"
+)
+
 func TestExpandTilde(t *testing.T) {
-	homeDirectory, err := os.UserHomeDir()
-	if err != nil {
-		t.Fatal("error determining home directory to use for testing: ", err)
-	}
+	t.Run(testhelper.MakeTestName(configUnitTest1, "Test expand tildes 1"), func(t *testing.T) {
+		homeDirectory, err := os.UserHomeDir()
+		if err != nil {
+			t.Fatal("error determining home directory to use for testing: ", err)
+		}
 
-	type testCase struct {
-		path           string
-		expectedResult string
-	}
+		type testCase struct {
+			path           string
+			expectedResult string
+			testSubId 	   string
+		}
 
-	tests := map[string]testCase{
-		"expands tilde": {
-			path:           filepath.Join("~/Desktop/folderA"),
-			expectedResult: filepath.Join(homeDirectory, "Desktop", "folderA"),
-		},
-		"does not modify regular path": {
-			path:           filepath.Join("A/B/C"),
-			expectedResult: filepath.Join("A/B/C"),
-		},
-		"does not modify local path": {
-			path:           filepath.Join("../A/B/C"),
-			expectedResult: filepath.Join("../A/B/C"),
-		},
-		"tilde must be prefix": {
-			path:           filepath.Join("A/B/~/C"),
-			expectedResult: filepath.Join("A/B/~/C"),
-		},
-		"works with empty path": {
-			path:           "",
-			expectedResult: "",
-		},
-	}
+		tests := map[string]testCase{
+			"expands tilde": {
+				path:           filepath.Join("~/Desktop/folderA"),
+				expectedResult: filepath.Join(homeDirectory, "Desktop", "folderA"),
+				testSubId: "1",
+			},
+			"does not modify regular path": {
+				path:           filepath.Join("A/B/C"),
+				expectedResult: filepath.Join("A/B/C"),
+				testSubId: "2",
+			},
+			"does not modify local path": {
+				path:           filepath.Join("../A/B/C"),
+				expectedResult: filepath.Join("../A/B/C"),
+				testSubId: "3",
+			},
+			"tilde must be prefix": {
+				path:           filepath.Join("A/B/~/C"),
+				expectedResult: filepath.Join("A/B/~/C"),
+				testSubId: "4",
+			},
+			"works with empty path": {
+				path:           "",
+				expectedResult: "",
+				testSubId: "5",
+			},
+		}
 
-	for testName, tc := range tests {
-		t.Run(testName, func(t *testing.T) {
-			actualResult := expandTilde(tc.path)
-			assert.Equal(t, tc.expectedResult, actualResult)
-		})
-	}
-}
+		for testName, tc := range tests {
+			t.Run(testhelper.MakeSubtestName(configUnitTest1, tc.testSubId, testName), func(t *testing.T) {
+				actualResult := expandTilde(tc.path)
+				assert.Equal(t, tc.expectedResult, actualResult)
+			})
+		}
+	})
 
-func TestExpandTildes(t *testing.T) {
-	homeDirectory, err := os.UserHomeDir()
-	if err != nil {
-		t.Fatal("error determining home directory to use for testing: ", err)
-	}
+	t.Run(testhelper.MakeTestName(configUnitTest2, "Test expand tildes 2"), func(t *testing.T) {
+		homeDirectory, err := os.UserHomeDir()
+		if err != nil {
+			t.Fatal("error determining home directory to use for testing: ", err)
+		}
 
-	type testCase struct {
-		paths           []string
-		expectedResults []string
-	}
+		type testCase struct {
+			paths           []string
+			expectedResults []string
+			testSubId 	   string
+		}
 
-	tests := map[string]testCase{
-		"expands tildes": {
-			paths: []string{
-				filepath.Join("~/Desktop/folderA"),
-				filepath.Join("~/Documents/folderB"),
+		tests := map[string]testCase{
+			"expands tildes": {
+				paths: []string{
+					filepath.Join("~/Desktop/folderA"),
+					filepath.Join("~/Documents/folderB"),
+				},
+				expectedResults: []string{
+					filepath.Join(homeDirectory, "Desktop", "folderA"),
+					filepath.Join(homeDirectory, "Documents", "folderB"),
+				},
+				testSubId : "1",
 			},
-			expectedResults: []string{
-				filepath.Join(homeDirectory, "Desktop", "folderA"),
-				filepath.Join(homeDirectory, "Documents", "folderB"),
+			"expands tildes but not others": {
+				paths: []string{
+					filepath.Join("~/Desktop/folderA"),
+					filepath.Join("/TopDir/Documents/folderB"),
+				},
+				expectedResults: []string{
+					filepath.Join(homeDirectory, "Desktop", "folderA"),
+					filepath.Join("/TopDir", "Documents", "folderB"),
+				},
+				testSubId : "2",
 			},
-		},
-		"expands tildes but not others": {
-			paths: []string{
-				filepath.Join("~/Desktop/folderA"),
-				filepath.Join("/TopDir/Documents/folderB"),
+			"does not modify non-tilde repos": {
+				paths: []string{
+					filepath.Join("A", "B", "C"),
+					filepath.Join("D"),
+					filepath.Join("/srv", "shiny-server", "log.txt"),
+					"",
+					filepath.Join("..", "E", "F"),
+				},
+				expectedResults: []string{
+					filepath.Join("A", "B", "C"),
+					filepath.Join("D"),
+					filepath.Join("/srv", "shiny-server", "log.txt"),
+					"",
+					filepath.Join("..", "E", "F"),
+				},
+				testSubId : "3",
 			},
-			expectedResults: []string{
-				filepath.Join(homeDirectory, "Desktop", "folderA"),
-				filepath.Join("/TopDir", "Documents", "folderB"),
-			},
-		},
-		"does not modify non-tilde repos": {
-			paths: []string{
-				filepath.Join("A", "B", "C"),
-				filepath.Join("D"),
-				filepath.Join("/srv", "shiny-server", "log.txt"),
-				"",
-				filepath.Join("..", "E", "F"),
-			},
-			expectedResults: []string{
-				filepath.Join("A", "B", "C"),
-				filepath.Join("D"),
-				filepath.Join("/srv", "shiny-server", "log.txt"),
-				"",
-				filepath.Join("..", "E", "F"),
-			},
-		},
-	}
+		}
 
-	for testName, tc := range tests {
-		t.Run(testName, func(t *testing.T) {
-			actualResults := expandTildes(tc.paths)
-			assert.Equal(t, tc.expectedResults, actualResults)
-		})
-	}
-}
+		for testName, tc := range tests {
+			t.Run(testhelper.MakeSubtestName(configUnitTest1, string(tc.testSubId), testName), func(t *testing.T) {
+				actualResults := expandTildes(tc.paths)
+				assert.Equal(t, tc.expectedResults, actualResults)
+			})
+		}
+	})
 
-func TestExpandTildesRepo(t *testing.T) {
-	homeDirectory, err := os.UserHomeDir()
-	if err != nil {
-		t.Fatal("error determining home directory to use for testing: ", err)
-	}
+	t.Run(testhelper.MakeTestName(configUnitTest3, "Test expand tildes 3"), func(t *testing.T) {
+		homeDirectory, err := os.UserHomeDir()
+		if err != nil {
+			t.Fatal("error determining home directory to use for testing: ", err)
+		}
 
-	type testCase struct {
-		repos           []map[string]string
-		expectedResults []map[string]string
-	}
+		type testCase struct {
+			repos           []map[string]string
+			expectedResults []map[string]string
+			testSubId 		string
+		}
 
-	tests := map[string]testCase{
-		"expands tildes": {
-			repos: []map[string]string{
-				{"A": filepath.Join("~/Desktop/folderA")},
-				{"B": filepath.Join("~/Documents/folderB")},
+		tests := map[string]testCase{
+			"expands tildes": {
+				repos: []map[string]string{
+					{"A": filepath.Join("~/Desktop/folderA")},
+					{"B": filepath.Join("~/Documents/folderB")},
+				},
+				expectedResults: []map[string]string{
+					{"A": filepath.Join(homeDirectory, "Desktop/folderA")},
+					{"B": filepath.Join(homeDirectory, "Documents/folderB")},
+				},
+				testSubId : "1",
 			},
-			expectedResults: []map[string]string{
-				{"A": filepath.Join(homeDirectory, "Desktop/folderA")},
-				{"B": filepath.Join(homeDirectory, "Documents/folderB")},
+			"expands tildes but not others": {
+				repos: []map[string]string{
+					{"A": filepath.Join("~/Desktop/folderA")},
+					{"B": filepath.Join("/TopDir/Documents/folderB")},
+				},
+				expectedResults: []map[string]string{
+					{"A": filepath.Join(homeDirectory, "Desktop", "folderA")},
+					{"B": filepath.Join("/TopDir", "Documents", "folderB")},
+				},
+				testSubId : "2",
 			},
-		},
-		"expands tildes but not others": {
-			repos: []map[string]string{
-				{"A": filepath.Join("~/Desktop/folderA")},
-				{"B": filepath.Join("/TopDir/Documents/folderB")},
+			"does not modify non-tilde repos": {
+				repos: []map[string]string{
+					{"1": filepath.Join("A", "B", "C")},
+					{"2": filepath.Join("D")},
+					{"3": filepath.Join("/srv", "shiny-server", "log.txt")},
+					{"4": ""},
+					{"5": filepath.Join("..", "E", "F")},
+				},
+				expectedResults: []map[string]string{
+					{"1": filepath.Join("A", "B", "C")},
+					{"2": filepath.Join("D")},
+					{"3": filepath.Join("/srv", "shiny-server", "log.txt")},
+					{"4": ""},
+					{"5": filepath.Join("..", "E", "F")},
+				},
+				testSubId : "3",
 			},
-			expectedResults: []map[string]string{
-				{"A": filepath.Join(homeDirectory, "Desktop", "folderA")},
-				{"B": filepath.Join("/TopDir", "Documents", "folderB")},
-			},
-		},
-		"does not modify non-tilde repos": {
-			repos: []map[string]string{
-				{"1": filepath.Join("A", "B", "C")},
-				{"2": filepath.Join("D")},
-				{"3": filepath.Join("/srv", "shiny-server", "log.txt")},
-				{"4": ""},
-				{"5": filepath.Join("..", "E", "F")},
-			},
-			expectedResults: []map[string]string{
-				{"1": filepath.Join("A", "B", "C")},
-				{"2": filepath.Join("D")},
-				{"3": filepath.Join("/srv", "shiny-server", "log.txt")},
-				{"4": ""},
-				{"5": filepath.Join("..", "E", "F")},
-			},
-		},
-	}
+		}
 
-	for testName, tc := range tests {
-		t.Run(testName, func(t *testing.T) {
-			actualResults := expandTildesRepos(tc.repos)
-			assert.Equal(t, tc.expectedResults, actualResults)
-		})
-	}
+		for testName, tc := range tests {
+			t.Run(testhelper.MakeSubtestName(configUnitTest3, tc.testSubId, testName), func(t *testing.T) {
+				actualResults := expandTildesRepos(tc.repos)
+				assert.Equal(t, tc.expectedResults, actualResults)
+			})
+		}
+	})
+
 }
 
 func TestAddRemovePackage(t *testing.T) {
@@ -210,34 +240,40 @@ func TestAddRemovePackage(t *testing.T) {
 		},
 	}
 
-	appFS := afero.NewOsFs()
-	for _, tt := range tests {
-		t.Logf("Test filename: %s", tt.fileName)
-		fileName := filepath.Join(getIntegrationTestFolder(t, tt.fileName), "pkgr.yml")
-		viper.SetConfigFile(fileName)
+	t.Run(testhelper.MakeTestName(configUnitTest4, "packages can be added and removed"), func(t *testing.T) {
+		appFS := afero.NewOsFs()
+		for ttIndex, tt := range tests {
+			t.Run(testhelper.MakeSubtestName(configUnitTest4, fmt.Sprint(ttIndex), fmt.Sprintf("test filename: %s", tt.fileName)), func(t *testing.T) {
+				t.Logf("Test filename: %s", tt.fileName)
+				fileName := filepath.Join(getIntegrationTestFolder(t, tt.fileName), "pkgr.yml")
+				viper.SetConfigFile(fileName)
 
-		b, _ := afero.Exists(appFS, fileName)
-		assert.Equal(t, true, b, fmt.Sprintf("yml file not found:%s", fileName))
+				b, _ := afero.Exists(appFS, fileName)
+				assert.Equal(t, true, b, fmt.Sprintf("yml file not found:%s", fileName))
 
-		ymlStart, _ := afero.ReadFile(appFS, fileName)
+				ymlStart, _ := afero.ReadFile(appFS, fileName)
 
-		AddPackages([]string{tt.packageName})
-		b, _ = afero.FileContainsBytes(appFS, fileName, []byte(tt.packageName))
-		assert.Equal(t, true, b, fmt.Sprintf("Package not added:%s", fileName))
+				AddPackages([]string{tt.packageName})
+				b, _ = afero.FileContainsBytes(appFS, fileName, []byte(tt.packageName))
+				assert.Equal(t, true, b, fmt.Sprintf("Package not added:%s", fileName))
 
-		remove(fileName, tt.packageName)
-		b, _ = afero.FileContainsBytes(appFS, fileName, []byte(tt.packageName))
-		assert.Equal(t, false, b, fmt.Sprintf("Package not removed:%s", fileName))
+				remove(fileName, tt.packageName)
+				b, _ = afero.FileContainsBytes(appFS, fileName, []byte(tt.packageName))
+				assert.Equal(t, false, b, fmt.Sprintf("Package not removed:%s", fileName))
 
-		ymlEnd, _ := afero.ReadFile(appFS, fileName)
-		b = equal(ymlStart, ymlEnd, false)
-		assert.Equal(t, true, b, fmt.Sprintf("Start and End yml files differ:%s", fileName))
+				ymlEnd, _ := afero.ReadFile(appFS, fileName)
+				b = equal(ymlStart, ymlEnd, false)
+				assert.Equal(t, true, b, fmt.Sprintf("Start and End yml files differ:%s", fileName))
 
-		// put file back for Git
-		fi, _ := os.Stat(fileName)
-		err := afero.WriteFile(appFS, fileName, ymlStart, fi.Mode())
-		assert.Equal(t, nil, err, fmt.Sprintf("Error writing file back to original state:%s", fileName))
-	}
+				// put file back for Git
+				fi, _ := os.Stat(fileName)
+				err := afero.WriteFile(appFS, fileName, ymlStart, fi.Mode())
+				assert.Equal(t, nil, err, fmt.Sprintf("Error writing file back to original state:%s", fileName))
+			})
+		}
+	})
+
+
 }
 
 func TestAddPackageWithDuplicate(t *testing.T) {
@@ -255,8 +291,9 @@ func TestAddPackageWithDuplicate(t *testing.T) {
 
 	fs := afero.NewOsFs()
 
-	for _, testCase := range tests {
-		pkgrYamlContent := []byte(`
+	t.Run(testhelper.MakeTestName(configUnitTest5, "add package with duplicates"), func(t *testing.T) {
+		for _, testCase := range tests {
+			pkgrYamlContent := []byte(`
 Version: 1
 # top level packages
 Packages:
@@ -271,31 +308,34 @@ Repos:
 Library: "test-library"
 
 `)
-		configFilePath := filepath.Join("testsite", testCase.testFolder, "pkgr.yml")
-		_ = fs.Remove(configFilePath)
-		err := afero.WriteFile(fs, configFilePath, pkgrYamlContent, 0755)
-		if err != nil {
-			t.Error("Could not write test pkgr.yml file in " + testCase.testFolder)
-			t.Fail()
-		}
-		viper.SetConfigFile(configFilePath)
-		resultErr := AddPackages([]string{testCase.packageToAdd})
-		assert.Nil(t, resultErr, "failed to add package")
-
-		var actualResult PkgrConfig
-		postChangeConfig, err := afero.ReadFile(fs, configFilePath)
-		assert.Nil(t, err, "Could not read in updated yml file for folder "+testCase.testFolder)
-		err = yaml.Unmarshal(postChangeConfig, &actualResult)
-		assert.Nil(t, err, "Could not unmarshal updated yml file for folder "+testCase.testFolder)
-
-		pkgCount := 0
-		for _, p := range actualResult.Packages {
-			if p == testCase.packageToAdd {
-				pkgCount++
+			configFilePath := filepath.Join("testsite", testCase.testFolder, "pkgr.yml")
+			_ = fs.Remove(configFilePath)
+			err := afero.WriteFile(fs, configFilePath, pkgrYamlContent, 0755)
+			if err != nil {
+				t.Error("Could not write test pkgr.yml file in " + testCase.testFolder)
+				t.Fail()
 			}
+			viper.SetConfigFile(configFilePath)
+			resultErr := AddPackages([]string{testCase.packageToAdd})
+			assert.Nil(t, resultErr, "failed to add package")
+
+			var actualResult PkgrConfig
+			postChangeConfig, err := afero.ReadFile(fs, configFilePath)
+			assert.Nil(t, err, "Could not read in updated yml file for folder "+testCase.testFolder)
+			err = yaml.Unmarshal(postChangeConfig, &actualResult)
+			assert.Nil(t, err, "Could not unmarshal updated yml file for folder "+testCase.testFolder)
+
+			pkgCount := 0
+			for _, p := range actualResult.Packages {
+				if p == testCase.packageToAdd {
+					pkgCount++
+				}
+			}
+			assert.Equal(t, 1, pkgCount, fmt.Sprintf("expected to find exactly one occurence of package %s in %s, found %d", testCase.packageToAdd, configFilePath, pkgCount))
 		}
-		assert.Equal(t, 1, pkgCount, fmt.Sprintf("expected to find exactly one occurence of package %s in %s, found %d", testCase.packageToAdd, configFilePath, pkgCount))
-	}
+	})
+
+
 
 }
 
@@ -321,8 +361,9 @@ func TestAddPackageLockfileConfig(t *testing.T) {
 
 	fs := afero.NewOsFs()
 
-	for _, testCase := range tests {
-		pkgrYamlContent := []byte(fmt.Sprintf(`
+	t.Run(testhelper.MakeTestName(configUnitTest6, "can add packages in config with lockfile"), func(t *testing.T) {
+		for _, testCase := range tests {
+			pkgrYamlContent := []byte(fmt.Sprintf(`
 Version: 1
 
 Packages:
@@ -333,27 +374,30 @@ Repos:
 Lockfile:
   Type: %s
 `, testCase.lockfileType))
-		configFilePath := filepath.Join("testsite", testCase.testFolder, "pkgr.yml")
-		_ = fs.Remove(configFilePath)
-		err := afero.WriteFile(fs, configFilePath, pkgrYamlContent, 0755)
-		if err != nil {
-			t.Error("Could not write test pkgr.yml file in " + testCase.testFolder)
-			t.Fail()
+			configFilePath := filepath.Join("testsite", testCase.testFolder, "pkgr.yml")
+			_ = fs.Remove(configFilePath)
+			err := afero.WriteFile(fs, configFilePath, pkgrYamlContent, 0755)
+			if err != nil {
+				t.Error("Could not write test pkgr.yml file in " + testCase.testFolder)
+				t.Fail()
+			}
+			viper.SetConfigFile(configFilePath)
+			resultErr := AddPackages([]string{testCase.packageToAdd})
+			assert.Nil(t, resultErr, "failed to add package")
+
+			// Find packageToRemove in yml file under Packages:
+			var actualResult PkgrConfig
+			postChangeConfig, err := afero.ReadFile(fs, configFilePath)
+			assert.Nil(t, err, "Could not read in updated yml file for folder "+testCase.testFolder)
+			err = yaml.Unmarshal(postChangeConfig, &actualResult)
+			assert.Nil(t, err, "Could not unmarshal updated yml file for folder "+testCase.testFolder)
+
+			pkgWasAdded := funk.Contains(actualResult.Packages, testCase.packageToAdd)
+			assert.True(t, pkgWasAdded, fmt.Sprintf("package not found after add command: %s", testCase.packageToAdd))
 		}
-		viper.SetConfigFile(configFilePath)
-		resultErr := AddPackages([]string{testCase.packageToAdd})
-		assert.Nil(t, resultErr, "failed to add package")
+	})
 
-		// Find packageToRemove in yml file under Packages:
-		var actualResult PkgrConfig
-		postChangeConfig, err := afero.ReadFile(fs, configFilePath)
-		assert.Nil(t, err, "Could not read in updated yml file for folder "+testCase.testFolder)
-		err = yaml.Unmarshal(postChangeConfig, &actualResult)
-		assert.Nil(t, err, "Could not unmarshal updated yml file for folder "+testCase.testFolder)
 
-		pkgWasAdded := funk.Contains(actualResult.Packages, testCase.packageToAdd)
-		assert.True(t, pkgWasAdded, fmt.Sprintf("package not found after add command: %s", testCase.packageToAdd))
-	}
 
 }
 
@@ -379,8 +423,9 @@ func TestRemovePackageLockfileConfig(t *testing.T) {
 
 	fs := afero.NewOsFs()
 
-	for _, testCase := range tests {
-		pkgrYamlContent := []byte(fmt.Sprintf(`
+	t.Run(testhelper.MakeTestName(configUnitTest7, "can remove packages in config with lockfile"), func(t *testing.T) {
+		for _, testCase := range tests {
+			pkgrYamlContent := []byte(fmt.Sprintf(`
 Version: 1
 
 Packages:
@@ -392,29 +437,30 @@ Repos:
 Lockfile:
   Type: %s
 `,
-			testCase.packageToRemove, testCase.lockfileType))
+				testCase.packageToRemove, testCase.lockfileType))
 
-		configFilePath := filepath.Join("testsite", testCase.testFolder, "pkgr.yml")
-		_ = fs.Remove(configFilePath)
-		err := afero.WriteFile(fs, configFilePath, pkgrYamlContent, 0755)
-		if err != nil {
-			t.Error("Could not write test pkgr.yml file in " + testCase.testFolder)
-			t.Fail()
+			configFilePath := filepath.Join("testsite", testCase.testFolder, "pkgr.yml")
+			_ = fs.Remove(configFilePath)
+			err := afero.WriteFile(fs, configFilePath, pkgrYamlContent, 0755)
+			if err != nil {
+				t.Error("Could not write test pkgr.yml file in " + testCase.testFolder)
+				t.Fail()
+			}
+			resultErr := remove(configFilePath, testCase.packageToRemove)
+			assert.Nil(t, resultErr, "failed to add package")
+
+			// Verify packageToRemove is not in yml file.
+			var actualResult PkgrConfig
+			postChangeConfig, err := afero.ReadFile(fs, configFilePath)
+			assert.Nil(t, err, "Could not read in updated yml file for folder "+testCase.testFolder)
+			err = yaml.Unmarshal(postChangeConfig, &actualResult)
+			assert.Nil(t, err, "Could not unmarshal updated yml file for folder "+testCase.testFolder)
+
+			pkgWasRemoved := !funk.Contains(actualResult.Packages, testCase.packageToRemove)
+
+			assert.True(t, pkgWasRemoved, fmt.Sprintf("package not excluded after add command: %s", testCase.packageToRemove))
 		}
-		resultErr := remove(configFilePath, testCase.packageToRemove)
-		assert.Nil(t, resultErr, "failed to add package")
-
-		// Verify packageToRemove is not in yml file.
-		var actualResult PkgrConfig
-		postChangeConfig, err := afero.ReadFile(fs, configFilePath)
-		assert.Nil(t, err, "Could not read in updated yml file for folder "+testCase.testFolder)
-		err = yaml.Unmarshal(postChangeConfig, &actualResult)
-		assert.Nil(t, err, "Could not unmarshal updated yml file for folder "+testCase.testFolder)
-
-		pkgWasRemoved := !funk.Contains(actualResult.Packages, testCase.packageToRemove)
-
-		assert.True(t, pkgWasRemoved, fmt.Sprintf("package not excluded after add command: %s", testCase.packageToRemove))
-	}
+	})
 
 }
 
@@ -936,7 +982,7 @@ func TestNewConfigSimple(t *testing.T) {
 	assert.Empty(t, cfg.Tarballs)
 	assert.Equal(t, "R", filepath.Base(cfg.RPath)) // Just make sure the path ends in R executable. May not work on Windows.
 	assert.Equal(t, LogConfig{}, cfg.Logging)
-	assert.Equal(t, false, cfg.Update)
+	assert.Equal(t, false, cfg.NoUpdate)
 	assert.Equal(t, false, cfg.Suggests)
 	assert.Empty(t, cfg.Customizations)
 	assert.Equal(t, []map[string]string{{"CRAN": "https://cran.microsoft.com/snapshot/2020-05-01"}}, cfg.Repos)
@@ -973,7 +1019,7 @@ func TestNewConfigNonDefaults(t *testing.T) {
 		Level:     "debug",
 		Overwrite: true,
 	}, cfg.Logging)
-	assert.Equal(t, true, cfg.Update)
+	assert.Equal(t, true, cfg.NoUpdate)
 	assert.Equal(t, true, cfg.Suggests)
 	assert.Empty(t, cfg.Customizations) // Customizations are tested elsewhere.
 	assert.Equal(t, []map[string]string{{"CRAN": "https://cran.microsoft.com/snapshot/2020-05-01"}}, cfg.Repos)
@@ -1047,11 +1093,8 @@ func getTestFolder(t *testing.T, folder string) string {
 	return testFolder
 }
 
-// NOTE: This should NOT be used, but I'm creating this function as a patch while we decide the best way to test these things.
-// It is only acceptable to use this function for tests that access ONLY the pkgr.yml files in the integration tests in
-// a read-only capacity.
 func getIntegrationTestFolder(t *testing.T, folder string) string {
 	_, filename, _, _ := runtime.Caller(0)
 	sa := strings.SplitAfter(filename, "/pkgr/")
-	return filepath.Join(filepath.Dir(sa[0]), "integration_tests", folder)
+	return filepath.Join(filepath.Dir(sa[0]), "configlib", "testsite", "integration_test_archive", folder)
 }

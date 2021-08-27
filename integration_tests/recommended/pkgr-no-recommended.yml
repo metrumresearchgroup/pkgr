@@ -5,14 +5,14 @@ Packages:
 NoRecommended: true
 # any repositories, order matters
 Repos:
-  - miniCRAN: "../minicran"
+  - LOCALREPO: "localrepo"
   - MPN: "https://mpn.metworx.com/snapshots/stable/2020-02-18"
 
 Library: "test-library"
 
 Customizations:
     Repos:
-      - miniCRAN:
+      - LOCALREPO:
             Type: source
       - MPN:
             Type: source

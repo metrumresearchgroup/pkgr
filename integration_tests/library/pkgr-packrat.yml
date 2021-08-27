@@ -1,0 +1,15 @@
+Version: 1
+
+Packages:
+  - R6
+
+Repos:
+  - MPN: https://mpn.metworx.com/snapshots/stable/2021-06-20
+
+Lockfile:
+  Type: packrat
+
+Customizations:
+  Repos:
+      - MPN:
+          Type: source

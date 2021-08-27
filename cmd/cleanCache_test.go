@@ -92,7 +92,7 @@ func (suite *CleanCacheSuite) TestCleanCache_DeletesSpecificRepos() {
 	repo1, _ := filepath.Abs(filepath.Join(suite.FilePrefix, "cache", "CRAN"))
 	repo2, _ := filepath.Abs(filepath.Join(suite.FilePrefix, "cache", "CRAN-Micro"))
 	repo3, _ := filepath.Abs(filepath.Join(suite.FilePrefix, "cache", "r_validated"))
-	repo4, _ := filepath.Abs(filepath.Join(suite.FilePrefix, "cache", "empty_repo"))
+	//repo4, _ := filepath.Abs(filepath.Join(suite.FilePrefix, "cache", "empty_repo"))
 
 	actual1 := deleteCacheSubfolders(suite.FileSystemOs, reposFixture, "binary", cacheDirectory)
 	actual2 := deleteCacheSubfolders(suite.FileSystemOs, reposFixture, "src", cacheDirectory)
@@ -102,6 +102,5 @@ func (suite *CleanCacheSuite) TestCleanCache_DeletesSpecificRepos() {
 	suite.False(afero.Exists(suite.FileSystemOs, repo1)) //CRAN should be deleted
 	suite.True(afero.Exists(suite.FileSystemOs, repo2))
 	suite.False(afero.Exists(suite.FileSystemOs, repo3)) //r_validated should be deleted
-	suite.True(afero.Exists(suite.FileSystemOs, repo4))  //Empty repo should be ignored in this case
 
 }

@@ -1,0 +1,16 @@
+Version: 1
+
+Packages:
+  - R6
+
+Repos:
+  - MPN: https://mpn.metworx.com/snapshots/stable/2021-06-20
+
+Library: test-library
+
+Strict: True
+
+Customizations:
+  Repos:
+      - MPN:
+          Type: source

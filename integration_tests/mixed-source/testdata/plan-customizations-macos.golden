@@ -1,0 +1,6 @@
+msg: 'package repository set', pkg: 'R6', version: '2.5.0', repo: 'MPNBinary', relationship: user_defined', type: binary
+msg: 'package repository set', pkg: 'RUnit', version: '0.4.32', repo: 'MPNBinary', relationship: dependency', type: binary
+msg: 'package repository set', pkg: 'digest', version: '0.6.27', repo: 'MPNBinary', relationship: user_defined', type: source
+msg: 'package repository set', pkg: 'ellipsis', version: '0.3.2', repo: 'MPNBinary', relationship: user_defined', type: binary
+msg: 'package repository set', pkg: 'rlang', version: '0.4.11', repo: 'MPNBinary', relationship: dependency', type: binary
+msg: 'package repository set', pkg: 'yaml', version: '2.2.1', repo: 'MPNSource', relationship: user_defined', type: binary

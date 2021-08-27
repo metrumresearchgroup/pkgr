@@ -42,21 +42,21 @@ type Lockfile struct {
 type PkgrConfig struct {
 	Version        int                 `yaml:"Version,omitempty"`
 	Packages       []string            `yaml:"Packages,omitempty"`
-	IgnorePackages   []string          `mapstructure:"ignore_packages,yaml:"ignore_packages,omitempty"`
+	IgnorePackages   []string          `yaml:"IgnorePackages,omitempty"`
 	Tarballs       []string            `yaml:"Tarballs,omitempty"`
 	Descriptions   []string            `yaml:"Descriptions,omitempty"`
 	Suggests       bool                `yaml:"Suggests,omitempty"`
 	NoRecommended  bool                `yaml:"NoRecommended",omitempty"`
 	Repos          []map[string]string `yaml:"Repos,omitempty"`
-	NoRollback     bool                `yaml:"no_rollback,omitempty" mapstructure:"no_rollback,omitempty"`
-	Library        string              `yaml:"Library,omitempty" mapstructure:"library,omitempty"`
+	NoRollback     bool                `yaml:"NoRollback,omitempty"`
+	Library        string              `yaml:"Library,omitempty"`
 	LibPaths       []string            `yaml:"LibPaths,omitempty"`
 	Customizations Customizations      `yaml:"Customizations,omitempty"`
 	Threads        int                 `yaml:"Threads,omitempty"`
-	RPath          string              `yaml:"RPath,omitempty" mapstructure:"rpath,omitempty"`
+	RPath          string              `yaml:"RPath,omitempty"`
 	Cache          string              `yaml:"Cache,omitempty"`
 	Logging        LogConfig           `yaml:"Logging,omitempty"`
-	Update         bool                `yaml:"Update,omitempty"`
+	NoUpdate         bool              `yaml:"NoUpdate,omitempty"`
 	Lockfile       Lockfile            `yaml:"Lockfile,omitempty"`
 	Strict         bool                `yaml:"Strict,omitempty"`
 	NoSecure       bool                `yaml:"NoSecure,omitempty"`

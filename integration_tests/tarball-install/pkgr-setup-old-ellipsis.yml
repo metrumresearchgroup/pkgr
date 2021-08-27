@@ -1,0 +1,18 @@
+Version: 1
+# top level packages
+
+Packages:
+  - ellipsis
+
+# any repositories, order matters
+Repos:
+  - MPN_Older: "https://mpn.metworx.com/snapshots/stable/2021-04-15"
+
+Cache: test-cache
+
+Library: "test-library"
+
+Customizations:
+  Repos:
+    - MPN_Older:
+        Type: source

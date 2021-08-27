@@ -1,0 +1,13 @@
+Version: 1
+# top level packages
+Packages:
+  - R6
+  - pillar
+
+Repos:
+  - CRAN: "https://mpn.metworx.com/snapshots/stable/2021-06-20"
+
+Library: "test-library"
+Cache: "test-cache"
+
+Threads: 4

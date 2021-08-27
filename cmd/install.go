@@ -75,7 +75,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if cfg.Update { //} && cfg.Rollback { We actually need this to run either way, as the "prepare packages for update" operation moves the current installations to __OLD__ folders, thus allowing updated versions to be installed.
+	if !cfg.NoUpdate { //} && cfg.Rollback { We actually need this to run either way, as the "prepare packages for update" operation moves the current installations to __OLD__ folders, thus allowing updated versions to be installed.
 		log.Info("update argument passed. staging packages for update...")
 		rollbackPlan.PreparePackagesForUpdate(fs, cfg.Library)
 	}

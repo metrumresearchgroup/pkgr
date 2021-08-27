@@ -15,6 +15,10 @@ func setupMultiRepoTest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to remove test library at beginning of test, %s", err)
 	}
+	err = os.RemoveAll("test-cache")
+	if err != nil {
+		t.Fatalf("failed to remove test cache at beginning of test, %s", err)
+	}
 }
 
 // Test IDs
@@ -28,6 +32,7 @@ const(
 
 // Golden file names
 const (
+	multiRepoPlan = "multi-repo-plan"
 	multiRepoInstallation = "multi-repo-installed-packages"
 )
 
@@ -38,32 +43,20 @@ func TestMultiRepoInstall(t *testing.T) {
 		ctx := context.TODO()
 		planCmd := command.New()
 
-		outputBytes, err := planCmd.Run(ctx, "pkgr", "plan", "--loglevel=debug", "--logjson")
+		capture, err := planCmd.Run(ctx, "pkgr", "plan", "--loglevel=debug", "--logjson")
 		if err != nil {
 			t.Fatalf("error occurred when installing packages: %s", err)
 		}
-		output := string(outputBytes.Output)
+
+		pkgRepoSetLogs := CollectPkgRepoSetLogs(t, capture)
+
+		// This line is in here to explicitly test the order repositories are listed in matters.
+		// LOCALREPO has R6, 2.4.1, REMOTEREPO has 2.5.0
+		assert.True(t, pkgRepoSetLogs.Contains("R6", "2.4.1", "LOCALREPO", "user_defined"), "expected R6 2.4.1 to be installed because repo containing this version was listed first.")
 
 		// Check repositories set correctly
-		//# R6 -- Install from local. Used to ensure a user package can be installed from local, ensure repo-order is respected when installing user packages.
-		//# ellipsis -- Install from remote. Used to ensure a user package can be installed from remote. All of this package's deps will come from remote as well.
-		//# rlang Install from remote. Used to ensure a dependency package can be installed from remote (dep. of ellipsis)
-		//# openssl -- Install from remote. Used to ensure that a user package can be installed from remote
-		//# askpass -- Install from local. Used to ensure that repo order is respected when installing dependencies (askpass is a dependency of openssl. Openssl is installed from second repo, askpass should be installed from first repo, i.e. local.)
-		//# sys -- Install from local. Used to ensure a dependency package can be installed from local (dep. of askpass).
-		r6Regex := `\{"level":"debug","msg":"package repository set","pkg":"R6","relationship":"user_defined","repo":"LOCALREPO","type":1,"version":"2.5.0"\}`
-		ellipsisRegex := `\{"level":"debug","msg":"package repository set","pkg":"ellipsis","relationship":"user_defined","repo":"REMOTEREPO","type":1,"version":"0.3.2"\}`
-		rlangRegex := `\{"level":"debug","msg":"package repository set","pkg":"rlang","relationship":"dependency","repo":"REMOTEREPO","type":1,"version":"0.4.11"\}`
-		opensslRegex := `\{"level":"debug","msg":"package repository set","pkg":"openssl","relationship":"user_defined","repo":"REMOTEREPO","type":1,"version":"1.4.4"\}`
-		askpassRegex := `\{"level":"debug","msg":"package repository set","pkg":"askpass","relationship":"dependency","repo":"LOCALREPO","type":1,"version":"1.1"\}`
-		sysRegex := `\{"level":"debug","msg":"package repository set","pkg":"sys","relationship":"dependency","repo":"LOCALREPO","type":1,"version":"3.4"\}`
-
-		assert.Regexp(t, r6Regex, output)
-		assert.Regexp(t, ellipsisRegex, output)
-		assert.Regexp(t, rlangRegex, output)
-		assert.Regexp(t, opensslRegex, output)
-		assert.Regexp(t, askpassRegex, output)
-		assert.Regexp(t, sysRegex, output)
+		g := goldie.New(t)
+		g.Assert(t, multiRepoPlan, pkgRepoSetLogs.ToBytes())
 	})
 
 	t.Run(MakeTestName(multiRepoE2ETest2, "pkgr install can install packages from multiple repositories"), func(t *testing.T) {

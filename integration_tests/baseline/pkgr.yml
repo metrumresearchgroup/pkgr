@@ -9,3 +9,5 @@ Repos:
 
 Library: "test-library"
 Cache: "test-cache"
+
+Threads: 4

@@ -59,7 +59,7 @@ func InitGlobalConfig(libraryPath, localRepo string, update, suggests bool, inst
 
 	cfg = configlib.PkgrConfig{
 		Threads:  5,
-		Update:   update,
+		NoUpdate:   !update,
 		NoRollback: false,
 		Strict:   false,
 		Packages: packages,
@@ -292,8 +292,8 @@ func TestInstallWithoutRollback(t *testing.T) {
 	// Create a fake config (will work for commands that don't use viper.Get[...])
 	cfg = configlib.PkgrConfig{
 		Threads:  5,
-		Update:   true,
-		Rollback: false,
+		NoUpdate:   false,
+		NoRollback: true,
 		Strict:   false,
 		Packages: []string{"xml2", "crayon", "R6", "Rcpp", "crayon", "fansi", "flatxml"},
 		Library:  testLibrary,

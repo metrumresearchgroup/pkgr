@@ -1,0 +1,28 @@
+Version: 1
+Packages:
+  - R6
+  - ellipsis # depends on rlang
+  - digest
+  - yaml # suggests RUnit
+Repos:
+  - MPNBinary: https://mpn.metworx.com/snapshots/stable/2021-05-16 # I had to change this one to something more recent because the repo that has linux binaries doesn't have Mac binaries for R4.0.
+  - MPNSource: https://mpn.metworx.com/snapshots/stable/2021-06-20
+
+# this library path is customized for ubuntu linux systems like metworx
+# change it if you need to run this on a separate machine type
+Library: test-library
+
+Cache: test-cache
+
+Customizations:
+  Repos:
+    - MPNBinary:
+        Type: binary
+    - MPNSource:
+        Type: source
+  Packages:
+    - digest:
+        Type: source
+    - yaml:
+        Suggests: true
+        Repo: MPNSource

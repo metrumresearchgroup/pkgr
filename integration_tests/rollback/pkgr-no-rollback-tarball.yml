@@ -16,4 +16,4 @@ Library: "test-library"
 Cache: "test-cache"
 
 # WHAT IS BEING TESTED IN CONFIG
-no_rollback: true
+NoRollback: true

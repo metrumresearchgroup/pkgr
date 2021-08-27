@@ -1,0 +1,6 @@
+Package: survivalrec
+Version: 0.0.1
+Imports: magrittr, survival
+License: MIT + file LICENSE
+MD5sum: dd8264a46b86bf8f3bb7ffed0b4ce229
+NeedsCompilation: no
