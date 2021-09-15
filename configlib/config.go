@@ -8,13 +8,14 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/metrumresearchgroup/pkgr/cran"
-	"github.com/metrumresearchgroup/pkgr/gpsr"
-	"github.com/metrumresearchgroup/pkgr/rcmd"
 	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"github.com/spf13/viper"
+
+	"github.com/metrumresearchgroup/pkgr/cran"
+	"github.com/metrumresearchgroup/pkgr/gpsr"
+	"github.com/metrumresearchgroup/pkgr/rcmd"
 )
 
 // packrat uses R.version platform, which is not the same as the Platform
@@ -124,11 +125,11 @@ func loadConfigFromPath(configFilename string) error {
 	viper.SetEnvPrefix("pkgr")
 	err := viper.BindEnv("rpath")
 	if err != nil {
-		log.Fatalf("error binding env: %s\n",  err)
+		log.Fatalf("error binding env: %s\n", err)
 	}
 	err = viper.BindEnv("library")
 	if err != nil {
-		log.Fatalf("error binding env: %s\n",  err)
+		log.Fatalf("error binding env: %s\n", err)
 	}
 	configFilename, _ = homedir.Expand(filepath.Clean(configFilename))
 	viper.SetConfigFile(configFilename)
@@ -162,7 +163,8 @@ func loadDefaultSettings() {
 	viper.SetDefault("loglevel", "info")
 	// path to R on system, defaults to R in path
 	viper.SetDefault("rpath", "R")
-	viper.SetDefault("threads", runtime.NumCPU())
+	// setting this to GOMAXPROCS(0) because NumCPU() won't work well with the scheduler.
+	viper.SetDefault("threads", runtime.GOMAXPROCS(0))
 }
 
 // IsCustomizationSet ...
