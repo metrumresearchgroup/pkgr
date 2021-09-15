@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/metrumresearchgroup/pkgr/cmd"
+
+	_ "go.uber.org/automaxprocs"
 )
 
 // if want to generate docs
