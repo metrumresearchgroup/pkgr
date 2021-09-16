@@ -7,8 +7,6 @@ import (
 	"go.uber.org/automaxprocs/maxprocs"
 
 	"github.com/metrumresearchgroup/pkgr/cmd"
-
-	_ "go.uber.org/automaxprocs/maxprocs"
 )
 
 // if want to generate docs
