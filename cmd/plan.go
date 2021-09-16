@@ -16,10 +16,11 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/afero"
-	"github.com/thoas/go-funk"
 	"path/filepath"
 	"runtime"
+
+	"github.com/spf13/afero"
+	"github.com/thoas/go-funk"
 
 	"github.com/metrumresearchgroup/pkgr/rollback"
 
@@ -33,13 +34,14 @@ import (
 
 	"github.com/metrumresearchgroup/pkgr/rcmd"
 
-	"github.com/metrumresearchgroup/pkgr/configlib"
-	"github.com/metrumresearchgroup/pkgr/cran"
-	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/sajari/fuzzy"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/metrumresearchgroup/pkgr/configlib"
+	"github.com/metrumresearchgroup/pkgr/cran"
+	"github.com/metrumresearchgroup/pkgr/gpsr"
 )
 
 // planCmd shows the install plan
@@ -59,7 +61,7 @@ func init() {
 }
 
 func plan(cmd *cobra.Command, args []string) error {
-	log.Infof("Installation would launch %v workers\n", getWorkerCount(cfg.Threads, runtime.NumCPU()))
+	log.Infof("Installation would launch %v workers\n", getWorkerCount(cfg.Threads, runtime.GOMAXPROCS(0)))
 	rs := rcmd.NewRSettings(cfg.RPath)
 	rVersion := rcmd.GetRVersion(&rs)
 	log.Infoln("R Version " + rVersion.ToFullString())
@@ -167,7 +169,6 @@ func planInstall(rv cran.RVersion, exitOnMissing bool) (*cran.PkgNexus, gpsr.Ins
 	}
 	log.Infoln("Package installation cache directory: ", userCache(cfg.Cache))
 	log.Infoln("Database cache directory: ", filepath.Dir(pkgNexus.Db[0].GetRepoDbCacheFilePath(rv.ToFullString())))
-
 
 	dependencyConfigurations := gpsr.NewDefaultInstallDeps()
 	dependencyConfigurations.Default.NoRecommended = cfg.NoRecommended
