@@ -16,18 +16,20 @@ package cmd
 
 import (
 	"errors"
-	"github.com/metrumresearchgroup/pkgr/gpsr"
-	"github.com/metrumresearchgroup/pkgr/rollback"
 	"path/filepath"
 	"runtime"
 	"time"
+
+	"github.com/metrumresearchgroup/pkgr/gpsr"
+	"github.com/metrumresearchgroup/pkgr/rollback"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 
 	"github.com/metrumresearchgroup/pkgr/configlib"
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/logger"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 )
 
 // installCmd represents the R CMD install command
@@ -75,31 +77,34 @@ func rInstall(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if !cfg.NoUpdate { //} && cfg.Rollback { We actually need this to run either way, as the "prepare packages for update" operation moves the current installations to __OLD__ folders, thus allowing updated versions to be installed.
+	if !cfg.NoUpdate { // } && cfg.Rollback { We actually need this to run either way, as the "prepare packages for update" operation moves the current installations to __OLD__ folders, thus allowing updated versions to be installed.
 		log.Info("update argument passed. staging packages for update...")
 		rollbackPlan.PreparePackagesForUpdate(fs, cfg.Library)
 	}
 	rollbackPlan.PrepareAdditionalPackagesForOverwrite(fs, cfg.Library)
 
 	// Create a list of package download objects using our install plan and our "nexus" object.
-	//pkgsToDownload := getPackagesToDownload(installPlan, pkgNexus)
+	// pkgsToDownload := getPackagesToDownload(installPlan, pkgNexus)
 
 	// Retrieve a cache to store any packages we need to download for the install.
 	packageCache := rcmd.NewPackageCache(userCache(cfg.Cache), false)
 
-	//Create a pkgMap object, which helps us with parallel downloads (?)
+	// Create a pkgMap object, which helps us with parallel downloads (?)
 	pkgMap, err := cran.DownloadPackages(fs, installPlan.PackageDownloads, packageCache.BaseDir, rVersion, cfg.NoSecure)
 	if err != nil {
 		log.Fatalf("error downloading packages: %s", err)
 	}
 
-	//Set the arguments to be passed in to the R Package Installer
+	// Set the arguments to be passed in to the R Package Installer
 	pkgInstallArgs := rcmd.NewDefaultInstallArgs()
 	pkgInstallArgs.Library, _ = filepath.Abs(cfg.Library)
 
 	// Get the number of workers.
-	// Use number of user defined threads if set. Otherwise, use the number of CPUs (up to 8).
-	nworkers := getWorkerCount(cfg.Threads, runtime.NumCPU())
+	// Use number of user defined threads if set. Otherwise, use the
+	// quota-adjusted GOMAXPROC (up to 8).
+
+	// Source this from GOMAXPROCS() instead of NumCPU(), to respect quota.
+	nworkers := getWorkerCount(cfg.Threads, runtime.GOMAXPROCS(0))
 
 	// Process any customizations set in the yaml config file for individual packages.
 	// Set ENV values in rSettings
@@ -126,7 +131,7 @@ func rInstall(cmd *cobra.Command, args []string) error {
 	log.WithField("duration", time.Since(startTime)).Info("total package install time")
 
 	if !cfg.NoRollback {
-		//If anything went wrong during the installation, rollback the environment.
+		// If anything went wrong during the installation, rollback the environment.
 		if err != nil || errInstallAdditional != nil {
 			errRollback := rollback.RollbackPackageEnvironment(fs, rollbackPlan)
 			if errRollback != nil {
@@ -243,10 +248,10 @@ func installAdditionalPackages(installPlan gpsr.InstallPlan, rSettings rcmd.RSet
 			errorAggregator = append(errorAggregator, err)
 		} else {
 			logFields := log.Fields{
-				"pkg":         pkgName,
-				"source":      additionalPkg.OriginPath,
+				"pkg":          pkgName,
+				"source":       additionalPkg.OriginPath,
 				"install_type": additionalPkg.Type,
-				"remaining":   toInstallCount,
+				"remaining":    toInstallCount,
 			}
 			if log.GetLevel() == log.TraceLevel {
 				logFields["output"] = res.Output
@@ -263,7 +268,7 @@ func installAdditionalPackages(installPlan gpsr.InstallPlan, rSettings rcmd.RSet
 }
 
 func initInstallLog() {
-	//Init install-specific log, if one has been set. This overwrites the default log.
+	// Init install-specific log, if one has been set. This overwrites the default log.
 	if cfg.Logging.Install != "" {
 		logger.AddLogFile(cfg.Logging.Install, cfg.Logging.Overwrite)
 	} else {
