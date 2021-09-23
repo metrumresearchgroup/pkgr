@@ -93,7 +93,6 @@ func TestInstall2(t *testing.T) {
 
 		// Execute
 		installCmd := command.New("pkgr", "install", "--config=pkgr.yml", "--logjson")
-		installCmd.Dir = "Rscripts"
 
 		capture, err := installCmd.CombinedOutput()
 		if err != nil {
