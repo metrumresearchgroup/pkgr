@@ -5,7 +5,7 @@ require (
 	github.com/dpastoor/goutils v1.2.0
 	github.com/fatih/structs v1.1.0
 	github.com/fatih/structtag v1.2.0
-	github.com/metrumresearchgroup/command v0.0.2-0.20210716145028-d3194efebb33
+	github.com/metrumresearchgroup/command v0.1.0
 	github.com/mholt/archiver/v3 v3.5.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/sajari/fuzzy v1.0.0
@@ -18,7 +18,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/thoas/go-funk v0.8.0
 	github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca
-	go.uber.org/automaxprocs v1.4.0 // indirect
+	go.uber.org/automaxprocs v1.4.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	pault.ag/go/debian v0.0.0-20180722221659-90aeb542bd40

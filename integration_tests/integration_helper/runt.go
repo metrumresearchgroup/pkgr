@@ -1,7 +1,6 @@
 package integration_helper
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -26,16 +25,18 @@ func RunTest(tgt targets.Target) error {
 		return err
 	}
 
-	r, err := command.New(command.WithDir(dir)).Run(context.Background(), "go", "test", "-json", ".")
+	testCmd := command.New("go", "test", "-json", ".")
+	testCmd.Dir = dir
+	r, err := testCmd.CombinedOutput()
 
 	//goland:noinspection GoNilness
-	fmt.Println(r.Output)
+	fmt.Println(r)
 
 	if err != nil {
 		return err
 	}
 
-	if strings.Contains(string(r.Output), "FAIL:") {
+	if strings.Contains(string(r), "FAIL:") {
 		return errors.New("found FAIL message")
 	}
 

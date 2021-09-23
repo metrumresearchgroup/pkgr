@@ -1,32 +1,33 @@
 package testhelper
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/metrumresearchgroup/command"
-	"github.com/metrumresearchgroup/pkgr/cran"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"regexp"
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/metrumresearchgroup/command"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/metrumresearchgroup/pkgr/cran"
 )
 
 func MakeTestName(testId, testName string) string {
-	return(fmt.Sprintf("[%s] %s", testId, testName))
+	return (fmt.Sprintf("[%s] %s", testId, testName))
 }
 
 func MakeSubtestName(testId, subtestId, testName string) string {
-	return(fmt.Sprintf("[%s-%s] %s", testId, subtestId, testName))
+	return (fmt.Sprintf("[%s-%s] %s", testId, subtestId, testName))
 }
 
 func SetupEndToEndWithInstall(t *testing.T, pkgrConfig, testLibrary string) {
 	DeleteTestFolder(t, testLibrary)
-	ctx := context.TODO()
-	installCmd := command.New()
-	_, err := installCmd.Run(ctx, "pkgr", "install", fmt.Sprintf("--config=%s", pkgrConfig))
+
+	installCmd := command.New("pkgr", "install", fmt.Sprintf("--config=%s", pkgrConfig))
+	err := installCmd.Run()
 	if err != nil {
 		t.Fatalf("could not install baseline packages to '%s' with config file '%s'. Error: %s", testLibrary, pkgrConfig, err)
 	}
@@ -56,8 +57,8 @@ type PkgrJsonLogOutput struct {
 	Logs []string
 }
 
-func (lo PkgrJsonLogOutput) Collect(results command.Capture) {
-	stringOutput := string(results.Output)
+func (lo PkgrJsonLogOutput) Collect(results []byte) {
+	stringOutput := string(results)
 	lo.Logs = strings.Split(stringOutput, "\n")
 }
 
@@ -84,15 +85,14 @@ func (lo PkgrJsonLogOutput) Contains(search string) ([]string, bool, error) {
 	return matched, found, nil
 }
 
-
 // Helper objects  for "package repository set" logs. ------------------------------------------------------------------
 type PkgRepoSetMsg struct {
-	Msg string `json:"msg,omitempty"`
-	Pkg string `json:"pkg,omitempty"`
+	Msg          string `json:"msg,omitempty"`
+	Pkg          string `json:"pkg,omitempty"`
 	Relationship string `json:"relationship,omitempty"`
-	Repo string `json:"repo,omitempty"`
-	Version string `json:"version,omitempty"`
-	Type int `json:"type,omitempty"`
+	Repo         string `json:"repo,omitempty"`
+	Version      string `json:"version,omitempty"`
+	Type         int    `json:"type,omitempty"`
 }
 
 func (prsm PkgRepoSetMsg) ToString() string {
@@ -171,7 +171,7 @@ func ComparePkgRepoSetMsg(a, b PkgRepoSetMsg) int {
 	} else if a.Relationship != b.Relationship {
 		return strings.Compare(a.Relationship, b.Relationship)
 	} else if a.Type != b.Type {
-		return( strings.Compare(typeStringA, typeStringB))
+		return (strings.Compare(typeStringA, typeStringB))
 	} else {
 		return 0
 	}
@@ -228,12 +228,12 @@ func (prsmc PkgRepoSetMsgCollection) ToBytesWithType() []byte {
 }
 
 // PkgRepoSetMsgCollection returned will be sorted for the purposes of making golden files.
-func CollectPkgRepoSetLogs(t *testing.T, capture command.Capture) PkgRepoSetMsgCollection {
+func CollectPkgRepoSetLogs(t *testing.T, capture []byte) PkgRepoSetMsgCollection {
 
 	parsedLines := []PkgRepoSetMsg{}
 
 	msgKey := "package repository set"
-	outputLines := strings.Split(string(capture.Output), "\n")
+	outputLines := strings.Split(string(capture), "\n")
 
 	for _, line := range outputLines {
 		if strings.Contains(line, msgKey) {
@@ -259,32 +259,32 @@ func CollectPkgRepoSetLogs(t *testing.T, capture command.Capture) PkgRepoSetMsgC
 // Basically, don't use this if you need golden files, use a more robust object with line-sorting.
 // This object is meant to remain flexible with whatever fields we may need for a given test.
 type GenericLog struct {
-	Level string `json:"level,omitempty"`
-	Msg string `json:"msg,omitempty"`
-	Pkg string `json:"pkg,omitempty"`
-	Package string `json:"package,omitempty"`
-	Relationship string `json:"relationship,omitempty"`
-	Repo string `json:"repo,omitempty"`
-	InstallType int `json:"type,omitempty"`
-	InstallFrom string `json:"install_from,omitempty"`
-	Method string `json:"method,omitempty"`
-	Origin string `json:"origin,omitempty"`
-	Version string `json:"version,omitempty"`
-	RSettings RSettingsDup `json:"RSettings,omitempty"` // "Do you want ciruclar dependencies? Because this is how you get circular dependencies."
-	CmdArgs []string `json:"cmdArgs,omitempty"`
-	RPath string `json:"rpath,omitempty"`
-	LocalRepo int `json:"LOCALREPO,omitempty"` // Very specific to certain test cases
-	Tarballs int `json:"tarballs"` // Very specific to certain test cases
-	Library string `json:"library,omitempty"`
-	ToInstall int `json:"to_install,omitempty"`
-	ToUpdate int `json:"to_update,omitempty"`
-	InstalledVersion string `json:"installed_version,omitempty"`
-	UpdateVersion string `json:"update_version,omitempty"`
-	Packages []string `json:"packages,omitempty"`
-	Installed int `json:"installed,omitempty"`
-	NotFromPkgr int `json:"not_from_pkgr,omitempty"`
-	Outdated int `json:"outdated,omitempty"`
-	TotalPackagesRequired int `json:"total_packages_required,omitempty"`
+	Level                 string       `json:"level,omitempty"`
+	Msg                   string       `json:"msg,omitempty"`
+	Pkg                   string       `json:"pkg,omitempty"`
+	Package               string       `json:"package,omitempty"`
+	Relationship          string       `json:"relationship,omitempty"`
+	Repo                  string       `json:"repo,omitempty"`
+	InstallType           int          `json:"type,omitempty"`
+	InstallFrom           string       `json:"install_from,omitempty"`
+	Method                string       `json:"method,omitempty"`
+	Origin                string       `json:"origin,omitempty"`
+	Version               string       `json:"version,omitempty"`
+	RSettings             RSettingsDup `json:"RSettings,omitempty"` // "Do you want ciruclar dependencies? Because this is how you get circular dependencies."
+	CmdArgs               []string     `json:"cmdArgs,omitempty"`
+	RPath                 string       `json:"rpath,omitempty"`
+	LocalRepo             int          `json:"LOCALREPO,omitempty"` // Very specific to certain test cases
+	Tarballs              int          `json:"tarballs"`            // Very specific to certain test cases
+	Library               string       `json:"library,omitempty"`
+	ToInstall             int          `json:"to_install,omitempty"`
+	ToUpdate              int          `json:"to_update,omitempty"`
+	InstalledVersion      string       `json:"installed_version,omitempty"`
+	UpdateVersion         string       `json:"update_version,omitempty"`
+	Packages              []string     `json:"packages,omitempty"`
+	Installed             int          `json:"installed,omitempty"`
+	NotFromPkgr           int          `json:"not_from_pkgr,omitempty"`
+	Outdated              int          `json:"outdated,omitempty"`
+	TotalPackagesRequired int          `json:"total_packages_required,omitempty"`
 }
 
 type GenericLogsCollection []GenericLog
@@ -293,19 +293,19 @@ type GenericLogsCollection []GenericLog
 func (glc GenericLogsCollection) FilterByPackageTag(pkg string) GenericLogsCollection {
 	matched := []GenericLog{}
 	for _, obj := range glc {
-		if(obj.Pkg == pkg) {
+		if obj.Pkg == pkg {
 			matched = append(matched, obj)
 		}
 	}
 	return matched
 }
 
-func CollectGenericLogs(t *testing.T, capture command.Capture, messageRegex string) GenericLogsCollection {
+func CollectGenericLogs(t *testing.T, capture []byte, messageRegex string) GenericLogsCollection {
 	re := regexp.MustCompile(messageRegex)
 
 	parsedLines := []GenericLog{}
 
-	outputLines := strings.Split(string(capture.Output), "\n")
+	outputLines := strings.Split(string(capture), "\n")
 	for _, line := range outputLines {
 		if re.MatchString(line) {
 			var parsedLine GenericLog
@@ -321,6 +321,7 @@ func CollectGenericLogs(t *testing.T, capture command.Capture, messageRegex stri
 
 	return parsedLines
 }
+
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Need to duplicate these structs from Rcmd to avoid circular dependencies in Rcmd's unit tests.-----------------------
@@ -329,7 +330,7 @@ type RSettingsDup struct {
 	Version       cran.RVersion                `json:"r_version,omitempty"`
 	LibPaths      []string                     `json:"lib_paths,omitempty"`
 	Rpath         string                       `json:"rpath,omitempty"`
-	GlobalEnvVars NvpListDup                      `json:"global_env_vars,omitempty"`
+	GlobalEnvVars NvpListDup                   `json:"global_env_vars,omitempty"`
 	PkgEnvVars    map[string]map[string]string `json:"pkg_env_vars,omitempty"`
 	Platform      string                       `json:"platform,omitempty"`
 }
@@ -344,4 +345,5 @@ type NvpDup struct {
 type NvpListDup struct {
 	Pairs []NvpDup `json:"global_env_vars_pairs,omitempty"`
 }
+
 // ---------------------------------------------------------------------------------------------------------------------

@@ -1,18 +1,19 @@
 package baseline
 
 import (
-	"context"
-	"github.com/metrumresearchgroup/command"
-	. "github.com/metrumresearchgroup/pkgr/testhelper"
-	"github.com/sebdah/goldie/v2"
-	"github.com/stretchr/testify/assert"
 	"log"
 	"os"
 	"testing"
+
+	"github.com/metrumresearchgroup/command"
+	"github.com/sebdah/goldie/v2"
+	"github.com/stretchr/testify/assert"
+
+	. "github.com/metrumresearchgroup/pkgr/testhelper"
 )
 
 // Test IDs
-const(
+const (
 	baselineInstallE2ETest1 = "BSLNINS-E2E-001"
 	baselineInstallE2ETest2 = "BSLNINS-E2E-002"
 	baselineInstallE2ETest3 = "BSLNINS-E2E-003"
@@ -22,62 +23,61 @@ const(
 )
 
 // Golden file names
-const(
-	basicInstall = "install"
-	suggestsInstall = "suggests-install"
-	idempotenceInstall = "idempotence-install"
+const (
+	basicInstall        = "install"
+	suggestsInstall     = "suggests-install"
+	idempotenceInstall  = "idempotence-install"
 	preinstalledInstall = "preinstalled-install"
 )
 
 func TestInstall(t *testing.T) {
 	DeleteTestFolder(t, "test-library")
-	installCmd := command.New()
-	ctx := context.TODO()
-	installRes, err := installCmd.Run(ctx, "pkgr", "install")
+	installCmd := command.New("pkgr", "install")
+	installRes, err := installCmd.CombinedOutput()
 	if err != nil {
 		panic(err)
 	}
 
 	t.Run(MakeTestName(baselineInstallE2ETest1, "should install 11"), func(t *testing.T) {
-		assert.Contains(t, string(installRes.Output), "to_install=11 to_update=0")
+		assert.Contains(t, string(installRes), "to_install=11 to_update=0")
 	})
 	t.Run(MakeTestName(baselineInstallE2ETest2, "should install to the test library"), func(t *testing.T) {
-		assert.Contains(t, string(installRes.Output), "Library path to install packages: test-library")
+		assert.Contains(t, string(installRes), "Library path to install packages: test-library")
 	})
 
-
-	testCmd := command.New(command.WithDir("Rscripts"))
 	// we could also suppress any global state by doing things like setting --vanilla
 	// then setting the R_LIBS_SITE using command.WithEnv() however
 	// this way it will be easy to interactively develop the script in the Rproj,
 	// then invoke it whenever needed
 	t.Run(MakeTestName(baselineInstallE2ETest3, "install the packages and dependencies"), func(t *testing.T) {
-		testRes, err := testCmd.Run(ctx, "Rscript", "--quiet", "install_test.R")
+		testCmd := command.New("Rscript", "--quiet", "install_test.R")
+		testCmd.Dir = "Rscripts"
+		testRes, err := testCmd.CombinedOutput()
 		if err != nil {
-		  	t.Fatalf("failed to run Rscript command with err: %s", err)
+			t.Fatalf("failed to run Rscript command with err: %s", err)
 		}
 		g := goldie.New(t)
-		g.Assert(t, basicInstall, testRes.Output)
+		g.Assert(t, basicInstall, testRes)
 	})
 
-	t.Run(MakeTestName(baselineInstallE2ETest4, "can install suggested dependencies for user packages"), func(t *testing.T){
+	t.Run(MakeTestName(baselineInstallE2ETest4, "can install suggested dependencies for user packages"), func(t *testing.T) {
 		DeleteTestFolder(t, "test-library")
-		installCmd := command.New()
-		ctx := context.TODO()
+		installCmd := command.New("pkgr", "install", "--config=pkgr-suggests.yml")
 
-		_, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr-suggests.yml")
+		err := installCmd.Run()
 		if err != nil {
 			t.Fatalf("error occurred while running pkgr install: %s", err)
 		}
 
-		rScriptCmd := command.New(command.WithDir("Rscripts"))
-		testCapture, err := rScriptCmd.Run(ctx, "Rscript", "--quiet", "install_test.R")
+		rScriptCmd := command.New("Rscript", "--quiet", "install_test.R")
+		rScriptCmd.Dir = "Rscripts"
+		testCapture, err := rScriptCmd.CombinedOutput()
 		if err != nil {
 			log.Fatalf("error occurred while using R to check installed packages: %s", err)
 		}
 
 		g := goldie.New(t)
-		g.Assert(t, suggestsInstall, testCapture.Output)
+		g.Assert(t, suggestsInstall, testCapture)
 	})
 }
 
@@ -91,19 +91,19 @@ func TestInstall2(t *testing.T) {
 		assert.DirExists(t, "test-library/fansi", "expected fansi to be installed, but couldn't find folder in test-library")
 		DeleteTestFolder(t, "test-library/fansi") // giving pkgr the need to install this package again
 
-
 		// Execute
-		ctx := context.TODO()
-		installCmd := command.New()
-		rScriptCommand := command.New(command.WithDir("Rscripts"))
+		installCmd := command.New("pkgr", "install", "--config=pkgr.yml", "--logjson")
+		installCmd.Dir = "Rscripts"
 
-		capture, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr.yml", "--logjson")
+		capture, err := installCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error occurred running pkgr install: %s", err)
 		}
 		installPlanLogs := CollectGenericLogs(t, capture, "package installation plan")
 
-		rScriptCapture, err := rScriptCommand.Run(ctx, "Rscript", "--quiet", "install_test.R")
+		rScriptCommand := command.New("Rscript", "--quiet", "install_test.R")
+		rScriptCommand.Dir = "Rscripts"
+		rScriptCapture, err := rScriptCommand.CombinedOutput()
 		if err != nil {
 			log.Fatalf("error occurred while using R to check installed packages: %s", err)
 		}
@@ -114,7 +114,7 @@ func TestInstall2(t *testing.T) {
 		assert.Equal(t, 0, installPlanLogs[0].ToUpdate)
 
 		g := goldie.New(t)
-		g.Assert(t, idempotenceInstall, rScriptCapture.Output)
+		g.Assert(t, idempotenceInstall, rScriptCapture)
 	})
 
 	t.Run(MakeTestName(baselineInstallE2ETest6, "installs do not overwrite packages not installed by pkgr"), func(t *testing.T) {
@@ -127,17 +127,14 @@ func TestInstall2(t *testing.T) {
 		}
 
 		// Execute
-		ctx := context.TODO()
-		rInstallCmd := command.New()
-		installCmd := command.New()
-		verifyInstalledCommand := command.New(command.WithDir("Rscripts"))
-
-		rInstallCapture, err := rInstallCmd.Run(ctx, "Rscript", "-e", "install.packages(c('ellipsis', 'digest'), lib='test-library', repos=c('https://mpn.metworx.com/snapshots/stable/2021-06-20'))")
+		rInstallCmd := command.New("Rscript", "-e", "install.packages(c('ellipsis', 'digest'), lib='test-library', repos=c('https://mpn.metworx.com/snapshots/stable/2021-06-20'))")
+		rInstallCapture, err := rInstallCmd.CombinedOutput()
 		if err != nil {
-			t.Fatalf("error while installing packages through non-pkgr means: %s\nOutput:\n%s", err, string(rInstallCapture.Output))
+			t.Fatalf("error while installing packages through non-pkgr means: %s\nOutput:\n%s", err, string(rInstallCapture))
 		}
 
-		pkgrCapture, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr.yml", "--logjson")
+		installCmd := command.New("pkgr", "install", "--config=pkgr.yml", "--logjson")
+		pkgrCapture, err := installCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error occurred running pkgr install: %s", err)
 		}
@@ -162,13 +159,15 @@ func TestInstall2(t *testing.T) {
 		assert.Equal(t, 0, installationStatusLogs[0].Outdated)
 		assert.Equal(t, 11, installationStatusLogs[0].TotalPackagesRequired)
 
-		rScriptCapture, err := verifyInstalledCommand.Run(ctx, "Rscript", "--quiet", "install_test.R")
+		verifyInstalledCommand := command.New("Rscript", "--quiet", "install_test.R")
+		verifyInstalledCommand.Dir = "Rscripts"
+		rScriptCapture, err := verifyInstalledCommand.CombinedOutput()
 		if err != nil {
 			log.Fatalf("error occurred while using R to check installed packages: %s", err)
 		}
 
 		g := goldie.New(t)
-		g.Assert(t, preinstalledInstall, rScriptCapture.Output)
+		g.Assert(t, preinstalledInstall, rScriptCapture)
 	})
 
 }

@@ -1,13 +1,14 @@
 package multi_repo
 
 import (
-	"context"
-	"github.com/metrumresearchgroup/command"
-	. "github.com/metrumresearchgroup/pkgr/testhelper"
-	"github.com/sebdah/goldie/v2"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/metrumresearchgroup/command"
+	"github.com/sebdah/goldie/v2"
+	"github.com/stretchr/testify/assert"
+
+	. "github.com/metrumresearchgroup/pkgr/testhelper"
 )
 
 func setupMultiRepoTest(t *testing.T) {
@@ -22,7 +23,7 @@ func setupMultiRepoTest(t *testing.T) {
 }
 
 // Test IDs
-const(
+const (
 	multiRepoE2ETest1 = "MRPO-E2E-001"
 	multiRepoE2ETest2 = "MRPO-E2E-002"
 	multiRepoE2ETest3 = "MRPO-E2E-003"
@@ -32,7 +33,7 @@ const(
 
 // Golden file names
 const (
-	multiRepoPlan = "multi-repo-plan"
+	multiRepoPlan         = "multi-repo-plan"
 	multiRepoInstallation = "multi-repo-installed-packages"
 )
 
@@ -40,10 +41,9 @@ func TestMultiRepoInstall(t *testing.T) {
 	t.Run(MakeTestName(multiRepoE2ETest1, "pkgr plan takes packages from both local and remote repos in the order listed in pkgr.yml"), func(t *testing.T) {
 		setupMultiRepoTest(t)
 
-		ctx := context.TODO()
-		planCmd := command.New()
+		planCmd := command.New("pkgr", "plan", "--loglevel=debug", "--logjson")
 
-		capture, err := planCmd.Run(ctx, "pkgr", "plan", "--loglevel=debug", "--logjson")
+		capture, err := planCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error occurred when installing packages: %s", err)
 		}
@@ -60,23 +60,22 @@ func TestMultiRepoInstall(t *testing.T) {
 	})
 
 	t.Run(MakeTestName(multiRepoE2ETest2, "pkgr install can install packages from multiple repositories"), func(t *testing.T) {
-
-		ctx := context.TODO()
-		installCmd := command.New()
-		rScriptCmd := command.New(command.WithDir("Rscripts"))
-		_, err := installCmd.Run(ctx, "pkgr", "install", "--loglevel=debug", "--logjson")
+		installCmd := command.New("pkgr", "install", "--loglevel=debug", "--logjson")
+		err := installCmd.Run()
 		if err != nil {
 			t.Fatalf("error occurred when installing packages: %s", err)
 		}
+		rScriptCmd := command.New("Rscript", "--quiet", "install_test.R")
+		rScriptCmd.Dir = "Rscripts"
 
-		rScriptOutputBytes, err := rScriptCmd.Run(ctx, "Rscript", "--quiet", "install_test.R")
+		rScriptOutputBytes, err := rScriptCmd.CombinedOutput()
 		//t.Log(string(rScriptOutputBytes.Output))
 		if err != nil {
 			t.Fatalf("error occurred while detecting installed packages: %s", err)
 		}
 
 		g := goldie.New(t)
-		g.Assert(t, multiRepoInstallation, rScriptOutputBytes.Output)
+		g.Assert(t, multiRepoInstallation, rScriptOutputBytes)
 	})
 
 }

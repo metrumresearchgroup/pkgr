@@ -23,10 +23,11 @@ func Reset(tgt targets.Target) error {
 	if !isIntegrationTestDir() {
 		return errors.New("you must run make functions from the integration_tests directory")
 	}
-	r, err := command.New().Run(nil, "make", targets.ResetTargets[tgt])
+
+	r, err := command.New("make", targets.ResetTargets[tgt]).CombinedOutput()
 	if err != nil {
 		//goland:noinspection GoNilness
-		fmt.Println(string(r.Output))
+		fmt.Println(string(r))
 	}
 	return err
 }
