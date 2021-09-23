@@ -70,7 +70,7 @@ func TestRpathEnvVar(t *testing.T) {
 		os.Setenv("PKGR_RPATH", rPathSymlink)
 
 		// Run
-		installCmd := command.New("pkgr\", \"install\", \"--loglevel=trace\", \"--logjson\"")
+		installCmd := command.New("pkgr", "install", "--loglevel=trace", "--logjson")
 		capture, err := installCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error when executing 'pkgr install': %s", err)
