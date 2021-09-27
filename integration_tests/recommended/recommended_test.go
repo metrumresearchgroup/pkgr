@@ -1,14 +1,15 @@
 package recommended
 
 import (
-	"context"
-	"github.com/metrumresearchgroup/command"
-	. "github.com/metrumresearchgroup/pkgr/testhelper"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/metrumresearchgroup/command"
+	"github.com/stretchr/testify/assert"
+
+	. "github.com/metrumresearchgroup/pkgr/testhelper"
 )
 
-const(
+const (
 	recommendedE2ETest1 = "REC-E2E-001"
 	recommendedE2ETest2 = "REC-E2E-002"
 	recommendedE2ETest3 = "REC-E2E-003"
@@ -17,10 +18,9 @@ const(
 func TestRecommended(t *testing.T) {
 	t.Run(MakeTestName(recommendedE2ETest1, "plan includes recommended packages by default"), func(t *testing.T) {
 		DeleteTestFolder(t, "test-library")
-		ctx := context.TODO()
-		planCmd := command.New()
 
-		capture, err := planCmd.Run(ctx, "pkgr", "plan", "--config=pkgr.yml", "--loglevel=debug", "--logjson")
+		planCmd := command.New("pkgr", "plan", "--config=pkgr.yml", "--loglevel=debug", "--logjson")
+		capture, err := planCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error running pkgr plan: %s", err)
 		}
@@ -33,12 +33,11 @@ func TestRecommended(t *testing.T) {
 		)
 	})
 
-	t.Run(MakeTestName(recommendedE2ETest2, "plan excludes recommended packages when NoRecommended is true"), func(t *testing.T){
+	t.Run(MakeTestName(recommendedE2ETest2, "plan excludes recommended packages when NoRecommended is true"), func(t *testing.T) {
 		DeleteTestFolder(t, "test-library")
-		ctx := context.TODO()
-		planCmd := command.New()
 
-		capture, err := planCmd.Run(ctx, "pkgr", "plan", "--config=pkgr-no-recommended.yml", "--loglevel=debug", "--logjson")
+		planCmd := command.New("pkgr", "plan", "--config=pkgr-no-recommended.yml", "--loglevel=debug", "--logjson")
+		capture, err := planCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error running pkgr plan: %s", err)
 		}
@@ -52,12 +51,11 @@ func TestRecommended(t *testing.T) {
 
 	})
 
-	t.Run(MakeTestName(recommendedE2ETest3, "specifying recommeded pkg as a user package overrides NoRecommeded option"), func(t *testing.T){
+	t.Run(MakeTestName(recommendedE2ETest3, "specifying recommeded pkg as a user package overrides NoRecommeded option"), func(t *testing.T) {
 		DeleteTestFolder(t, "test-library")
-		ctx := context.TODO()
-		planCmd := command.New()
 
-		capture, err := planCmd.Run(ctx, "pkgr", "plan", "--config=pkgr-survival-direct.yml", "--loglevel=debug", "--logjson")
+		planCmd := command.New("pkgr", "plan", "--config=pkgr-survival-direct.yml", "--loglevel=debug", "--logjson")
+		capture, err := planCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error running pkgr plan: %s", err)
 		}

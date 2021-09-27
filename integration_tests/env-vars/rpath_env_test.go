@@ -1,19 +1,20 @@
 package env_vars
 
 import (
-	"context"
-	"github.com/metrumresearchgroup/command"
-	. "github.com/metrumresearchgroup/pkgr/testhelper"
-	"github.com/sebdah/goldie/v2"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/metrumresearchgroup/command"
+	"github.com/sebdah/goldie/v2"
+	"github.com/stretchr/testify/assert"
+
+	. "github.com/metrumresearchgroup/pkgr/testhelper"
 )
 
 // Test IDs
-const(
+const (
 	envVarE2Etest1 = "ENV-E2E-001"
 	envVarE2Etest2 = "ENV-E2E-002"
 	envVarE2Etest3 = "ENV-E2E-003"
@@ -26,7 +27,7 @@ const (
 )
 
 func TestRpathEnvVar(t *testing.T) {
-	t.Run(MakeTestName(envVarE2Etest1, "PKGR_RPATH environment variable is set in plan"), func(t *testing.T){
+	t.Run(MakeTestName(envVarE2Etest1, "PKGR_RPATH environment variable is set in plan"), func(t *testing.T) {
 
 		// Setup
 		rPathSymlink := GetTestSymlinkPath(t)
@@ -38,13 +39,11 @@ func TestRpathEnvVar(t *testing.T) {
 			t.Fatalf("failed to create symlink to RPath for testing purposes: %s", err)
 		}
 
-
 		os.Setenv("PKGR_RPATH", rPathSymlink)
 
 		// Run
-		ctx := context.TODO()
-		planCmd := command.New()
-		capture, err := planCmd.Run(ctx, "pkgr", "plan", "--loglevel=trace", "--logjson")
+		planCmd := command.New("pkgr", "plan", "--loglevel=trace", "--logjson")
+		capture, err := planCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error when executing 'pkgr plan': %s", err)
 		}
@@ -71,15 +70,15 @@ func TestRpathEnvVar(t *testing.T) {
 		os.Setenv("PKGR_RPATH", rPathSymlink)
 
 		// Run
-		ctx := context.TODO()
-		installCmd := command.New()
-		capture, err := installCmd.Run(ctx, "pkgr", "install", "--loglevel=trace", "--logjson")
+		installCmd := command.New("pkgr", "install", "--loglevel=trace", "--logjson")
+		capture, err := installCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error when executing 'pkgr install': %s", err)
 		}
 		logs := CollectGenericLogs(t, capture, "command args")
-		rCmd := command.New(command.WithDir("Rscripts"))
-		rCmdCapture, err := rCmd.Run(ctx, "Rscript", "--quiet", "install_test.R")
+		rCmd := command.New("Rscript", "--quiet", "install_test.R")
+		rCmd.Dir = "Rscripts"
+		rCmdCapture, err := rCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error when running Rscript to parse installed packages: %s", err)
 		}
@@ -91,7 +90,7 @@ func TestRpathEnvVar(t *testing.T) {
 		}
 
 		g := goldie.New(t)
-		g.Assert(t, EnvVarRpathInstall, rCmdCapture.Output)
+		g.Assert(t, EnvVarRpathInstall, rCmdCapture)
 	})
 
 	t.Run(MakeTestName(envVarE2Etest3, "installation fails with invalid PKGR_RPATH environment variable set"), func(t *testing.T) {
@@ -101,9 +100,9 @@ func TestRpathEnvVar(t *testing.T) {
 
 		os.Setenv("PKGR_RPATH", invalidRPath)
 		// Run
-		ctx := context.TODO()
-		installCmd := command.New()
-		capture, testError := installCmd.Run(ctx, "pkgr", "install", "--loglevel=trace", "--logjson")
+
+		installCmd := command.New("pkgr", "install", "--loglevel=trace", "--logjson")
+		capture, testError := installCmd.CombinedOutput()
 
 		// Validate
 		assert.Error(t, testError, "pkgr should have thrown an error when trying to install with an invalid RPath")
@@ -117,13 +116,12 @@ func TestRpathEnvVar(t *testing.T) {
 }
 
 func GetValidRPath(t *testing.T) string {
-	ctx := context.TODO()
-	utilCommand := command.New()
-	rPathCapture, err := utilCommand.Run(ctx, "which", "R")
+	utilCommand := command.New("which", "R")
+	rPathCapture, err := utilCommand.CombinedOutput()
 	if err != nil {
 		t.Fatalf("error while looking for valid R installation on the PATH: %s", err)
 	}
-	validRPath := strings.TrimSpace(string(rPathCapture.Output))
+	validRPath := strings.TrimSpace(string(rPathCapture))
 	validRPath = filepath.Clean(validRPath)
 	return validRPath
 }

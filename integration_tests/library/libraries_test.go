@@ -1,13 +1,14 @@
 package library
 
 import (
-	"context"
-	"github.com/metrumresearchgroup/command"
-	. "github.com/metrumresearchgroup/pkgr/testhelper"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/metrumresearchgroup/command"
+	"github.com/stretchr/testify/assert"
+
+	. "github.com/metrumresearchgroup/pkgr/testhelper"
 )
 
 const (
@@ -21,10 +22,10 @@ func TestLibrary(t *testing.T) {
 	t.Run(MakeTestName(librariesE2ETest1, "strict mode stops pkgr when library doesn't exist"), func(t *testing.T) {
 		DeleteTestFolder(t, "test-library")
 		DeleteTestFolder(t, "test-cache")
-		ctx := context.TODO()
-		installCmd := command.New()
 
-		capture, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr-strict.yml", "--logjson")
+		installCmd := command.New("pkgr", "install", "--config=pkgr-strict.yml", "--logjson")
+
+		capture, err := installCmd.CombinedOutput()
 		assert.Error(t, err, "install succeeded, but it should have failed due to strict mode")
 		assert.NoDirExists(t, "test-library", "test-library was created when it should not have been")
 		//t.Log(string(capture.Output))

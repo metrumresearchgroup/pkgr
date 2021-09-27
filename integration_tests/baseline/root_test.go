@@ -1,26 +1,26 @@
 package baseline
 
 import (
-	"context"
+	"testing"
+
 	"github.com/metrumresearchgroup/command"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/metrumresearchgroup/pkgr/cmd"
 	. "github.com/metrumresearchgroup/pkgr/testhelper"
-	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
-const(
+const (
 	baselineRootE2ETest1 = "BSLNRT-E2E-001"
 )
 
 func TestRoot(t *testing.T) {
 	t.Run(MakeTestName(baselineRootE2ETest1, "-v flag prints version"), func(t *testing.T) {
-		ctx := context.TODO()
-		rootCmd := command.New()
-		capture, err := rootCmd.Run(ctx, "pkgr", "-v")
+		rootCmd := command.New("pkgr", "-v")
+		capture, err := rootCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error occurred running pkgr -v: %s", err)
 		}
-		assert.Equal(t, cmd.VERSION, string(capture.Output))
+		assert.Equal(t, cmd.VERSION, string(capture))
 	})
 }

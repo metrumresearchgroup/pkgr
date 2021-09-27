@@ -1,39 +1,39 @@
 package baseline
 
 import (
-	"context"
+	"testing"
+
 	"github.com/metrumresearchgroup/command"
-	. "github.com/metrumresearchgroup/pkgr/testhelper"
 	"github.com/sebdah/goldie/v2"
 	"github.com/stretchr/testify/assert"
-	"testing"
+
+	. "github.com/metrumresearchgroup/pkgr/testhelper"
 )
 
 const (
-	baselinePlanTest1="BSLNPLN-E2E-001"
-	baselinePlanTest2="BSLNPLN-E2E-002"
-	baselinePlanTest3="BSLNPLN-E2E-003"
-	baselinePlanTest4="BSLNPLN-E2E-004"
+	baselinePlanTest1 = "BSLNPLN-E2E-001"
+	baselinePlanTest2 = "BSLNPLN-E2E-002"
+	baselinePlanTest3 = "BSLNPLN-E2E-003"
+	baselinePlanTest4 = "BSLNPLN-E2E-004"
 )
 
 // Golden Test File Names
 const (
-	baselinePlanGolden="baseline-plan-golden"
+	baselinePlanGolden = "baseline-plan-golden"
 )
 
 func TestPlan(t *testing.T) {
 
 	t.Run(MakeTestName(baselinePlanTest1, "plan indicates packages to be installed, as well as version, source repo, and whether pkg is user-defined or a dependency"), func(t *testing.T) {
 		DeleteTestFolder(t, "test-library")
-		ctx := context.TODO()
-		planCmd := command.New()
 
-		capture, err := planCmd.Run(ctx, "pkgr", "plan", "--loglevel=debug", "--logjson")
+		planCmd := command.New("pkgr", "plan", "--loglevel=debug", "--logjson")
+
+		capture, err := planCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error running pkgr plan: %s", err)
 		}
 		//output := string(capture.Output)
-
 
 		pkgRepoSetLogs := CollectPkgRepoSetLogs(t, capture)
 		//assert.True(t, pkgRepoSetLogs.Contains("R6", "2.5.0", "CRAN", "user_defined"), "failed to find expected log message")
@@ -56,14 +56,13 @@ func TestPlan(t *testing.T) {
 
 	t.Run(MakeTestName(baselinePlanTest2, "number of workers (threads) can be set"), func(t *testing.T) {
 		DeleteTestFolder(t, "test-library")
-		ctx := context.TODO()
-		planCmd := command.New()
+		planCmd := command.New("pkgr", "plan", "--threads=5", "--logjson")
 
-		capture, err := planCmd.Run(ctx, "pkgr", "plan", "--threads=5", "--logjson")
+		capture, err := planCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error running pkgr plan: %s", err)
 		}
-		output := string(capture.Output)
+		output := string(capture)
 
 		jsonRegex := `\{"level":"info","msg":"Installation would launch 5 workers.*\}`
 		assert.Regexp(t, jsonRegex, output)
@@ -74,16 +73,14 @@ func TestPlan(t *testing.T) {
 		DeleteTestFolder(t, "test-cache")
 		SetupEndToEndWithInstall(t, "pkgr-preinstalled-setup.yml", "test-library")
 
-		ctx := context.TODO()
-		rInstallCmd := command.New()
-		planCmd := command.New()
-
-		rInstallCapture, err := rInstallCmd.Run(ctx, "Rscript", "-e", "install.packages(c('digest', 'R6'), lib='test-library', repos=c('https://mpn.metworx.com/snapshots/stable/2021-06-20'))")
+		rInstallCmd := command.New("Rscript", "-e", "install.packages(c('digest', 'R6'), lib='test-library', repos=c('https://mpn.metworx.com/snapshots/stable/2021-06-20'))")
+		rInstallCapture, err := rInstallCmd.CombinedOutput()
 		if err != nil {
-			t.Fatalf("error while installing packages through non-pkgr means: %s\nOutput:\n%s", err, string(rInstallCapture.Output))
+			t.Fatalf("error while installing packages through non-pkgr means: %s\nOutput:\n%s", err, string(rInstallCapture))
 		}
 
-		planCapture, err := planCmd.Run(ctx, "pkgr", "plan", "--config=pkgr-preinstalled.yml", "--logjson")
+		planCmd := command.New("pkgr", "plan", "--config=pkgr-preinstalled.yml", "--logjson")
+		planCapture, err := planCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error running pkgr plan: %s", err)
 		}

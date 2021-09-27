@@ -1,17 +1,18 @@
 package outdated_pkgs
 
 import (
-	"context"
 	"encoding/json"
-	"github.com/metrumresearchgroup/command"
-	"github.com/metrumresearchgroup/pkgr/testhelper"
-	"github.com/sebdah/goldie/v2"
-	"github.com/spf13/afero"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/metrumresearchgroup/command"
+	"github.com/sebdah/goldie/v2"
+	"github.com/spf13/afero"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/metrumresearchgroup/pkgr/testhelper"
 )
 
 const (
@@ -53,10 +54,10 @@ func setupBaseline(t *testing.T) {
 // Utilities for this test suite only:
 type UpdateMsg struct {
 	InstalledVersion string `json:"installed_version,omitempty"`
-	UpdateVersion string `json:"update_version,omitempty"`
-	Package string `json:"pkg,omitempty"`
-	Msg string	`json:"msg, omitempty"`
-	Level string `json:"level,omitempty"`
+	UpdateVersion    string `json:"update_version,omitempty"`
+	Package          string `json:"pkg,omitempty"`
+	Msg              string `json:"msg, omitempty"`
+	Level            string `json:"level,omitempty"`
 }
 
 type UpdateLogs []UpdateMsg
@@ -79,7 +80,7 @@ const (
 
 func CompareUpdateMsgs(a, b UpdateMsg) int {
 	if a.Level != b.Level {
-		return(strings.Compare(a.Level, b.Level))
+		return (strings.Compare(a.Level, b.Level))
 	} else if a.Msg != b.Msg {
 		return strings.Compare(a.Msg, b.Msg)
 	} else if a.Package != b.Package {
@@ -88,12 +89,12 @@ func CompareUpdateMsgs(a, b UpdateMsg) int {
 		return strings.Compare(a.InstalledVersion, b.InstalledVersion)
 	} else if a.UpdateVersion != b.UpdateVersion {
 		return strings.Compare(a.UpdateVersion, b.UpdateVersion)
-	} else{
+	} else {
 		return 0
 	}
 }
 
-func CollectUpdateLogs(t *testing.T, capture command.Capture, msgType UpdateMsgType) UpdateLogs {
+func CollectUpdateLogs(t *testing.T, capture []byte, msgType UpdateMsgType) UpdateLogs {
 	parsedLines := []UpdateMsg{}
 
 	var msgKey string
@@ -105,7 +106,7 @@ func CollectUpdateLogs(t *testing.T, capture command.Capture, msgType UpdateMsgT
 		t.Fatalf("invalid msgType passed to 'CollectUpdateLogs'. MsgType: %d", msgType)
 	}
 
-	outputLines := strings.Split(string(capture.Output), "\n")
+	outputLines := strings.Split(string(capture), "\n")
 
 	for _, line := range outputLines {
 		if strings.Contains(line, msgKey) {
@@ -129,13 +130,11 @@ func CollectUpdateLogs(t *testing.T, capture command.Capture, msgType UpdateMsgT
 
 func TestOutdated(t *testing.T) {
 
-	t.Run(testhelper.MakeTestName(outdatedPackagesE2ETest1,"pkgr warns when updates are available and NoUpdate setting true"), func(t *testing.T) {
+	t.Run(testhelper.MakeTestName(outdatedPackagesE2ETest1, "pkgr warns when updates are available and NoUpdate setting true"), func(t *testing.T) {
 		setupBaseline(t)
-		planCmd := command.New()
-		ctx := context.TODO()
 
-
-		res, err := planCmd.Run(ctx, "pkgr", "plan", "--config=pkgr-no-update.yml", "--logjson")
+		planCmd := command.New("pkgr", "plan", "--config=pkgr-no-update.yml", "--logjson")
+		res, err := planCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("failed to successfully create pkgr plan: %s", err)
 		}
@@ -148,32 +147,30 @@ func TestOutdated(t *testing.T) {
 		assert.True(t, outdatedLogs.Contains("R6", "2.0", "2.5.0", "warning"), "pkgr did not notify that package was outdated")
 	})
 
-	t.Run(testhelper.MakeTestName(outdatedPackagesE2ETest2,"pkgr install does not update when NoUpdate setting true"), func(t *testing.T) {
+	t.Run(testhelper.MakeTestName(outdatedPackagesE2ETest2, "pkgr install does not update when NoUpdate setting true"), func(t *testing.T) {
 		setupBaseline(t)
-		testCmd := command.New(command.WithDir("Rscripts"))
-		installCmd := command.New()
-		ctx := context.TODO()
+		installCmd := command.New("pkgr", "install", "--config=pkgr-no-update.yml", "--logjson")
 
-
-		_, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr-no-update.yml", "--logjson")
+		err := installCmd.Run()
 		if err != nil {
 			t.Fatalf("failed to install updated packages: %s", err)
 		}
-		rScriptRes, err := testCmd.Run(ctx, "Rscript", "--quiet", "install_test.R")
+		testCmd := command.New("Rscript", "--quiet", "install_test.R")
+		testCmd.Dir = "Rscripts"
+
+		rScriptRes, err := testCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("failed to run Rscript command with err: %s", err)
 		}
 		g := goldie.New(t)
-		g.Assert(t, OutdatedPackagesNoUpdate, rScriptRes.Output)
+		g.Assert(t, OutdatedPackagesNoUpdate, rScriptRes)
 	})
 
-	t.Run(testhelper.MakeTestName(outdatedPackagesE2ETest3,"pkgr plan indicates that updates will be installed when NoUpdate setting is false"), func(t *testing.T) {
+	t.Run(testhelper.MakeTestName(outdatedPackagesE2ETest3, "pkgr plan indicates that updates will be installed when NoUpdate setting is false"), func(t *testing.T) {
 		setupBaseline(t)
-		planCmd := command.New()
-		ctx := context.TODO()
 
-
-		planRes, err := planCmd.Run(ctx, "pkgr", "plan", "--config=pkgr-update.yml", "--logjson")
+		planCmd := command.New("pkgr", "plan", "--config=pkgr-update.yml", "--logjson")
+		planRes, err := planCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error running pkgr plan %s", err)
 		}
@@ -186,38 +183,39 @@ func TestOutdated(t *testing.T) {
 
 	})
 
-	t.Run(testhelper.MakeTestName(outdatedPackagesE2ETest4,"pkgr install installs updates when NoUpdate setting is false"), func(t *testing.T) {
+	t.Run(testhelper.MakeTestName(outdatedPackagesE2ETest4, "pkgr install installs updates when NoUpdate setting is false"), func(t *testing.T) {
 		setupBaseline(t)
-		testCmd := command.New(command.WithDir("Rscripts"))
-		installCmd := command.New()
-		ctx := context.TODO()
 
-
-		_, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr-update.yml")
+		installCmd := command.New("pkgr", "install", "--config=pkgr-update.yml")
+		err := installCmd.Run()
 		if err != nil {
 			t.Fatalf("failed to install packages: %s", err)
 		}
-		rScriptRes, err := testCmd.Run(ctx, "Rscript", "--quiet", "install_test.R")
+
+		testCmd := command.New("Rscript", "--quiet", "install_test.R")
+		testCmd.Dir = "Rscripts"
+		rScriptRes, err := testCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("failed to run Rscript command with err: %s", err)
 		}
 		g := goldie.New(t)
-		g.Assert(t, OutdatedPackagesUpdate, rScriptRes.Output)
+		g.Assert(t, OutdatedPackagesUpdate, rScriptRes)
 	})
 
 	// this maintains legacy behavior of using --update in case people
 	// have scripts or just by habit
-	t.Run(testhelper.MakeTestName(outdatedPackagesE2ETest5,"pkgr install --update flag overrides other config"), func(t *testing.T) {
+	t.Run(testhelper.MakeTestName(outdatedPackagesE2ETest5, "pkgr install --update flag overrides other config"), func(t *testing.T) {
 		setupBaseline(t)
-		testCmd := command.New(command.WithDir("Rscripts"))
-		installCmd := command.New()
-		ctx := context.TODO()
 
-		installRes, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr-no-update.yml", "--update", "--logjson")
+		installCmd := command.New("pkgr", "install", "--config=pkgr-no-update.yml", "--update", "--logjson")
+		installRes, err := installCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("failed to install packages: %s", err)
 		}
-		rScriptRes, err := testCmd.Run(ctx, "Rscript", "--quiet", "install_test.R")
+
+		testCmd := command.New("Rscript", "--quiet", "install_test.R")
+		testCmd.Dir = "Rscripts"
+		rScriptRes, err := testCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("failed to run Rscript command with err: %s: ", err)
 		}
@@ -229,6 +227,6 @@ func TestOutdated(t *testing.T) {
 		assert.True(t, updateLogs.Contains("R6", "2.0", "2.5.0", "info"), "pkgr did not confirm package would be updated")
 
 		g := goldie.New(t)
-		g.Assert(t, OutdatedPackagesUpdateFlag, rScriptRes.Output)
+		g.Assert(t, OutdatedPackagesUpdateFlag, rScriptRes)
 	})
 }

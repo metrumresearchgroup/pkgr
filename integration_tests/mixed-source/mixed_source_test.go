@@ -1,14 +1,15 @@
 package mixed_source
 
 import (
-	"context"
 	"fmt"
-	"github.com/metrumresearchgroup/command"
-	. "github.com/metrumresearchgroup/pkgr/testhelper"
-	"github.com/sebdah/goldie/v2"
-	"github.com/stretchr/testify/assert"
 	"runtime"
 	"testing"
+
+	"github.com/metrumresearchgroup/command"
+	"github.com/sebdah/goldie/v2"
+	"github.com/stretchr/testify/assert"
+
+	. "github.com/metrumresearchgroup/pkgr/testhelper"
 )
 
 const (
@@ -16,22 +17,18 @@ const (
 	mixedSourceE2ETest2 = "MXSRC-E2E-002"
 )
 
-const(
+const (
 	goldenPlanWithCustomizationsLinux    = "plan-customizations-linux"
-	goldenPlanWithCustomizationsMac    = "plan-customizations-macos"
+	goldenPlanWithCustomizationsMac      = "plan-customizations-macos"
 	goldenInstallWithCustomizationsLinux = "install-customizations-linux"
-	goldenInstallWithCustomizationsMac = "install-customizations-macos"
-	goldenCustomizationSync = "customization-sync"
+	goldenInstallWithCustomizationsMac   = "install-customizations-macos"
+	goldenCustomizationSync              = "customization-sync"
 )
 
 func TestMixedSource(t *testing.T) {
 	t.Run(MakeTestName(mixedSourceE2ETest1, "pkgr can install both source and binary packages"), func(t *testing.T) {
 		DeleteTestFolder(t, "test-library")
 		DeleteTestFolder(t, "test-cache")
-		ctx := context.TODO()
-		planCmd := command.New()
-		installCmd := command.New()
-		testCmd := command.New(command.WithDir("Rscripts"))
 		g := goldie.New(t)
 
 		var pkgrConfig, goldenPlan, goldenInstall string
@@ -51,9 +48,10 @@ func TestMixedSource(t *testing.T) {
 		}
 
 		t.Run(MakeSubtestName(mixedSourceE2ETest1, "A", "repo and package customizations are set properly"), func(t *testing.T) {
-			planCapture, err := planCmd.Run(ctx, "pkgr", "plan", fmt.Sprintf("--config=%s", pkgrConfig),"--loglevel=debug", "--logjson")
+			planCmd := command.New("pkgr", "plan", fmt.Sprintf("--config=%s", pkgrConfig), "--loglevel=debug", "--logjson")
+			planCapture, err := planCmd.CombinedOutput()
 			if err != nil {
-				t.Fatalf("error running pkgr plan: %s\noutput:\n%s", err, string(planCapture.Output))
+				t.Fatalf("error running pkgr plan: %s\noutput:\n%s", err, string(planCapture))
 			}
 			pkgRepoSettings := CollectPkgRepoSetLogs(t, planCapture)
 
@@ -64,27 +62,30 @@ func TestMixedSource(t *testing.T) {
 			g.Assert(t, goldenPlan, pkgRepoSettings.ToBytesWithType())
 		})
 
-		t.Run(MakeSubtestName(mixedSourceE2ETest1, "B", "pkgr can install from both source and binary files"), func(t *testing.T){
-			installCapture, err := installCmd.Run(ctx, "pkgr", "install", fmt.Sprintf("--config=%s", pkgrConfig), "--logjson")
+		t.Run(MakeSubtestName(mixedSourceE2ETest1, "B", "pkgr can install from both source and binary files"), func(t *testing.T) {
+			installCmd := command.New("pkgr", "install", fmt.Sprintf("--config=%s", pkgrConfig), "--logjson")
+			installCapture, err := installCmd.CombinedOutput()
 			if err != nil {
-				t.Fatalf("error running pkgr install: %s\n output:\n%s", err, string(installCapture.Output))
+				t.Fatalf("error running pkgr install: %s\n output:\n%s", err, string(installCapture))
 			}
-			testCapture, err := testCmd.Run(ctx, "Rscript", "--quiet", "install_test.R")
+
+			testCmd := command.New("Rscript", "--quiet", "install_test.R")
+			testCmd.Dir = "Rscripts"
+			testCapture, err := testCmd.CombinedOutput()
 			if err != nil {
-				t.Fatalf("error running R script to scan installed packages: %s\noutput:\n%s", err, string(testCapture.Output))
+				t.Fatalf("error running R script to scan installed packages: %s\noutput:\n%s", err, string(testCapture))
 			}
-			g.Assert(t, goldenInstall, testCapture.Output)
+			g.Assert(t, goldenInstall, testCapture)
 		})
 	})
-	t.Run(MakeTestName(mixedSourceE2ETest2,"repo and package customizations synchronize when compatible" ), func(t *testing.T) {
+	t.Run(MakeTestName(mixedSourceE2ETest2, "repo and package customizations synchronize when compatible"), func(t *testing.T) {
 		DeleteTestFolder(t, "test-library")
 		DeleteTestFolder(t, "test-cache")
-		ctx := context.TODO()
-		planCmd := command.New()
+		planCmd := command.New("pkgr", "plan", "--config=pkgr-issue-329.yml", "--loglevel=debug", "--logjson")
 
-		planCapture, err := planCmd.Run(ctx, "pkgr", "plan", "--config=pkgr-issue-329.yml", "--loglevel=debug", "--logjson")
+		planCapture, err := planCmd.CombinedOutput()
 		if err != nil {
-			t.Fatalf("error running pkgr plan: %s\noutput:\n%s", err, string(planCapture.Output))
+			t.Fatalf("error running pkgr plan: %s\noutput:\n%s", err, string(planCapture))
 		}
 		pkgRepoSettings := CollectPkgRepoSetLogs(t, planCapture)
 		assert.True(t, pkgRepoSettings.ContainsWithType("R6", "2.5.0", "MPNSource", "user_defined", "source"), "expected 'R6' version 2.5.0 installed from source.\nActual pkg plan:\n%s", pkgRepoSettings.ToStringWithType())

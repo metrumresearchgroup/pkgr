@@ -1,13 +1,14 @@
 package tarball_install
 
 import (
-	"context"
-	"github.com/metrumresearchgroup/command"
-	. "github.com/metrumresearchgroup/pkgr/testhelper"
-	"github.com/sebdah/goldie/v2"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/metrumresearchgroup/command"
+	"github.com/sebdah/goldie/v2"
+	"github.com/stretchr/testify/assert"
+
+	. "github.com/metrumresearchgroup/pkgr/testhelper"
 )
 
 // Test IDs
@@ -21,22 +22,21 @@ const (
 
 // Golden file IDs
 const (
-	tarballBasicInstall = "tarball-basic-install"
+	tarballBasicInstall           = "tarball-basic-install"
 	tarballOverwriteInstallBefore = "tarball-overwrite-install-before"
-	tarballOverwriteInstallAfter = "tarball-overwrite-install-after"
+	tarballOverwriteInstallAfter  = "tarball-overwrite-install-after"
 )
 
-//TODO
+// TODO
 func TestTarballInstall(t *testing.T) {
 
 	t.Run(MakeTestName(tarballInstallE2ETest1, "plan includes message about tarball installation and gets tarball deps from repo"), func(t *testing.T) {
-		DeleteTestFolder(t,"test-library")
+		DeleteTestFolder(t, "test-library")
 		DeleteTestFolder(t, "test-cache")
 
-		ctx := context.TODO()
-		planCmd := command.New()
+		planCmd := command.New("pkgr", "plan", "--loglevel=debug", "--logjson")
 
-		capture, err := planCmd.Run(ctx, "pkgr", "plan", "--loglevel=debug", "--logjson")
+		capture, err := planCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error running pkgr plan: %s", err)
 		}
@@ -62,25 +62,26 @@ func TestTarballInstall(t *testing.T) {
 		assert.Equal(t, 1, logs2[0].Tarballs)
 	})
 
-	t.Run(MakeTestName(tarballInstallE2ETest2, "installs from tarball directly"), func(t *testing.T){
-		DeleteTestFolder(t,"test-library")
+	t.Run(MakeTestName(tarballInstallE2ETest2, "installs from tarball directly"), func(t *testing.T) {
+		DeleteTestFolder(t, "test-library")
 		DeleteTestFolder(t, "test-cache")
 
-		ctx := context.TODO()
-		installCmd := command.New()
-		rScriptCmd := command.New(command.WithDir("Rscripts"))
+		installCmd := command.New("pkgr", "install")
 
-		_, err := installCmd.Run(ctx, "pkgr", "install")
+		err := installCmd.Run()
 		if err != nil {
 			t.Fatalf("error during pkgr install: %s", err)
 		}
 
-		testCapture, err := rScriptCmd.Run(ctx,"Rscript", "--quiet", "install_test.R")
+		rScriptCmd := command.New("Rscript", "--quiet", "install_test.R")
+		rScriptCmd.Dir = "Rscripts"
+
+		testCapture, err := rScriptCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error running Rscript to collect installed packages: %s", err)
 		}
 		g := goldie.New(t)
-		g.Assert(t, tarballBasicInstall, testCapture.Output)
+		g.Assert(t, tarballBasicInstall, testCapture)
 	})
 
 	t.Run(MakeTestName(tarballInstallE2ETest3, "overwrites existing package with tarball"), func(t *testing.T) {
@@ -88,38 +89,39 @@ func TestTarballInstall(t *testing.T) {
 		SetupEndToEndWithInstall(t, "pkgr-setup-old-ellipsis.yml", "test-library")
 
 		g := goldie.New(t)
-		ctx := context.TODO()
-		installCmd := command.New()
-		rScriptCmdBefore := command.New(command.WithDir("Rscripts"))
-		rScriptCmdAfter := command.New(command.WithDir("Rscripts"))
 
-		preCapture, err := rScriptCmdBefore.Run(ctx,"Rscript", "--quiet", "install_test.R")
+		rScriptCmdBefore := command.New("Rscript", "--quiet", "install_test.R")
+		rScriptCmdBefore.Dir = "Rscripts"
+		preCapture, err := rScriptCmdBefore.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error running Rscript to collect installed packages: %s", err)
 		}
-		g.Assert(t, tarballOverwriteInstallBefore, preCapture.Output)
+		g.Assert(t, tarballOverwriteInstallBefore, preCapture)
 
-		_, err = installCmd.Run(ctx, "pkgr", "install")
+		installCmd := command.New("pkgr", "install")
+		err = installCmd.Run()
 		if err != nil {
 			t.Fatalf("error during pkgr install: %s", err)
 		}
 
-		postCapture, err := rScriptCmdAfter.Run(ctx,"Rscript", "--quiet", "install_test.R")
+		rScriptCmdAfter := command.New("Rscript", "--quiet", "install_test.R")
+		rScriptCmdAfter.Dir = "Rscripts"
+
+		postCapture, err := rScriptCmdAfter.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error running Rscript to collect installed packages: %s", err)
 		}
 
-		g.Assert(t, tarballOverwriteInstallAfter, postCapture.Output)
+		g.Assert(t, tarballOverwriteInstallAfter, postCapture)
 	})
 
 	t.Run(MakeTestName(tarballInstallE2ETest4, "clean cleans the local cache"), func(t *testing.T) {
 		DeleteTestFolder(t, "test-cache")
 		SetupEndToEndWithInstall(t, "pkgr.yml", "test-library")
 
-		ctx := context.TODO()
-		cleanCmd := command.New()
+		cleanCmd := command.New("pkgr", "clean", "cache")
 
-		_, err := cleanCmd.Run(ctx, "pkgr", "clean", "cache")
+		err := cleanCmd.Run()
 		if err != nil {
 			t.Fatalf("error running 'pkgr clean cache': %s", err)
 		}
@@ -130,7 +132,5 @@ func TestTarballInstall(t *testing.T) {
 			t.Fatalf("error while checking directory contents: %s", err)
 		}
 		assert.Len(t, contents, 0, "there are files remaining in the pkg cache after cleaning")
-
-		//rScriptCmd := command.New(command.WithDir("Rscripts"))
 	})
 }

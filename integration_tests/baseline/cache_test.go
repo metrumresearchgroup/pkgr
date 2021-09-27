@@ -1,26 +1,27 @@
 package baseline
 
 import (
-	"context"
 	"fmt"
-	"github.com/metrumresearchgroup/command"
-	. "github.com/metrumresearchgroup/pkgr/testhelper"
-	"github.com/sebdah/goldie/v2"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/metrumresearchgroup/command"
+	"github.com/sebdah/goldie/v2"
+	"github.com/stretchr/testify/assert"
+
+	. "github.com/metrumresearchgroup/pkgr/testhelper"
 )
 
 const (
-	cacheTest1="BSLNCHE-E2E-001"
-	cacheTest2="BSLNCHE-E2E-002"
-	cacheTest3="BSLNCHE-E2E-003"
+	cacheTest1 = "BSLNCHE-E2E-001"
+	cacheTest2 = "BSLNCHE-E2E-002"
+	cacheTest3 = "BSLNCHE-E2E-003"
 )
 
-const(
+const (
 	cachePartialAndExtraneous = "cache-partial-and-extraneous"
 )
 
@@ -29,7 +30,6 @@ func TestClean(t *testing.T) {
 	// So this test is only going to verify that it is printed out and used.
 	t.Run(MakeTestName(cacheTest1, "pkgr uses and cleans the global pkg/pkgdb caches"), func(t *testing.T) {
 		DeleteTestFolder(t, "test-library")
-
 
 		userCacheDir, err := os.UserCacheDir()
 		if err != nil {
@@ -42,17 +42,15 @@ func TestClean(t *testing.T) {
 			t.Fatalf("error when removing the global pkgr cache: %s", err)
 		}
 
-		ctx := context.TODO()
-		installCmd := command.New()
-
-		capture, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr-global-cache.yml", "--logjson")
+		installCmd := command.New("pkgr", "install", "--config=pkgr-global-cache.yml", "--logjson")
+		capture, err := installCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error running pkgr install: %s", err)
 		}
-		output := string(capture.Output)
+		output := string(capture)
 
-		pkgDbRegex := `\{"level":"info","msg":"Database cache directory: .*\}` // We can't determine this up front because it varies by OS and might be a temp dir.
-		pkgCacheRegex:= `\{"level":"info","msg":"Package installation cache directory: .*\}` // We can't determine this up front because it varies by OS and might be a temp dir.
+		pkgDbRegex := `\{"level":"info","msg":"Database cache directory: .*\}`                // We can't determine this up front because it varies by OS and might be a temp dir.
+		pkgCacheRegex := `\{"level":"info","msg":"Package installation cache directory: .*\}` // We can't determine this up front because it varies by OS and might be a temp dir.
 		assert.Regexp(t, pkgDbRegex, output)
 		assert.Regexp(t, pkgCacheRegex, output)
 
@@ -61,7 +59,6 @@ func TestClean(t *testing.T) {
 		pkgDbDir := rPkgDbs.FindStringSubmatch(output)[1]
 		rPkgCache := regexp.MustCompile(`\{"level":"info","msg":"Package installation cache directory:  (.*)"\}`)
 		pkgCacheDir := rPkgCache.FindStringSubmatch(output)[1]
-
 
 		pkgDbDirContents, err := os.ReadDir(filepath.Clean(pkgDbDir))
 		if err != nil {
@@ -78,14 +75,14 @@ func TestClean(t *testing.T) {
 		found := false
 		for _, entry := range pkgCacheDirContents {
 			t.Log(entry.Name())
-			if(entry.IsDir() && strings.Contains(entry.Name(), "GLOBAL_CACHE_REPO")) {
+			if entry.IsDir() && strings.Contains(entry.Name(), "GLOBAL_CACHE_REPO") {
 				found = true
 			}
 		}
 		assert.True(t, found, "pkgr failed to create a directory in the global pkgr cache for GLOBAL_CACHE_REPO")
 
-		cleanCmd := command.New()
-		_, err = cleanCmd.Run(ctx, "pkgr", "clean", "--all", "--config=pkgr-global-cache.yml", "--logjson")
+		cleanCmd := command.New("pkgr", "clean", "--all", "--config=pkgr-global-cache.yml", "--logjson")
+		err = cleanCmd.Run()
 		if err != nil {
 			t.Fatalf("error occurred running 'clean' command: %s", err)
 		}
@@ -106,7 +103,6 @@ func TestClean(t *testing.T) {
 		assert.Equal(t, pkgCacheDirContents2[0].Name(), "r_packagedb_caches", "expected r_packagedb_caches folder to remain in global cache")
 	})
 
-
 	t.Run(MakeTestName(cacheTest2, "pkgr uses and cleans local pkg cache"), func(t *testing.T) {
 		DeleteTestFolder(t, "test-library")
 
@@ -116,18 +112,16 @@ func TestClean(t *testing.T) {
 			t.Fatalf("error when removing the local package cache: %s", err)
 		}
 
-		ctx := context.TODO()
-		installCmd := command.New()
+		installCmd := command.New("pkgr", "install", "--config=pkgr.yml", "--logjson")
 
-		capture, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr.yml", "--logjson")
+		capture, err := installCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error running pkgr install: %s", err)
 		}
-		output := string(capture.Output)
+		output := string(capture)
 
 		pkgCacheMessage := fmt.Sprintf("Package installation cache directory:  %s", localPackageCacheDir)
 		assert.Contains(t, output, pkgCacheMessage)
-
 
 		pkgCacheDirContents, err := os.ReadDir(localPackageCacheDir)
 		if err != nil {
@@ -137,14 +131,14 @@ func TestClean(t *testing.T) {
 		found := false
 		for _, entry := range pkgCacheDirContents {
 			t.Log(entry.Name())
-			if(entry.IsDir() && strings.Contains(entry.Name(), "CRAN")) {
+			if entry.IsDir() && strings.Contains(entry.Name(), "CRAN") {
 				found = true
 			}
 		}
 		assert.True(t, found, "pkgr failed to create a directory in the local cache for CRAN")
 
-		cleanCmd := command.New()
-		_, err = cleanCmd.Run(ctx, "pkgr", "clean", "cache", "--config=pkgr.yml", "--logjson")
+		cleanCmd := command.New("pkgr", "clean", "cache", "--config=pkgr.yml", "--logjson")
+		err = cleanCmd.Run()
 		if err != nil {
 			t.Fatalf("error occurred running 'clean' command: %s", err)
 		}
@@ -162,15 +156,13 @@ func TestClean(t *testing.T) {
 
 		// Installs R6, pillar, and purrr.
 		SetupEndToEndWithInstall(t, "pkgr-with-purrr.yml", "test-library")
-		DeleteTestFolder(t, "test-library/pillar") // giving pkgr the need to install this package again
-		DeleteTestFolder(t, "test-cache/CRAN-9a8e3d5f8621/binary") // Delete all binaries (deleting all for convenience)
+		DeleteTestFolder(t, "test-library/pillar")                                // giving pkgr the need to install this package again
+		DeleteTestFolder(t, "test-cache/CRAN-9a8e3d5f8621/binary")                // Delete all binaries (deleting all for convenience)
 		DeleteTestFile(t, "test-cache/CRAN-9a8e3d5f8621/src/pillar_1.6.1.tar.gz") // giving pkgr the need to download this package again
 
-		ctx := context.TODO()
-		installCmd := command.New()
-		rScriptCmd := command.New(command.WithDir("Rscripts"))
+		installCmd := command.New("pkgr", "install", "--config=pkgr-no-purrr.yml", "--logjson")
 
-		capture, err := installCmd.Run(ctx, "pkgr", "install", "--config=pkgr-no-purrr.yml", "--logjson")
+		capture, err := installCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error running pkgr install: %s", err)
 		}
@@ -181,14 +173,15 @@ func TestClean(t *testing.T) {
 		assert.Len(t, toInstallLogs, 1, "expected exactly one 'package installation plan' log entry")
 		assert.Equal(t, 1, toInstallLogs[0].ToInstall)
 
-
-		rScriptCapture, err := rScriptCmd.Run(ctx, "Rscript", "--quiet", "install_test.R")
+		rScriptCmd := command.New("Rscript", "--quiet", "install_test.R")
+		rScriptCmd.Dir = "Rscripts"
+		rScriptCapture, err := rScriptCmd.CombinedOutput()
 		if err != nil {
-			t.Fatalf("error running RScript to get list of installed packages: %s, output: %s", err, string(rScriptCapture.Output))
+			t.Fatalf("error running RScript to get list of installed packages: %s, output: %s", err, string(rScriptCapture))
 		}
 
 		g := goldie.New(t)
-		g.Assert(t, cachePartialAndExtraneous, rScriptCapture.Output)
+		g.Assert(t, cachePartialAndExtraneous, rScriptCapture)
 
 	})
 }

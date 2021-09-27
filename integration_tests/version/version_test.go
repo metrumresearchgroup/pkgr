@@ -1,10 +1,10 @@
 package version_test
 
 import (
-	"context"
+	"testing"
+
 	"github.com/metrumresearchgroup/command"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 const (
@@ -13,25 +13,24 @@ const (
 )
 
 func TestVersion(t *testing.T) {
-	testCmd := command.New()
-	ctx := context.TODO()
-
 	t.Run("long flag --version works", func(t *testing.T) {
-		res, err := testCmd.Run(ctx, "pkgr", "--version")
+		testCmd := command.New("pkgr", "--version")
+		res, err := testCmd.CombinedOutput()
 		if err != nil {
 			t.Fatal(err)
 		}
 		// this will always get the git tag for regular releases
-		assert.Equal(t, "dev", string(res.Output))
+		assert.Equal(t, "dev", string(res))
 	})
 
 	t.Run("short flag -v works", func(t *testing.T) {
-		res, err := testCmd.Run(ctx, "pkgr", "--version")
+		testCmd := command.New("pkgr", "-v")
+		res, err := testCmd.CombinedOutput()
 		if err != nil {
 			t.Fatal(err)
 		}
 		// this will always get the git tag for regular releases
-		assert.Equal(t,"dev",  string(res.Output))
+		assert.Equal(t, "dev", string(res))
 	})
 
 }
