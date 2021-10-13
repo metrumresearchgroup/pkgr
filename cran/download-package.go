@@ -8,11 +8,13 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/dpastoor/goutils"
+	"github.com/hashicorp/go-retryablehttp"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
@@ -67,6 +69,15 @@ func getRepos(ds []PkgDl) map[string]RepoURL {
 	return rpm
 }
 
+func getIntEnv(val string) int {
+	ret, err := strconv.Atoi(val)
+	if err != nil {
+		log.Error("could not parse PKGR_DL_CONCURRENCY to int - reverting to 10")
+		return 10
+	}
+	return ret
+}
+
 // DownloadPackages downloads a set of packages concurrently
 // noSecure will allow https fetching without validating the certificate chain.
 // This occasionally is needed for repos that have self signed or certs not fully verifiable
@@ -74,7 +85,14 @@ func getRepos(ds []PkgDl) map[string]RepoURL {
 func DownloadPackages(fs afero.Fs, ds []PkgDl, baseDir string, rv RVersion, noSecure bool) (*PkgMap, error) {
 	startTime := time.Now()
 	result := NewPkgMap()
-	sem := make(chan struct{}, 10)
+
+	dlConcurrencyStr, set := os.LookupEnv("PKGR_DL_CONCURRENCY")
+	if !set {
+		dlConcurrencyStr = "10"
+	}
+	dlConcurrency := getIntEnv(dlConcurrencyStr)
+	log.Infof("downloading packages with concurrency: %v\n", dlConcurrency)
+	sem := make(chan struct{}, dlConcurrency)
 	wg := sync.WaitGroup{}
 	rpm := getRepos(ds)
 	for _, r := range rpm {
@@ -190,13 +208,27 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion, noSecure bo
 
 	log.WithField("package", d.Package.Package).Info("downloading package ")
 	var from io.ReadCloser
+	client := retryablehttp.NewClient()
+	client.RetryMax = 3
+	switch log.GetLevel() {
+	case log.DebugLevel, log.TraceLevel:
+		// for some reason client.Logger will not take the default log anyway
+		// this will also make it such that the log will only write at debug/trace levels
+		// it currently writes out messages like:
+		// [DEBUG] GET https://cran.r-project.org/bin/macosx/contrib/4.1/scales_1.1.1.tgz
+		// and get fed to Printf
+		lg := log.New()
+		lg.Level = log.GetLevel()
+		client.Logger = lg
+	default:
+		client.Logger = nil
+	}
 
-	client := &http.Client{}
 	if noSecure {
 		tr := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify : true},
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
-		client = &http.Client{Transport: tr}
+		client.HTTPClient.Transport = tr
 	}
 
 	if strings.HasPrefix(pkgdl, "http") {
