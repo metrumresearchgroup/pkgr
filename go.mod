@@ -16,7 +16,7 @@ require (
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.8.1
 	github.com/stretchr/testify v1.7.0
-	github.com/thoas/go-funk v0.8.0
+	github.com/thoas/go-funk v0.9.0
 	github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca
 	go.uber.org/automaxprocs v1.4.0
 	gopkg.in/yaml.v2 v2.4.0
