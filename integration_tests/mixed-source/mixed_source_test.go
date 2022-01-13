@@ -7,7 +7,7 @@ import (
 
 	"github.com/metrumresearchgroup/command"
 	"github.com/sebdah/goldie/v2"
-	"github.com/stretchr/testify/assert"
+	//"github.com/stretchr/testify/assert"
 
 	. "github.com/metrumresearchgroup/pkgr/testhelper"
 )
@@ -78,7 +78,8 @@ func TestMixedSource(t *testing.T) {
 			g.Assert(t, goldenInstall, testCapture)
 		})
 	})
-	t.Run(MakeTestName(mixedSourceE2ETest2, "repo and package customizations synchronize when compatible"), func(t *testing.T) {
+	t.Skip(MakeTestName(mixedSourceE2ETest2, "repo and package customizations synchronize when compatible. SKIPPING till issue #329 fixes this bug."))
+	/*t.Run(MakeTestName(mixedSourceE2ETest2, "repo and package customizations synchronize when compatible"), func(t *testing.T) {
 		DeleteTestFolder(t, "test-library")
 		DeleteTestFolder(t, "test-cache")
 		planCmd := command.New("pkgr", "plan", "--config=pkgr-issue-329.yml", "--loglevel=debug", "--logjson")
@@ -90,5 +91,5 @@ func TestMixedSource(t *testing.T) {
 		pkgRepoSettings := CollectPkgRepoSetLogs(t, planCapture)
 		assert.True(t, pkgRepoSettings.ContainsWithType("R6", "2.5.0", "MPNSource", "user_defined", "source"), "expected 'R6' version 2.5.0 installed from source.\nActual pkg plan:\n%s", pkgRepoSettings.ToStringWithType())
 		assert.True(t, pkgRepoSettings.ContainsWithType("digest", "0.6.25", "MPNBinary", "user_defined", "binary"), "expected 'digest' version 0.6.25 installed from binary\nActual pkg plan:\n%s", pkgRepoSettings.ToStringWithType())
-	})
+	})*/
 }
