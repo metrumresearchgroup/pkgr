@@ -196,7 +196,7 @@ steps:
       - git config --global user.email "drone@metrumrg.com"
       - git config --global user.name "Drony"
       - git fetch --tags
-      - cd cmd/bbi
+      - cd cmd/pkgr
       - goreleaser --rm-dist
     environment:
       GITHUB_TOKEN:
