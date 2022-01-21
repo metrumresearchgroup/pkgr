@@ -527,6 +527,8 @@ func equal(a []byte, b []byte, compareWs bool) bool {
 }
 
 func TestNewConfigPackrat(t *testing.T) {
+	renv := os.Getenv("PKGR_TESTS_SYS_RENV")
+
 	tests := []struct {
 		folder   string
 		expected string
@@ -544,10 +546,13 @@ func TestNewConfigPackrat(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		var cfg PkgrConfig
-		_ = os.Chdir(getTestFolder(t, tt.folder))
-		NewConfig(viper.GetString("config"), &cfg)
-		assert.Equal(t, tt.expected, cfg.Lockfile.Type, fmt.Sprintf("Fail:%s", tt.message))
+		if !(tt.folder == "renv-library" && renv == "") {
+			var cfg PkgrConfig
+			_ = os.Chdir(getTestFolder(t, tt.folder))
+			NewConfig(viper.GetString("config"), &cfg)
+			assert.Equal(t, tt.expected, cfg.Lockfile.Type,
+				fmt.Sprintf("Fail:%s", tt.message))
+		}
 	}
 }
 
@@ -572,6 +577,8 @@ func TestNewConfigNoLockfile(t *testing.T) {
 }
 
 func TestGetLibraryPath(t *testing.T) {
+	renv := os.Getenv("PKGR_TESTS_SYS_RENV")
+
 	var rs rcmd.RSettings
 	rv := rcmd.GetRVersion(&rs)
 
@@ -599,14 +606,16 @@ func TestGetLibraryPath(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		library := getLibraryPath(
-			tt.lftype, "R", rv, "apple", "original")
-		if tt.contains {
-			assert.Contains(t, library, tt.expected)
-		} else {
-			assert.Equal(
-				t, tt.expected, library,
-				fmt.Sprintf("Fail:%s", tt.expected))
+		if !(tt.lftype == "renv" && renv == "") {
+			library := getLibraryPath(
+				tt.lftype, "R", rv, "apple", "original")
+			if tt.contains {
+				assert.Contains(t, library, tt.expected)
+			} else {
+				assert.Equal(
+					t, tt.expected, library,
+					fmt.Sprintf("Fail:%s", tt.expected))
+			}
 		}
 	}
 }
@@ -1005,6 +1014,10 @@ func TestNewConfigSimple(t *testing.T) {
 }
 
 func TestNewConfigNonDefaults(t *testing.T) {
+	renv := os.Getenv("PKGR_TESTS_SYS_RENV")
+	if renv == "" {
+		t.Skip("Skipping: empty PKGR_TESTS_SYS_RENV indicates renv not available")
+	}
 	//type testCase struct {
 	//	testSet string
 	//

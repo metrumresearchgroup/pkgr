@@ -19,6 +19,9 @@ const (
 )
 
 func TestLibrary(t *testing.T) {
+	renv := os.Getenv("PKGR_TESTS_SYS_RENV")
+	expectFail := renv == ""
+
 	t.Run(MakeTestName(librariesE2ETest1, "strict mode stops pkgr when library doesn't exist"), func(t *testing.T) {
 		DeleteTestFolder(t, "test-library")
 		DeleteTestFolder(t, "test-cache")
@@ -38,22 +41,30 @@ func TestLibrary(t *testing.T) {
 
 	t.Run(MakeTestName(librariesE2ETest2, "lockfile type renv installs to renv/library"), func(t *testing.T) {
 		DeleteTestFolder(t, "test-cache")
-		SetupEndToEndWithInstall(t, "pkgr-renv.yml", "renv")
+		cmdout, cmderr := SetupEndToEndWithInstallFull(t, "pkgr-renv.yml", "renv",
+			nil, "", expectFail)
 
-		r6FolderFound := false
-		err := filepath.Walk("renv/library", func(path string, info os.FileInfo, err error) error {
+		if renv == "" {
+			assert.Error(t, cmderr, "expected 'pkgr install' error")
+			assert.Contains(t, cmdout, "calling renv to find library path failed")
+			t.Skip("Skipping: empty PKGR_TESTS_SYS_RENV indicates renv not available")
+		} else {
+			r6FolderFound := false
+			err := filepath.Walk("renv/library",
+				func(path string, info os.FileInfo, err error) error {
+					if err != nil {
+						return err
+					}
+					if info.IsDir() && info.Name() == "R6" {
+						r6FolderFound = true
+					}
+					return nil
+				})
 			if err != nil {
-				return err
+				t.Fatalf("error when walking renv folder to find installed pkgs: %s", err)
 			}
-			if info.IsDir() && info.Name() == "R6" {
-				r6FolderFound = true
-			}
-			return nil
-		})
-		if err != nil {
-			t.Fatalf("error when walking renv folder to find installed pkgs: %s", err)
+			assert.True(t, r6FolderFound, "failed to find installation of R6")
 		}
-		assert.True(t, r6FolderFound, "failed to find installation of R6")
 	})
 
 	t.Run(MakeTestName(librariesE2ETest3, "lockfile type packrat installs to packrat/library"), func(t *testing.T) {
