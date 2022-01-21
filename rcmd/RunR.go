@@ -81,13 +81,25 @@ func RunR(
 	rdir string, // this should be put into RSettings
 ) ([]byte, error) {
 
-	envVars := configureEnv(os.Environ(), rs, pkg)
 	cmdArgs := []string{
 		"--vanilla",
 		"-e",
 		script,
 	}
 
+	return RunRscriptWithArgs(fs, pkg, rs, cmdArgs, rdir)
+}
+
+// RunRscriptWithArgs invokes Rscript with cmdArgs, returning
+// os.exec.Cmd.Output().
+func RunRscriptWithArgs(
+	fs afero.Fs,
+	pkg string,
+	rs RSettings,
+	cmdArgs []string,
+	rdir string,
+) ([]byte, error) {
+	envVars := configureEnv(os.Environ(), rs, pkg)
 	log.WithFields(
 		log.Fields{
 			"cmdArgs":   cmdArgs,
