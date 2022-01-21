@@ -1,6 +1,7 @@
 module github.com/metrumresearchgroup/pkgr
 
 require (
+	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/deckarep/golang-set v1.7.1
 	github.com/dpastoor/goutils v1.2.0
 	github.com/fatih/structs v1.1.0
