@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
@@ -57,6 +58,20 @@ func StartR(
 	return cmd.Run()
 }
 
+// convertToRscript converts an R path like "/path/to/R" to
+// "/path/to/Rscript", accounting for a trailing ".exe", if present.
+func convertToRscript(rpath string) string {
+	var script string
+
+	if strings.HasSuffix(rpath, ".exe") {
+		script = rpath[:len(rpath)-4] + "script" + ".exe"
+	} else {
+		script = rpath + "script"
+	}
+
+	return script
+}
+
 // RunR launches an interactive R console
 func RunR(
 	fs afero.Fs,
@@ -80,10 +95,8 @@ func RunR(
 			"env":       envVars,
 		}).Trace("command args")
 
-	cmd := exec.Command(
-		rs.R(runtime.GOOS)+"script",
-		cmdArgs...,
-	)
+	prog := convertToRscript(rs.R(runtime.GOOS))
+	cmd := exec.Command(prog, cmdArgs...)
 
 	if rdir == "" {
 		rdir, _ = os.Getwd()
