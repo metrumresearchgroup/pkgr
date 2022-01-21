@@ -80,11 +80,6 @@ func RunR(
 			"env":       envVars,
 		}).Trace("command args")
 
-	// --vanilla is a command for R and should be specified before the CMD, eg
-	// R --vanilla CMD check
-	// if cs.Vanilla {
-	// 	cmdArgs = append([]string{"--vanilla"}, cmdArgs...)
-	// }
 	cmd := exec.Command(
 		rs.R(runtime.GOOS)+"script",
 		cmdArgs...,
@@ -98,8 +93,6 @@ func RunR(
 	}
 	cmd.Dir = rdir
 	cmd.Env = envVars
-	// cmd.Stdout = os.Stdout
-	// cmd.Stderr = os.Stderr
 
 	return cmd.Output()
 }
