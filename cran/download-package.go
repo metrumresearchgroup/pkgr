@@ -188,7 +188,7 @@ func DownloadPackage(fs afero.Fs, d PkgDl, dest string, rv RVersion, noSecure bo
 	}
 	log.Trace(pkgdl)
 
-	log.WithField("package", d.Package.Package).Info("downloading package ")
+	log.WithField("package", d.Package.Package).Info("downloading package")
 	var from io.ReadCloser
 
 	client := &http.Client{}
