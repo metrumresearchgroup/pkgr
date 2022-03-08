@@ -572,17 +572,22 @@ func TestNewConfigNoLockfile(t *testing.T) {
 }
 
 func TestGetLibraryPath(t *testing.T) {
+	var rs rcmd.RSettings
+	rv := rcmd.GetRVersion(&rs)
+
 	tests := []struct {
 		lftype   string
 		expected string
 	}{
 		{
 			lftype:   "renv",
-			expected: "renv/library/R-1.2/apple",
+			expected: fmt.Sprintf("renv/library/R-%d.%d/apple",
+				rv.Major, rv.Minor),
 		},
 		{
 			lftype:   "packrat",
-			expected: "packrat/lib/apple/1.2.3",
+			expected: fmt.Sprintf("packrat/lib/apple/%d.%d.%d",
+				rv.Major, rv.Minor, rv.Patch),
 		},
 		{
 			lftype:   "pkgr",
@@ -590,12 +595,8 @@ func TestGetLibraryPath(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		var rv = cran.RVersion{
-			Major: 1,
-			Minor: 2,
-			Patch: 3,
-		}
-		library := getLibraryPath(tt.lftype, "myRpath", rv, "apple", "original")
+		library := getLibraryPath(
+			tt.lftype, "R", rv, "apple", "original")
 		assert.Equal(t, tt.expected, library, fmt.Sprintf("Fail:%s", tt.expected))
 	}
 }
