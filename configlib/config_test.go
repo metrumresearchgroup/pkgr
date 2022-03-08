@@ -578,26 +578,36 @@ func TestGetLibraryPath(t *testing.T) {
 	tests := []struct {
 		lftype   string
 		expected string
+		contains bool
 	}{
 		{
 			lftype:   "renv",
-			expected: fmt.Sprintf("renv/library/R-%d.%d/apple",
+			expected: fmt.Sprintf("renv/library/R-%d.%d/",
 				rv.Major, rv.Minor),
+			contains: true,
 		},
 		{
 			lftype:   "packrat",
 			expected: fmt.Sprintf("packrat/lib/apple/%d.%d.%d",
 				rv.Major, rv.Minor, rv.Patch),
+			contains: false,
 		},
 		{
 			lftype:   "pkgr",
 			expected: "original",
+			contains: false,
 		},
 	}
 	for _, tt := range tests {
 		library := getLibraryPath(
 			tt.lftype, "R", rv, "apple", "original")
-		assert.Equal(t, tt.expected, library, fmt.Sprintf("Fail:%s", tt.expected))
+		if tt.contains {
+			assert.Contains(t, library, tt.expected)
+		} else {
+			assert.Equal(
+				t, tt.expected, library,
+				fmt.Sprintf("Fail:%s", tt.expected))
+		}
 	}
 }
 
