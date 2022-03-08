@@ -16,6 +16,8 @@ steps:
       - $(aws ecr get-login --no-include-email --region us-east-1)
       - docker pull 906087756158.dkr.ecr.us-east-1.amazonaws.com/r-dev-ci:4.1.0
       - docker pull 906087756158.dkr.ecr.us-east-1.amazonaws.com/r-dev-ci:4.0.5
+      - docker pull 906087756158.dkr.ecr.us-east-1.amazonaws.com/r-dev-ci-mpn-4.1:2022-02-11
+      - docker pull 906087756158.dkr.ecr.us-east-1.amazonaws.com/r-dev-ci-mpn-4.1:cran-latest
     volumes:
       - name: docker.sock
         path: /var/run/docker.sock
@@ -29,7 +31,7 @@ steps:
     volumes:
       - name: go
         path: /go
-  - name: configlib
+  - name: configlib, no system renv
     image: 906087756158.dkr.ecr.us-east-1.amazonaws.com/r-dev-ci:4.1.0
     pull: never
     volumes:
@@ -38,6 +40,30 @@ steps:
     environment:
       <<: *default_environment
     commands:
+      - cd configlib
+      - go test -v .
+  - name: configlib, system renv (< 0.15)
+    image: 906087756158.dkr.ecr.us-east-1.amazonaws.com/r-dev-ci-mpn-4.1:2022-02-11
+    pull: never
+    volumes:
+      - name: go
+        path: /go
+    environment:
+      <<: *default_environment
+    commands:
+      - export PKGR_TESTS_SYS_RENV=1
+      - cd configlib
+      - go test -v .
+  - name: configlib, system renv (>= 0.15)
+    image: 906087756158.dkr.ecr.us-east-1.amazonaws.com/r-dev-ci-mpn-4.1:cran-latest
+    pull: never
+    volumes:
+      - name: go
+        path: /go
+    environment:
+      <<: *default_environment
+    commands:
+      - export PKGR_TESTS_SYS_RENV=1
       - cd configlib
       - go test -v .
   - name: baseline
@@ -170,6 +196,32 @@ steps:
       <<: *default_environment
     commands:
       - export PATH=/go/bin:$PATH
+      - cd integration_tests/library
+      - make test
+  - name: libraries, system renv (< 0.15)
+    image: 906087756158.dkr.ecr.us-east-1.amazonaws.com/r-dev-ci-mpn-4.1:2022-02-11
+    pull: never
+    volumes:
+      - name: go
+        path: /go
+    environment:
+      <<: *default_environment
+    commands:
+      - export PATH=/go/bin:$PATH
+      - export PKGR_TESTS_SYS_RENV=1
+      - cd integration_tests/library
+      - make test
+  - name: libraries, system renv (>= 0.15)
+    image: 906087756158.dkr.ecr.us-east-1.amazonaws.com/r-dev-ci-mpn-4.1:cran-latest
+    pull: never
+    volumes:
+      - name: go
+        path: /go
+    environment:
+      <<: *default_environment
+    commands:
+      - export PATH=/go/bin:$PATH
+      - export PKGR_TESTS_SYS_RENV=1
       - cd integration_tests/library
       - make test
   - name: mixed-source-and-customizations
