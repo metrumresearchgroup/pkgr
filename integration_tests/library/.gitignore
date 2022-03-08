@@ -1,2 +1,5 @@
+r-user-cache/
 renv/
+renv-custom/
 packrat/
+pkg/

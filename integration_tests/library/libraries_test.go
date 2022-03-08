@@ -16,6 +16,9 @@ const (
 	librariesE2ETest2 = "LIB-E2E-002"
 	librariesE2ETest3 = "LIB-E2E-003"
 	librariesE2ETest4 = "LIB-E2E-004"
+	librariesE2ETest5 = "LIB-E2E-005"
+	librariesE2ETest6 = "LIB-E2E-006"
+	librariesE2ETest7 = "LIB-E2E-007"
 )
 
 func TestLibrary(t *testing.T) {
@@ -64,6 +67,115 @@ func TestLibrary(t *testing.T) {
 				t.Fatalf("error when walking renv folder to find installed pkgs: %s", err)
 			}
 			assert.True(t, r6FolderFound, "failed to find installation of R6")
+		}
+	})
+
+	t.Run(MakeTestName(librariesE2ETest5, "lockfile type renv errors when renv isn't available"), func(t *testing.T) {
+		if renv != "" {
+			t.Skip("Skipping: empty PKGR_TESTS_SYS_RENV indicates renv is available")
+		}
+
+		DeleteTestFolder(t, "test-cache")
+		cmdout, _ := SetupEndToEndWithInstallFull(t, "pkgr-renv.yml", "renv",
+			nil, "", true)
+
+		assert.Contains(t, cmdout, "calling renv to find library path failed")
+	})
+
+	t.Run(MakeTestName(librariesE2ETest6, "lockfile type renv respects RENV_PATHS_LIBRARY_ROOT"), func(t *testing.T) {
+		DeleteTestFolder(t, "test-cache")
+
+		lib := "renv-custom"
+		env := append(os.Environ(), "RENV_PATHS_LIBRARY_ROOT="+lib)
+		cmdout, _ := SetupEndToEndWithInstallFull(t, "pkgr-renv.yml", lib,
+			env, "", expectFail)
+
+		if expectFail {
+			assert.Contains(t, cmdout, "calling renv to find library path failed")
+			t.Skip("Skipping: empty PKGR_TESTS_SYS_RENV indicates renv not available")
+		} else {
+			r6FolderFound := false
+			err := filepath.Walk(filepath.Join(lib),
+				func(path string, info os.FileInfo, err error) error {
+					if err != nil {
+						return err
+					}
+					if info.IsDir() && info.Name() == "R6" {
+						r6FolderFound = true
+					}
+					return nil
+				})
+			if err != nil {
+				t.Fatalf("error when walking renv folder to find installed pkgs: %s", err)
+			}
+			assert.True(t, r6FolderFound, "failed to find installation of R6")
+		}
+	})
+
+	t.Run(MakeTestName(librariesE2ETest7, "lockfile type renv detects package project library"), func(t *testing.T) {
+		DeleteTestFolder(t, "test-cache")
+		DeleteTestFolder(t, "pkg")
+
+		err := os.MkdirAll(filepath.Join("pkg", "renv"), 0777)
+		if err != nil {
+			t.Fatalf("os.MkdirAll() error: %s", err)
+		}
+
+		err = os.WriteFile(filepath.Join("pkg", ".Rprofile"),
+			[]byte("source(\"renv/activate.R\")\n"),
+			0666)
+		if err != nil {
+			t.Fatalf("os.WriteFile() error: %s", err)
+		}
+
+		err = os.WriteFile(filepath.Join("pkg", "DESCRIPTION"),
+			[]byte("Package: pkg\n"),
+			0666)
+		if err != nil {
+			t.Fatalf("os.WriteFile() error: %s", err)
+		}
+
+		err = os.Link(filepath.Join("testdata", "activate.R"),
+			filepath.Join("pkg", "renv", "activate.R"))
+		if err != nil {
+			t.Fatalf("os.Link() error: %s", err)
+		}
+
+		cwd, err := os.Getwd()
+		if err != nil {
+			t.Fatalf("os.Getwd() error: %s", err)
+		}
+
+		libcache := filepath.Join(cwd, "r-user-cache")
+		env := append(os.Environ(), "R_USER_CACHE_DIR="+libcache)
+		dir := "pkg"
+
+		SetupEndToEndWithInstallFull(t,
+			filepath.Join(cwd, "pkgr-renv.yml"),
+			libcache, env, dir, false)
+
+		r6FolderFound := false
+		err = filepath.Walk(filepath.Join(libcache),
+			func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				if info.IsDir() && info.Name() == "R6" {
+					r6FolderFound = true
+				}
+				return nil
+			})
+		if err != nil {
+			t.Fatalf("error when walking renv folder to find installed pkgs: %s", err)
+		}
+		assert.True(t, r6FolderFound, "failed to find installation of R6")
+
+		loadcmd := command.New("Rscript", "-e", "library(R6)")
+		loadcmd.Env = env
+		loadcmd.Dir = dir
+		err = loadcmd.Run()
+		if err != nil {
+			t.Fatalf("loading R6 failed: %s", err)
 		}
 	})
 

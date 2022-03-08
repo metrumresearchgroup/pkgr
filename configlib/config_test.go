@@ -546,6 +546,9 @@ func TestNewConfigPackrat(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		// The "no renv" error case is covered by the
+		// integration tests when PKGR_TESTS_SYS_RENV is an
+		// empty string.
 		if !(tt.folder == "renv-library" && renv == "") {
 			var cfg PkgrConfig
 			_ = os.Chdir(getTestFolder(t, tt.folder))
@@ -606,6 +609,9 @@ func TestGetLibraryPath(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		// The "no renv" error case is covered by the
+		// integration tests when PKGR_TESTS_SYS_RENV is an
+		// empty string.
 		if !(tt.lftype == "renv" && renv == "") {
 			library := getLibraryPath(
 				tt.lftype, "R", rv, "apple", "original")
