@@ -575,7 +575,6 @@ func TestGetLibraryPath(t *testing.T) {
 	tests := []struct {
 		lftype   string
 		expected string
-		message  string
 	}{
 		{
 			lftype:   "renv",
