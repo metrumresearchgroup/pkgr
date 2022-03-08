@@ -718,7 +718,7 @@ func TestSetViperCustomizations(t *testing.T) {
 		var urls = []cran.RepoURL{
 			cran.RepoURL{
 				Name: tt.repo,
-				URL:  "https://cran.microsoft.com/snapshot/2018-11-11",
+				URL:  "https://mpn.metworx.com/snapshots/stable/2019-12-02",
 			},
 		}
 		pkgNexus, _ := cran.NewPkgDb(urls, cran.Source, &installConfig, cran.RVersion{}, false)
@@ -818,7 +818,7 @@ func TestSetViperCustomizations2(t *testing.T) {
 		var urls = []cran.RepoURL{
 			cran.RepoURL{
 				Name: tt.repo,
-				URL:  "https://cran.microsoft.com/snapshot/2018-11-11",
+				URL:  "https://mpn.metworx.com/snapshots/stable/2019-12-02",
 			},
 		}
 
@@ -914,7 +914,7 @@ func TestSetPkgConfig(t *testing.T) {
 		var urls = []cran.RepoURL{
 			cran.RepoURL{
 				Name: tt.repo,
-				URL:  "https://cran.microsoft.com/snapshot/2018-11-11",
+				URL:  "https://mpn.metworx.com/snapshots/stable/2019-12-02",
 			},
 		}
 
