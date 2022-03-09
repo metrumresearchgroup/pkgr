@@ -1097,14 +1097,14 @@ func setViperCustomizations2(cfg PkgrConfig, pkgSettings PkgSettingsMap, depende
 
 func getTestFolder(t *testing.T, folder string) string {
 	_, filename, _, _ := runtime.Caller(0)
-	sa := strings.SplitAfter(filename, "/pkgr/")
+	top := filepath.Join(filepath.Dir(filename), "..")
 
-	testFolder := filepath.Join(filepath.Dir(sa[0]), "configlib", "testsite", folder)
+	testFolder := filepath.Join(top, "configlib", "testsite", folder)
 	return testFolder
 }
 
 func getIntegrationTestFolder(t *testing.T, folder string) string {
 	_, filename, _, _ := runtime.Caller(0)
-	sa := strings.SplitAfter(filename, "/pkgr/")
-	return filepath.Join(filepath.Dir(sa[0]), "configlib", "testsite", "integration_test_archive", folder)
+	top := filepath.Join(filepath.Dir(filename), "..")
+	return filepath.Join(top, "configlib", "testsite", "integration_test_archive", folder)
 }
