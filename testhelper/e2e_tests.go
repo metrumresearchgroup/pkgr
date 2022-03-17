@@ -54,14 +54,14 @@ func SetupEndToEndWithInstallFull(
 
 	out, err := installCmd.CombinedOutput()
 
-	if expectError {
-		if err == nil {
-			t.Fatalf("install to '%s' with config file '%s' unexpectedly succeeded",
-				testLibrary, pkgrConfig)
-		}
-	} else if err != nil {
+	if err != nil && !expectError {
 		t.Fatalf("could not install baseline packages to '%s' with config file '%s'. Error: %s",
 			testLibrary, pkgrConfig, err)
+	}
+
+	if err == nil && expectError {
+		t.Fatalf("install to '%s' with config file '%s' unexpectedly succeeded",
+			testLibrary, pkgrConfig)
 	}
 
 	return string(out), err
