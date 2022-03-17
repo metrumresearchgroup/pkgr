@@ -1,9 +1,11 @@
 package rcmd
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/spf13/afero"
+	"github.com/stretchr/testify/assert"
 )
 
 /*
@@ -85,5 +87,42 @@ func BenchmarkRunRBatch(b *testing.B) {
 	fs := afero.NewOsFs()
 	for n := 0; n < b.N; n++ {
 		RunRBatch(fs, rs, []string{"--version"})
+	}
+}
+
+func TestConvertToRscript(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			input:    "R",
+			expected: "Rscript",
+		},
+		{
+			input:    "R.exe",
+			expected: "Rscript.exe",
+		},
+		{
+			input:    "/path/to/R",
+			expected: "/path/to/Rscript",
+		},
+		{
+			input:    "/path/to/R.exe",
+			expected: "/path/to/Rscript.exe",
+		},
+		{
+			input:    "",
+			expected: "script",
+		},
+		{
+			input:    ".exe",
+			expected: "script.exe",
+		},
+	}
+	for _, tt := range tests {
+		res := convertToRscript(tt.input)
+		assert.Equal(t, tt.expected, res,
+			fmt.Sprintf("Fail: %s != %s", res, tt.expected))
 	}
 }

@@ -24,13 +24,47 @@ func MakeSubtestName(testId, subtestId, testName string) string {
 }
 
 func SetupEndToEndWithInstall(t *testing.T, pkgrConfig, testLibrary string) {
+	SetupEndToEndWithInstallFull(t, pkgrConfig, testLibrary, nil, "", false)
+}
+
+// SetupEndToEndWithInstallFull is like SetupEndToEndWithInstall but
+// takes three additional arguments---env, dir, and expectError---and
+// returns the combined output.
+//
+// env and dir are set as the environment and working directory for
+// the `pkgr install` call.  When expectError is true, t.Fatalf() is
+// called if the command does _not_ fail.
+func SetupEndToEndWithInstallFull(
+	t *testing.T,
+	pkgrConfig,
+	testLibrary string,
+	env []string,
+	dir string,
+	expectError bool,
+) (string, error) {
 	DeleteTestFolder(t, testLibrary)
 
 	installCmd := command.New("pkgr", "install", fmt.Sprintf("--config=%s", pkgrConfig))
-	err := installCmd.Run()
-	if err != nil {
-		t.Fatalf("could not install baseline packages to '%s' with config file '%s'. Error: %s", testLibrary, pkgrConfig, err)
+	if len(env) > 0 {
+		installCmd.Env = env
 	}
+	if len(dir) > 0 {
+		installCmd.Dir = dir
+	}
+
+	out, err := installCmd.CombinedOutput()
+
+	if err != nil && !expectError {
+		t.Fatalf("could not install baseline packages to '%s' with config file '%s'. Error: %s",
+			testLibrary, pkgrConfig, err)
+	}
+
+	if err == nil && expectError {
+		t.Fatalf("install to '%s' with config file '%s' unexpectedly succeeded",
+			testLibrary, pkgrConfig)
+	}
+
+	return string(out), err
 }
 
 func DeleteTestFolder(t *testing.T, folderToDelete string) {

@@ -527,28 +527,24 @@ func equal(a []byte, b []byte, compareWs bool) bool {
 }
 
 func TestNewConfigPackrat(t *testing.T) {
-	tests := []struct {
-		folder   string
-		expected string
-		message  string
-	}{
-		{
-			folder:   "packrat-library",
-			expected: "packrat",
-			message:  "packrat exists",
-		},
-		{
-			folder:   "renv-library",
-			expected: "renv",
-			message:  "renv exists",
-		},
+	var cfg PkgrConfig
+	_ = os.Chdir(getTestFolder(t, "packrat-library"))
+	NewConfig(viper.GetString("config"), &cfg)
+	assert.Equal(t, "packrat", cfg.Lockfile.Type, fmt.Sprintf("Fail:%s", "packrat exists"))
+}
+
+func TestNewConfigRenv(t *testing.T) {
+	// The "no renv" error case is covered by the integration
+	// tests when PKGR_TESTS_SYS_RENV is an empty string.
+	renv := os.Getenv("PKGR_TESTS_SYS_RENV")
+	if renv == "" {
+		t.Skip("Skipping: empty PKGR_TESTS_SYS_RENV indicates renv not available")
 	}
-	for _, tt := range tests {
-		var cfg PkgrConfig
-		_ = os.Chdir(getTestFolder(t, tt.folder))
-		NewConfig(viper.GetString("config"), &cfg)
-		assert.Equal(t, tt.expected, cfg.Lockfile.Type, fmt.Sprintf("Fail:%s", tt.message))
-	}
+
+	var cfg PkgrConfig
+	_ = os.Chdir(getTestFolder(t, "renv-library"))
+	NewConfig(viper.GetString("config"), &cfg)
+	assert.Equal(t, "renv", cfg.Lockfile.Type, fmt.Sprintf("Fail:%s", "renv exists"))
 }
 
 func TestNewConfigNoLockfile(t *testing.T) {
@@ -575,12 +571,7 @@ func TestGetLibraryPath(t *testing.T) {
 	tests := []struct {
 		lftype   string
 		expected string
-		message  string
 	}{
-		{
-			lftype:   "renv",
-			expected: "renv/library/R-1.2/apple",
-		},
 		{
 			lftype:   "packrat",
 			expected: "packrat/lib/apple/1.2.3",
@@ -599,6 +590,24 @@ func TestGetLibraryPath(t *testing.T) {
 		library := getLibraryPath(tt.lftype, "myRpath", rv, "apple", "original")
 		assert.Equal(t, tt.expected, library, fmt.Sprintf("Fail:%s", tt.expected))
 	}
+}
+
+func TestGetLibraryPathRenv(t *testing.T) {
+	// The "no renv" error case is covered by the integration
+	// tests when PKGR_TESTS_SYS_RENV is an empty string.
+	renv := os.Getenv("PKGR_TESTS_SYS_RENV")
+	if renv == "" {
+		t.Skip("Skipping: empty PKGR_TESTS_SYS_RENV indicates renv not available")
+	}
+
+	var rs rcmd.RSettings
+	rv := rcmd.GetRVersion(&rs)
+
+	library := getLibraryPath("renv", "R", rv,
+		"platform (ignored)", "original (ignored)")
+
+	assert.Contains(t, library,
+		fmt.Sprintf("renv/library/R-%d.%d/", rv.Major, rv.Minor))
 }
 
 func TestSetCustomizations(t *testing.T) {
@@ -708,7 +717,7 @@ func TestSetViperCustomizations(t *testing.T) {
 		var urls = []cran.RepoURL{
 			cran.RepoURL{
 				Name: tt.repo,
-				URL:  "https://cran.microsoft.com/snapshot/2018-11-11",
+				URL:  "https://mpn.metworx.com/snapshots/stable/2019-12-02",
 			},
 		}
 		pkgNexus, _ := cran.NewPkgDb(urls, cran.Source, &installConfig, cran.RVersion{}, false)
@@ -808,7 +817,7 @@ func TestSetViperCustomizations2(t *testing.T) {
 		var urls = []cran.RepoURL{
 			cran.RepoURL{
 				Name: tt.repo,
-				URL:  "https://cran.microsoft.com/snapshot/2018-11-11",
+				URL:  "https://mpn.metworx.com/snapshots/stable/2019-12-02",
 			},
 		}
 
@@ -904,7 +913,7 @@ func TestSetPkgConfig(t *testing.T) {
 		var urls = []cran.RepoURL{
 			cran.RepoURL{
 				Name: tt.repo,
-				URL:  "https://cran.microsoft.com/snapshot/2018-11-11",
+				URL:  "https://mpn.metworx.com/snapshots/stable/2019-12-02",
 			},
 		}
 
@@ -995,6 +1004,10 @@ func TestNewConfigSimple(t *testing.T) {
 }
 
 func TestNewConfigNonDefaults(t *testing.T) {
+	renv := os.Getenv("PKGR_TESTS_SYS_RENV")
+	if renv == "" {
+		t.Skip("Skipping: empty PKGR_TESTS_SYS_RENV indicates renv not available")
+	}
 	//type testCase struct {
 	//	testSet string
 	//
@@ -1087,14 +1100,14 @@ func setViperCustomizations2(cfg PkgrConfig, pkgSettings PkgSettingsMap, depende
 
 func getTestFolder(t *testing.T, folder string) string {
 	_, filename, _, _ := runtime.Caller(0)
-	sa := strings.SplitAfter(filename, "/pkgr/")
+	top := filepath.Join(filepath.Dir(filename), "..")
 
-	testFolder := filepath.Join(filepath.Dir(sa[0]), "configlib", "testsite", folder)
+	testFolder := filepath.Join(top, "configlib", "testsite", folder)
 	return testFolder
 }
 
 func getIntegrationTestFolder(t *testing.T, folder string) string {
 	_, filename, _, _ := runtime.Caller(0)
-	sa := strings.SplitAfter(filename, "/pkgr/")
-	return filepath.Join(filepath.Dir(sa[0]), "configlib", "testsite", "integration_test_archive", folder)
+	top := filepath.Join(filepath.Dir(filename), "..")
+	return filepath.Join(top, "configlib", "testsite", "integration_test_archive", folder)
 }

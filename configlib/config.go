@@ -2,9 +2,11 @@ package configlib
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 
@@ -16,6 +18,7 @@ import (
 	"github.com/metrumresearchgroup/pkgr/cran"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
 	"github.com/metrumresearchgroup/pkgr/rcmd"
+	"github.com/metrumresearchgroup/pkgr/rcmd/rp"
 )
 
 // packrat uses R.version platform, which is not the same as the Platform
@@ -101,13 +104,54 @@ func expandTildesRepos(repos []map[string]string) []map[string]string {
 	return expanded
 }
 
+// getRenvLibrary calls renv to discover the library path for the
+// current working directory.  This enables matching renv's location
+// without trying to implement custom logic that needs to align and
+// stay up to date with renv's own.
+func getRenvLibrary(rpath string) (string, error) {
+	log.Trace("invoking renv to get library path")
+
+	rs := rcmd.NewRSettings(rpath)
+	res, err := rcmd.RunRscriptWithArgs(
+		afero.NewOsFs(), "", rs,
+		[]string{"-e", "cat(renv::paths$library())"},
+		"")
+
+	if err != nil {
+		if exerr, ok := err.(*exec.ExitError); ok {
+			log.Warnf("error getting library path from renv: %s\n",
+				exerr.Stderr)
+		} else {
+			log.Warnf("error getting library path from renv: %s\n",
+				err)
+		}
+
+		return "", err
+	}
+
+	lines := rp.ScanLines(res)
+	nlines := len(lines)
+	if nlines != 1 {
+		log.Warnf("expected one line for renv library, got %d:\n %q\n",
+			nlines, lines)
+
+		return "", errors.New("Malformed renv library path")
+	}
+
+	return lines[0], nil
+}
+
 func getLibraryPath(lockfileType string, rpath string, rversion cran.RVersion, platform string, library string) string {
 	switch lockfileType {
 	case "packrat":
 		library = filepath.Join("packrat", "lib", packratPlatform(platform), rversion.ToFullString())
 	case "renv":
-		s := fmt.Sprintf("R-%s", rversion.ToString())
-		library = filepath.Join("renv", "library", s, packratPlatform(platform))
+		var err error
+		library, err = getRenvLibrary(rpath)
+		if err != nil {
+			log.Fatal("Lockfile type is renv, but calling renv to find library path failed.\n" +
+				"Check that renv is installed or consider using `Library:` instead.")
+		}
 	case "pkgr":
 	default:
 	}
