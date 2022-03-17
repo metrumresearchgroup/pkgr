@@ -527,36 +527,24 @@ func equal(a []byte, b []byte, compareWs bool) bool {
 }
 
 func TestNewConfigPackrat(t *testing.T) {
-	renv := os.Getenv("PKGR_TESTS_SYS_RENV")
+	var cfg PkgrConfig
+	_ = os.Chdir(getTestFolder(t, "packrat-library"))
+	NewConfig(viper.GetString("config"), &cfg)
+	assert.Equal(t, "packrat", cfg.Lockfile.Type, fmt.Sprintf("Fail:%s", "packrat exists"))
+}
 
-	tests := []struct {
-		folder   string
-		expected string
-		message  string
-	}{
-		{
-			folder:   "packrat-library",
-			expected: "packrat",
-			message:  "packrat exists",
-		},
-		{
-			folder:   "renv-library",
-			expected: "renv",
-			message:  "renv exists",
-		},
+func TestNewConfigRenv(t *testing.T) {
+	// The "no renv" error case is covered by the integration
+	// tests when PKGR_TESTS_SYS_RENV is an empty string.
+	renv := os.Getenv("PKGR_TESTS_SYS_RENV")
+	if renv == "" {
+		t.Skip("Skipping: empty PKGR_TESTS_SYS_RENV indicates renv not available")
 	}
-	for _, tt := range tests {
-		// The "no renv" error case is covered by the
-		// integration tests when PKGR_TESTS_SYS_RENV is an
-		// empty string.
-		if !(tt.folder == "renv-library" && renv == "") {
-			var cfg PkgrConfig
-			_ = os.Chdir(getTestFolder(t, tt.folder))
-			NewConfig(viper.GetString("config"), &cfg)
-			assert.Equal(t, tt.expected, cfg.Lockfile.Type,
-				fmt.Sprintf("Fail:%s", tt.message))
-		}
-	}
+
+	var cfg PkgrConfig
+	_ = os.Chdir(getTestFolder(t, "renv-library"))
+	NewConfig(viper.GetString("config"), &cfg)
+	assert.Equal(t, "renv", cfg.Lockfile.Type, fmt.Sprintf("Fail:%s", "renv exists"))
 }
 
 func TestNewConfigNoLockfile(t *testing.T) {
@@ -580,50 +568,46 @@ func TestNewConfigNoLockfile(t *testing.T) {
 }
 
 func TestGetLibraryPath(t *testing.T) {
-	renv := os.Getenv("PKGR_TESTS_SYS_RENV")
-
-	var rs rcmd.RSettings
-	rv := rcmd.GetRVersion(&rs)
-
 	tests := []struct {
 		lftype   string
 		expected string
-		contains bool
 	}{
 		{
-			lftype:   "renv",
-			expected: fmt.Sprintf("renv/library/R-%d.%d/",
-				rv.Major, rv.Minor),
-			contains: true,
-		},
-		{
 			lftype:   "packrat",
-			expected: fmt.Sprintf("packrat/lib/apple/%d.%d.%d",
-				rv.Major, rv.Minor, rv.Patch),
-			contains: false,
+			expected: "packrat/lib/apple/1.2.3",
 		},
 		{
 			lftype:   "pkgr",
 			expected: "original",
-			contains: false,
 		},
 	}
 	for _, tt := range tests {
-		// The "no renv" error case is covered by the
-		// integration tests when PKGR_TESTS_SYS_RENV is an
-		// empty string.
-		if !(tt.lftype == "renv" && renv == "") {
-			library := getLibraryPath(
-				tt.lftype, "R", rv, "apple", "original")
-			if tt.contains {
-				assert.Contains(t, library, tt.expected)
-			} else {
-				assert.Equal(
-					t, tt.expected, library,
-					fmt.Sprintf("Fail:%s", tt.expected))
-			}
+		var rv = cran.RVersion{
+			Major: 1,
+			Minor: 2,
+			Patch: 3,
 		}
+		library := getLibraryPath(tt.lftype, "myRpath", rv, "apple", "original")
+		assert.Equal(t, tt.expected, library, fmt.Sprintf("Fail:%s", tt.expected))
 	}
+}
+
+func TestGetLibraryPathRenv(t *testing.T) {
+	// The "no renv" error case is covered by the integration
+	// tests when PKGR_TESTS_SYS_RENV is an empty string.
+	renv := os.Getenv("PKGR_TESTS_SYS_RENV")
+	if renv == "" {
+		t.Skip("Skipping: empty PKGR_TESTS_SYS_RENV indicates renv not available")
+	}
+
+	var rs rcmd.RSettings
+	rv := rcmd.GetRVersion(&rs)
+
+	library := getLibraryPath("renv", "R", rv,
+		"platform (ignored)", "original (ignored)")
+
+	assert.Contains(t, library,
+		fmt.Sprintf("renv/library/R-%d.%d/", rv.Major, rv.Minor))
 }
 
 func TestSetCustomizations(t *testing.T) {
