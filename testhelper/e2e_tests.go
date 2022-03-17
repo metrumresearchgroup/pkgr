@@ -28,11 +28,11 @@ func SetupEndToEndWithInstall(t *testing.T, pkgrConfig, testLibrary string) {
 }
 
 // SetupEndToEndWithInstallFull is like SetupEndToEndWithInstall but
-// takes three additional arguments---env, dir, and expectFail---and
+// takes three additional arguments---env, dir, and expectError---and
 // returns the combined output.
 //
 // env and dir are set as the environment and working directory for
-// the `pkgr install` call.  When expectFail is true, t.Fatalf() is
+// the `pkgr install` call.  When expectError is true, t.Fatalf() is
 // called if the command does _not_ fail.
 func SetupEndToEndWithInstallFull(
 	t *testing.T,
@@ -40,7 +40,7 @@ func SetupEndToEndWithInstallFull(
 	testLibrary string,
 	env []string,
 	dir string,
-	expectFail bool,
+	expectError bool,
 ) (string, error) {
 	DeleteTestFolder(t, testLibrary)
 
@@ -54,7 +54,7 @@ func SetupEndToEndWithInstallFull(
 
 	out, err := installCmd.CombinedOutput()
 
-	if expectFail {
+	if expectError {
 		if err == nil {
 			t.Fatalf("install to '%s' with config file '%s' unexpectedly succeeded",
 				testLibrary, pkgrConfig)

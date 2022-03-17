@@ -23,7 +23,7 @@ const (
 
 func TestLibrary(t *testing.T) {
 	renv := os.Getenv("PKGR_TESTS_SYS_RENV")
-	expectFail := renv == ""
+	expectError := renv == ""
 
 	t.Run(MakeTestName(librariesE2ETest1, "strict mode stops pkgr when library doesn't exist"), func(t *testing.T) {
 		DeleteTestFolder(t, "test-library")
@@ -45,7 +45,7 @@ func TestLibrary(t *testing.T) {
 	t.Run(MakeTestName(librariesE2ETest2, "lockfile type renv installs to renv/library"), func(t *testing.T) {
 		DeleteTestFolder(t, "test-cache")
 		cmdout, cmderr := SetupEndToEndWithInstallFull(t, "pkgr-renv.yml", "renv",
-			nil, "", expectFail)
+			nil, "", expectError)
 
 		if renv == "" {
 			assert.Error(t, cmderr, "expected 'pkgr install' error")
@@ -88,9 +88,9 @@ func TestLibrary(t *testing.T) {
 		lib := "renv-custom"
 		env := append(os.Environ(), "RENV_PATHS_LIBRARY_ROOT="+lib)
 		cmdout, _ := SetupEndToEndWithInstallFull(t, "pkgr-renv.yml", lib,
-			env, "", expectFail)
+			env, "", expectError)
 
-		if expectFail {
+		if expectError {
 			assert.Contains(t, cmdout, "calling renv to find library path failed")
 			t.Skip("Skipping: empty PKGR_TESTS_SYS_RENV indicates renv not available")
 		} else {
