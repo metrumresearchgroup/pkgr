@@ -22,9 +22,6 @@ const (
 )
 
 func TestLibrary(t *testing.T) {
-	renv := os.Getenv("PKGR_TESTS_SYS_RENV")
-	expectError := renv == ""
-
 	t.Run(MakeTestName(librariesE2ETest1, "strict mode stops pkgr when library doesn't exist"), func(t *testing.T) {
 		DeleteTestFolder(t, "test-library")
 		DeleteTestFolder(t, "test-cache")
@@ -41,6 +38,31 @@ func TestLibrary(t *testing.T) {
 			assert.Equal(t, "test-library", log.Library)
 		}
 	})
+
+	t.Run(MakeTestName(librariesE2ETest3, "lockfile type packrat installs to packrat/library"), func(t *testing.T) {
+		DeleteTestFolder(t, "test-cache")
+		SetupEndToEndWithInstall(t, "pkgr-packrat.yml", "packrat")
+
+		r6FolderFound := false
+		err := filepath.Walk("packrat/lib", func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if info.IsDir() && info.Name() == "R6" {
+				r6FolderFound = true
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("error when walking renv folder to find installed pkgs: %s", err)
+		}
+		assert.True(t, r6FolderFound, "failed to find installation of R6")
+	})
+}
+
+func TestLibraryRenv(t *testing.T) {
+	renv := os.Getenv("PKGR_TESTS_SYS_RENV")
+	expectError := renv == ""
 
 	t.Run(MakeTestName(librariesE2ETest2, "lockfile type renv installs to renv/library"), func(t *testing.T) {
 		DeleteTestFolder(t, "test-cache")
@@ -177,25 +199,5 @@ func TestLibrary(t *testing.T) {
 		if err != nil {
 			t.Fatalf("loading R6 failed: %s", err)
 		}
-	})
-
-	t.Run(MakeTestName(librariesE2ETest3, "lockfile type packrat installs to packrat/library"), func(t *testing.T) {
-		DeleteTestFolder(t, "test-cache")
-		SetupEndToEndWithInstall(t, "pkgr-packrat.yml", "packrat")
-
-		r6FolderFound := false
-		err := filepath.Walk("packrat/lib", func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if info.IsDir() && info.Name() == "R6" {
-				r6FolderFound = true
-			}
-			return nil
-		})
-		if err != nil {
-			t.Fatalf("error when walking renv folder to find installed pkgs: %s", err)
-		}
-		assert.True(t, r6FolderFound, "failed to find installation of R6")
 	})
 }
