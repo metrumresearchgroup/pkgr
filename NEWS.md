@@ -1,4 +1,18 @@
 
+# pkgr 3.1.0
+
+* For `Lockfile: Type: renv`, pkgr now invokes `renv` to discover the
+  library location rather than assuming it is under the current
+  directory's `renv/library/`. This change is important for
+  compatibility with renv 0.15 and later, where the default behavior
+  is now to put a _package_ project library outside of the main
+  project directory. (#396)
+
+* System CPU quotas are now respected when setting the number of CPUs
+  that are used if the `--threads` option isn't explicitly passed and
+  the `GOMAXPROCS` environment variable isn't set. (#385)
+
+
 # pkgr 3.0.0
 
 This release is primarily about adding a more robust test suite, with
