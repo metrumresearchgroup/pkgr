@@ -8,10 +8,6 @@
   is now to put a _package_ project library outside of the main
   project directory. (#396)
 
-* System CPU quotas are now respected when setting the number of CPUs
-  that are used if the `--threads` option isn't explicitly passed and
-  the `GOMAXPROCS` environment variable isn't set. (#385)
-
 
 # pkgr 3.0.0
 
@@ -31,3 +27,7 @@ below, relating to the new `--no-update` flag.
 
 * Extend integration test coverage and refactored test suite to
   position better for future changes.
+
+* System CPU quotas are now respected when setting the number of CPUs
+  that are used if the `--threads` option isn't explicitly passed and
+  the `GOMAXPROCS` environment variable isn't set. (#385)
