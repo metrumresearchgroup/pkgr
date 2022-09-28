@@ -54,7 +54,7 @@ brew install pkgr
 To install pkgr on Linux systems, use the following commands:
 
 ```
-sudo wget https://github.com/metrumresearchgroup/pkgr/releases/download/v1.2.1/pkgr_1.2.1_linux_amd64.tar.gz -O /tmp/pkgr.tar.gz
+sudo wget https://github.com/metrumresearchgroup/pkgr/releases/download/v3.1.0/pkgr_3.1.0_linux_amd64.tar.gz -O /tmp/pkgr.tar.gz
 sudo tar xzf /tmp/pkgr.tar.gz pkgr
 sudo mv pkgr /usr/local/bin/pkgr
 sudo chmod +x /usr/local/bin/pkgr
