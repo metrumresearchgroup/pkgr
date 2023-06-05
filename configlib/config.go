@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
@@ -114,7 +115,7 @@ func getRenvLibrary(rpath string) (string, error) {
 	rs := rcmd.NewRSettings(rpath)
 	res, err := rcmd.RunRscriptWithArgs(
 		afero.NewOsFs(), "", rs,
-		[]string{"-e", "cat(renv::paths$library())"},
+		[]string{"-e", "cat('\n_pkgr_', renv::paths$library(), '_pkgr_\n', sep = '')"},
 		"")
 
 	if err != nil {
@@ -129,16 +130,23 @@ func getRenvLibrary(rpath string) (string, error) {
 		return "", err
 	}
 
+	marker := "_pkgr_"
+	var lib string
 	lines := rp.ScanLines(res)
-	nlines := len(lines)
-	if nlines != 1 {
-		log.Warnf("expected one line for renv library, got %d:\n %q\n",
-			nlines, lines)
+	for _, l := range lines {
+		if strings.HasPrefix(l, marker) && strings.HasSuffix(l, marker) {
+			lib = strings.TrimSuffix(strings.TrimPrefix(l, marker), marker)
+			break
+		}
+	}
+
+	if lib == "" {
+		log.Warnf("did not find renv library in output:\n %q\n", lines)
 
 		return "", errors.New("Malformed renv library path")
 	}
 
-	return lines[0], nil
+	return lib, nil
 }
 
 func getLibraryPath(lockfileType string, rpath string, rversion cran.RVersion, platform string, library string) string {

@@ -144,7 +144,7 @@ func TestLibraryRenv(t *testing.T) {
 		}
 
 		err = os.WriteFile(filepath.Join("pkg", ".Rprofile"),
-			[]byte("source(\"renv/activate.R\")\n"),
+			[]byte("cat('i do not interfere\n')\nsource('renv/activate.R')\n"),
 			0666)
 		if err != nil {
 			t.Fatalf("os.WriteFile() error: %s", err)
