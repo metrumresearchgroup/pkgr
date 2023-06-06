@@ -24,6 +24,10 @@ func TestBadCustomization(t *testing.T) {
 
 		logs := CollectGenericLogs(t, capture, "error finding custom repo to set")
 		assert.Len(t, logs, 1)
+		if len(logs) == 0 {
+			t.Fatalf("CollectGenericLogs() unexpectedly returned no results")
+		}
+
 		errorMessage := logs[0]
 		assert.Equal(t, "R6", errorMessage.Pkg)
 		assert.Equal(t, "DoesNotExist", errorMessage.Repo)
