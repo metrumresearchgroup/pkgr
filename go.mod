@@ -21,7 +21,7 @@ require (
 	github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca
 	go.uber.org/automaxprocs v1.4.0
 	gopkg.in/yaml.v2 v2.4.0
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+	gopkg.in/yaml.v3 v3.0.0
 	pault.ag/go/debian v0.0.0-20180722221659-90aeb542bd40
 	pault.ag/go/topsort v0.0.0-20160530003732-f98d2ad46e1a // indirect
 
