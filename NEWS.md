@@ -1,4 +1,9 @@
 
+# pkgr 3.1.1
+
+* Fixed renv detection when other startup code writes to stdout. (#408)
+
+
 # pkgr 3.1.0
 
 * For `Lockfile: Type: renv`, pkgr now invokes `renv` to discover the
