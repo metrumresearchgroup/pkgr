@@ -22,7 +22,7 @@ steps:
       - name: docker.sock
         path: /var/run/docker.sock
   - name: build
-    image: golang:1.16
+    image: golang:1.21
     environment:
       <<: *default_environment
     commands:
