@@ -66,6 +66,28 @@ steps:
       - export PKGR_TESTS_SYS_RENV=1
       - cd configlib
       - go test -v .
+  - name: gpsr
+    image: 906087756158.dkr.ecr.us-east-1.amazonaws.com/r-dev-ci:4.1.0
+    pull: never
+    volumes:
+      - name: go
+        path: /go
+    environment:
+      <<: *default_environment
+    commands:
+      - cd gpsr
+      - go test -v .
+  - name: cran
+    image: 906087756158.dkr.ecr.us-east-1.amazonaws.com/r-dev-ci:4.1.0
+    pull: never
+    volumes:
+      - name: go
+        path: /go
+    environment:
+      <<: *default_environment
+    commands:
+      - cd cran
+      - go test -v .
   - name: baseline
     image: 906087756158.dkr.ecr.us-east-1.amazonaws.com/r-dev-ci:4.1.0
     pull: never
