@@ -20,8 +20,8 @@ func TestAppendGraph(t *testing.T) {
 	}
 	var urls = []cran.RepoURL{
 		cran.RepoURL{
-			Name: "CRAN",
-			URL:  "https://cran.microsoft.com/snapshot/2018-11-11",
+			Name: "MPN",
+			URL:  "https://mpn.metworx.com/snapshots/stable/2023-05-14",
 		},
 	}
 	packages := map[string]cran.PkgConfig{
