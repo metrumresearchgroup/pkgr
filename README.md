@@ -40,25 +40,9 @@ way.
 
 # Getting Started
 
-### OSX Installation
+### OSX and Linux installation
 
-On MacOS, we recommend using [Homebrew](https://brew.sh/) to install pkgr.
-
-```
-brew tap metrumresearchgroup/homebrew-tap
-brew install pkgr
-```
-
-### Linux Installation
-
-To install pkgr on Linux systems, use the following commands:
-
-```
-sudo wget https://github.com/metrumresearchgroup/pkgr/releases/download/v3.1.0/pkgr_3.1.0_linux_amd64.tar.gz -O /tmp/pkgr.tar.gz
-sudo tar xzf /tmp/pkgr.tar.gz pkgr
-sudo mv pkgr /usr/local/bin/pkgr
-sudo chmod +x /usr/local/bin/pkgr
-```
+Visit the [latest release on GitHub](https://github.com/metrumresearchgroup/pkgr/releases/latest) for instructions on installing pkgr.
 
 ### Windows installation
 
