@@ -13,7 +13,7 @@ func TestAppendGraph(t *testing.T) {
 	workingGraph := NewGraph()
 	dependencyConfigurations := NewDefaultInstallDeps()
 	var pkgDesc = desc.Desc{
-		Package: "roxygen2", Source: "", Version: "4.1.1.9000", Maintainer: "",
+		Package: "roxygen2",
 		Imports: map[string]desc.Dep{
 			"brew": desc.Dep{Name: "brew", Version: desc.Version{Major: 0, Minor: 0, Patch: 0, Dev: 0, Other: 0}, Constraint: 0},
 		},
