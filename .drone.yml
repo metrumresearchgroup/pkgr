@@ -27,7 +27,7 @@ steps:
       <<: *default_environment
     commands:
       - make install
-      - go get ./...
+      - go get -t ./...
     volumes:
       - name: go
         path: /go
