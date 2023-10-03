@@ -302,7 +302,7 @@ Packages:
 
 # any repositories, order matters
 Repos:
-  - CRAN: "https://cran.microsoft.com/snapshot/2020-05-01"
+  - MPN: "https://mpn.metworx.com/snapshots/stable/2023-06-29"
 
 
 Library: "test-library"
@@ -994,7 +994,7 @@ func TestNewConfigSimple(t *testing.T) {
 	assert.Equal(t, false, cfg.NoUpdate)
 	assert.Equal(t, false, cfg.Suggests)
 	assert.Empty(t, cfg.Customizations)
-	assert.Equal(t, []map[string]string{{"CRAN": "https://cran.microsoft.com/snapshot/2020-05-01"}}, cfg.Repos)
+	assert.Equal(t, []map[string]string{{"MPN": "https://mpn.metworx.com/snapshots/stable/2023-06-29"}}, cfg.Repos)
 	assert.Equal(t, false, cfg.Strict)
 	assert.Equal(t, Lockfile{}, cfg.Lockfile)
 	assert.Equal(t, false, cfg.NoRollback)
@@ -1035,7 +1035,7 @@ func TestNewConfigNonDefaults(t *testing.T) {
 	assert.Equal(t, true, cfg.NoUpdate)
 	assert.Equal(t, true, cfg.Suggests)
 	assert.Empty(t, cfg.Customizations) // Customizations are tested elsewhere.
-	assert.Equal(t, []map[string]string{{"CRAN": "https://cran.microsoft.com/snapshot/2020-05-01"}}, cfg.Repos)
+	assert.Equal(t, []map[string]string{{"MPN": "https://mpn.metworx.com/snapshots/stable/2023-06-29"}}, cfg.Repos)
 	assert.Equal(t, true, cfg.Strict)
 	assert.Equal(t, Lockfile{
 		Type: "renv",

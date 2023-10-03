@@ -13,15 +13,15 @@ func TestAppendGraph(t *testing.T) {
 	workingGraph := NewGraph()
 	dependencyConfigurations := NewDefaultInstallDeps()
 	var pkgDesc = desc.Desc{
-		Package: "roxygen2", Source: "", Version: "4.1.1.9000", Maintainer: "",
+		Package: "roxygen2",
 		Imports: map[string]desc.Dep{
 			"brew": desc.Dep{Name: "brew", Version: desc.Version{Major: 0, Minor: 0, Patch: 0, Dev: 0, Other: 0}, Constraint: 0},
 		},
 	}
 	var urls = []cran.RepoURL{
 		cran.RepoURL{
-			Name: "CRAN",
-			URL:  "https://cran.microsoft.com/snapshot/2018-11-11",
+			Name: "MPN",
+			URL:  "https://mpn.metworx.com/snapshots/stable/2023-05-14",
 		},
 	}
 	packages := map[string]cran.PkgConfig{

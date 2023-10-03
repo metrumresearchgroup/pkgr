@@ -16,10 +16,10 @@ func TestUrlHash(t *testing.T) {
 	}{
 		{
 			RepoURL{
-				Name: "CRAN",
-				URL:  "https://cran.microsoft.com/snapshot/2018-11-11",
+				Name: "MPN",
+				URL:  "https://mpn.metworx.com/snapshots/stable/2023-05-14",
 			},
-			"CRAN-6a482b33cea8",
+			"MPN-8520d4ecc108",
 		},
 		{
 			RepoURL{

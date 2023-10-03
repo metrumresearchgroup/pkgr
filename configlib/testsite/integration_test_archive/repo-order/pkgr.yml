@@ -5,7 +5,7 @@ Packages:
 
 # any repositories, order matters
 Repos:
-  - CRAN: "https://cran.microsoft.com/snapshot/2020-05-01"
+  - MPN: "https://mpn.metworx.com/snapshots/stable/2023-06-29"
   - r_validated: "https://metrumresearchgroup.github.io/r_validated"
 
 Library: "test-library"

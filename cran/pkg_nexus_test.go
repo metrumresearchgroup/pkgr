@@ -20,18 +20,18 @@ func TestSetType(t *testing.T) {
 }
 
 func TestSetType2(t *testing.T) {
-	var pkgName = "sankey"
+	var pkgName = "mrgsolve"
 	var urls = []RepoURL{
 		RepoURL{
-			Name: "CRAN_2018_11_11",
-			URL:  "https://cran.microsoft.com/snapshot/2018-11-11",
+			Name: "MPN_2023_03_13",
+			URL:  "https://mpn.metworx.com/snapshots/stable/2023-03-13",
 		},
 	}
 	var installConfig = InstallConfig{
 		Packages: map[string]PkgConfig{},
 	}
 
-	pkgNexus, _ := NewPkgDb(urls, Source, &installConfig, RVersion{}, false)
+	pkgNexus, _ := NewPkgDb(urls, Source, &installConfig, RVersion{4, 1, 3}, false)
 	_, pkgCfg, _ := pkgNexus.GetPackage(pkgName)
 	assert.Equal(t, Source, pkgCfg.Type, "Error getting type source")
 
@@ -46,27 +46,27 @@ func TestSetType2(t *testing.T) {
 }
 
 func TestSetRepo(t *testing.T) {
-	var pkgName = "sankey"
+	var pkgName = "mrgsolve"
 	var urls = []RepoURL{
 		RepoURL{
-			Name: "CRAN_2018_11_11",
-			URL:  "https://cran.microsoft.com/snapshot/2018-11-11",
+			Name: "MPN_2023_03_13",
+			URL:  "https://mpn.metworx.com/snapshots/stable/2023-03-13",
 		},
 		RepoURL{
-			Name: "CRAN_2018_11_12",
-			URL:  "https://cran.microsoft.com/snapshot/2018-11-12",
+			Name: "MPN_2022_06_15",
+			URL:  "https://mpn.metworx.com/snapshots/stable/2022-06-15",
 		},
 	}
 	var installConfig = InstallConfig{
 		Packages: map[string]PkgConfig{},
 	}
 
-	pkgNexus, _ := NewPkgDb(urls, Source, &installConfig, RVersion{}, false)
+	pkgNexus, _ := NewPkgDb(urls, Source, &installConfig, RVersion{4, 1, 3}, false)
 
 	_, pkgCfg, _ := pkgNexus.GetPackage(pkgName)
-	assert.Equal(t, "CRAN_2018_11_11", pkgCfg.Repo.Name, "Error getting repo CRAN_2018_11_11")
+	assert.Equal(t, "MPN_2023_03_13", pkgCfg.Repo.Name, "Error getting repo MPN_2023_03_13")
 
-	pkgNexus.SetPackageRepo(pkgName, "CRAN_2018_11_12")
+	pkgNexus.SetPackageRepo(pkgName, "MPN_2022_06_15")
 	_, pkgCfg, _ = pkgNexus.GetPackage(pkgName)
-	assert.Equal(t, "CRAN_2018_11_12", pkgCfg.Repo.Name, "Error setting repo CRAN_2018_11_12")
+	assert.Equal(t, "MPN_2022_06_15", pkgCfg.Repo.Name, "Error getting repo MPN_2022_06_15")
 }

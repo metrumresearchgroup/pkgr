@@ -6,7 +6,6 @@ Packages:
 
 # any repositories, order matters
 Repos:
-  - CRAN: "https://cran.microsoft.com/snapshot/2020-05-01"
-
+  - MPN: "https://mpn.metworx.com/snapshots/stable/2023-06-29"
 
 Library: "test-library"
