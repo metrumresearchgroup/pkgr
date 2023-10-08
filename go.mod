@@ -6,6 +6,7 @@ require (
 	github.com/dpastoor/goutils v1.2.0
 	github.com/fatih/structs v1.1.0
 	github.com/fatih/structtag v1.2.0
+	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/metrumresearchgroup/command v0.1.0
 	github.com/mholt/archiver/v3 v3.5.1
 	github.com/mitchellh/go-homedir v1.1.0

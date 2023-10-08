@@ -166,7 +166,7 @@ func TestClean(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error running pkgr install: %s", err)
 		}
-		downloadLogs := CollectGenericLogs(t, capture, "downloading package")
+		downloadLogs := CollectGenericLogs(t, capture, "downloading package ")
 		assert.Len(t, downloadLogs, 1, "expected exactly one package to be downloaded")
 		assert.Equal(t, "pillar", downloadLogs[0].Package)
 		toInstallLogs := CollectGenericLogs(t, capture, "package installation plan")
