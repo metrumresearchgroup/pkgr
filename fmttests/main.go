@@ -62,16 +62,24 @@ func packageBaseName(s string) string {
 	return xs[n-1]
 }
 
+type key struct {
+	Package string
+	Test    string
+}
+
 // processEvents reads a JSON record of a test event from r.  For each result
 // record encountered (i.e. a record with an action of "pass", "fail", or
-// "skip"), it writes a formatted line to w.  The subtests argument controls
-// whether results for subtests are written.
+// "skip"), it writes a formatted line to wout.  If any failures are
+// encountered, it writes the failing test's output lines to werr.
+//
+// The subtests argument controls whether results for subtests are written.
 //
 // processEvents returns a summary instance that records the test names for each
 // result record encountered.
-func processEvents(r io.Reader, subtests bool, w io.Writer) (summary, error) {
+func processEvents(r io.Reader, subtests bool, wout io.Writer, werr io.Writer) (summary, error) {
 	var res summary
 
+	failLines := make(map[key][]string)
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		var e event
@@ -87,6 +95,10 @@ func processEvents(r io.Reader, subtests bool, w io.Writer) (summary, error) {
 		var alwaysShow bool
 		switch e.Action {
 		case "fail":
+			k := key{e.Package, e.Test}
+			for _, line := range failLines[k] {
+				fmt.Fprint(werr, line)
+			}
 			res.Failed = append(res.Failed, e.Test)
 			status = "failed"
 			alwaysShow = true
@@ -99,7 +111,11 @@ func processEvents(r io.Reader, subtests bool, w io.Writer) (summary, error) {
 			alwaysShow = true
 		case "bench":
 			return res, errors.New("bench output is not supported")
-		case "cont", "output", "pause", "run", "start":
+		case "output":
+			k := key{e.Package, e.Test}
+			failLines[k] = append(failLines[k], e.Output)
+			continue
+		case "cont", "pause", "run", "start":
 			continue
 		default:
 			return res, fmt.Errorf("unknown action: %s", e.Action)
@@ -109,7 +125,7 @@ func processEvents(r io.Reader, subtests bool, w io.Writer) (summary, error) {
 			// TODO: Consider other approaches for formatting the package name
 			// that avoid collisions (e.g., packageBaseName returns "cmd" for
 			// both ".../foo/cmd" and ".../bar/cmd").
-			fmt.Fprintf(w, "[%s] %s: %s\n",
+			fmt.Fprintf(wout, "[%s] %s: %s\n",
 				packageBaseName(e.Package), e.Test, status)
 		}
 	}
@@ -133,7 +149,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	res, err := processEvents(os.Stdin, *subtests, os.Stdout)
+	res, err := processEvents(os.Stdin, *subtests, os.Stdout, os.Stderr)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(2)

@@ -16,6 +16,7 @@ type testEvent struct {
 	Action  string
 	Package string
 	Test    string
+	Output  string
 }
 
 func makeEventReader(t *testing.T, tes []testEvent) io.Reader {
@@ -28,6 +29,7 @@ func makeEventReader(t *testing.T, tes []testEvent) io.Reader {
 			Action:  te.Action,
 			Package: te.Package,
 			Test:    te.Test,
+			Output:  te.Output,
 		}
 		bs, err := json.Marshal(&e)
 		if err != nil {
@@ -211,8 +213,10 @@ func TestProcessEvents(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var buf bytes.Buffer
-			s, err := processEvents(makeEventReader(t, tt.events), tt.subtests, &buf)
+			var bufStdout bytes.Buffer
+			var bufStderr bytes.Buffer
+			s, err := processEvents(makeEventReader(t, tt.events),
+				tt.subtests, &bufStdout, &bufStderr)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -227,12 +231,120 @@ func TestProcessEvents(t *testing.T) {
 				t.Errorf("skipped: want %d, got %d", tt.nskipped, len(s.Skipped))
 			}
 
-			out := buf.String()
-			outWant := strings.Join(tt.lines, "\n") + "\n"
-			if out != outWant {
-				t.Errorf("stdout:\n  want %q,\n   got %q", outWant, out)
+			stdout := bufStdout.String()
+			stdoutWant := strings.Join(tt.lines, "\n") + "\n"
+			if stdout != stdoutWant {
+				t.Errorf("stdout:\n  want %q,\n   got %q", stdoutWant, stdout)
+			}
+
+			stderr := bufStderr.String()
+			if stderr != "" {
+				t.Errorf("expected empty stderr, got %q", stderr)
 			}
 		})
+	}
+}
+
+func TestProcessEventsFailureOutput(t *testing.T) {
+	events := []testEvent{
+		{
+			Action:  "output",
+			Package: "example.com/o/foo",
+			Test:    "TestFoo1",
+			Output:  "foo1 output\n",
+		},
+		{
+			Action:  "pass",
+			Package: "example.com/o/foo",
+			Test:    "TestFoo1",
+		},
+		{
+			Action:  "output",
+			Package: "example.com/o/foo",
+			Test:    "TestFoo2",
+			Output:  "TestFoo2 failed\n",
+		},
+		{
+			Action:  "output",
+			Package: "example.com/o/foo",
+			Test:    "TestFoo2",
+			Output:  "error was ...\n",
+		},
+		{
+			Action:  "fail",
+			Package: "example.com/o/foo",
+			Test:    "TestFoo2",
+		},
+		{
+			Action:  "pass",
+			Package: "example.com/o/k/bar",
+			Test:    "TestBar",
+		},
+		{
+			Action:  "output",
+			Package: "example.com/o/k/baz",
+			Test:    "TestBaz/1",
+			Output:  "TestBaz/1 failed\n",
+		},
+		{
+			Action:  "pass",
+			Package: "example.com/o/k/baz",
+			Test:    "TestBaz/2",
+		},
+		{
+			Action:  "fail",
+			Package: "example.com/o/k/baz",
+			Test:    "TestBaz/1",
+		},
+		{
+			Action:  "fail",
+			Package: "example.com/o/k/baz",
+			Test:    "TestBaz",
+		},
+	}
+	var bufStdout bytes.Buffer
+	var bufStderr bytes.Buffer
+	s, err := processEvents(makeEventReader(t, events),
+		false, &bufStdout, &bufStderr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	nfailedWant := 3
+	if len(s.Failed) != nfailedWant {
+		t.Errorf("failed: want %d, got %d", nfailedWant, len(s.Failed))
+	}
+
+	npassedWant := 3
+	if len(s.Passed) != npassedWant {
+		t.Errorf("passed: want %d, got %d", npassedWant, len(s.Passed))
+	}
+
+	nskippedWant := 0
+	if len(s.Skipped) != nskippedWant {
+		t.Errorf("skipped: want %d, got %d", nskippedWant, len(s.Skipped))
+	}
+
+	stdout := bufStdout.String()
+	stdoutWant := strings.Join([]string{
+		"[foo] TestFoo1: passed",
+		"[foo] TestFoo2: failed",
+		"[bar] TestBar: passed",
+		"[baz] TestBaz/1: failed",
+		"[baz] TestBaz: failed",
+	}, "\n") + "\n"
+	if stdout != stdoutWant {
+		t.Errorf("stdout:\n  want %q,\n   got %q", stdoutWant, stdout)
+	}
+
+	stderr := bufStderr.String()
+	stderrWant := strings.Join([]string{
+		"TestFoo2 failed",
+		"error was ...",
+		"TestBaz/1 failed",
+	}, "\n") + "\n"
+	if stderr != stderrWant {
+		t.Errorf("stderr: want %q, got %q", stderrWant, stderr)
 	}
 }
 
@@ -280,8 +392,10 @@ func TestProcessEventsErrors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var buf bytes.Buffer
-			_, err := processEvents(makeEventReader(t, tt.events), false, &buf)
+			var bufStdout bytes.Buffer
+			var bufStderr bytes.Buffer
+			_, err := processEvents(makeEventReader(t, tt.events),
+				false, &bufStdout, &bufStderr)
 			if err == nil {
 				t.Errorf("processEvents unexpectedly passed")
 			}
