@@ -89,9 +89,9 @@ commands, replacing any spaces in the name with underscores.
 documentation unless the `VT_DOC_DIR` variable specifies another
 locatino (see [step 5](#step5)).
 
-The Makefile rules expect the main repository to define a `docgen`
-package (suggested location: `internal/tools/docgen`) whose executable
-generates the documentation.
+By default, the Makefile rules expect the main repository to define a
+`docgen` package (suggested location: `internal/tools/docgen`) whose
+executable generates the documentation.
 
 The `docgen` executable should accept one argument, the directory in
 which to write the documentation files.  The executable is responsible
@@ -100,6 +100,10 @@ for ensuring that no stale documentation remains in the directory
 
 If a module uses `cobra`, `docgen` can likely be defined as a light
 wrapper around the `cobra/doc.GenMarkdownTree` function.
+
+If the documentation files are maintained as the primary source
+(i.e. the files do not need to be generated), set the `VT_DOC_DO_GEN`
+variable to `no` (see [step 5](#step5)).
 
 ### 3. Define traceability matrix
 
@@ -218,6 +222,9 @@ variable `VT_OUT_DIR`.  By default, this points to
 
  * `VT_DOC_DIR`: tell `docgen` executable to generate documentation
    files under this directory (default: `docs/commands`)
+
+ * `VT_DOC_DO_GEN`: whether to run `docgen` executable to generate
+   documentation files under `VT_DOC_DIR` (default: `yes`)
 
  * `VT_MATRIX`: path to matrix file (default:
    `docs/validation/matrix.yaml`)

@@ -17,6 +17,7 @@ prefix := $(VT_OUT_DIR)/$(name)
 
 VT_BIN_DIR ?= $(vtdir)/bin
 VT_DOC_DIR ?= docs/commands
+VT_DOC_DO_GEN ?= yes
 VT_MATRIX ?= docs/validation/matrix.yaml
 
 VT_TEST_ALLOW_SKIPS ?= no
@@ -63,10 +64,14 @@ vt-bin:
 
 .PHONY: vt-gen-docs
 vt-gen-docs:
+ifeq ($(VT_DOC_DO_GEN),yes)
 	$(MAKE) vt-bin
 	@test -f '$(VT_BIN_DIR)/docgen' || \
 	  { printf '"make vt-bin" did not generate $(VT_BIN_DIR)/docgen\n'; exit 1; }
 	'$(VT_BIN_DIR)/docgen' '$(VT_DOC_DIR)'
+else
+	@:
+endif
 
 $(VT_BIN_DIR)/checkmat: $(vtdir)/checkmat/main.go
 
