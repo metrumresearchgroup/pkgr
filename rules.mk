@@ -46,6 +46,13 @@ vt-copymat:
 	@mkdir -p '$(VT_OUT_DIR)'
 	cp '$(VT_MATRIX)' '$(prefix).matrix.yaml'
 
+.PHONY: vt-archive
+vt-archive:
+	@mkdir -p '$(VT_OUT_DIR)'
+	@test -z "$(git status --porcelain -unormal --ignore-submodules=none)" || \
+	  { printf >&2 'working tree is dirty; commit changes first\n'; exit 1; }
+	git archive -o '$(prefix).tar.gz' --format=tar.gz HEAD
+
 $(VT_BIN_DIR)/%: $(vtdir)/%/main.go
 	@mkdir -p '$(VT_BIN_DIR)'
 	go build -o '$@' '$<'
