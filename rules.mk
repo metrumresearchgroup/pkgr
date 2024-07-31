@@ -6,6 +6,7 @@ endif
 
 VT_BIN_DIR ?= $(vtdir)/bin
 VT_DOC_DIR ?= docs/commands
+VT_MATRIX ?= docs/validation/matrix.yaml
 
 .PHONY: vt-bin
 vt-bin:
@@ -18,3 +19,13 @@ vt-gen-docs:
 	@test -f '$(VT_BIN_DIR)/docgen' || \
 	  { printf '"make vt-bin" did not generate $(VT_BIN_DIR)/docgen\n'; exit 1; }
 	'$(VT_BIN_DIR)/docgen' '$(VT_DOC_DIR)'
+
+$(VT_BIN_DIR)/checkmat: $(vtdir)/checkmat/main.go
+
+.PHONY: vt-checkmat
+vt-checkmat: $(VT_BIN_DIR)/checkmat
+	'$(VT_BIN_DIR)/checkmat' '$(VT_MATRIX)' '$(VT_DOC_DIR)'
+
+$(VT_BIN_DIR)/%: $(vtdir)/%/main.go
+	@mkdir -p '$(VT_BIN_DIR)'
+	go build -o '$@' '$<'
