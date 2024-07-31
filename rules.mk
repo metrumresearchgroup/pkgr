@@ -46,6 +46,8 @@ vt-copymat:
 	@mkdir -p '$(VT_OUT_DIR)'
 	cp '$(VT_MATRIX)' '$(prefix).matrix.yaml'
 
+$(VT_BIN_DIR)/fmttests: $(vtdir)/fmttests/main.go
+
 .PHONY: vt-archive
 vt-archive:
 	@mkdir -p '$(VT_OUT_DIR)'
