@@ -19,6 +19,12 @@ VT_BIN_DIR ?= $(vtdir)/bin
 VT_DOC_DIR ?= docs/commands
 VT_MATRIX ?= docs/validation/matrix.yaml
 
+VT_TEST_ALLOW_SKIPS ?= no
+VT_TEST_RUNNERS ?=
+ifeq ($(strip $(VT_TEST_RUNNERS)),)
+$(error "VT_TEST_RUNNERS must point to space-delimited list of test scripts")
+endif
+
 .PHONY: vt-bin
 vt-bin:
 	rm -rf '$(VT_BIN_DIR)' && mkdir '$(VT_BIN_DIR)'
@@ -47,6 +53,12 @@ vt-copymat:
 	cp '$(VT_MATRIX)' '$(prefix).matrix.yaml'
 
 $(VT_BIN_DIR)/fmttests: $(vtdir)/fmttests/main.go
+
+.PHONY: vt-test
+vt-test: $(VT_BIN_DIR)/fmttests
+	@unset GOCOVERDIR; \
+	  '$(vtdir)/scripts/run-tests' '$(VT_BIN_DIR)/fmttests' \
+	  '$(VT_TEST_ALLOW_SKIPS)' $(VT_TEST_RUNNERS)
 
 .PHONY: vt-archive
 vt-archive:
