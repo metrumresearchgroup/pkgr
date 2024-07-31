@@ -60,6 +60,8 @@ vt-test: $(VT_BIN_DIR)/fmttests
 	  '$(vtdir)/scripts/run-tests' '$(VT_BIN_DIR)/fmttests' \
 	  '$(VT_TEST_ALLOW_SKIPS)' $(VT_TEST_RUNNERS)
 
+$(VT_BIN_DIR)/filecov: $(vtdir)/filecov/main.go
+
 .PHONY: vt-archive
 vt-archive:
 	@mkdir -p '$(VT_OUT_DIR)'
