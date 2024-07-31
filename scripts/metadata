@@ -10,7 +10,8 @@ test $# = 0 || {
 }
 
 # Note: This output matches the "metadata" field that mpn.scorecard
-# outputs to the .scorecard.json for R packages.
+# outputs to the .scorecard.json for R packages, with the addition of
+# the Go version.
 
 dt=$(date '+%Y-%m-%d %H:%M:%S')
 user=${USER?'USER environment variable is not set'}
@@ -20,6 +21,9 @@ release=$(uname -r)
 machine=$(uname -m)
 mver=${METWORX_VERSION?'METWORX_VERSION environment variable is not set'}
 
+go_ver=$(go env GOVERSION)
+go_ver=${go_ver#go}
+
 jq -n \
    --arg d "$dt" \
    --arg u "$user" \
@@ -28,6 +32,7 @@ jq -n \
    --arg r "$release" \
    --arg m "$machine" \
    --arg V "$mver" \
+   --arg g "$go_ver" \
    '{"date": $d,
      "executor": $u,
      "info": {
@@ -36,7 +41,8 @@ jq -n \
          "sysname": $s,
          "version": $v,
          "release": $r,
-         "machine": $m
+         "machine": $m,
+         "Go version": $g
        }
      }
     }'
