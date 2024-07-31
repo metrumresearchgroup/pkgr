@@ -86,6 +86,11 @@ vt-scores:
 	'$(vtdir)/scripts/write-scores' '$(prefix).coverage.json' \
 	  >'$(prefix).scores.json'
 
+.PHONY: vt-metadata
+vt-metadata:
+	@mkdir -p '$(VT_OUT_DIR)'
+	'$(vtdir)/scripts/metadata' >'$(prefix).metadata.json'
+
 .PHONY: vt-archive
 vt-archive:
 	@mkdir -p '$(VT_OUT_DIR)'

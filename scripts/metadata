@@ -1,0 +1,42 @@
+#!/bin/sh
+# Copyright 2024 Metrum Research Group
+# SPDX-License-Identifier: MIT
+
+set -eu
+
+test $# = 0 || {
+    printf >&2 'usage: %s\n' "$0"
+    exit 1
+}
+
+# Note: This output matches the "metadata" field that mpn.scorecard
+# outputs to the .scorecard.json for R packages.
+
+dt=$(date '+%Y-%m-%d %H:%M:%S')
+user=${USER?'USER environment variable is not set'}
+sysname=$(uname -s)
+version=$(uname -v)
+release=$(uname -r)
+machine=$(uname -m)
+mver=${METWORX_VERSION?'METWORX_VERSION environment variable is not set'}
+
+jq -n \
+   --arg d "$dt" \
+   --arg u "$user" \
+   --arg s "$sysname" \
+   --arg v "$version" \
+   --arg r "$release" \
+   --arg m "$machine" \
+   --arg V "$mver" \
+   '{"date": $d,
+     "executor": $u,
+     "info": {
+       "env_vars": {"METWORX_VERSION": $V},
+       "sys": {
+         "sysname": $s,
+         "version": $v,
+         "release": $r,
+         "machine": $m
+       }
+     }
+    }'
