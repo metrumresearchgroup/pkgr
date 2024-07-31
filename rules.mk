@@ -25,6 +25,14 @@ ifeq ($(strip $(VT_TEST_RUNNERS)),)
 $(error "VT_TEST_RUNNERS must point to space-delimited list of test scripts")
 endif
 
+.PHONY: vt-all
+vt-all: vt-copymat
+vt-all: vt-cover
+vt-all: vt-scores
+vt-all: vt-pkg
+vt-all: vt-metadata
+vt-all: vt-archive
+
 .PHONY: vt-bin
 vt-bin:
 	rm -rf '$(VT_BIN_DIR)' && mkdir '$(VT_BIN_DIR)'
