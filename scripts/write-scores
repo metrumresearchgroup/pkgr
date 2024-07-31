@@ -1,0 +1,73 @@
+#!/bin/sh
+# Copyright 2024 Metrum Research Group
+# SPDX-License-Identifier: MIT
+#
+# shellcheck disable=SC3043
+#   Note: shell must support non-POSIX 'local'.
+
+set -eu
+
+test $# = 1 || {
+    printf >&2 'usage: %s <coverage json>\n' "$0"
+    exit 1
+}
+
+covresults=$1
+cov=$(jq -e .overall <"$covresults") || {
+    printf >&2 'reading coverage from %s failed\n' "$covresults"
+    exit 1
+}
+
+ask () {
+    local ans
+    local res
+
+    while true
+    do
+        printf >&2 '%s [yn] ' "$1"
+        read -r ans
+        case "$ans" in
+            y|Y|yes)
+                res=1
+                break
+                ;;
+            n|N|no)
+                res=0
+                break
+                ;;
+            *)
+                printf >&2 'Enter y or n.\n'
+                ;;
+        esac
+    done
+    printf '%s\n' "$res"
+}
+
+# TODO: Check existence of NEWS.md (any others?) instead of prompting?
+has_news=$(ask 'Does this package have a NEWS file?')
+news_current=$(ask 'Does the version being scored have a NEWS entry?')
+has_website=$(ask 'Does this package have a website?')
+
+jq -n \
+   --argjson c "$cov" \
+   --argjson w "$has_website" \
+   --argjson n "$has_news" \
+   --argjson N "$news_current" \
+   '{
+      "testing": {
+        "check": 1,
+        "coverage": ($c / 100)
+      },
+      "documentation": {
+        "has_website": $w,
+        "has_news": $n
+      },
+      "maintenance": {
+        "has_maintainer": 1,
+        "news_current": $N
+      },
+      "transparency": {
+        "has_source_control": 1,
+        "has_bug_reports_url": 1
+      }
+    }'

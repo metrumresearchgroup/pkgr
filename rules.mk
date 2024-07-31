@@ -80,6 +80,12 @@ vt-cover: $(VT_BIN_DIR)/fmttests
 	'$(VT_BIN_DIR)/filecov' -mod go.mod '$(cov_prof)' \
 	  >'$(prefix).coverage.json'
 
+.PHONY: vt-scores
+vt-scores:
+	@mkdir -p '$(VT_OUT_DIR)'
+	'$(vtdir)/scripts/write-scores' '$(prefix).coverage.json' \
+	  >'$(prefix).scores.json'
+
 .PHONY: vt-archive
 vt-archive:
 	@mkdir -p '$(VT_OUT_DIR)'
