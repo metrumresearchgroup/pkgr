@@ -86,6 +86,15 @@ vt-scores:
 	'$(vtdir)/scripts/write-scores' '$(prefix).coverage.json' \
 	  >'$(prefix).scores.json'
 
+.PHONY: vt-pkg
+vt-pkg:
+	@mkdir -p '$(VT_OUT_DIR)'
+	jq -n --arg p '$(VT_PKG)' --arg v "$(version)" \
+	'{"mpn_scorecard_format": "1.0",'\
+	' "pkg_name": $$p, "pkg_version": $$v,'\
+	' "scorecard_type": "cli"}' \
+	>'$(prefix).pkg.json'
+
 .PHONY: vt-metadata
 vt-metadata:
 	@mkdir -p '$(VT_OUT_DIR)'
