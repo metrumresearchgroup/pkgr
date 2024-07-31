@@ -249,6 +249,14 @@ directly:
  * `vt-gen-docs`: invoke the `docgen` exectuable to refresh the
    documentation in `VT_DOC_DIR`
 
+ * `vt-cover-unlisted`: display a diff of two file sets: 1) non-test
+   Go files in the repository that define at least one function and 2)
+   files included in the coverage JSON under `VT_OUT_DIR`
+
+   This can help identify files that are unexpectedly missing coverage
+   scores.  In this case, you may need to adjust the package selection
+   or the `-coverpkg` value in one of the test runners scripts.
+
  * `vt-test`: invoke each script in `VT_TEST_RUNNERS` *without*
    coverage enabled
 

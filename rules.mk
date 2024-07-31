@@ -33,6 +33,7 @@ vt-help:
 	$(info * vt-gen-docs: generate command docs under $(VT_DOC_DIR)/)
 	$(info )
 	$(info Other targets:)
+	$(info * vt-cover-unlisted: show Go files that are not in coverage JSON)
 	$(info * vt-test: invoke each script listed in VT_TEST_RUNNERS)
 	$(info )
 	$(info Other targets, triggered by vt-all:)
@@ -115,6 +116,12 @@ vt-cover: $(VT_BIN_DIR)/fmttests
 	go tool covdata textfmt -i '$(cov_dir)' -o '$(cov_prof)'
 	'$(VT_BIN_DIR)/filecov' -mod go.mod '$(cov_prof)' \
 	  >'$(prefix).coverage.json'
+
+.PHONY: vt-cover-unlisted
+vt-cover-unlisted:
+	@test -f '$(prefix).coverage.json' || \
+	  { printf >&2 'vt-cover-unlisted requires $(prefix).coverage.json\n'; exit 1; }
+	@'$(vtdir)/scripts/cover-unlisted' '$(prefix).coverage.json' || :
 
 .PHONY: vt-scores
 vt-scores:
