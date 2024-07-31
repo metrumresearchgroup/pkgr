@@ -25,6 +25,29 @@ ifeq ($(strip $(VT_TEST_RUNNERS)),)
 $(error "VT_TEST_RUNNERS must point to space-delimited list of test scripts")
 endif
 
+.PHONY: vt-help
+vt-help:
+	$(info Primary targets:)
+	$(info * vt-all: create all validation artifacts under $(VT_OUT_DIR)/)
+	$(info * vt-gen-docs: generate command docs under $(VT_DOC_DIR)/)
+	$(info )
+	$(info Other targets:)
+	$(info * vt-test: invoke each script listed in VT_TEST_RUNNERS)
+	$(info )
+	$(info Other targets, triggered by vt-all:)
+	$(info * vt-archive: write source archive to $(prefix).tar.gz)
+	$(info * vt-bin: install executables for packages under current directory to $(VT_BIN_DIR)/)
+	$(info * vt-checkmat: check $(VT_MATRIX) with checkmat)
+	$(info * vt-copymat: copy $(VT_MATRIX) to $(prefix).matrix.yaml)
+	$(info * vt-cover: invoke each script listed in VT_TEST_RUNNERS with coverage enabled)
+	$(info * vt-metadata: write scorecard metadata to $(prefix).metadata.json)
+	$(info * vt-pkg: write package name and version to $(prefix).pkg.json)
+	$(info * vt-scores: write scorecard scores to $(prefix).scores.json)
+	@:
+
+.PHONY: help-valtools
+help-valtools: vt-help
+
 .PHONY: vt-all
 vt-all: vt-copymat
 vt-all: vt-cover
