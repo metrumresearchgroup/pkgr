@@ -62,6 +62,24 @@ vt-test: $(VT_BIN_DIR)/fmttests
 
 $(VT_BIN_DIR)/filecov: $(vtdir)/filecov/main.go
 
+# ATTN: Make coverage directory absolute because we cannot rely on
+# test subprocesses to be executed from the same directory.
+cov_dir := $(abspath $(VT_OUT_DIR)/.coverage)
+cov_prof := $(cov_dir).profile
+
+.PHONY: vt-cover
+vt-cover: export GOCOVERDIR=$(cov_dir)
+vt-cover: $(VT_BIN_DIR)/filecov
+vt-cover: $(VT_BIN_DIR)/fmttests
+	@mkdir -p '$(VT_OUT_DIR)'
+	rm -rf '$(cov_dir)' && mkdir '$(cov_dir)'
+	'$(vtdir)/scripts/run-tests' '$(VT_BIN_DIR)/fmttests' \
+	  '$(VT_TEST_ALLOW_SKIPS)' $(VT_TEST_RUNNERS) \
+	  >'$(prefix).check.txt'
+	go tool covdata textfmt -i '$(cov_dir)' -o '$(cov_prof)'
+	'$(VT_BIN_DIR)/filecov' -mod go.mod '$(cov_prof)' \
+	  >'$(prefix).coverage.json'
+
 .PHONY: vt-archive
 vt-archive:
 	@mkdir -p '$(VT_OUT_DIR)'
