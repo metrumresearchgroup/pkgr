@@ -113,7 +113,8 @@ files that test it.  By default, the Makefile rules look for the
 matrix YAML file at `docs/validation/matrix.yaml`.  To change this
 location, set the `VT_MATRIX` variable (see [step 5](#step5)).
 
-The file should consist of a sequence of entries with following items:
+The file should consist of a sequence of entries with the following
+items:
 
  * `entrypoint`: the name of the command, as invoked by the user
 
