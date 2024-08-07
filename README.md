@@ -140,7 +140,7 @@ the top-level `foo` command may serve only as an entry point for
 subcommands, making it "uninteresting" to include in the matrix.  For
 such cases, you can add a skip entry to the matrix.
 
-    - command: foo
+    - entrypoint: foo
       skip: true
 
 ### 4. Add test runners
