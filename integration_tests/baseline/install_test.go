@@ -126,7 +126,14 @@ func TestInstall2(t *testing.T) {
 		}
 
 		// Execute
-		rInstallCmd := command.New("Rscript", "-e", "install.packages(c('ellipsis', 'digest'), lib='test-library', repos=c('https://mpn.metworx.com/snapshots/stable/2021-06-20'))")
+		rInstallCmd := command.New(
+			"Rscript", "--vanilla", "-e",
+			"install.packages(c('ellipsis', 'digest'), lib='test-library', repos=c('https://mpn.metworx.com/snapshots/stable/2021-06-20'))")
+		rInstallCmd.Env = append(os.Environ(),
+			"R_LIBS=:",
+			"R_LIBS_SITE=:",
+			"R_LIBS_USER=:",
+		)
 		rInstallCapture, err := rInstallCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error while installing packages through non-pkgr means: %s\nOutput:\n%s", err, string(rInstallCapture))
