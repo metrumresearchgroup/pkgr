@@ -1,0 +1,93 @@
+name: CI
+on:
+  push:
+    branches:
+      - main
+      - 'scratch/**'
+    tags:
+      - 'v*'
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ${{ matrix.config.os }}
+    name: ${{ matrix.config.os }} / go ${{ matrix.config.go }} / R ${{ matrix.config.r }} ${{ matrix.config.renv && 'renv' || '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - os: ubuntu-20.04
+            go: 1.21.x
+            r: 4.2.3
+            renv: false
+          - os: ubuntu-20.04
+            go: stable
+            r: 4.3.1
+            renv: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.config.go }}
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+      - name: Install other system dependencies
+        shell: bash
+        run: |
+          sudo DEBIAN_FRONTEND=noninteractive \
+            apt-get install -y libcurl4-openssl-dev
+      - name: Disable R_LIBS_USER
+        shell: bash
+        run: echo 'R_LIBS_USER=:' >>"$GITHUB_ENV"
+      - name: Adjust Rprofile.site
+        if: matrix.config.renv
+        shell: sudo Rscript {0}
+        run: |
+          dir.create("/opt/rpkgs")
+          cat(
+            '\n\n.libPaths("/opt/rpkgs")\n',
+            sep = "",
+            file = file.path(R.home("etc"), "Rprofile.site"),
+            append = TRUE
+          )
+      - name: Install renv system-wide
+        if: matrix.config.renv
+        shell: sudo Rscript {0}
+        run: install.packages("renv", repos = "https://cran.rstudio.com")
+      - name: Build
+        shell: bash
+        run: go get -t ./... && go build ./...
+      - name: Unit tests
+        shell: bash
+        run: ./scripts/run-unit-tests
+        env:
+          PKGR_TESTS_SYS_RENV: ${{ matrix.config.renv && '1' || '' }}
+      - name: Integration tests
+        shell: bash
+        run: ./scripts/run-integration-tests
+        env:
+          PKGR_TESTS_SYS_RENV: ${{ matrix.config.renv && '1' || '' }}
+  release:
+    if: github.ref_type == 'tag'
+    name: Make release
+    needs: check
+    runs-on: ubuntu-20.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: '~> v2'
+          args: release --clean
+          workdir: cmd/pkgr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
