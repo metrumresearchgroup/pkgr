@@ -22,7 +22,6 @@ const (
 	goldenPlanWithCustomizationsMac      = "plan-customizations-macos"
 	goldenInstallWithCustomizationsLinux = "install-customizations-linux"
 	goldenInstallWithCustomizationsMac   = "install-customizations-macos"
-	goldenCustomizationSync              = "customization-sync"
 )
 
 func TestMixedSource(t *testing.T) {
