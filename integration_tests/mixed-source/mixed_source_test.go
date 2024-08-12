@@ -1,9 +1,14 @@
 package mixed_source
 
 import (
+	"bytes"
 	"fmt"
-	"runtime"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 	"testing"
+	"text/template"
 
 	"github.com/metrumresearchgroup/command"
 	"github.com/sebdah/goldie/v2"
@@ -18,32 +23,74 @@ const (
 )
 
 const (
-	goldenPlanWithCustomizationsLinux    = "plan-customizations-linux"
-	goldenPlanWithCustomizationsMac      = "plan-customizations-macos"
-	goldenInstallWithCustomizationsLinux = "install-customizations-linux"
-	goldenInstallWithCustomizationsMac   = "install-customizations-macos"
+	goldenPlan              = "plan-customizations-linux"
+	goldenInstall           = "install-customizations-linux"
 )
 
+func skipIfNotUbunutu(t *testing.T) {
+	t.Helper()
+
+	prog := "lsb_release"
+	if _, err := exec.LookPath(prog); err != nil {
+		t.Skip("lsb_release not available; test requires Ubuntu")
+	}
+	cmd := command.New(prog, "-i")
+	out, err := cmd.Output()
+	if err != nil {
+		t.Fatalf("calling lsb_release failed: %s", err)
+	}
+	if !bytes.HasSuffix(out, []byte("Ubuntu\n")) {
+		t.Skip("test requires Ubuntu")
+	}
+}
+
+func generateConfig() (string, error) {
+	outfile := "pkgr-linux.yml"
+	tfile := outfile + ".template"
+
+	t, err := template.New(tfile).ParseFiles(tfile)
+	if err != nil {
+		return "", err
+	}
+
+	wd, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	cmd := command.New(filepath.Join(wd, "setup-binary-repo.sh"))
+	cmdout, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	repo := strings.TrimSuffix(string(cmdout), "\n")
+
+	values := map[string]string{
+		"BinaryRepo": repo,
+	}
+
+	f, err := os.Create(outfile)
+	if err != nil {
+		return "", err
+	}
+
+	if err = t.Execute(f, values); err != nil {
+		f.Close()
+		return "", err
+	}
+
+	return outfile, f.Close()
+}
+
 func TestMixedSource(t *testing.T) {
+	skipIfNotUbunutu(t)
 	t.Run(MakeTestName(mixedSourceE2ETest1, "pkgr can install both source and binary packages"), func(t *testing.T) {
 		DeleteTestFolder(t, "test-library")
 		DeleteTestFolder(t, "test-cache")
 		g := goldie.New(t)
 
-		var pkgrConfig, goldenPlan, goldenInstall string
-		operatingSystem := runtime.GOOS
-		t.Logf("operating system: %s", operatingSystem)
-		switch operatingSystem {
-		case "linux":
-			pkgrConfig = "pkgr-linux.yml"
-			goldenPlan = goldenPlanWithCustomizationsLinux
-			goldenInstall = goldenInstallWithCustomizationsLinux
-		case "darwin":
-			pkgrConfig = "pkgr-mac.yml"
-			goldenPlan = goldenPlanWithCustomizationsMac
-			goldenInstall = goldenInstallWithCustomizationsMac
-		default:
-			t.Skipf("this test is only supported on Mac and Linux systems. Detected OS: %s", operatingSystem)
+		pkgrConfig, err := generateConfig()
+		if err != nil {
+			t.Fatalf("generating pkgr.yml failed: %s", err)
 		}
 
 		t.Run(MakeSubtestName(mixedSourceE2ETest1, "A", "repo and package customizations are set properly"), func(t *testing.T) {

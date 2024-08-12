@@ -5,7 +5,7 @@ Packages:
   - digest
   - yaml # suggests RUnit
 Repos:
-  - MPNJuly2020: https://mpn.metworx.com/snapshots/stable/2020-07-19
+  - MPNJuly2020: {{.BinaryRepo}}
   - MPNJune2021: https://mpn.metworx.com/snapshots/stable/2021-06-20
 
 # this library path is customized for ubuntu linux systems like metworx
@@ -19,7 +19,7 @@ Customizations:
     - MPNJuly2020:
         Type: binary
         RepoType: MPN
-        RepoSuffix: metworx/20.06
+        RepoSuffix: pkgr/test
     - MPNJune2021:
         Type: source
   Packages:
