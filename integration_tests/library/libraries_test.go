@@ -16,7 +16,6 @@ const (
 	librariesE2ETest2 = "LIB-E2E-002"
 	librariesE2ETest3 = "LIB-E2E-003"
 	librariesE2ETest4 = "LIB-E2E-004"
-	librariesE2ETest5 = "LIB-E2E-005"
 	librariesE2ETest6 = "LIB-E2E-006"
 	librariesE2ETest7 = "LIB-E2E-007"
 )
@@ -92,7 +91,7 @@ func TestLibraryRenv(t *testing.T) {
 		}
 	})
 
-	t.Run(MakeTestName(librariesE2ETest5, "lockfile type renv errors when renv isn't available"), func(t *testing.T) {
+	t.Run("lockfile type renv errors renv if is unavailable", func(t *testing.T) {
 		if renv != "" {
 			t.Skip("Skipping: non-empty PKGR_TESTS_SYS_RENV indicates renv is available")
 		}
