@@ -94,7 +94,7 @@ func TestLibraryRenv(t *testing.T) {
 
 	t.Run(MakeTestName(librariesE2ETest5, "lockfile type renv errors when renv isn't available"), func(t *testing.T) {
 		if renv != "" {
-			t.Skip("Skipping: empty PKGR_TESTS_SYS_RENV indicates renv is available")
+			t.Skip("Skipping: non-empty PKGR_TESTS_SYS_RENV indicates renv is available")
 		}
 
 		DeleteTestFolder(t, "test-cache")
