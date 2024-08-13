@@ -48,18 +48,10 @@ func checkEnvVarsValid(t *testing.T, testCase configureArgsTestCase, actualResul
 }
 
 func checkIsTempDir(t *testing.T, tmpDir string) {
-	switch runtime.GOOS {
-	case "darwin":
+	if runtime.GOOS == "darwin" {
 		assert.True(t, strings.Contains(tmpDir, "var/folders"), "R_LIBS_USER not set to temp directory: Dir found: %s", tmpDir)
-		break
-	case "linux":
-		t.Skip("tmp dir check not implemented for linux")
-		break
-	case "windows":
-		t.Skip("tmp dir check not implemented for linux")
-		break
-	default:
-		t.Skip("tmp dir check not implemented for detected os")
+	} else {
+		t.Log("checkIsTempDir: skipping because not on darwin system")
 	}
 }
 

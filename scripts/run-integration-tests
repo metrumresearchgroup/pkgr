@@ -1,0 +1,70 @@
+#!/bin/sh
+
+set -eu
+
+tdir=$(mktemp -d "${TMPDIR:-/tmp}"/pkgr-test-XXXXX)
+trap 'rm -rf "$tdir"' 0
+
+bin=$tdir/bin
+mkdir "$bin"
+
+cache=$tdir/cache
+mkdir "$cache"
+# Prevent integration_tests/baseline/cache_test.go from touching
+# user's real cache.
+export XDG_CACHE_HOME="$cache"
+
+if test -n "${GOCOVERDIR-}"
+then
+    printf >&2 'building binary with -cover\n'
+    coverarg=-cover
+else
+    coverarg=
+fi
+
+version=$(git describe --always --dirty)
+
+# shellcheck disable=SC2086
+go build $coverarg \
+   -ldflags "-X github.com/metrumresearchgroup/pkgr/cmd.VERSION=$version" \
+   -o "$bin/pkgr" cmd/pkgr/pkgr.go
+
+export PATH="$bin:$PATH"
+# Unset R_LIBS_{USER,SITE} to prevent the warning from
+# rcmd.configureEnv tripping up TestLoad's check for expected output.
+unset R_LIBS_USER
+unset R_LIBS_SITE
+export PKGR_TESTS_SYS_RENV="${PKGR_TESTS_SYS_RENV-1}"
+
+printf >&2 'pkgr path: %s\npkgr version: %s\n' \
+       "$(command -v pkgr)" "$(pkgr --version)"
+
+git clean -xfq \
+    'integration_tests/**/test-cache' 'integration_tests/**/test-library'
+
+test_dir=$PWD/integration_tests
+subdirs='
+  bad-customization
+  baseline
+  env-vars
+  library
+  load
+  mixed-source
+  multi-repo
+  outdated-pkgs
+  recommended
+  rollback
+  tarball-install
+  version
+'
+
+status=0
+for d in $subdirs
+do
+    cd "$test_dir/$d"
+    go test -count 1 "$@" ./... || {
+        status=$?
+        printf >&2 '%s: failed (exit status: %d)\n' "$d" "$status"
+    }
+done
+exit "$status"

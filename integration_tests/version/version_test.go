@@ -1,6 +1,7 @@
 package version_test
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/metrumresearchgroup/command"
@@ -20,7 +21,7 @@ func TestVersion(t *testing.T) {
 			t.Fatal(err)
 		}
 		// this will always get the git tag for regular releases
-		assert.Equal(t, "dev", string(res))
+		assert.True(t, len(bytes.TrimSpace(res)) != 0)
 	})
 
 	t.Run("short flag -v works", func(t *testing.T) {
@@ -30,7 +31,7 @@ func TestVersion(t *testing.T) {
 			t.Fatal(err)
 		}
 		// this will always get the git tag for regular releases
-		assert.Equal(t, "dev", string(res))
+		assert.True(t, len(bytes.TrimSpace(res)) != 0)
 	})
 
 }

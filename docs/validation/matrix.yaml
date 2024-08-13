@@ -1,0 +1,80 @@
+- entrypoint: pkgr
+  skip: true
+
+- entrypoint: pkgr add
+  code: cmd/add.go
+  doc: docs/commands/pkgr_add.md
+  tests:
+    - configlib/add_package_test.go
+
+- entrypoint: pkgr clean
+  code: cmd/clean.go
+  doc: docs/commands/pkgr_clean.md
+  tests:
+    - cmd/cleanCache_test.go
+    - integration_tests/baseline/cache_test.go
+
+- entrypoint: pkgr clean cache
+  code: cmd/cleanCache.go
+  doc: docs/commands/pkgr_clean_cache.md
+  tests:
+    - cmd/cleanCache_test.go
+    - integration_tests/baseline/cache_test.go
+
+- entrypoint: pkgr clean pkgdbs
+  code: cmd/cleanPkgdb.go
+  doc: docs/commands/pkgr_clean_pkgdbs.md
+  tests:
+    - integration_tests/baseline/cache_test.go
+
+- entrypoint: pkgr inspect
+  code: cmd/inspect.go
+  doc: docs/commands/pkgr_inspect.md
+  tests:
+    - integration_tests/baseline/inspect_test.go
+
+- entrypoint: pkgr install
+  code: cmd/install.go
+  doc: docs/commands/pkgr_install.md
+  tests:
+    - cmd/install_test.go
+    - integration_tests/bad-customization/bad_customization_test.go
+    - integration_tests/baseline/cache_test.go
+    - integration_tests/baseline/install_test.go
+    - integration_tests/env-vars/rpath_env_test.go
+    - integration_tests/library/libraries_test.go
+    - integration_tests/mixed-source/mixed_source_test.go
+    - integration_tests/multi-repo/multi_repo_test.go
+    - integration_tests/outdated-pkgs/outdated_packages_test.go
+    - integration_tests/rollback/rollback_test.go
+    - integration_tests/tarball-install/tarball_install_test.go
+
+- entrypoint: pkgr load
+  code: cmd/load.go
+  doc: docs/commands/pkgr_load.md
+  tests:
+    - integration_tests/load/load_test.go
+
+- entrypoint: pkgr plan
+  code: cmd/plan.go
+  doc: docs/commands/pkgr_plan.md
+  tests:
+    - cmd/plan_test.go
+    - integration_tests/baseline/plan_test.go
+    - integration_tests/env-vars/rpath_env_test.go
+    - integration_tests/mixed-source/mixed_source_test.go
+    - integration_tests/multi-repo/multi_repo_test.go
+    - integration_tests/outdated-pkgs/outdated_packages_test.go
+    - integration_tests/recommended/recommended_test.go
+    - integration_tests/tarball-install/tarball_install_test.go
+
+- entrypoint: pkgr remove
+  code: cmd/remove.go
+  doc: docs/commands/pkgr_remove.md
+  tests:
+    - configlib/config_test.go
+
+- entrypoint: pkgr run
+  code: cmd/run.go
+  doc: docs/commands/pkgr_run.md
+  tests: []

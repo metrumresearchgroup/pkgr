@@ -28,7 +28,8 @@ var debugCmd = &cobra.Command{
 	Long: `
 	debug internal settings
  `,
-	RunE: rDebug,
+	RunE:   rDebug,
+	Hidden: true,
 }
 
 func rDebug(cmd *cobra.Command, args []string) error {

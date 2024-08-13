@@ -124,7 +124,7 @@ func TestMixedSource(t *testing.T) {
 			g.Assert(t, goldenInstall, testCapture)
 		})
 	})
-	t.Skip(MakeTestName(mixedSourceE2ETest2, "repo and package customizations synchronize when compatible. SKIPPING till issue #329 fixes this bug."))
+	// See https://github.com/metrumresearchgroup/pkgr/issues/329
 	/*t.Run(MakeTestName(mixedSourceE2ETest2, "repo and package customizations synchronize when compatible"), func(t *testing.T) {
 		DeleteTestFolder(t, "test-library")
 		DeleteTestFolder(t, "test-cache")

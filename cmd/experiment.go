@@ -31,7 +31,8 @@ var experimentCmd = &cobra.Command{
 	Long: `
 	JUST FOR EXPERIMENTATION
  `,
-	RunE: rExperiment,
+	RunE:   rExperiment,
+	Hidden: true,
 }
 
 func rExperiment(cmd *cobra.Command, args []string) error {

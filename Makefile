@@ -71,3 +71,8 @@ outdated-test-reset:
 outdated-test: install outdated-test-reset
 	cd ${TEST_HOME}/outdated-pkgs; pkgr plan
 	cd ${TEST_HOME}/outdated-pkgs; pkgr install
+
+VT_TEST_ALLOW_SKIPS = yes
+VT_TEST_RUNNERS = scripts/run-unit-tests
+VT_TEST_RUNNERS += scripts/run-integration-tests
+include internal/valtools/rules.mk
