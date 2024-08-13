@@ -1,0 +1,30 @@
+Version: 1
+Packages:
+  - R6
+  - ellipsis # depends on rlang
+  - digest
+  - yaml # suggests RUnit
+Repos:
+  - MPNJuly2020: {{.BinaryRepo}}
+  - MPNJune2021: https://mpn.metworx.com/snapshots/stable/2021-06-20
+
+# this library path is customized for ubuntu linux systems like metworx
+# change it if you need to run this on a separate machine type
+Library: test-library
+
+Cache: test-cache
+
+Customizations:
+  Repos:
+    - MPNJuly2020:
+        Type: binary
+        RepoType: MPN
+        RepoSuffix: pkgr/test
+    - MPNJune2021:
+        Type: source
+  Packages:
+    - digest:
+        Type: source
+    - yaml:
+        Suggests: true
+        Repo: MPNJune2021

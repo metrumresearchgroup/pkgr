@@ -39,17 +39,19 @@ Package: Rcpp
 Version: 1.0.3
 Depends: R (>= 3.0.0)
 Imports: methods, utils
-Suggests: RUnit, inline, rbenchmark, knitr, rmarkdown, pinp, pkgKitten (>= 0.1.2)
+Suggests: RUnit, inline, rbenchmark, knitr, rmarkdown, pinp, pkgKitten
+        (>= 0.1.2)
 License: GPL (>= 2)
 MD5sum: 0171ac73ab1635df72395dcc5450d48d
 NeedsCompilation: yes
 
 Package: RCurl
-Version: 1.95-4.12
-Depends: R (>= 3.0.0), methods, bitops
-Suggests: Rcompression, XML
-License: BSD
-MD5sum: 40c850fc7186e38db79a9aa8633e66a4
+Version: 1.98-1.16
+Depends: R (>= 3.4.0), methods
+Imports: bitops
+Suggests: XML
+License: BSD_3_clause + file LICENSE
+MD5sum: 3727edecf0189d460661535b6e7b1a46
 NeedsCompilation: yes
 
 Package: utf8
@@ -65,7 +67,8 @@ Version: 1.2.2
 Depends: R (>= 3.1.0)
 Imports: Rcpp, methods
 LinkingTo: Rcpp (>= 0.12.12)
-Suggests: covr, curl, httr, knitr, magrittr, mockery, rmarkdown, testthat (>= 2.1.0)
+Suggests: covr, curl, httr, knitr, magrittr, mockery, rmarkdown,
+        testthat (>= 2.1.0)
 License: GPL (>= 2)
 MD5sum: 177e90414196655c7a5f990351c1df02
 NeedsCompilation: yes
