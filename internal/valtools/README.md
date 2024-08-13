@@ -87,7 +87,7 @@ commands, replacing any spaces in the name with underscores.
 
 `docs/commands/` is taken as the directory for the command
 documentation unless the `VT_DOC_DIR` variable specifies another
-locatino (see [step 5](#step5)).
+location (see [step 5](#step5)).
 
 By default, the Makefile rules expect the main repository to define a
 `docgen` package (suggested location: `internal/tools/docgen`) whose
@@ -172,7 +172,7 @@ unit tests.
    of the call.
 
    When tallying coverage, Go does not by default count a statement as
-   covered if it's only executed via another packge's unit tests.  To
+   covered if it's only executed via another package's unit tests.  To
    change that, list all the module's packages of interest by
    specifying `-coverpkg` in the `go test` call.
 
@@ -193,7 +193,7 @@ Notes:
 ### 5. Wire up Makefile
 
 To wire up the subtree to the main repository, include the subtree's
-`rule.mk` file in the repository's top-level Makefile.  Before the
+`rules.mk` file in the repository's top-level Makefile.  Before the
 `include` directive, you can specify any Makefile [variables](#vars),
 but, at a minimum, you should set `VT_TEST_RUNNERS`.
 
@@ -242,12 +242,12 @@ variable `VT_OUT_DIR`.  By default, this points to
  * `VT_TEST_RUNNERS`: a space-delimited list of scripts to invoke to
    run the test suite
 
-### Auxillary targets
+### Auxiliary targets
 
 In addition to `vt-all`, the following targets can be useful to run
 directly:
 
- * `vt-gen-docs`: invoke the `docgen` exectuable to refresh the
+ * `vt-gen-docs`: invoke the `docgen` executable to refresh the
    documentation in `VT_DOC_DIR`
 
  * `vt-cover-unlisted`: display a diff of two file sets: 1) non-test
