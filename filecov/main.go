@@ -105,11 +105,11 @@ func shortenFileNames(cov coverage, modpath string, localpath string) error {
 
 	var lprefix string
 	if localpath != "" {
-		localpath, err := filepath.EvalSymlinks(localpath)
+		lpath, err := filepath.EvalSymlinks(localpath)
 		if err != nil {
 			return err
 		}
-		lprefix = localpath + string(filepath.Separator)
+		lprefix = lpath + string(filepath.Separator)
 	}
 
 	for _, entry := range cov.Files {
