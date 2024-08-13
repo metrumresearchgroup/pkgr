@@ -310,22 +310,18 @@ func TestProcessEventsFailureOutput(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	nfailedWant := 3
-	if len(s.Failed) != nfailedWant {
+	if nfailedWant := 3; len(s.Failed) != nfailedWant {
 		t.Errorf("failed: want %d, got %d", nfailedWant, len(s.Failed))
 	}
 
-	npassedWant := 3
-	if len(s.Passed) != npassedWant {
+	if npassedWant := 3; len(s.Passed) != npassedWant {
 		t.Errorf("passed: want %d, got %d", npassedWant, len(s.Passed))
 	}
 
-	nskippedWant := 0
-	if len(s.Skipped) != nskippedWant {
+	if nskippedWant := 0; len(s.Skipped) != nskippedWant {
 		t.Errorf("skipped: want %d, got %d", nskippedWant, len(s.Skipped))
 	}
 
-	stdout := bufStdout.String()
 	stdoutWant := strings.Join([]string{
 		"[foo] TestFoo1: passed",
 		"[foo] TestFoo2: failed",
@@ -333,17 +329,16 @@ func TestProcessEventsFailureOutput(t *testing.T) {
 		"[baz] TestBaz/1: failed",
 		"[baz] TestBaz: failed",
 	}, "\n") + "\n"
-	if stdout != stdoutWant {
+	if stdout := bufStdout.String(); stdout != stdoutWant {
 		t.Errorf("stdout:\n  want %q,\n   got %q", stdoutWant, stdout)
 	}
 
-	stderr := bufStderr.String()
 	stderrWant := strings.Join([]string{
 		"TestFoo2 failed",
 		"error was ...",
 		"TestBaz/1 failed",
 	}, "\n") + "\n"
-	if stderr != stderrWant {
+	if stderr := bufStderr.String(); stderr != stderrWant {
 		t.Errorf("stderr: want %q, got %q", stderrWant, stderr)
 	}
 }

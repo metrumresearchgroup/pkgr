@@ -99,8 +99,8 @@ func TestCheckValidFileNamesGood(t *testing.T) {
 	if bad != 0 {
 		t.Errorf("expected no invalid file names, got %d", bad)
 	}
-	out := buf.String()
-	if out != "" {
+
+	if out := buf.String(); out != "" {
 		t.Errorf("expected empty output, got %q", out)
 	}
 }
@@ -233,8 +233,7 @@ func TestCheckMissingFilesGood(t *testing.T) {
 		t.Errorf("expected no missing files, got %d", bad)
 	}
 
-	out := buf.String()
-	if out != "" {
+	if out := buf.String(); out != "" {
 		t.Errorf("expected empty output, got %q", out)
 	}
 }
@@ -324,8 +323,8 @@ func TestCheckEntrypointDocMismatchGood(t *testing.T) {
 	if bad != 0 {
 		t.Errorf("expected no mismatches, got %d", bad)
 	}
-	out := buf.String()
-	if out != "" {
+
+	if out := buf.String(); out != "" {
 		t.Errorf("expected empty output, got %q", out)
 	}
 }
@@ -352,8 +351,7 @@ func TestCheckDupEntrypointsBad(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	wantBad := 1
-	if bad != wantBad {
+	if wantBad := 1; bad != wantBad {
 		t.Errorf("expected %d duplicated entry, got %d", wantBad, bad)
 	}
 	out := buf.String()
@@ -382,8 +380,8 @@ func TestCheckDupEntrypointsGood(t *testing.T) {
 	if bad != 0 {
 		t.Errorf("expected no duplicated entries, got %d", bad)
 	}
-	out := buf.String()
-	if out != "" {
+
+	if out := buf.String(); out != "" {
 		t.Errorf("expected empty output, got %q", out)
 	}
 }
@@ -476,8 +474,7 @@ func TestCheckMissingEntriesGood(t *testing.T) {
 		t.Errorf("expected no missing entries, got %d", bad)
 	}
 
-	out := buf.String()
-	if out != "" {
+	if out := buf.String(); out != "" {
 		t.Errorf("expected empty output, got %q", out)
 	}
 }
