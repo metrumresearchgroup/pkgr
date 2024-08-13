@@ -1,0 +1,34 @@
+#!/bin/bash
+# Copyright 2024 Metrum Research Group
+# SPDX-License-Identifier: MIT
+
+set -uo pipefail
+
+test $# -gt 2 || {
+    printf >&2 'usage: %s <fmttests> <allow skips> <runner script>...\n' "$0"
+    exit 1
+}
+
+fmt=$1
+shift
+allow_skips=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+case "$allow_skips" in
+    1|yes|y|true|t)
+        skip_arg=-allow-skips
+        ;;
+    *)
+        skip_arg=
+        ;;
+esac
+shift
+
+status=0
+for runner in "$@"
+do
+    # shellcheck disable=SC2086
+    "$runner" -json | "$fmt" $skip_arg || {
+        status=$?
+        printf >&2 '%s failed\n' "$runner"
+    }
+done
+exit "$status"
