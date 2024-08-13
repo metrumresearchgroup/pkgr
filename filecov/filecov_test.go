@@ -36,6 +36,7 @@ func assertFileCoverage(t *testing.T, got []*fileCoverage, want []*fileCoverage)
 	nwant := len(want)
 	if ngot != nwant {
 		t.Errorf("expected coverage for %d files, got %d", nwant, ngot)
+
 		return
 	}
 
@@ -54,7 +55,6 @@ func assertFileCoverage(t *testing.T, got []*fileCoverage, want []*fileCoverage)
 		} else {
 			t.Error("no coverage measurement for", fc.File)
 		}
-
 	}
 }
 

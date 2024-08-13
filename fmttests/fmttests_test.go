@@ -38,6 +38,7 @@ func makeEventReader(t *testing.T, tes []testEvent) io.Reader {
 		buf.Write(bs)
 		buf.Write([]byte("\n"))
 	}
+
 	return bytes.NewReader(buf.Bytes())
 }
 

@@ -606,5 +606,4 @@ func TestCheckAll(t *testing.T) {
 		assertCode(t, out, "04", 1)
 		assertCode(t, out, "05", 1)
 	})
-
 }

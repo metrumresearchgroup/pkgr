@@ -114,6 +114,7 @@ func processEvents(r io.Reader, subtests bool, wout io.Writer, werr io.Writer) (
 		case "output":
 			k := key{e.Package, e.Test}
 			failLines[k] = append(failLines[k], e.Output)
+
 			continue
 		case "cont", "pause", "run", "start":
 			continue
