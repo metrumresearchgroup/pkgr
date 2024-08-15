@@ -6,6 +6,7 @@
   doc: docs/commands/pkgr_add.md
   tests:
     - configlib/add_package_test.go
+    - integration_tests/addremove/addremove_test.go
 
 - entrypoint: pkgr clean
   code: cmd/clean.go
@@ -73,6 +74,7 @@
   doc: docs/commands/pkgr_remove.md
   tests:
     - configlib/config_test.go
+    - integration_tests/addremove/addremove_test.go
 
 - entrypoint: pkgr run
   code: cmd/run.go
