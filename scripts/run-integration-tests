@@ -44,6 +44,7 @@ git clean -xfq \
 
 test_dir=$PWD/integration_tests
 subdirs='
+  addremove
   bad-customization
   baseline
   env-vars

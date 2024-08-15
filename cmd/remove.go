@@ -41,7 +41,7 @@ func init() {
 func rRemove(ccmd *cobra.Command, args []string) error {
 
 	// Initialize log and start time.
-	initAddLog()
+	initRemoveLog()
 	startTime := time.Now()
 
 	if len(args) == 0 {
