@@ -1,15 +1,14 @@
 ## pkgr remove
 
-remove one or more packages
+Remove packages from the configuration file
 
 ### Synopsis
 
-
-	remove package/s from the configuration file
-
+Remove the specified packages from the 'Packages' section of the
+configuration file.
 
 ```
-pkgr remove [package name1] [package name2] [package name3] ... [flags]
+pkgr remove [flags] <package> [<package>...]
 ```
 
 ### Options
@@ -35,5 +34,5 @@ pkgr remove [package name1] [package name2] [package name3] ... [flags]
 
 ### SEE ALSO
 
-* [pkgr](pkgr.md)	 - package manager
+* [pkgr](pkgr.md)	 - A package manager for R
 

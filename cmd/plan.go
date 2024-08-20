@@ -47,10 +47,14 @@ import (
 // planCmd shows the install plan
 var planCmd = &cobra.Command{
 	Use:   "plan",
-	Short: "plan a full installation",
-	Long: `
-	see the plan for an install
- `,
+	Short: "Display plan for installation",
+	Long: `Preview an installation with the current configuration. This subcommand
+is commonly invoked before running 'pkgr install' to confirm that the
+configuration is behaving as intended.
+
+The output includes details about which repositories particular packages would
+be retrieved from, the library that packages would be installed into, and which
+packages would be installed or updated.`,
 	RunE: plan,
 }
 

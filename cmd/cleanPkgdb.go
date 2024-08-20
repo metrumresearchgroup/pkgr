@@ -29,17 +29,19 @@ var pkgdbsToClearArgument string
 // pkgdbCmd represents the pkgdb command
 var pkgdbsCmd = &cobra.Command{
 	Use:   "pkgdbs",
-	Short: "Subcommand to clean cached pkgdbs",
-	Long: `This command parses the currently-cached pkgdbs and removes all
-	of them by default, or specific ones if desired. Identify specific repos using the "repos" argument, i.e.
-	pkgr clean pkgdbs --repos="CRAN,r_validated"
-	Repo names should match names in the pkgr.yml file.`,
+	Short: "Clean cached package databases",
+	Long: `Delete cached package databases. By default, remove cached databases for
+every repository listed in the active configuration file. If the --repos option
+is passed, remove only the cached databases for those repositories. Repo names
+should match the names in the configuration file.`,
+	Example: `  # Clean package databases for CRAN and MPN
+  pkgr clean pkgdbs --repos=CRAN,MPN`,
 	RunE: executeCommand,
 }
 
 func init() {
 
-	pkgdbsCmd.Flags().StringVar(&pkgdbsToClearArgument, "repos", "ALL", "Set the repos you wish to clear the pkgdbs for.")
+	pkgdbsCmd.Flags().StringVar(&pkgdbsToClearArgument, "repos", "ALL", "clear databases for these repos")
 	CleanCmd.AddCommand(pkgdbsCmd)
 }
 

@@ -1,15 +1,38 @@
 ## pkgr run
 
-Run R with the configuration settings used with other R commands
+Launch R session with config settings
 
 ### Synopsis
 
+Start an interactive R session based on the settings defined in the
+configuration file.
 
-	allows for interactive use and debugging based on the configuration specified by pkgr
- 
+   * Use the R executable defined by the 'RPath' value, if any.
+
+   * Set the library paths so that packages come from only the
+     configuration's library and the library bundled with the R
+     installation.
+
+   * If the --pkg option is passed, set the environment variables defined in
+     the package's 'Customizations' entry.
 
 ```
-pkgr run R [flags]
+pkgr run [flags]
+```
+
+### Examples
+
+```
+  # Launch an R session, setting values based on pkgr.yml
+  pkgr run
+  # Also setting environment variables specified for dplyr:
+  #
+  #   Customizations:
+  #     Packages:
+  #        - dplyr:
+  #            Env:
+  #              [...]
+  pkgr run --pkg=dplyr
 ```
 
 ### Options
@@ -36,5 +59,5 @@ pkgr run R [flags]
 
 ### SEE ALSO
 
-* [pkgr](pkgr.md)	 - package manager
+* [pkgr](pkgr.md)	 - A package manager for R
 

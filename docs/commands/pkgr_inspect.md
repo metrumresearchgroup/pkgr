@@ -1,15 +1,39 @@
 ## pkgr inspect
 
-inspect a full installation
+Inspect package dependencies
 
 ### Synopsis
 
+The inspect subcommand provides an entry point for displaying
+information that can be gathered by examining the configuration file, the
+associated package database, and the library. The current focus is on
+inspecting package dependencies (triggered by passing --deps).
 
-	see the inspect for an install
- 
+Note: If the configuration file has 'Suggests: true', that does not affect
+the set of dependencies listed for any particular package. Instead the set
+of suggested packages is included in the top-level package set.
 
 ```
-pkgr inspect [flags]
+pkgr inspect --deps [flags] [<package>...]
+```
+
+### Examples
+
+```
+  # Show all dependencies as a tree
+  pkgr --loglevel=fatal inspect --deps --tree
+  # Show dependency tree, restricting roots to the named packages
+  pkgr --loglevel=fatal inspect --deps --tree processx here
+
+  # Output a JSON record where each item maps a package to its direct
+  # and indirect dependencies
+  pkgr --loglevel=fatal inspect --deps
+  # Do the same, but filter to records for the named packages
+  pkgr --loglevel=fatal inspect --deps processx here
+
+  # Output a JSON record where each item maps a package to
+  # the packages that have it as a dependency
+  pkgr --loglevel=fatal inspect --deps --reverse
 ```
 
 ### Options
@@ -39,5 +63,5 @@ pkgr inspect [flags]
 
 ### SEE ALSO
 
-* [pkgr](pkgr.md)	 - package manager
+* [pkgr](pkgr.md)	 - A package manager for R
 

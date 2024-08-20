@@ -26,18 +26,22 @@ import (
 
 // installCmd represents the R CMD install command
 var addCmd = &cobra.Command{
-	Use:   "add [package name1] [package name2] [package name3] ...",
-	Short: "add one or more packages",
-	Long: `
-	add package/s to the configuration file and optionally install
-`,
+	Use:   "add [flags] <package> [<package>...]",
+	Short: "Add packages to the configuration file",
+	Long: `Add the specified packages to the 'Packages' section of the
+configuration file.`,
+	Example: `  # Add mrgsolve and bbr to list of packages
+  pkgr add mrgsolve bbr
+  # Add rlang and then do installation
+  # (same result as following up with 'pkgr install' call)
+  pkgr add --install rlang`,
 	RunE: rAdd,
 }
 
 var install bool
 
 func init() {
-	addCmd.Flags().BoolVar(&install, "install", false, "install package/s after adding")
+	addCmd.Flags().BoolVar(&install, "install", false, "run install after updating config")
 	RootCmd.AddCommand(addCmd)
 }
 

@@ -1,10 +1,22 @@
 ## pkgr clean
 
-clean up cached information
+Clean cached information
 
 ### Synopsis
 
-clean up cached source files and binaries, as well as the saved package database.
+This subcommand is an entry point for cleaning two categories of cached
+data:
+
+ * source and binary tarballs
+
+   Use the 'cache' subcommand to remove these.
+
+ * package databases with information about the packages available from
+   repositories
+
+   Use the 'pkgdbs' subcommand to remove these.
+
+To remove cached data for both categories, pass the --all flag.
 
 ```
 pkgr clean [flags]
@@ -34,7 +46,7 @@ pkgr clean [flags]
 
 ### SEE ALSO
 
-* [pkgr](pkgr.md)	 - package manager
-* [pkgr clean cache](pkgr_clean_cache.md)	 - Subcommand to clean cached source and binary files.
-* [pkgr clean pkgdbs](pkgr_clean_pkgdbs.md)	 - Subcommand to clean cached pkgdbs
+* [pkgr](pkgr.md)	 - A package manager for R
+* [pkgr clean cache](pkgr_clean_cache.md)	 - Clean cached package tarballs
+* [pkgr clean pkgdbs](pkgr_clean_pkgdbs.md)	 - Clean cached package databases
 

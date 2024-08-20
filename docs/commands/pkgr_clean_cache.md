@@ -1,28 +1,38 @@
 ## pkgr clean cache
 
-Subcommand to clean cached source and binary files.
+Clean cached package tarballs
 
 ### Synopsis
 
-This command is a subcommand of the "clean" command.
+Delete cached tarballs for source and binary packages. Both source and
+binary files are deleted if neither the --src-only or --binaries-only flags
+is specified.
 
-	Using this command deletes cached source and binary files. Use the
-	--src and --binary options to specify which repos to clean each
-	file type from.
-
-	
+By default, files for all repositories are deleted unless specific
+repositories are specified via the --repos option. Note that the value must
+match the directory name in the cache, including the unique ID that is
+appended to the repository name.
 
 ```
 pkgr clean cache [flags]
 ```
 
+### Examples
+
+```
+  # Clean binary files for all repos
+  pkgr clean cache --binaries-only
+  # Clean binaries files for MPN-889df4238bae repo
+  pkgr clean cache --repos=MPN-889df4238bae --binaries-only
+```
+
 ### Options
 
 ```
-      --binaries-only   Clean only binary files from the cache
+      --binaries-only   clean only binary files from the cache
   -h, --help            help for cache
-      --repos string    Comma separated list of repositories to be cleaned. Defaults to all. (default "ALL")
-      --src-only        Clean only src files from the cache
+      --repos string    comma-separated list of repositories to be cleaned. Defaults to all. (default "ALL")
+      --src-only        clean only source files from the cache
 ```
 
 ### Options inherited from parent commands
@@ -42,5 +52,5 @@ pkgr clean cache [flags]
 
 ### SEE ALSO
 
-* [pkgr clean](pkgr_clean.md)	 - clean up cached information
+* [pkgr clean](pkgr_clean.md)	 - Clean cached information
 

@@ -1,6 +1,6 @@
 ## pkgr
 
-package manager
+A package manager for R
 
 ### Options
 
@@ -21,12 +21,12 @@ package manager
 
 ### SEE ALSO
 
-* [pkgr add](pkgr_add.md)	 - add one or more packages
-* [pkgr clean](pkgr_clean.md)	 - clean up cached information
-* [pkgr inspect](pkgr_inspect.md)	 - inspect a full installation
-* [pkgr install](pkgr_install.md)	 - install a package
-* [pkgr load](pkgr_load.md)	 - Checks that installed packages can be loaded
-* [pkgr plan](pkgr_plan.md)	 - plan a full installation
-* [pkgr remove](pkgr_remove.md)	 - remove one or more packages
-* [pkgr run](pkgr_run.md)	 - Run R with the configuration settings used with other R commands
+* [pkgr add](pkgr_add.md)	 - Add packages to the configuration file
+* [pkgr clean](pkgr_clean.md)	 - Clean cached information
+* [pkgr inspect](pkgr_inspect.md)	 - Inspect package dependencies
+* [pkgr install](pkgr_install.md)	 - Install packages
+* [pkgr load](pkgr_load.md)	 - Check that installed packages can be loaded
+* [pkgr plan](pkgr_plan.md)	 - Display plan for installation
+* [pkgr remove](pkgr_remove.md)	 - Remove packages from the configuration file
+* [pkgr run](pkgr_run.md)	 - Launch R session with config settings
 

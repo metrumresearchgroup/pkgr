@@ -38,7 +38,7 @@ var update bool
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:     "pkgr",
-	Short:   "package manager",
+	Short:   "A package manager for R",
 	Version: VERSION,
 }
 
