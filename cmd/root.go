@@ -96,13 +96,13 @@ func rootInit() {
 	RootCmd.PersistentFlags().String("library", "", "library to install packages")
 	_ = viper.BindPFlag("library", RootCmd.PersistentFlags().Lookup("library"))
 
-	RootCmd.PersistentFlags().Bool("no-rollback", cfg.NoRollback, "Disable rollback")
+	RootCmd.PersistentFlags().Bool("no-rollback", cfg.NoRollback, "disable rollback")
 	_ = viper.BindPFlag("norollback", RootCmd.PersistentFlags().Lookup("no-rollback"))
 
 	RootCmd.PersistentFlags().Bool("no-secure", cfg.NoSecure, "disable TLS certificate verification")
 	_ = viper.BindPFlag("nosecure", RootCmd.PersistentFlags().Lookup("no-secure"))
 
-	RootCmd.PersistentFlags().Bool("strict", cfg.Strict, "Enable strict mode")
+	RootCmd.PersistentFlags().Bool("strict", cfg.Strict, "enable strict mode")
 	_ = viper.BindPFlag("strict", RootCmd.PersistentFlags().Lookup("strict"))
 }
 

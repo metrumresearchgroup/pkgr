@@ -11,11 +11,11 @@ package manager
       --library string    library to install packages
       --logjson           log as json
       --loglevel string   level for logging
-      --no-rollback       Disable rollback
+      --no-rollback       disable rollback
       --no-secure         disable TLS certificate verification
       --no-update         don't update installed packages
       --preview           preview action, but don't actually run command
-      --strict            Enable strict mode
+      --strict            enable strict mode
       --threads int       number of threads to execute with
       --update            whether to update installed packages
   -v, --version           print the version
