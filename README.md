@@ -2,7 +2,7 @@
 
 For additional details of how to use pkgr, please see the [user manual](https://github.com/metrumresearchgroup/pkgr/wiki/user_manual)
 
-# What is pkgr?
+## What is pkgr?
 
 `pkgr` is a rethinking of the way packages are managed in R. Namely, it embraces
 the declarative philosophy of defining _ideal state_ of the entire system, and working
@@ -10,7 +10,7 @@ towards achieving that objective. Furthermore, `pkgr` is built with a focus on r
 and auditability of what is going on, a vital component for the pharmaceutical sciences + enterprises.
 
 
-# Why pkgr?
+## Why pkgr?
 
 `install.packages` and friends such as `remotes::install_github` have a subtle weakness --
 they are not good at controlling desired global state. There are some knobs that
@@ -38,7 +38,7 @@ way.
 
 [![asciicast](https://asciinema.org/a/wgcPBvCMtEwhpdW793MBjgSi2.svg)](https://asciinema.org/a/wgcPBvCMtEwhpdW793MBjgSi2)
 
-# Getting Started
+## Getting Started
 
 ### OSX and Linux installation
 
@@ -56,7 +56,7 @@ Pkgr for Windows is supported, but we have not yet published on a Windows-compat
   - The destination folder should be on your Windows PATH. You may need to [modify your Windows PATH environment variable](https://www.architectryan.com/2018/03/17/add-to-the-path-on-windows-10/) to make this happen.
   - If you do not already have a preferred way of accomplishing the above, we suggest creating a folder called "apps" in your home directory, then adding the "apps" directory to your PATH. From there, simply make sure that the `pkgr.exe` file from the tarball ends up in your "apps/" directory.
 
-# How it works
+## How it works
 
 `pkgr` is a command line utility with several top level commands. The two primary commands are:
 
@@ -184,7 +184,7 @@ Logging:
   overwrite: true
 ```
 
-# pkgr and [packrat](https://rstudio.github.io/packrat/) and renv
+## pkgr and [packrat](https://rstudio.github.io/packrat/) and renv
 
 **Pkgr is not a replacement for Packrat/renv -- Pkgr is complementary to packrat/renv**.
 
