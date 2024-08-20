@@ -15,12 +15,11 @@ pkgr inspect [flags]
 ### Options
 
 ```
-      --deps             show dependency tree
-  -h, --help             help for inspect
-      --installed-from   show package installation source
-      --json             output as clean json
-      --reverse          show reverse dependencies
-      --tree             show full recursive dependency tree
+      --deps      show dependency tree
+  -h, --help      help for inspect
+      --json      output as clean json
+      --reverse   show reverse dependencies
+      --tree      show full recursive dependency tree
 ```
 
 ### Options inherited from parent commands

@@ -118,5 +118,8 @@ func init() {
 	inspectCmd.Flags().BoolVar(&toJson, "json", false, "output as clean json")
 	inspectCmd.Flags().BoolVar(&installedFrom, "installed-from", false, "show package installation source")
 
+	// Don't advertise this until work is done to improve it.
+	inspectCmd.Flags().MarkHidden("installed-from")
+
 	RootCmd.AddCommand(inspectCmd)
 }
