@@ -1,7 +1,5 @@
 # pkgr
 
-For additional details of how to use pkgr, please see the [user manual](https://github.com/metrumresearchgroup/pkgr/wiki/user_manual)
-
 ## What is pkgr?
 
 `pkgr` is a rethinking of the way packages are managed in R. Namely, it embraces
@@ -57,6 +55,10 @@ Pkgr for Windows is supported, but we have not yet published on a Windows-compat
   - If you do not already have a preferred way of accomplishing the above, we suggest creating a folder called "apps" in your home directory, then adding the "apps" directory to your PATH. From there, simply make sure that the `pkgr.exe` file from the tarball ends up in your "apps/" directory.
 
 ## How it works
+
+> [!NOTE]
+> For additional details of how to use pkgr, please see the
+> [user manual](https://github.com/metrumresearchgroup/pkgr/wiki/user_manual).
 
 `pkgr` is a command line utility with several top level commands. The two primary commands are:
 
