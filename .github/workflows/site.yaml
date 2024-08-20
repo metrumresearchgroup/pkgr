@@ -48,6 +48,7 @@ jobs:
           HUGO_ENVIRONMENT: production
           HUGO_CACHEDIR: ${{ runner.temp }}/hugo_cache
           TZ: America/New_York
+          HUGO_PARAMS_PKGRVERSION: v3.1.1
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
