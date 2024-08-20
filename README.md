@@ -31,8 +31,8 @@ the same set of responsibilities (dealing with dataframes + dealing with other l
 As such, it is becoming increasingly difficult to manage the _set_ of packages in a transparent and robust
 way.
 
-### how does it compare with pak can be read about [here](https://github.com/metrumresearchgroup/pkgr/issues/222#issuecomment-576340217)
-
+> [!NOTE]
+> How pkgr compares with pak can be read about [here](https://github.com/metrumresearchgroup/pkgr/issues/222#issuecomment-576340217).
 
 ## pkgr in action
 
