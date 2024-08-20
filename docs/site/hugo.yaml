@@ -1,0 +1,67 @@
+title: pkgr
+baseURL: https://metrumresearchgroup.github.io/pkgr/
+languageCode: en-us
+markup:
+  highlight:
+    noClasses: false
+  goldmark:
+    extensions:
+      typographer:
+        # Prevent --option in command pages from being rendered with an en-dash.
+        disable: true
+    parser:
+      attribute:
+        block: true
+menu:
+  main:
+    - name: Docs
+      pageRef: /docs
+      weight: 10
+    - name: News
+      pageRef: /news
+      weight: 20
+    - name: Search
+      weight: 30
+      params:
+        type: search
+    - name: GitHub
+      weight: 40
+      url: https://github.com/metrumresearchgroup/pkgr
+      params:
+        icon: github
+  sidebar:
+    - identifier: wikimanual
+      name: "User manual (pkgr wiki) ↗"
+      url: "https://github.com/metrumresearchgroup/pkgr/wiki/user_manual"
+      weight: 100
+    - identifier: repos
+      name: Snapshot repos
+      params:
+        type: separator
+      weight: 110
+    - identifier: mpn
+      name: "Metrum Package Network ↗"
+      url: "https://mpn.metworx.com"
+      weight: 120
+    - identifier: ppm
+      name: "Posit Package Manager ↗"
+      url: "https://packagemanager.posit.co"
+      weight: 130
+
+disableKinds:
+  - taxonomy
+  - term
+
+module:
+  imports:
+    - path: github.com/imfing/hextra
+params:
+  navbar:
+    displayTitle: false
+    displayLogo: true
+    logo:
+      path: logo.png
+      width: 45
+  theme:
+    default: system
+    displayToggle: false

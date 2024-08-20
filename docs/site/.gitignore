@@ -1,0 +1,7 @@
+/.hugo_build.lock
+/content/**/*.md
+!/content/docs/_index.md
+/local.mk
+/public/
+/resources/
+/static/windows.png
