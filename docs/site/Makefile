@@ -44,9 +44,11 @@ content/docs/config.md: ../config.md
 	printf -- '---\ntitle: "Configuration"\nweight: 10\n---\n\n' >'$@'
 	cat '$<' >>'$@'
 
+content/news.md: ./scripts/add-gh-links
 content/news.md: ../../NEWS.md
 	printf -- '---\ntitle: "News"\n---\n\n' >'$@'
-	sed 's/^# pkgr/##/' '$<' \
+	sed 's/^# pkgr/##/' '$<' | \
+	  ./scripts/add-gh-links https://github.com/metrumresearchgroup/pkgr \
 	  >>'$@'
 
 static/windows.png: ../images/windows_tarball_picture.png
