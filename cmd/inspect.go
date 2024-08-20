@@ -115,7 +115,10 @@ func init() {
 	inspectCmd.Flags().BoolVar(&showDeps, "deps", false, "show dependency tree")
 	inspectCmd.Flags().BoolVar(&reverse, "reverse", false, "show reverse dependencies")
 	inspectCmd.Flags().BoolVar(&tree, "tree", false, "show full recursive dependency tree")
-	inspectCmd.Flags().BoolVar(&toJson, "json", false, "output as clean json")
+	inspectCmd.Flags().BoolVar(&toJson, "json", false,
+		// Point the user to --loglevel because it also suppresses logging
+		// upstream of the inspect() call.
+		"suppress non-fatal logging (note: prefer --loglevel=fatal to this flag)")
 	inspectCmd.Flags().BoolVar(&installedFrom, "installed-from", false, "show package installation source")
 
 	// Don't advertise this until work is done to improve it.

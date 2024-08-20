@@ -17,7 +17,7 @@ pkgr inspect [flags]
 ```
       --deps      show dependency tree
   -h, --help      help for inspect
-      --json      output as clean json
+      --json      suppress non-fatal logging (note: prefer --loglevel=fatal to this flag)
       --reverse   show reverse dependencies
       --tree      show full recursive dependency tree
 ```
