@@ -62,7 +62,7 @@ Pkgr for Windows is supported, but we have not yet published on a Windows-compat
 
 ```bash
 pkgr plan # show what would happen if install is run
-pkgr install # install the packages specified in pkgr.config
+pkgr install # install the packages specified in pkgr.yml
 ```
 The actions are controlled by a configuration file that specifies the desired global state, namely,
 by defining the top level packages a user cares about, as well as specific configuration customizations.
