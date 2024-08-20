@@ -1,0 +1,67 @@
+name: Deploy site
+on:
+  push:
+    branches:
+      - scratch/deploy-site
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install Hugo
+        shell: bash
+        run: |
+          tdir=$(mktemp -d)
+          tgz=$tdir/hugo.tar.gz
+          bin=$HOME/bin
+          mkdir -p "$bin"
+
+          url=https://github.com/gohugoio/hugo/releases/download
+          curl -fSsL --retry 3 \
+            "$url/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz" \
+            >"$tgz"
+          printf '%s  %s\n' "$HUGO_SHA" "$tgz" | sha256sum --check >/dev/null
+
+          tar --to-stdout --extract -zf "$tgz" hugo >"$bin"/hugo
+          chmod +x "$bin/hugo"
+          "$bin"/hugo version
+          echo "$bin" >>"$GITHUB_PATH"
+        env:
+          HUGO_VERSION: '0.133.0'
+          HUGO_SHA: '372530e2de9ae74087a987ca841429390a055123b8a4dec665cc601f10dc8e6e'
+      - uses: actions/configure-pages@v5
+        id: pages
+      - name: Check URL match
+        shell: bash
+        run: |
+          url=$(grep '^baseURL:' docs/site/hugo.yaml)
+          test "${{ steps.pages.outputs.base_url }}/" = "${url#baseURL: }"
+      - name: Build site
+        shell: bash
+        run: make -C docs/site build
+        env:
+          HUGO_ENVIRONMENT: production
+          HUGO_CACHEDIR: ${{ runner.temp }}/hugo_cache
+          TZ: America/New_York
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./docs/site/public
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
