@@ -14,10 +14,8 @@ package manager
       --no-rollback       disable rollback
       --no-secure         disable TLS certificate verification
       --no-update         don't update installed packages
-      --preview           preview action, but don't actually run command
       --strict            enable strict mode
       --threads int       number of threads to execute with
-      --update            whether to update installed packages
   -v, --version           print the version
 ```
 

@@ -67,6 +67,7 @@ func rootInit() {
 
 	// this is added to maintain legacy compatibility in case people use this flag
 	RootCmd.PersistentFlags().BoolVar(&update, "update", false, "whether to update installed packages")
+	RootCmd.PersistentFlags().MarkHidden("update")
 
 	// this replaces the update
 	RootCmd.PersistentFlags().Bool("no-update", false, "don't update installed packages")
@@ -86,6 +87,7 @@ func rootInit() {
 
 	RootCmd.PersistentFlags().Bool("preview", false, "preview action, but don't actually run command")
 	_ = viper.BindPFlag("preview", RootCmd.PersistentFlags().Lookup("preview"))
+	RootCmd.PersistentFlags().MarkHidden("preview")
 
 	RootCmd.PersistentFlags().Bool("debug", false, "use debug mode")
 	_ = viper.BindPFlag("debug", RootCmd.PersistentFlags().Lookup("debug"))
