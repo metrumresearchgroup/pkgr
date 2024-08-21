@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+"""
+Read Cobra command markdown on stdin and replace option code blocks
+with a list of options.
+
+For example, convert
+
+  ```
+        --json            json tree of output, if possible
+    -v, --verbose         verbose output
+  ```
+
+to
+
+   * `--json`: json tree of output, if possible
+
+   * `-v, --verbose`: verbose output
+
+"""
+
+import fileinput
+import sys
+
+
+def format_option(line):
+    line = line.strip()
+    if not line:
+        return ""
+    if line == "```":
+        return "\n"
+
+    try:
+        # Note: This relies on the "-o, --option value" part 1) _not_
+        # containing two spaces and 2) being separated from the
+        # description by at least two spaces.
+        opts, desc = line.split("  ", maxsplit=1)
+    except ValueError:
+        raise ValueError(f"option line in unexpected format: {line}") from None
+
+    return f" * `{opts}`: {desc}\n\n"
+
+
+if __name__ == "__main__":
+    in_options = False
+    for line in fileinput.input("-"):
+        if line.startswith("#"):
+            in_options = line.startswith("### Options")
+            sys.stdout.write(line)
+            continue
+
+        if in_options:
+            line = format_option(line)
+        sys.stdout.write(line)

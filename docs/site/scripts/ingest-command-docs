@@ -21,8 +21,15 @@
 #    "flag" is better for consistency.
 #
 #  * put inherited flags as subhead of under flags heading
+#
+#  * extract option lines from code block and reformat as bullets
 
 set -eu
+
+test -x scripts/format-command-flags || {
+    printf >&2 'script must be executed from docs/site/ directory\n'
+    exit 1
+}
 
 outdir=content/docs/commands
 mkdir -p "$outdir"
@@ -41,7 +48,8 @@ do
         seename='See also'
     fi
     printf -- '---\ntitle: "%s"\ntype: "command"\n---\n\n' "$title" >"$dest"
-    sed 's/^##/#/' "$f" | \
+    ./scripts/format-command-flags <"$f" | \
+        sed 's/^##/#/' | \
         sed -E 's|\[pkgr\]\(pkgr\.md\).*|[pkgr]({{< relref "/docs/commands/" >}}) - top-level entry point |' | \
         sed 's|(pkgr_\(.*\)\.md)|({{< relref "/docs/commands/\1" >}})|' | \
         sed 's/# Options inherited from parent commands/## Inherited/' | \
