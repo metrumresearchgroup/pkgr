@@ -1,5 +1,8 @@
 # pkgr
 
+Documentation for `pkgr` is available at
+<https://metrumresearchgroup.github.io/pkgr/docs/>.
+
 ## What is pkgr?
 
 `pkgr` is a rethinking of the way packages are managed in R. Namely, it embraces
