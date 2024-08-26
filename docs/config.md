@@ -23,7 +23,7 @@ and where to get the package and its dependencies from (MPN's
 2024-06-12 snapshot).
 
 Running `pkgr install` from the directory that contains that
-`pkgr.yml` file crates the library with `here` and its dependency
+`pkgr.yml` file creates the library with `here` and its dependency
 `rprojroot`:
 
 ```
