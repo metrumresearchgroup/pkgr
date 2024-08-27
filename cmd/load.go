@@ -21,9 +21,20 @@ import (
 // loadCmd represents the load command
 var loadCmd = &cobra.Command{
 	Use:   "load",
-	Short: "Checks that installed packages can be loaded",
-	Long: `Attempts to load user packages specified in pkgr.yml to validate that each package has been installed
-successfully and can be used. Use the --all flag to load all packages in the user-library dependency tree instead of just user-level packages.`,
+	Short: "Check that installed packages can be loaded",
+	Long: `Load packages specified in the configuration file to validate that
+each package has been installed successfully and can be used.
+
+**Execution environment**. This subcommand runs R with the same settings
+that R would use if you invoked 'R' from the current working directory. It
+relies on that environment being configured to find packages in the library
+path specified in the configuration file (via 'Library' or 'Lockfile:
+Type').  Pass the --json argument to confirm that the package is being
+loaded from the expected library.`,
+	Example: `  # Load packages listed in config file
+  pkgr load --json
+  # Load the above packages and all their dependencies
+  pkgr load --json --all`,
 	Run: func(cmd *cobra.Command, args []string) {
 		all := viper.GetBool("all")
 		json := viper.GetBool("json")
@@ -52,9 +63,9 @@ successfully and can be used. Use the --all flag to load all packages in the use
 
 func init() {
 	RootCmd.AddCommand(loadCmd)
-	loadCmd.Flags().Bool("all", false, "load user packages as well as their dependencies")
+	loadCmd.Flags().Bool("all", false, "load all packages in dependency tree")
 	viper.BindPFlag("all", loadCmd.LocalFlags().Lookup("all")) //There doesn't seem to be a way to bind local flags.
-	loadCmd.Flags().Bool("json", false, "output a JSON object of package info at the end")
+	loadCmd.Flags().Bool("json", false, "output results as a JSON object")
 	viper.BindPFlag("json", loadCmd.LocalFlags().Lookup("json")) //There doesn't seem to be a way to bind local flags.
 	// loadCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

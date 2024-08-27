@@ -1,22 +1,38 @@
 ## pkgr load
 
-Checks that installed packages can be loaded
+Check that installed packages can be loaded
 
 ### Synopsis
 
-Attempts to load user packages specified in pkgr.yml to validate that each package has been installed
-successfully and can be used. Use the --all flag to load all packages in the user-library dependency tree instead of just user-level packages.
+Load packages specified in the configuration file to validate that
+each package has been installed successfully and can be used.
+
+**Execution environment**. This subcommand runs R with the same settings
+that R would use if you invoked 'R' from the current working directory. It
+relies on that environment being configured to find packages in the library
+path specified in the configuration file (via 'Library' or 'Lockfile:
+Type').  Pass the --json argument to confirm that the package is being
+loaded from the expected library.
 
 ```
 pkgr load [flags]
 ```
 
+### Examples
+
+```
+  # Load packages listed in config file
+  pkgr load --json
+  # Load the above packages and all their dependencies
+  pkgr load --json --all
+```
+
 ### Options
 
 ```
-      --all    load user packages as well as their dependencies
+      --all    load all packages in dependency tree
   -h, --help   help for load
-      --json   output a JSON object of package info at the end
+      --json   output results as a JSON object
 ```
 
 ### Options inherited from parent commands
@@ -27,16 +43,14 @@ pkgr load [flags]
       --library string    library to install packages
       --logjson           log as json
       --loglevel string   level for logging
-      --no-rollback       Disable rollback
+      --no-rollback       disable rollback
       --no-secure         disable TLS certificate verification
       --no-update         don't update installed packages
-      --preview           preview action, but don't actually run command
-      --strict            Enable strict mode
+      --strict            enable strict mode
       --threads int       number of threads to execute with
-      --update            whether to update installed packages
 ```
 
 ### SEE ALSO
 
-* [pkgr](pkgr.md)	 - package manager
+* [pkgr](pkgr.md)	 - A package manager for R
 

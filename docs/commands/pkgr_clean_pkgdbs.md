@@ -1,23 +1,30 @@
 ## pkgr clean pkgdbs
 
-Subcommand to clean cached pkgdbs
+Clean cached package databases
 
 ### Synopsis
 
-This command parses the currently-cached pkgdbs and removes all
-	of them by default, or specific ones if desired. Identify specific repos using the "repos" argument, i.e.
-	pkgr clean pkgdbs --repos="CRAN,r_validated"
-	Repo names should match names in the pkgr.yml file.
+Delete cached package databases. By default, remove cached databases for
+every repository listed in the active configuration file. If the --repos option
+is passed, remove only the cached databases for those repositories. Repo names
+should match the names in the configuration file.
 
 ```
 pkgr clean pkgdbs [flags]
+```
+
+### Examples
+
+```
+  # Clean package databases for CRAN and MPN
+  pkgr clean pkgdbs --repos=CRAN,MPN
 ```
 
 ### Options
 
 ```
   -h, --help           help for pkgdbs
-      --repos string   Set the repos you wish to clear the pkgdbs for. (default "ALL")
+      --repos string   clear databases for these repos (default "ALL")
 ```
 
 ### Options inherited from parent commands
@@ -28,16 +35,14 @@ pkgr clean pkgdbs [flags]
       --library string    library to install packages
       --logjson           log as json
       --loglevel string   level for logging
-      --no-rollback       Disable rollback
+      --no-rollback       disable rollback
       --no-secure         disable TLS certificate verification
       --no-update         don't update installed packages
-      --preview           preview action, but don't actually run command
-      --strict            Enable strict mode
+      --strict            enable strict mode
       --threads int       number of threads to execute with
-      --update            whether to update installed packages
 ```
 
 ### SEE ALSO
 
-* [pkgr clean](pkgr_clean.md)	 - clean up cached information
+* [pkgr clean](pkgr_clean.md)	 - Clean cached information
 

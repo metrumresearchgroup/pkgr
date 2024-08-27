@@ -29,11 +29,30 @@ import (
 
 // inspectCmd shows the install inspect
 var inspectCmd = &cobra.Command{
-	Use:   "inspect",
-	Short: "inspect a full installation",
-	Long: `
-	see the inspect for an install
- `,
+	Use:   "inspect --deps [flags] [<package>...]",
+	Short: "Inspect package dependencies",
+	Long: `The inspect subcommand provides an entry point for displaying
+information that can be gathered by examining the configuration file, the
+associated package database, and the library. The current focus is on
+inspecting package dependencies (triggered by passing --deps).
+
+Note: If the configuration file has 'Suggests: true', that does not affect
+the set of dependencies listed for any particular package. Instead the set
+of suggested packages is included in the top-level package set.`,
+	Example: `  # Show all dependencies as a tree
+  pkgr --loglevel=fatal inspect --deps --tree
+  # Show dependency tree, restricting roots to the named packages
+  pkgr --loglevel=fatal inspect --deps --tree processx here
+
+  # Output a JSON record where each item maps a package to its direct
+  # and indirect dependencies
+  pkgr --loglevel=fatal inspect --deps
+  # Do the same, but filter to records for the named packages
+  pkgr --loglevel=fatal inspect --deps processx here
+
+  # Output a JSON record where each item maps a package to
+  # the packages that have it as a dependency
+  pkgr --loglevel=fatal inspect --deps --reverse`,
 	RunE: inspect,
 }
 
@@ -115,8 +134,14 @@ func init() {
 	inspectCmd.Flags().BoolVar(&showDeps, "deps", false, "show dependency tree")
 	inspectCmd.Flags().BoolVar(&reverse, "reverse", false, "show reverse dependencies")
 	inspectCmd.Flags().BoolVar(&tree, "tree", false, "show full recursive dependency tree")
-	inspectCmd.Flags().BoolVar(&toJson, "json", false, "output as clean json")
+	inspectCmd.Flags().BoolVar(&toJson, "json", false,
+		// Point the user to --loglevel because it also suppresses logging
+		// upstream of the inspect() call.
+		"suppress non-fatal logging (note: prefer --loglevel=fatal to this flag)")
 	inspectCmd.Flags().BoolVar(&installedFrom, "installed-from", false, "show package installation source")
+
+	// Don't advertise this until work is done to improve it.
+	inspectCmd.Flags().MarkHidden("installed-from")
 
 	RootCmd.AddCommand(inspectCmd)
 }

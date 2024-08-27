@@ -26,11 +26,10 @@ import (
 
 // installCmd represents the R CMD install command
 var removeCmd = &cobra.Command{
-	Use:   "remove [package name1] [package name2] [package name3] ...",
-	Short: "remove one or more packages",
-	Long: `
-	remove package/s from the configuration file
-`,
+	Use:   "remove [flags] <package> [<package>...]",
+	Short: "Remove packages from the configuration file",
+	Long: `Remove the specified packages from the 'Packages' section of the
+configuration file.`,
 	RunE: rRemove,
 }
 

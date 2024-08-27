@@ -25,11 +25,29 @@ var pkg string
 
 // checkCmd represents the R CMD check command
 var runCmd = &cobra.Command{
-	Use:   "run R",
-	Short: "Run R with the configuration settings used with other R commands",
-	Long: `
-	allows for interactive use and debugging based on the configuration specified by pkgr
- `,
+	Use:   "run",
+	Short: "Launch R session with config settings",
+	Long: `Start an interactive R session based on the settings defined in the
+configuration file.
+
+   * Use the R executable defined by the 'RPath' value, if any.
+
+   * Set the library paths so that packages come from only the
+     configuration's library and the library bundled with the R
+     installation.
+
+   * If the --pkg option is passed, set the environment variables defined in
+     the package's 'Customizations' entry.`,
+	Example: `  # Launch an R session, setting values based on pkgr.yml
+  pkgr run
+  # Also setting environment variables specified for dplyr:
+  #
+  #   Customizations:
+  #     Packages:
+  #        - dplyr:
+  #            Env:
+  #              [...]
+  pkgr run --pkg=dplyr`,
 	RunE: rRun,
 }
 

@@ -38,7 +38,7 @@ var update bool
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:     "pkgr",
-	Short:   "package manager",
+	Short:   "A package manager for R",
 	Version: VERSION,
 }
 
@@ -67,6 +67,7 @@ func rootInit() {
 
 	// this is added to maintain legacy compatibility in case people use this flag
 	RootCmd.PersistentFlags().BoolVar(&update, "update", false, "whether to update installed packages")
+	RootCmd.PersistentFlags().MarkHidden("update")
 
 	// this replaces the update
 	RootCmd.PersistentFlags().Bool("no-update", false, "don't update installed packages")
@@ -86,6 +87,7 @@ func rootInit() {
 
 	RootCmd.PersistentFlags().Bool("preview", false, "preview action, but don't actually run command")
 	_ = viper.BindPFlag("preview", RootCmd.PersistentFlags().Lookup("preview"))
+	RootCmd.PersistentFlags().MarkHidden("preview")
 
 	RootCmd.PersistentFlags().Bool("debug", false, "use debug mode")
 	_ = viper.BindPFlag("debug", RootCmd.PersistentFlags().Lookup("debug"))
@@ -96,13 +98,13 @@ func rootInit() {
 	RootCmd.PersistentFlags().String("library", "", "library to install packages")
 	_ = viper.BindPFlag("library", RootCmd.PersistentFlags().Lookup("library"))
 
-	RootCmd.PersistentFlags().Bool("no-rollback", cfg.NoRollback, "Disable rollback")
+	RootCmd.PersistentFlags().Bool("no-rollback", cfg.NoRollback, "disable rollback")
 	_ = viper.BindPFlag("norollback", RootCmd.PersistentFlags().Lookup("no-rollback"))
 
 	RootCmd.PersistentFlags().Bool("no-secure", cfg.NoSecure, "disable TLS certificate verification")
 	_ = viper.BindPFlag("nosecure", RootCmd.PersistentFlags().Lookup("no-secure"))
 
-	RootCmd.PersistentFlags().Bool("strict", cfg.Strict, "Enable strict mode")
+	RootCmd.PersistentFlags().Bool("strict", cfg.Strict, "enable strict mode")
 	_ = viper.BindPFlag("strict", RootCmd.PersistentFlags().Lookup("strict"))
 }
 

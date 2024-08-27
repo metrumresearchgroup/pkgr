@@ -26,10 +26,22 @@ var cleanAll bool
 
 // CleanCmd represents the clean command
 var CleanCmd = &cobra.Command{
-	Use:   "clean",
-	Short: "clean up cached information",
-	Long:  "clean up cached source files and binaries, as well as the saved package database.",
-	RunE:  clean,
+	Use:   `clean [flags]`,
+	Short: "Clean cached information",
+	Long: `This subcommand is an entry point for cleaning two categories of cached
+data:
+
+ * source and binary tarballs
+
+   Use the 'cache' subcommand to remove these.
+
+ * package databases with information about the packages available from
+   repositories
+
+   Use the 'pkgdbs' subcommand to remove these.
+
+To remove cached data for both categories, pass the --all flag.`,
+	RunE: clean,
 }
 
 func init() {

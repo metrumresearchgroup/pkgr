@@ -1,22 +1,31 @@
 ## pkgr add
 
-add one or more packages
+Add packages to the configuration file
 
 ### Synopsis
 
-
-	add package/s to the configuration file and optionally install
-
+Add the specified packages to the 'Packages' section of the
+configuration file.
 
 ```
-pkgr add [package name1] [package name2] [package name3] ... [flags]
+pkgr add [flags] <package> [<package>...]
+```
+
+### Examples
+
+```
+  # Add mrgsolve and bbr to list of packages
+  pkgr add mrgsolve bbr
+  # Add rlang and then do installation
+  # (same result as following up with 'pkgr install' call)
+  pkgr add --install rlang
 ```
 
 ### Options
 
 ```
   -h, --help      help for add
-      --install   install package/s after adding
+      --install   run install after updating config
 ```
 
 ### Options inherited from parent commands
@@ -27,16 +36,14 @@ pkgr add [package name1] [package name2] [package name3] ... [flags]
       --library string    library to install packages
       --logjson           log as json
       --loglevel string   level for logging
-      --no-rollback       Disable rollback
+      --no-rollback       disable rollback
       --no-secure         disable TLS certificate verification
       --no-update         don't update installed packages
-      --preview           preview action, but don't actually run command
-      --strict            Enable strict mode
+      --strict            enable strict mode
       --threads int       number of threads to execute with
-      --update            whether to update installed packages
 ```
 
 ### SEE ALSO
 
-* [pkgr](pkgr.md)	 - package manager
+* [pkgr](pkgr.md)	 - A package manager for R
 

@@ -1,0 +1,58 @@
+#!/bin/sh
+
+# Copy generated command docs from contents/commands/ with the
+# following modifications:
+#
+#  * set title metadata to name of subcommand
+#
+#  * promote each heading (e.g., H2 becomes H1)
+#
+#  * adjust the link to the other markdown files to work in the Hugo
+#    context
+#
+#  * tweak the headings of top-level command page to make it a more
+#    suitable landing page for /commands
+#
+#  * replace "option" with "flag" in title.
+#
+#    Although "option" is arguably the better term in general, 1)
+#    cobra puts these under "flags" in its command-line help output
+#    and 2) cobra adds a "[flag]" value to the usage, so staying with
+#    "flag" is better for consistency.
+#
+#  * put inherited flags as subhead of under flags heading
+#
+#  * extract option lines from code block and reformat as bullets
+
+set -eu
+
+test -x scripts/format-command-flags || {
+    printf >&2 'script must be executed from docs/site/ directory\n'
+    exit 1
+}
+
+outdir=content/docs/commands
+mkdir -p "$outdir"
+for f in ../commands/*.md
+do
+    if test "$f" = ../commands/pkgr.md
+    then
+        dest=$outdir/_index.md
+        title=Commands
+        seename=Subcommands
+    else
+        base=$(basename "$f")
+        cmd=${base%.md}
+        title=$(printf '%s\n' "$cmd" | sed 's/pkgr_//' | sed 's/_/ /g')
+        dest=$outdir/${base#pkgr_}
+        seename='See also'
+    fi
+    printf -- '---\ntitle: "%s"\ntype: "command"\n---\n\n' "$title" >"$dest"
+    ./scripts/format-command-flags <"$f" | \
+        sed 's/^##/#/' | \
+        sed -E 's|\[pkgr\]\(pkgr\.md\).*|[pkgr]({{< relref "/docs/commands/" >}}) - top-level entry point |' | \
+        sed 's|(pkgr_\(.*\)\.md)|({{< relref "/docs/commands/\1" >}})|' | \
+        sed 's/# Options inherited from parent commands/## Inherited/' | \
+        sed 's/# Options/# Flags/' | \
+        sed "s/# SEE ALSO/# $seename/" >>"$dest"
+done

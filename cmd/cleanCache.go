@@ -35,22 +35,27 @@ var reposToClear string
 // cacheCmd represents the cache command
 var cleanCacheCmd = &cobra.Command{
 	Use:   "cache",
-	Short: "Subcommand to clean cached source and binary files.",
-	Long: `This command is a subcommand of the "clean" command.
+	Short: "Clean cached package tarballs",
+	Long: `Delete cached tarballs for source and binary packages. Both source and
+binary files are deleted if neither the --src-only or --binaries-only flags
+is specified.
 
-	Using this command deletes cached source and binary files. Use the
-	--src and --binary options to specify which repos to clean each
-	file type from.
-
-	`,
+By default, files for all repositories are deleted unless specific
+repositories are specified via the --repos option. Note that the value must
+match the directory name in the cache, including the unique ID that is
+appended to the repository name.`,
+	Example: `  # Clean binary files for all repos
+  pkgr clean cache --binaries-only
+  # Clean binaries files for MPN-889df4238bae repo
+  pkgr clean cache --repos=MPN-889df4238bae --binaries-only`,
 	RunE: cache,
 }
 
 func init() {
 	//cleanCacheCmd.Flags().BoolVar(&cleanAllFromCache, "all", true, "Clean both src and binary files from the cache.")
-	cleanCacheCmd.Flags().BoolVar(&srcOnly, "src-only", false, "Clean only src files from the cache")
-	cleanCacheCmd.Flags().BoolVar(&binariesOnly, "binaries-only", false, "Clean only binary files from the cache")
-	cleanCacheCmd.Flags().StringVar(&reposToClear, "repos", "ALL", "Comma separated list of repositories to be cleaned. Defaults to all.")
+	cleanCacheCmd.Flags().BoolVar(&srcOnly, "src-only", false, "clean only source files from the cache")
+	cleanCacheCmd.Flags().BoolVar(&binariesOnly, "binaries-only", false, "clean only binary files from the cache")
+	cleanCacheCmd.Flags().StringVar(&reposToClear, "repos", "ALL", "comma-separated list of repositories to be cleaned. Defaults to all.")
 
 	CleanCmd.AddCommand(cleanCacheCmd)
 }

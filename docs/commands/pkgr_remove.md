@@ -1,15 +1,14 @@
 ## pkgr remove
 
-remove one or more packages
+Remove packages from the configuration file
 
 ### Synopsis
 
-
-	remove package/s from the configuration file
-
+Remove the specified packages from the 'Packages' section of the
+configuration file.
 
 ```
-pkgr remove [package name1] [package name2] [package name3] ... [flags]
+pkgr remove [flags] <package> [<package>...]
 ```
 
 ### Options
@@ -26,16 +25,14 @@ pkgr remove [package name1] [package name2] [package name3] ... [flags]
       --library string    library to install packages
       --logjson           log as json
       --loglevel string   level for logging
-      --no-rollback       Disable rollback
+      --no-rollback       disable rollback
       --no-secure         disable TLS certificate verification
       --no-update         don't update installed packages
-      --preview           preview action, but don't actually run command
-      --strict            Enable strict mode
+      --strict            enable strict mode
       --threads int       number of threads to execute with
-      --update            whether to update installed packages
 ```
 
 ### SEE ALSO
 
-* [pkgr](pkgr.md)	 - package manager
+* [pkgr](pkgr.md)	 - A package manager for R
 

@@ -35,10 +35,16 @@ import (
 // installCmd represents the R CMD install command
 var installCmd = &cobra.Command{
 	Use:   "install",
-	Short: "install a package",
-	Long: `
-	install a package
-`,
+	Short: "Install packages",
+	Long: `Create the library defined by the configuration file.
+
+See <https://metrumresearchgroup.github.io/pkgr/docs/config> for details on
+the configuration file.`,
+	Example: `  # Create or update library defined by pkgr.yml
+  pkgr install
+  # Install new packages and dependencies but don't update packages that already
+  # exist in the library.
+  pkgr install  --no-update`,
 	RunE: rInstall,
 }
 

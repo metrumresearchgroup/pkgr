@@ -1,8 +1,9 @@
 # pkgr
 
-For additional details of how to use pkgr, please see the [user manual](https://github.com/metrumresearchgroup/pkgr/wiki/user_manual)
+Documentation for `pkgr` is available at
+<https://metrumresearchgroup.github.io/pkgr/docs/>.
 
-# What is pkgr?
+## What is pkgr?
 
 `pkgr` is a rethinking of the way packages are managed in R. Namely, it embraces
 the declarative philosophy of defining _ideal state_ of the entire system, and working
@@ -10,7 +11,7 @@ towards achieving that objective. Furthermore, `pkgr` is built with a focus on r
 and auditability of what is going on, a vital component for the pharmaceutical sciences + enterprises.
 
 
-# Why pkgr?
+## Why pkgr?
 
 `install.packages` and friends such as `remotes::install_github` have a subtle weakness --
 they are not good at controlling desired global state. There are some knobs that
@@ -31,14 +32,14 @@ the same set of responsibilities (dealing with dataframes + dealing with other l
 As such, it is becoming increasingly difficult to manage the _set_ of packages in a transparent and robust
 way.
 
-### how does it compare with pak can be read about [here](https://github.com/metrumresearchgroup/pkgr/issues/222#issuecomment-576340217)
-
+> [!NOTE]
+> How pkgr compares with pak can be read about [here](https://github.com/metrumresearchgroup/pkgr/issues/222#issuecomment-576340217).
 
 ## pkgr in action
 
 [![asciicast](https://asciinema.org/a/wgcPBvCMtEwhpdW793MBjgSi2.svg)](https://asciinema.org/a/wgcPBvCMtEwhpdW793MBjgSi2)
 
-# Getting Started
+## Getting Started
 
 ### OSX and Linux installation
 
@@ -56,13 +57,17 @@ Pkgr for Windows is supported, but we have not yet published on a Windows-compat
   - The destination folder should be on your Windows PATH. You may need to [modify your Windows PATH environment variable](https://www.architectryan.com/2018/03/17/add-to-the-path-on-windows-10/) to make this happen.
   - If you do not already have a preferred way of accomplishing the above, we suggest creating a folder called "apps" in your home directory, then adding the "apps" directory to your PATH. From there, simply make sure that the `pkgr.exe` file from the tarball ends up in your "apps/" directory.
 
-# How it works
+## How it works
+
+> [!NOTE]
+> For additional details of how to use pkgr, please see the
+> [user manual](https://github.com/metrumresearchgroup/pkgr/wiki/user_manual).
 
 `pkgr` is a command line utility with several top level commands. The two primary commands are:
 
 ```bash
 pkgr plan # show what would happen if install is run
-pkgr install # install the packages specified in pkgr.config
+pkgr install # install the packages specified in pkgr.yml
 ```
 The actions are controlled by a configuration file that specifies the desired global state, namely,
 by defining the top level packages a user cares about, as well as specific configuration customizations.
@@ -184,7 +189,7 @@ Logging:
   overwrite: true
 ```
 
-# pkgr and [packrat](https://rstudio.github.io/packrat/) and renv
+## pkgr and [packrat](https://rstudio.github.io/packrat/) and renv
 
 **Pkgr is not a replacement for Packrat/renv -- Pkgr is complementary to packrat/renv**.
 
@@ -207,3 +212,23 @@ Pkgr solves these issues by:
   - Providing timely error messages and halting the installation process immediately when something goes wrong during the
   installation process (such as a package not being available, a repository being unreachable, etc.)
 
+## Development
+
+To run the test suite, you can invoke [scripts/run-unit-tests][ru] and
+[scripts/run-integration-tests][ri] directly or via `make vt-test`.
+
+After updating a subcommand, regenerate the Markdown documentation at
+[docs/commands][dc] by running `make vt-gen-docs`.  See `make vt-help` and
+[internal/valtools/README.md][vr] for more details on the validation tooling.
+
+The setup for building the documentation site is described in
+[docs/site/README.md][dr].
+
+<!-- Note: Use GitHub URLs rather than relative paths (e.g., "/docs/commands") so -->
+<!-- that these work on https://metrumresearchgroup.github.io/pkgr/ without further -->
+<!-- processing. -->
+[dc]: https://github.com/metrumresearchgroup/pkgr/blob/main/docs/commands
+[dr]: https://github.com/metrumresearchgroup/pkgr/blob/main/docs/site/README.md
+[ri]: https://github.com/metrumresearchgroup/pkgr/blob/main/scripts/run-integration-tests
+[ru]: https://github.com/metrumresearchgroup/pkgr/blob/main/scripts/run-unit-tests
+[vr]: https://github.com/metrumresearchgroup/pkgr/blob/main/internal/valtools/README.md

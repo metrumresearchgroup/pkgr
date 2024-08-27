@@ -1,12 +1,16 @@
 ## pkgr plan
 
-plan a full installation
+Display plan for installation
 
 ### Synopsis
 
+Preview an installation with the current configuration. This subcommand
+is commonly invoked before running 'pkgr install' to confirm that the
+configuration is behaving as intended.
 
-	see the plan for an install
- 
+The output includes details about which repositories particular packages would
+be retrieved from, the library that packages would be installed into, and which
+packages would be installed or updated.
 
 ```
 pkgr plan [flags]
@@ -27,16 +31,14 @@ pkgr plan [flags]
       --library string    library to install packages
       --logjson           log as json
       --loglevel string   level for logging
-      --no-rollback       Disable rollback
+      --no-rollback       disable rollback
       --no-secure         disable TLS certificate verification
       --no-update         don't update installed packages
-      --preview           preview action, but don't actually run command
-      --strict            Enable strict mode
+      --strict            enable strict mode
       --threads int       number of threads to execute with
-      --update            whether to update installed packages
 ```
 
 ### SEE ALSO
 
-* [pkgr](pkgr.md)	 - package manager
+* [pkgr](pkgr.md)	 - A package manager for R
 

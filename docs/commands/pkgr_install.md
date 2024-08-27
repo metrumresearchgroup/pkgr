@@ -1,15 +1,26 @@
 ## pkgr install
 
-install a package
+Install packages
 
 ### Synopsis
 
+Create the library defined by the configuration file.
 
-	install a package
-
+See <https://metrumresearchgroup.github.io/pkgr/docs/config> for details on
+the configuration file.
 
 ```
 pkgr install [flags]
+```
+
+### Examples
+
+```
+  # Create or update library defined by pkgr.yml
+  pkgr install
+  # Install new packages and dependencies but don't update packages that already
+  # exist in the library.
+  pkgr install  --no-update
 ```
 
 ### Options
@@ -26,16 +37,14 @@ pkgr install [flags]
       --library string    library to install packages
       --logjson           log as json
       --loglevel string   level for logging
-      --no-rollback       Disable rollback
+      --no-rollback       disable rollback
       --no-secure         disable TLS certificate verification
       --no-update         don't update installed packages
-      --preview           preview action, but don't actually run command
-      --strict            Enable strict mode
+      --strict            enable strict mode
       --threads int       number of threads to execute with
-      --update            whether to update installed packages
 ```
 
 ### SEE ALSO
 
-* [pkgr](pkgr.md)	 - package manager
+* [pkgr](pkgr.md)	 - A package manager for R
 
