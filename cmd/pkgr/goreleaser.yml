@@ -8,6 +8,7 @@ release:
   # If set to true, will mark the release as not ready for production.
   # Default is false.
   prerelease: auto
+  draft: true
   footer: |
     ## Installation Instructions
 
