@@ -91,3 +91,4 @@ jobs:
           workdir: cmd/pkgr
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_GORELEASER_BREWS_TOKEN: ${{ secrets.GH_GORELEASER_BREWS_TOKEN }}
