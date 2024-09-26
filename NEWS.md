@@ -1,4 +1,12 @@
 
+# pkgr 3.1.2
+
+Documentation is now available at
+<https://metrumresearchgroup.github.io/pkgr/docs/>, including new
+documentation on the configuration format and expanded documentation
+of many subcommands.  (#422)
+
+
 # pkgr 3.1.1
 
 * Fixed renv detection when other startup code writes to stdout. (#408)
