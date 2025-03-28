@@ -17,7 +17,7 @@ jobs:
       matrix:
         config:
           - os: ubuntu-22.04
-            go: 1.21.x
+            go: 1.23.x
             r: 4.2.3
             renv: false
           - os: ubuntu-22.04
