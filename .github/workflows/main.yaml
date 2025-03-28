@@ -18,11 +18,11 @@ jobs:
         config:
           - os: ubuntu-22.04
             go: 1.23.x
-            r: 4.2.3
+            r: 4.3.3
             renv: false
           - os: ubuntu-22.04
             go: stable
-            r: 4.3.1
+            r: 4.4.2
             renv: true
     steps:
       - uses: actions/checkout@v4
