@@ -198,7 +198,7 @@ func TestTarballInstall(t *testing.T) {
 			},
 		},
 		"Tarball with dependencies": TestCase{
-			localRepoName:   "testthat_deps",
+			localRepoName:   "tarball-deps",
 			installUpdates:  false,
 			installSuggests: false,
 			toInstall: []string{
