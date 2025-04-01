@@ -202,25 +202,22 @@ func TestTarballInstall(t *testing.T) {
 			installUpdates:  false,
 			installSuggests: false,
 			toInstall: []string{
-				"pillar",
+				"openssl",
 			},
 			toInstallTarballs: []string{
-				filepath.Join(localReposDir, "tarballs", "testthat_2.1.1.tar.gz"),
+				filepath.Join(localReposDir, "tarballs", "pillar_1.3.1.tar.gz"),
 			},
 			expectedInstalled: []string{
+				"askpass", // Pulled in by openssl.
 				"assertthat",
 				"cli",
 				"crayon",
-				"digest",
 				"fansi",
-				"magrittr",
+				"openssl",
 				"pillar",
-				"praise",
-				"R6",
 				"rlang",
-				"testthat", //Should be installed through tarball
+				"sys", // Pulled in by openssl.
 				"utf8",
-				"withr",
 			},
 		},
 		// Right after release 1.0.0, we found a bug on a specific tarball.
