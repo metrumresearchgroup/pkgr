@@ -32,11 +32,12 @@ MD5sum: bc8081563e49bf85d1b720b21b938af1
 NeedsCompilation: yes
 
 Package: fansi
-Version: 0.4.0
+Version: 1.0.6
 Depends: R (>= 3.1.0)
+Imports: grDevices, utils
 Suggests: unitizer, knitr, rmarkdown
-License: GPL (>= 2)
-MD5sum: 8642a7132e7c2f64ce60a67f2c05304b
+License: GPL-2 | GPL-3
+MD5sum: 27eb3b066918811ce7080f45b18eda04
 NeedsCompilation: yes
 
 Package: magrittr
@@ -48,8 +49,10 @@ NeedsCompilation: no
 
 Package: pillar
 Version: 1.3.1
-Imports: cli (>= 1.0.0), crayon (>= 1.3.4), fansi (>= 0.4.0), methods, rlang (>= 0.3.0.1), utf8 (>= 1.1.3)
-Suggests: knitr (>= 1.19), lubridate (>= 1.7.4), testthat (>= 2.0.0), withr (>= 2.1.2)
+Imports: cli (>= 1.0.0), crayon (>= 1.3.4), fansi (>= 0.4.0), methods,
+        rlang (>= 0.3.0.1), utf8 (>= 1.1.3)
+Suggests: knitr (>= 1.19), lubridate (>= 1.7.4), testthat (>= 2.0.0),
+        withr (>= 2.1.2)
 License: GPL-3
 MD5sum: fe7ef47df16a5599b20121de28923c32
 NeedsCompilation: no
@@ -72,7 +75,8 @@ NeedsCompilation: no
 Package: rlang
 Version: 0.3.4
 Depends: R (>= 3.1.0)
-Suggests: covr, crayon, magrittr, methods, pillar, rmarkdown, testthat (>= 2.0.0)
+Suggests: covr, crayon, magrittr, methods, pillar, rmarkdown, testthat
+        (>= 2.0.0)
 License: GPL-3
 MD5sum: c44f84ce72ebc7c3d0d02640c6b12a13
 NeedsCompilation: yes
@@ -80,9 +84,10 @@ NeedsCompilation: yes
 Package: testthat
 Version: 2.1.1
 Depends: R (>= 3.1)
-Imports: cli, crayon (>= 1.3.4), digest, magrittr, methods, praise, R6 (>= 2.2.0), rlang (>= 0.3.0), withr (>=
-            2.0.0)
-Suggests: covr, curl (>= 0.9.5), devtools, knitr, rmarkdown, usethis, vctrs (>= 0.1.0), xml2
+Imports: cli, crayon (>= 1.3.4), digest, magrittr, methods, praise, R6
+        (>= 2.2.0), rlang (>= 0.3.0), withr (>= 2.0.0)
+Suggests: covr, curl (>= 0.9.5), devtools, knitr, rmarkdown, usethis,
+        vctrs (>= 0.1.0), xml2
 License: MIT + file LICENSE
 MD5sum: 329062cb31384b33e1717a3366fb6440
 NeedsCompilation: yes
@@ -99,7 +104,8 @@ Package: withr
 Version: 2.1.2
 Depends: R (>= 3.0.2)
 Imports: stats, graphics, grDevices
-Suggests: testthat, covr, lattice, DBI, RSQLite, methods, knitr, rmarkdown
+Suggests: testthat, covr, lattice, DBI, RSQLite, methods, knitr,
+        rmarkdown
 License: GPL (>= 2)
 MD5sum: 85e8574fb0a6832c4f275531be6371d6
 NeedsCompilation: no
