@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 )
 
-// Tarball manipulation code taken from https://gist.github.com/indraniel/1a91458984179ab4cf80 -- is there a built-in function that does this?
 func unpackTarballs(fs afero.Fs, tarballs []string, cache string) ([]desc.Desc, map[string]gpsr.AdditionalPkg) {
 	cacheDir := userCache(cache)
 
