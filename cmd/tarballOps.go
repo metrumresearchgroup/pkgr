@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"github.com/metrumresearchgroup/pkgr/desc"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
-	"github.com/mholt/archiver/v3"
+	"github.com/metrumresearchgroup/pkgr/internal/archive"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"io"
@@ -84,7 +84,7 @@ func untar(fs afero.Fs, path string, cacheDir string) string {
 			"source_tarball": path,
 		}).Debug("using cached tarball.")
 	} else {
-		err = archiver.Unarchive(path, tarballDirectoryPath)
+		err = archive.Extract(path, tarballDirectoryPath)
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
 				"path": path,
