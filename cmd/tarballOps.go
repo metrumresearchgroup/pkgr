@@ -52,14 +52,7 @@ func untar(fs afero.Fs, path string, cacheDir string) string {
 
 	// Part 1
 	// Create hash of Tarball to use for a folder name in the cache.
-	tgzFile, err := fs.Open(path)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"path": path,
-		}).Fatal("error processing specified tarball")
-	}
-	defer tgzFile.Close()
-	tgzFileForHash, err := fs.Open(path) // Shouldn't fail if the first one passed, but I'll check anyway.
+	tgzFileForHash, err := fs.Open(path)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"path": path,
