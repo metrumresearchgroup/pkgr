@@ -605,9 +605,11 @@ func TestGetLibraryPathRenv(t *testing.T) {
 
 	library := getLibraryPath("renv", "R", rv,
 		"platform (ignored)", "original (ignored)")
-
-	assert.Contains(t, library,
-		fmt.Sprintf("renv/library/R-%d.%d/", rv.Major, rv.Minor))
+	// renv 1.0.6 started using a platform-specific library path on Linux under
+	// R 4.4 or later (e.g., "renv/library/linux-ubuntu-jammy/R-4.4" instead of
+	// "renv/library/R-4.4").
+	assert.Regexp(t, fmt.Sprintf(`renv/library/(.+/)?R-%d\.%d/`, rv.Major, rv.Minor),
+		library)
 }
 
 func TestSetCustomizations(t *testing.T) {

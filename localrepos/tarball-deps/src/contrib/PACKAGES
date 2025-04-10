@@ -1,3 +1,11 @@
+Package: askpass
+Version: 1.1
+Imports: sys (>= 2.1)
+Suggests: testthat
+License: MIT + file LICENSE
+MD5sum: a00d6599ff99f501534c1d965a1fd3b4
+NeedsCompilation: yes
+
 Package: assertthat
 Version: 0.2.1
 Imports: tools
@@ -32,15 +40,13 @@ License: GPL-2 | GPL-3
 MD5sum: 27eb3b066918811ce7080f45b18eda04
 NeedsCompilation: yes
 
-Package: pillar
-Version: 1.3.1
-Imports: cli (>= 1.0.0), crayon (>= 1.3.4), fansi (>= 0.4.0), methods,
-        rlang (>= 0.3.0.1), utf8 (>= 1.1.3)
-Suggests: knitr (>= 1.19), lubridate (>= 1.7.4), testthat (>= 2.0.0),
-        withr (>= 2.1.2)
-License: GPL-3
-MD5sum: fe7ef47df16a5599b20121de28923c32
-NeedsCompilation: no
+Package: openssl
+Version: 1.4.1
+Imports: askpass
+Suggests: testthat, digest, knitr, rmarkdown, jsonlite, jose, sodium
+License: MIT + file LICENSE
+MD5sum: 776426687d74e645334542f30757f5a6
+NeedsCompilation: yes
 
 Package: rlang
 Version: 0.3.4
@@ -49,6 +55,13 @@ Suggests: covr, crayon, magrittr, methods, pillar, rmarkdown, testthat
         (>= 2.0.0)
 License: GPL-3
 MD5sum: c44f84ce72ebc7c3d0d02640c6b12a13
+NeedsCompilation: yes
+
+Package: sys
+Version: 3.2
+Suggests: unix (>= 1.4), spelling, testthat
+License: MIT + file LICENSE
+MD5sum: 190fca32f95385aef9869793c4f6c5c3
 NeedsCompilation: yes
 
 Package: utf8

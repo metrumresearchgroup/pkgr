@@ -13,11 +13,12 @@ MD5sum: 77c7c2906c59a3141306d86c89ffc7d3
 NeedsCompilation: no
 
 Package: fansi
-Version: 0.4.1
+Version: 1.0.6
 Depends: R (>= 3.1.0)
+Imports: grDevices, utils
 Suggests: unitizer, knitr, rmarkdown
-License: GPL (>= 2)
-MD5sum: 725fb99ed2e21699ffbf00b1b45a4b81
+License: GPL-2 | GPL-3
+MD5sum: 27eb3b066918811ce7080f45b18eda04
 NeedsCompilation: yes
 
 Package: flatxml
