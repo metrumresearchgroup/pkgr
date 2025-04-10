@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"github.com/metrumresearchgroup/pkgr/desc"
 	"github.com/metrumresearchgroup/pkgr/gpsr"
-	"github.com/mholt/archiver/v3"
+	"github.com/metrumresearchgroup/pkgr/internal/archive"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"io"
@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 )
 
-// Tarball manipulation code taken from https://gist.github.com/indraniel/1a91458984179ab4cf80 -- is there a built-in function that does this?
 func unpackTarballs(fs afero.Fs, tarballs []string, cache string) ([]desc.Desc, map[string]gpsr.AdditionalPkg) {
 	cacheDir := userCache(cache)
 
@@ -53,14 +52,7 @@ func untar(fs afero.Fs, path string, cacheDir string) string {
 
 	// Part 1
 	// Create hash of Tarball to use for a folder name in the cache.
-	tgzFile, err := fs.Open(path)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"path": path,
-		}).Fatal("error processing specified tarball")
-	}
-	defer tgzFile.Close()
-	tgzFileForHash, err := fs.Open(path) // Shouldn't fail if the first one passed, but I'll check anyway.
+	tgzFileForHash, err := fs.Open(path)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"path": path,
@@ -92,7 +84,7 @@ func untar(fs afero.Fs, path string, cacheDir string) string {
 			"source_tarball": path,
 		}).Debug("using cached tarball.")
 	} else {
-		err = archiver.Unarchive(path, tarballDirectoryPath)
+		err = archive.Extract(path, tarballDirectoryPath)
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
 				"path": path,
