@@ -17,7 +17,7 @@ require (
 	github.com/spf13/viper v1.8.1
 	github.com/stretchr/testify v1.10.0
 	github.com/thoas/go-funk v0.9.3
-	github.com/ulikunitz/xz v0.5.12
+	github.com/ulikunitz/xz v0.5.15
 	github.com/xlab/treeprint v1.2.0
 	go.uber.org/automaxprocs v1.6.0
 	golang.org/x/mod v0.24.0
