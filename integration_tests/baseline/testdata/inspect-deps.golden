@@ -1,19 +1,11 @@
 {
-  "cli": [
-    "glue"
-  ],
-  "ellipsis": [
-    "rlang"
-  ],
   "lifecycle": [
+    "cli",
     "glue",
     "rlang"
   ],
   "pillar": [
     "cli",
-    "crayon",
-    "ellipsis",
-    "fansi",
     "glue",
     "lifecycle",
     "rlang",
@@ -21,8 +13,9 @@
     "vctrs"
   ],
   "vctrs": [
-    "ellipsis",
+    "cli",
     "glue",
+    "lifecycle",
     "rlang"
   ]
 }
