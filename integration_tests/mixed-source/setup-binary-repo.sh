@@ -20,7 +20,7 @@ cd "$root"
 cat <<EOF >pkgr.yml
 Version: 1
 Repos:
-- MPN: https://mpn.metworx.com/snapshots/stable/2020-07-19
+- MPN: https://mpn.metworx.com/snapshots/stable/2025-10-21
 Library: lib
 Cache: pkgcache
 Packages:
