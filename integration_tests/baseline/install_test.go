@@ -88,8 +88,8 @@ func TestInstall2(t *testing.T) {
 		//Setup
 		DeleteTestFolder(t, "test-cache")
 		SetupEndToEndWithInstall(t, "pkgr.yml", "test-library")
-		assert.DirExists(t, "test-library/fansi", "expected fansi to be installed, but couldn't find folder in test-library")
-		DeleteTestFolder(t, "test-library/fansi") // giving pkgr the need to install this package again
+		assert.DirExists(t, "test-library/cli", "expected cli to be installed, but couldn't find folder in test-library")
+		DeleteTestFolder(t, "test-library/cli") // giving pkgr the need to install this package again
 
 		// Execute
 		installCmd := command.New("pkgr", "install", "--config=pkgr.yml", "--logjson")
