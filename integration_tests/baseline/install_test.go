@@ -38,8 +38,8 @@ func TestInstall(t *testing.T) {
 		panic(err)
 	}
 
-	t.Run(MakeTestName(baselineInstallE2ETest1, "should install 11"), func(t *testing.T) {
-		assert.Contains(t, string(installRes), "to_install=11 to_update=0")
+	t.Run(MakeTestName(baselineInstallE2ETest1, "should install 8"), func(t *testing.T) {
+		assert.Contains(t, string(installRes), "to_install=8 to_update=0")
 	})
 	t.Run(MakeTestName(baselineInstallE2ETest2, "should install to the test library"), func(t *testing.T) {
 		assert.Contains(t, string(installRes), "Library path to install packages: test-library")
@@ -88,8 +88,8 @@ func TestInstall2(t *testing.T) {
 		//Setup
 		DeleteTestFolder(t, "test-cache")
 		SetupEndToEndWithInstall(t, "pkgr.yml", "test-library")
-		assert.DirExists(t, "test-library/fansi", "expected fansi to be installed, but couldn't find folder in test-library")
-		DeleteTestFolder(t, "test-library/fansi") // giving pkgr the need to install this package again
+		assert.DirExists(t, "test-library/cli", "expected cli to be installed, but couldn't find folder in test-library")
+		DeleteTestFolder(t, "test-library/cli") // giving pkgr the need to install this package again
 
 		// Execute
 		installCmd := command.New("pkgr", "install", "--config=pkgr.yml", "--logjson")
@@ -128,7 +128,7 @@ func TestInstall2(t *testing.T) {
 		// Execute
 		rInstallCmd := command.New(
 			"Rscript", "--vanilla", "-e",
-			"install.packages(c('ellipsis', 'digest'), lib='test-library', repos=c('https://mpn.metworx.com/snapshots/stable/2021-06-20'))")
+			"install.packages(c('ellipsis', 'digest'), lib='test-library', repos=c('https://mpn.metworx.com/snapshots/stable/2025-10-21'))")
 		rInstallCmd.Env = append(os.Environ(),
 			"R_LIBS=:",
 			"R_LIBS_SITE=:",
@@ -155,7 +155,7 @@ func TestInstall2(t *testing.T) {
 
 		installPlanLogs := CollectGenericLogs(t, pkgrCapture, "package installation plan")
 		assert.Len(t, installPlanLogs, 1, "expected exactly one message containing 'package installation plan' metadata")
-		assert.Equal(t, 9, installPlanLogs[0].ToInstall, "since two packages were already installed from pkgr's plan, we expect only 9 packages to be installed")
+		assert.Equal(t, 7, installPlanLogs[0].ToInstall, "expected ToInstall=7 because rlang is already installed")
 		assert.Equal(t, 0, installPlanLogs[0].ToUpdate)
 
 		installationStatusLogs := CollectGenericLogs(t, pkgrCapture, "package installation status")
@@ -163,7 +163,7 @@ func TestInstall2(t *testing.T) {
 		assert.Equal(t, 3, installationStatusLogs[0].Installed)
 		assert.Equal(t, 3, installationStatusLogs[0].NotFromPkgr)
 		assert.Equal(t, 0, installationStatusLogs[0].Outdated)
-		assert.Equal(t, 11, installationStatusLogs[0].TotalPackagesRequired)
+		assert.Equal(t, 8, installationStatusLogs[0].TotalPackagesRequired)
 
 		verifyInstalledCommand := command.New("Rscript", "--quiet", "install_test.R")
 		verifyInstalledCommand.Dir = "Rscripts"

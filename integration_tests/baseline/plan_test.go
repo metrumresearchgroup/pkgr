@@ -73,7 +73,7 @@ func TestPlan(t *testing.T) {
 		DeleteTestFolder(t, "test-cache")
 		SetupEndToEndWithInstall(t, "pkgr-preinstalled-setup.yml", "test-library")
 
-		rInstallCmd := command.New("Rscript", "-e", "install.packages(c('digest', 'R6'), lib='test-library', repos=c('https://mpn.metworx.com/snapshots/stable/2021-06-20'))")
+		rInstallCmd := command.New("Rscript", "-e", "install.packages(c('digest', 'R6'), lib='test-library', repos=c('https://mpn.metworx.com/snapshots/stable/2025-10-21'))")
 		rInstallCapture, err := rInstallCmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("error while installing packages through non-pkgr means: %s\nOutput:\n%s", err, string(rInstallCapture))

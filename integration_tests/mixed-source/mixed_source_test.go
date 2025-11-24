@@ -102,8 +102,8 @@ func TestMixedSource(t *testing.T) {
 			pkgRepoSettings := CollectPkgRepoSetLogs(t, planCapture)
 
 			// This should verify that:
-			// Packages coming from MPNJuly2020 install from binaries, except digest, which should builid from source
-			// Packages coming from MPNJune2021 install from source. Yaml should come from this repo
+			// Packages coming from MPNBin install from binaries, except digest, which should builid from source
+			// Packages coming from MPNSrc install from source. Yaml should come from this repo
 			// Yaml should also install its suggested packages (RUnit)
 			g.Assert(t, goldenPlan, pkgRepoSettings.ToBytesWithType())
 		})
