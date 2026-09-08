@@ -1,6 +1,6 @@
 title: pkgr
 baseURL: https://metrumresearchgroup.github.io/pkgr/
-languageCode: en-us
+locale: en-us
 markup:
   highlight:
     noClasses: false
