@@ -10,20 +10,19 @@ import (
 	"strings"
 	"testing"
 
-	"gopkg.in/yaml.v3"
+	"github.com/goccy/go-yaml"
 )
 
-func assertCode(t *testing.T, output string, code string, ntimes int) {
+func assertCode(t *testing.T, output, code string, ntimes int) {
 	t.Helper()
 	found := strings.Count(output, "["+code+"]")
 	if found != ntimes {
-		t.Errorf("expected %dx [%s] in output, got %d\noutput: %q",
-			ntimes, code, found, output)
+		t.Errorf("got %dx [%s] in output, want %dx\noutput: %q", found, code, ntimes, output)
 	}
 }
 
 func TestCheckValidFileNamesBad(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		name    string
 		entries []entry
 		want    int
@@ -69,7 +68,7 @@ func TestCheckValidFileNamesBad(t *testing.T) {
 			}
 
 			if bad != tt.want {
-				t.Errorf("invalid file names: want %d, got %d", tt.want, bad)
+				t.Errorf("invalid file names: got %d, want %d", bad, tt.want)
 			}
 			out := buf.String()
 			assertCode(t, out, "01", tt.want)
@@ -97,17 +96,17 @@ func TestCheckValidFileNamesGood(t *testing.T) {
 	}
 
 	if bad != 0 {
-		t.Errorf("expected no invalid file names, got %d", bad)
+		t.Errorf("got %d invalid file names, want none", bad)
 	}
 
 	if out := buf.String(); out != "" {
-		t.Errorf("expected empty output, got %q", out)
+		t.Errorf("got %q for output, want empty", out)
 	}
 }
 
 func TestCheckMissingFilesBad(t *testing.T) {
 	dir := t.TempDir()
-	var tests = []struct {
+	tests := []struct {
 		name    string
 		entries []entry
 		want    int
@@ -164,7 +163,7 @@ func TestCheckMissingFilesBad(t *testing.T) {
 			}
 
 			if bad != tt.want {
-				t.Errorf("missing files: want %d, got %d", tt.want, bad)
+				t.Errorf("missing files: got %d, want %d", bad, tt.want)
 			}
 			out := buf.String()
 			assertCode(t, out, "02", tt.want)
@@ -201,11 +200,11 @@ func TestCheckMissingFilesGood(t *testing.T) {
 		},
 	}
 
-	err := os.MkdirAll(filepath.Join(dir, "cmd"), 0777)
+	err := os.MkdirAll(filepath.Join(dir, "cmd"), 0o777)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = os.MkdirAll(filepath.Join(dir, "docs"), 0777)
+	err = os.MkdirAll(filepath.Join(dir, "docs"), 0o777)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -230,16 +229,16 @@ func TestCheckMissingFilesGood(t *testing.T) {
 	}
 
 	if bad != 0 {
-		t.Errorf("expected no missing files, got %d", bad)
+		t.Errorf("got %d missing files, want none", bad)
 	}
 
 	if out := buf.String(); out != "" {
-		t.Errorf("expected empty output, got %q", out)
+		t.Errorf("got %q for output, want empty", out)
 	}
 }
 
 func TestCheckEntrypointDocMismatchBad(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		name    string
 		entries []entry
 		want    int
@@ -288,13 +287,13 @@ func TestCheckEntrypointDocMismatchBad(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
-			bad, err := checkEntrypointDocMismatch(tt.entries, &buf)
+			bad, err := checkEntrypointDocMismatch(tt.entries, "", &buf)
 			if err != nil {
 				t.Fatal(err)
 			}
 
 			if bad != tt.want {
-				t.Errorf("command/doc mismatches: want %d, got %d", tt.want, bad)
+				t.Errorf("command/doc mismatches: got %d, want %d", bad, tt.want)
 			}
 			out := buf.String()
 			assertCode(t, out, "03", tt.want)
@@ -315,17 +314,17 @@ func TestCheckEntrypointDocMismatchGood(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	bad, err := checkEntrypointDocMismatch(entries, &buf)
+	bad, err := checkEntrypointDocMismatch(entries, "", &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if bad != 0 {
-		t.Errorf("expected no mismatches, got %d", bad)
+		t.Errorf("got %d mismatches, want none", bad)
 	}
 
 	if out := buf.String(); out != "" {
-		t.Errorf("expected empty output, got %q", out)
+		t.Errorf("got %q for output, want empty", out)
 	}
 }
 
@@ -352,7 +351,7 @@ func TestCheckDupEntrypointsBad(t *testing.T) {
 	}
 
 	if wantBad := 1; bad != wantBad {
-		t.Errorf("expected %d duplicated entry, got %d", wantBad, bad)
+		t.Errorf("duplicated entries: got %d, want %d", bad, wantBad)
 	}
 	out := buf.String()
 	assertCode(t, out, "04", 1)
@@ -378,11 +377,11 @@ func TestCheckDupEntrypointsGood(t *testing.T) {
 	}
 
 	if bad != 0 {
-		t.Errorf("expected no duplicated entries, got %d", bad)
+		t.Errorf("got %d duplicated entries, want none", bad)
 	}
 
 	if out := buf.String(); out != "" {
-		t.Errorf("expected empty output, got %q", out)
+		t.Errorf("got %q for output, want empty", out)
 	}
 }
 
@@ -397,7 +396,7 @@ func TestCheckMissingEntriesBad(t *testing.T) {
 		createEmptyFile(t, fname)
 	}
 
-	var tests = []struct {
+	tests := []struct {
 		name    string
 		entries []entry
 		want    int
@@ -430,13 +429,13 @@ func TestCheckMissingEntriesBad(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
-			bad, err := checkMissingEntries(tt.entries, dir, &buf)
+			bad, err := checkMissingEntries(tt.entries, dir, "", &buf)
 			if err != nil {
 				t.Fatal(err)
 			}
 
 			if bad != tt.want {
-				t.Errorf("missing entries: want %d, got %d", tt.want, bad)
+				t.Errorf("missing entries: got %d, want %d", bad, tt.want)
 			}
 			out := buf.String()
 			assertCode(t, out, "05", tt.want)
@@ -465,17 +464,17 @@ func TestCheckMissingEntriesGood(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	bad, err := checkMissingEntries(entries, dir, &buf)
+	bad, err := checkMissingEntries(entries, dir, "", &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if bad != 0 {
-		t.Errorf("expected no missing entries, got %d", bad)
+		t.Errorf("got %d missing entries, want none", bad)
 	}
 
 	if out := buf.String(); out != "" {
-		t.Errorf("expected empty output, got %q", out)
+		t.Errorf("got %q for output, want empty", out)
 	}
 }
 
@@ -504,18 +503,19 @@ func writeEntries(t *testing.T, es []entry, outfile string) {
 func TestCheckAll(t *testing.T) {
 	dir := t.TempDir()
 	docdir := filepath.Join(dir, "docs", "commands")
-	err := os.MkdirAll(docdir, 0777)
+	err := os.MkdirAll(docdir, 0o777)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	codedir := filepath.Join(dir, "cmd")
-	err = os.MkdirAll(codedir, 0777)
+	err = os.MkdirAll(codedir, 0o777)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	files := []string{
+		filepath.Join(docdir, "README.md"),
 		filepath.Join(docdir, "foo_bar.md"),
 		filepath.Join(docdir, "baz.md"),
 		filepath.Join(docdir, "skip.md"),
@@ -549,19 +549,21 @@ func TestCheckAll(t *testing.T) {
 	writeEntries(t, goodEntries, yfile)
 
 	t.Run("all good", func(t *testing.T) {
+		toskip := make(map[string]bool)
+
 		var buf bytes.Buffer
-		bad, err := check(yfile, docdir, dir, &buf)
+		bad, err := check(yfile, docdir, dir, "", toskip, &buf)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		if bad != 0 {
-			t.Errorf("expected no missing entries, got %d", bad)
+			t.Errorf("got %d missing entries, want none", bad)
 		}
 
 		out := buf.String()
 		if out != "" {
-			t.Errorf("expected empty output, got %q", out)
+			t.Errorf("got %q for output, want empty", out)
 		}
 	})
 
@@ -588,15 +590,17 @@ func TestCheckAll(t *testing.T) {
 	createEmptyFile(t, filepath.Join(docdir, "noentry.md"))
 
 	t.Run("some bad", func(t *testing.T) {
+		toskip := make(map[string]bool)
+
 		var buf bytes.Buffer
-		bad, err := check(yfile, docdir, dir, &buf)
+		bad, err := check(yfile, docdir, dir, "", toskip, &buf)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		wantBad := 7
 		if bad != wantBad {
-			t.Errorf("expected %d missing entries, got %d", wantBad, bad)
+			t.Errorf("got %d missing entries, want %d", bad, wantBad)
 		}
 
 		out := buf.String()
@@ -605,5 +609,87 @@ func TestCheckAll(t *testing.T) {
 		assertCode(t, out, "03", 1)
 		assertCode(t, out, "04", 1)
 		assertCode(t, out, "05", 1)
+
+		buf.Reset()
+
+		toskip["03"] = true
+		toskip["05"] = true
+		bad, err = check(yfile, docdir, dir, "", toskip, &buf)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		wantBad = 5
+		if bad != wantBad {
+			t.Errorf("got %d missing entries, want %d", bad, wantBad)
+		}
+
+		out = buf.String()
+		assertCode(t, out, "01", 1)
+		assertCode(t, out, "02", 3)
+		assertCode(t, out, "03", 0)
+		assertCode(t, out, "04", 1)
+		assertCode(t, out, "05", 0)
 	})
+}
+
+func TestCheckPrefix(t *testing.T) {
+	dir := t.TempDir()
+	docdir := filepath.Join(dir, "docs", "commands")
+	err := os.MkdirAll(docdir, 0o777)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	codedir := filepath.Join(dir, "cmd")
+	err = os.MkdirAll(codedir, 0o777)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	files := []string{
+		filepath.Join(docdir, "foo.md"),
+		filepath.Join(docdir, "bar.md"),
+		filepath.Join(docdir, "baz.md"),
+		filepath.Join(codedir, "foo.go"),
+		filepath.Join(codedir, "foo_test.go"),
+		filepath.Join(codedir, "bar.go"),
+		filepath.Join(codedir, "bar_test.go"),
+	}
+	for _, f := range files {
+		createEmptyFile(t, f)
+	}
+
+	entries := []entry{
+		{
+			Entrypoint: "foo",
+			Code:       "cmd/foo.go",
+			Doc:        "docs/commands/foo.md",
+			Tests:      []string{"cmd/foo_test.go"},
+		},
+		{
+			Entrypoint: "foo bar",
+			Code:       "cmd/bar.go",
+			Doc:        "docs/commands/bar.md",
+			Tests:      []string{"cmd/bar_test.go"},
+		},
+	}
+
+	yfile := filepath.Join(dir, "docs", "matrix.yaml")
+	writeEntries(t, entries, yfile)
+
+	toskip := make(map[string]bool)
+
+	var buf bytes.Buffer
+	bad, err := check(yfile, docdir, dir, "foo", toskip, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if want := 1; bad != want {
+		t.Errorf("got %d missing entries, want %d", bad, want)
+	}
+
+	out := buf.String()
+	assertCode(t, out, "05", 1)
 }

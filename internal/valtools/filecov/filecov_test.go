@@ -16,28 +16,26 @@ import (
 	"golang.org/x/tools/cover"
 )
 
-func assertNearEqual(t *testing.T, a float64, b float64) {
+func assertNearEqual(t *testing.T, a, b float64) {
 	t.Helper()
 	if math.IsNaN(a) || math.IsNaN(b) {
 		t.Fatal("assertNearEqual: NaN values are not allowed")
 	}
 
-	var tol float64 = 1e-8
+	tol := 1e-8
 	d := math.Abs(a - b)
 	if d >= tol {
 		t.Errorf("absolute difference exceeds tolerance (%e)\na=%f\nb=%f", tol, a, b)
 	}
 }
 
-func assertFileCoverage(t *testing.T, got []*fileCoverage, want []*fileCoverage) {
+func assertFileCoverage(t *testing.T, got, want []*fileCoverage) {
 	t.Helper()
 
 	ngot := len(got)
 	nwant := len(want)
 	if ngot != nwant {
-		t.Errorf("expected coverage for %d files, got %d", nwant, ngot)
-
-		return
+		t.Errorf("coverage files: got %d, want %d", ngot, nwant)
 	}
 
 	mapWant := make(map[string]float64, nwant)
@@ -132,7 +130,7 @@ func TestPercentCoveredNoFiles(t *testing.T) {
 	assertNearEqual(t, cov.Overall, 0.0)
 
 	if len(cov.Files) != 0 {
-		t.Errorf("expected coverage for 0 files, got %d", len(cov.Files))
+		t.Errorf("got coverage for %d files, want 0", len(cov.Files))
 	}
 }
 
@@ -212,26 +210,12 @@ func TestWriteShortenNames(t *testing.T) {
 	)
 }
 
-func chdir(t *testing.T, dir string) {
-	old, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = os.Chdir(dir)
-	if err != nil {
-		_ = os.Chdir(old)
-		t.Fatal(err)
-	}
-
-	t.Cleanup(func() {
-		_ = os.Chdir(old)
-	})
-}
-
 func setupRunDir(t *testing.T) string {
+	t.Helper()
+
 	dir := t.TempDir()
 	realmodPath := filepath.Join(dir, "realmod")
-	err := os.MkdirAll(filepath.Join(realmodPath, "cmd"), 0777)
+	err := os.MkdirAll(filepath.Join(realmodPath, "cmd"), 0o777)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -245,7 +229,7 @@ func setupRunDir(t *testing.T) string {
 	err = os.WriteFile(
 		filepath.Join(modPath, "go.mod"),
 		[]byte("module example.com/tmod\n\ngo 1.22.5"),
-		0666)
+		0o666)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -266,7 +250,7 @@ func setupRunDir(t *testing.T) string {
 		}
 	}
 
-	chdir(t, modPath)
+	t.Chdir(modPath)
 
 	return modPath
 }
@@ -277,7 +261,7 @@ func TestRun(t *testing.T) {
 		"example.com/tmod/cmd/main.go",
 		modPath+"/"+"cmd/main.go")
 	profPath := filepath.Join(modPath, "coverage.out")
-	err := os.WriteFile(profPath, []byte(pcontent), 0666)
+	err := os.WriteFile(profPath, []byte(pcontent), 0o666)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -316,7 +300,7 @@ func TestRun(t *testing.T) {
 func TestRunNoGoMod(t *testing.T) {
 	modPath := setupRunDir(t)
 	profPath := filepath.Join(modPath, "coverage.out")
-	err := os.WriteFile(profPath, []byte(testProfile), 0666)
+	err := os.WriteFile(profPath, []byte(testProfile), 0o666)
 	if err != nil {
 		t.Fatal(err)
 	}

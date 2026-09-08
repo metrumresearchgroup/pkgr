@@ -4,16 +4,21 @@ ifeq ($(strip $(vtdir)),)
 $(error "bug: vtdir is unexpectedly empty")
 endif
 
+VT_REPO ?= .
+VT_CMDPREFIX ?=
+VT_CHECKMAT_SKIP ?=
+
 ifeq ($(VT_PKG),)
 VT_PKG := $(notdir $(CURDIR))
 endif
 
-version := $(shell git describe --tags --always HEAD)
+version := $(shell git -C '$(VT_REPO)' describe --tags --always HEAD)
 version := $(version:v%=%)
 name := $(VT_PKG)_$(version)
 
-VT_OUT_DIR ?= $(vtdir)/output/$(name)
-prefix := $(VT_OUT_DIR)/$(name)
+VT_OUT_DIR ?= $(vtdir)/output
+outdir = $(VT_OUT_DIR)/$(name)
+prefix := $(outdir)/$(name)
 
 VT_BIN_DIR ?= $(vtdir)/bin
 VT_DOC_DIR ?= docs/commands
@@ -29,7 +34,7 @@ endif
 .PHONY: vt-help
 vt-help:
 	$(info Primary targets:)
-	$(info * vt-all: create all validation artifacts under $(VT_OUT_DIR)/)
+	$(info * vt-all: create all validation artifacts under $(outdir)/)
 	$(info * vt-gen-docs: generate command docs under $(VT_DOC_DIR)/)
 	$(info )
 	$(info Other targets:)
@@ -78,15 +83,16 @@ $(VT_BIN_DIR)/checkmat: $(vtdir)/checkmat/main.go
 
 .PHONY: vt-checkmat
 vt-checkmat: $(VT_BIN_DIR)/checkmat
-	'$(VT_BIN_DIR)/checkmat' '$(VT_MATRIX)' '$(VT_DOC_DIR)'
+	'$(VT_BIN_DIR)/checkmat' -repo '$(VT_REPO)' -cmdprefix '$(VT_CMDPREFIX)' \
+	  -skip '$(VT_CHECKMAT_SKIP)' '$(VT_MATRIX)' '$(VT_DOC_DIR)'
 
 .PHONY: vt-copymat
 vt-copymat:
 	$(MAKE) vt-gen-docs
 	$(MAKE) vt-checkmat
-	@test -z "$$(git status -unormal --porcelain -- '$(VT_DOC_DIR)')" || \
+	@test -z "$$(git -C '$(VT_REPO)' status -unormal --porcelain -- '$(VT_DOC_DIR)')" || \
 	  { printf 'commit changes to $(VT_DOC_DIR) first\n'; exit 1; }
-	@mkdir -p '$(VT_OUT_DIR)'
+	@mkdir -p '$(outdir)'
 	cp '$(VT_MATRIX)' '$(prefix).matrix.yaml'
 
 $(VT_BIN_DIR)/fmttests: $(vtdir)/fmttests/main.go
@@ -95,43 +101,43 @@ $(VT_BIN_DIR)/fmttests: $(vtdir)/fmttests/main.go
 vt-test: $(VT_BIN_DIR)/fmttests
 	@unset GOCOVERDIR; \
 	  '$(vtdir)/scripts/run-tests' '$(VT_BIN_DIR)/fmttests' \
-	  '$(VT_TEST_ALLOW_SKIPS)' $(VT_TEST_RUNNERS)
+	  '$(VT_TEST_ALLOW_SKIPS)' '$(VT_REPO)' $(VT_TEST_RUNNERS)
 
 $(VT_BIN_DIR)/filecov: $(vtdir)/filecov/main.go
 
 # ATTN: Make coverage directory absolute because we cannot rely on
 # test subprocesses to be executed from the same directory.
-cov_dir := $(abspath $(VT_OUT_DIR)/.coverage)
+cov_dir := $(abspath $(outdir)/.coverage)
 cov_prof := $(cov_dir).profile
 
 .PHONY: vt-cover
 vt-cover: export GOCOVERDIR=$(cov_dir)
 vt-cover: $(VT_BIN_DIR)/filecov
 vt-cover: $(VT_BIN_DIR)/fmttests
-	@mkdir -p '$(VT_OUT_DIR)'
+	@mkdir -p '$(outdir)'
 	rm -rf '$(cov_dir)' && mkdir '$(cov_dir)'
 	'$(vtdir)/scripts/run-tests' '$(VT_BIN_DIR)/fmttests' \
-	  '$(VT_TEST_ALLOW_SKIPS)' $(VT_TEST_RUNNERS) \
-	  >'$(prefix).check.txt'
+	  '$(VT_TEST_ALLOW_SKIPS)' '$(VT_REPO)' \
+	  $(VT_TEST_RUNNERS) >'$(prefix).check.txt'
 	go tool covdata textfmt -i '$(cov_dir)' -o '$(cov_prof)'
-	'$(VT_BIN_DIR)/filecov' -mod go.mod '$(cov_prof)' \
+	'$(VT_BIN_DIR)/filecov' -mod '$(VT_REPO)'/go.mod '$(cov_prof)' \
 	  >'$(prefix).coverage.json'
 
 .PHONY: vt-cover-unlisted
 vt-cover-unlisted:
 	@test -f '$(prefix).coverage.json' || \
 	  { printf >&2 'vt-cover-unlisted requires $(prefix).coverage.json\n'; exit 1; }
-	@'$(vtdir)/scripts/cover-unlisted' '$(prefix).coverage.json' || :
+	@'$(vtdir)/scripts/cover-unlisted' '$(prefix).coverage.json' '$(VT_REPO)' || :
 
 .PHONY: vt-scores
 vt-scores:
-	@mkdir -p '$(VT_OUT_DIR)'
+	@mkdir -p '$(outdir)'
 	'$(vtdir)/scripts/write-scores' '$(prefix).coverage.json' \
 	  >'$(prefix).scores.json'
 
 .PHONY: vt-pkg
 vt-pkg:
-	@mkdir -p '$(VT_OUT_DIR)'
+	@mkdir -p '$(outdir)'
 	jq -n --arg p '$(VT_PKG)' --arg v "$(version)" \
 	'{"mpn_scorecard_format": "1.0",'\
 	' "pkg_name": $$p, "pkg_version": $$v,'\
@@ -140,15 +146,15 @@ vt-pkg:
 
 .PHONY: vt-metadata
 vt-metadata:
-	@mkdir -p '$(VT_OUT_DIR)'
+	@mkdir -p '$(outdir)'
 	'$(vtdir)/scripts/metadata' >'$(prefix).metadata.json'
 
 .PHONY: vt-archive
 vt-archive:
-	@mkdir -p '$(VT_OUT_DIR)'
-	@test -z "$(git status --porcelain -unormal --ignore-submodules=none)" || \
+	@mkdir -p '$(outdir)'
+	@test -z "$$(git -C '$(VT_REPO)' status --porcelain -unormal --ignore-submodules=none)" || \
 	  { printf >&2 'working tree is dirty; commit changes first\n'; exit 1; }
-	git archive -o '$(prefix).tar.gz' --format=tar.gz HEAD
+	git -C '$(VT_REPO)' archive -o '$(abspath $(prefix)).tar.gz' --format=tar.gz HEAD
 
 $(VT_BIN_DIR)/%: $(vtdir)/%/main.go
 	@mkdir -p '$(VT_BIN_DIR)'
