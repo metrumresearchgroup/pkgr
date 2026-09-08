@@ -10,26 +10,29 @@
 
    * use custom credit line that 1) credits Hugo in addition to
      Hextra and 2) is right aligned
+
+   * update class names for Hextra 0.10.0 (Tailwind v4.0)
+
 */}}
 
-{{- $footerWidth := "hx-max-w-screen-xl" -}}
+{{- $footerWidth := "hx:max-w-screen-xl" -}}
 {{- with .Site.Params.footer.width -}}
   {{ if eq . "wide" -}}
-    {{ $footerWidth = "hx-max-w-[90rem]" -}}
+    {{ $footerWidth = "hx:max-w-[90rem]" -}}
   {{ else if eq . "full" -}}
     {{ $footerWidth = "max-w-full" -}}
   {{ end -}}
 {{- end -}}
 
-<footer class="hextra-footer hx-bg-gray-100 hx-pb-[env(safe-area-inset-bottom)] dark:hx-bg-neutral-900 print:hx-bg-transparent">
+<footer class="hextra-footer hx:bg-gray-100 hx:pb-[env(safe-area-inset-bottom)] hx:dark:bg-neutral-900 hx:print:bg-transparent">
   <div
-    class="max-w-full hx-mx-auto hx-flex hx-justify-center hx-py-4 hx-pl-[max(env(safe-area-inset-left),1.5rem)] hx-pr-[max(env(safe-area-inset-right),1.5rem)] hx-text-gray-600 dark:hx-text-gray-400 md:hx-justify-start"
+    class="max-w-full hx:mx-auto hx:flex hx:justify-center hx:py-4 hx:pl-[max(env(safe-area-inset-left),1.5rem)] hx:pr-[max(env(safe-area-inset-right),1.5rem)] hx:text-gray-600 hx:dark:text-gray-400 hx:md:justify-start"
   >
-    <span class="ltr:hx-ml-auto rtl:hx-mr-auto hx-text-sm hx-text-gray-600 dark:hx-text-gray-400">
+    <span class="hx:ltr:ml-auto hx:rtl:mr-auto hx:text-sm hx:text-gray-600 hx:dark:text-gray-400">
       Site built with
-      <a class="hover:hx-text-gray-800 dark:hover:hx-text-gray-200" href="https://gohugo.io">Hugo</a>
+      <a class="hx:hover:text-gray-800 hx:dark:hover:text-gray-200" href="https://gohugo.io">Hugo</a>
       and
-      <a class="hover:hx-text-gray-800 dark:hover:hx-text-gray-200" href="https://imfing.github.io/hextra">Hextra</a>
+      <a class="hx:hover:text-gray-800 hx:dark:hover:text-gray-200" href="https://imfing.github.io/hextra">Hextra</a>
     </span>
   </div>
 </footer>
