@@ -343,7 +343,7 @@ Disable the default TLS certificate verification by setting
 `NoSecure: true`.
 
 > [!CAUTION]
-> Disable TLS certificate verification is not recommended.  If you
+> Disabling TLS certificate verification is not recommended.  If you
 > need this in a particular case, consider passing the `--no-secure`
 > command-line flag instead.
 
