@@ -1,5 +1,7 @@
 module github.com/metrumresearchgroup/pkgr
 
+go 1.27.0
+
 require (
 	github.com/deckarep/golang-set v1.8.0
 	github.com/dpastoor/goutils v1.2.0
@@ -65,5 +67,3 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	pault.ag/go/topsort v0.1.1 // indirect
 )
-
-go 1.24.0
