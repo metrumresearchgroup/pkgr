@@ -4,20 +4,23 @@
 
 set -eu
 
-test $# = 1 || {
-    printf >&2 'usage: %s <coverage json>\n' "$0"
+test $# = 2 || {
+    printf >&2 'usage: %s <coverage json> <repo>\n' "$0"
     exit 1
 }
+
+cov=$1
+repo=$2
 
 tdir=$(mktemp -d "${TMPDIR:-/tmp}"/valtools-XXXXX)
 trap 'rm -rf "$tdir"' 0
 
-jq -r '.files | .[] | .file' <"$1" | sort >"$tdir"/files-in-coverage
+jq -r '.files | .[] | .file' <"$cov" | sort >"$tdir"/files-in-coverage
 
 # Limit to files with a function definition because Go, by design,
 # does not consider those.  See Go's d1cb5c0605 (cmd/go: improve
 # handling of no-test packages for coverage, 2023-05-09).
-git grep -l --full-name '^func ' ':(top)*.go' | \
+git -C "$repo" grep -l --full-name '^func ' ':(top)*.go' | \
     grep -Ev '_test.go$' | \
     sort >"$tdir"/files-in-tree
 

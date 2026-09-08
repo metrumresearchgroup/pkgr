@@ -43,7 +43,7 @@ func makeEventReader(t *testing.T, tes []testEvent) io.Reader {
 }
 
 func TestProcessEvents(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		name     string
 		events   []testEvent
 		subtests bool
@@ -216,31 +216,30 @@ func TestProcessEvents(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var bufStdout bytes.Buffer
 			var bufStderr bytes.Buffer
-			s, err := processEvents(makeEventReader(t, tt.events),
-				tt.subtests, &bufStdout, &bufStderr)
+			s, err := processEvents(makeEventReader(t, tt.events), tt.subtests, &bufStdout, &bufStderr)
 			if err != nil {
 				t.Fatal(err)
 			}
 
 			if len(s.Failed) != tt.nfailed {
-				t.Errorf("failed: want %d, got %d", tt.nfailed, len(s.Failed))
+				t.Errorf("failed: got %d, want %d", len(s.Failed), tt.nfailed)
 			}
 			if len(s.Passed) != tt.npassed {
-				t.Errorf("passed: want %d, got %d", tt.npassed, len(s.Passed))
+				t.Errorf("passed: got %d, want %d", len(s.Passed), tt.npassed)
 			}
 			if len(s.Skipped) != tt.nskipped {
-				t.Errorf("skipped: want %d, got %d", tt.nskipped, len(s.Skipped))
+				t.Errorf("skipped: got %d, want %d", len(s.Skipped), tt.nskipped)
 			}
 
 			stdout := bufStdout.String()
 			stdoutWant := strings.Join(tt.lines, "\n") + "\n"
 			if stdout != stdoutWant {
-				t.Errorf("stdout:\n  want %q,\n   got %q", stdoutWant, stdout)
+				t.Errorf("stdout:\n   got %q\n  want %q", stdout, stdoutWant)
 			}
 
 			stderr := bufStderr.String()
 			if stderr != "" {
-				t.Errorf("expected empty stderr, got %q", stderr)
+				t.Errorf("got %q for stderr, want empty", stderr)
 			}
 		})
 	}
@@ -305,22 +304,21 @@ func TestProcessEventsFailureOutput(t *testing.T) {
 	}
 	var bufStdout bytes.Buffer
 	var bufStderr bytes.Buffer
-	s, err := processEvents(makeEventReader(t, events),
-		false, &bufStdout, &bufStderr)
+	s, err := processEvents(makeEventReader(t, events), false, &bufStdout, &bufStderr)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if nfailedWant := 3; len(s.Failed) != nfailedWant {
-		t.Errorf("failed: want %d, got %d", nfailedWant, len(s.Failed))
+		t.Errorf("failed: got %d, want %d", len(s.Failed), nfailedWant)
 	}
 
 	if npassedWant := 3; len(s.Passed) != npassedWant {
-		t.Errorf("passed: want %d, got %d", npassedWant, len(s.Passed))
+		t.Errorf("passed: got %d, want %d", len(s.Passed), npassedWant)
 	}
 
 	if nskippedWant := 0; len(s.Skipped) != nskippedWant {
-		t.Errorf("skipped: want %d, got %d", nskippedWant, len(s.Skipped))
+		t.Errorf("skipped: got %d, want %d", len(s.Skipped), nskippedWant)
 	}
 
 	stdoutWant := strings.Join([]string{
@@ -331,7 +329,7 @@ func TestProcessEventsFailureOutput(t *testing.T) {
 		"[baz] TestBaz: failed",
 	}, "\n") + "\n"
 	if stdout := bufStdout.String(); stdout != stdoutWant {
-		t.Errorf("stdout:\n  want %q,\n   got %q", stdoutWant, stdout)
+		t.Errorf("stdout:\n   got %q\n  want %q", stdout, stdoutWant)
 	}
 
 	stderrWant := strings.Join([]string{
@@ -340,12 +338,12 @@ func TestProcessEventsFailureOutput(t *testing.T) {
 		"TestBaz/1 failed",
 	}, "\n") + "\n"
 	if stderr := bufStderr.String(); stderr != stderrWant {
-		t.Errorf("stderr: want %q, got %q", stderrWant, stderr)
+		t.Errorf("stderr: got %q, want %q", stderr, stderrWant)
 	}
 }
 
 func TestProcessEventsErrors(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		name     string
 		events   []testEvent
 		subtests bool
@@ -390,8 +388,7 @@ func TestProcessEventsErrors(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var bufStdout bytes.Buffer
 			var bufStderr bytes.Buffer
-			_, err := processEvents(makeEventReader(t, tt.events),
-				false, &bufStdout, &bufStderr)
+			_, err := processEvents(makeEventReader(t, tt.events), false, &bufStdout, &bufStderr)
 			if err == nil {
 				t.Errorf("processEvents unexpectedly passed")
 			}

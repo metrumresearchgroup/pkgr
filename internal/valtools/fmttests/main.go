@@ -27,11 +27,6 @@ If any "fail" record is encountered, exit with status 1.  Any "skip" record will
 also trigger an exit with status 1 unless the -allow-skips flag is specified.
 `
 
-var (
-	subtests   = flag.Bool("subtests", false, "")
-	allowSkips = flag.Bool("allow-skips", false, "")
-)
-
 func usage() {
 	fmt.Fprint(flag.CommandLine.Output(), usageMessage)
 }
@@ -76,7 +71,7 @@ type key struct {
 //
 // processEvents returns a summary instance that records the test names for each
 // result record encountered.
-func processEvents(r io.Reader, subtests bool, wout io.Writer, werr io.Writer) (summary, error) {
+func processEvents(r io.Reader, subtests bool, wout, werr io.Writer) (summary, error) {
 	var res summary
 
 	failLines := make(map[key][]string)
@@ -126,8 +121,7 @@ func processEvents(r io.Reader, subtests bool, wout io.Writer, werr io.Writer) (
 			// TODO: Consider other approaches for formatting the package name
 			// that avoid collisions (e.g., packageBaseName returns "cmd" for
 			// both ".../foo/cmd" and ".../bar/cmd").
-			fmt.Fprintf(wout, "[%s] %s: %s\n",
-				packageBaseName(e.Package), e.Test, status)
+			fmt.Fprintf(wout, "[%s] %s: %s\n", packageBaseName(e.Package), e.Test, status)
 		}
 	}
 
@@ -142,6 +136,10 @@ func main() {
 	if len(os.Args) > 1 && (os.Args[1] == "-h" || os.Args[1] == "--help") {
 		flag.CommandLine.SetOutput(os.Stdout)
 	}
+
+	subtests := flag.Bool("subtests", false, "")
+	allowSkips := flag.Bool("allow-skips", false, "")
+
 	flag.Usage = usage
 	flag.Parse()
 
@@ -157,8 +155,7 @@ func main() {
 	}
 
 	if len(res.Failed) > 0 || (!*allowSkips && len(res.Skipped) > 0) {
-		fmt.Fprintf(os.Stderr, "failed tests: %d, skipped tests: %d\n",
-			len(res.Failed), len(res.Skipped))
+		fmt.Fprintf(os.Stderr, "failed tests: %d, skipped tests: %d\n", len(res.Failed), len(res.Skipped))
 		os.Exit(1)
 	}
 }

@@ -7,6 +7,7 @@ require (
 	github.com/dpastoor/goutils v1.2.0
 	github.com/fatih/structs v1.1.0
 	github.com/fatih/structtag v1.2.0
+	github.com/goccy/go-yaml v1.19.2
 	github.com/klauspost/compress v1.20.0
 	github.com/metrumresearchgroup/command v0.1.1
 	github.com/mholt/archives v0.1.5

@@ -72,6 +72,10 @@ You can use [git subtree][gs] to manage the subtree.
 Run `go mod tidy` to update `go.mod` with new dependencies, if any,
 brought in by the subtree.
 
+Alternatively, the valtools module may be set up outside of the main
+repository/module being validating.  In that case, the `VT_REPO`
+variable should point to the repository to validate.
+
 ### 2. Command documentation
 
 Consider a Go module that defines one executable, `foo`, where the
@@ -210,9 +214,9 @@ source archive and mpn.scorecard inputs.
 
     make vt-all
 
-The generated files are written under the directory specified by the
-variable `VT_OUT_DIR`.  By default, this points to
-`{subtree}/output/{package}_{version}`.
+The generated files are written to a directory named
+`{package}_{version}` under the directory specified by the variable
+`VT_OUT_DIR`.  By default, this points to `{subtree}/output/`.
 
 <a id="vars"></a>
 
@@ -220,6 +224,12 @@ variable `VT_OUT_DIR`.  By default, this points to
 
  * `VT_BIN_DIR`: where to install executables (default:
    `{subtree}/bin`)
+
+ * `VT_CMDPREFIX`: value to pass for the `-cmdprefix` option of
+   `checkmat` (default: "")
+
+ * `VT_CHECKMAT_SKIP`: value to pass for the `-skip` option of
+   `checkmat` (default: "")
 
  * `VT_DOC_DIR`: tell `docgen` executable to generate documentation
    files under this directory (default: `docs/commands`)
@@ -230,11 +240,14 @@ variable `VT_OUT_DIR`.  By default, this points to
  * `VT_MATRIX`: path to matrix file (default:
    `docs/validation/matrix.yaml`)
 
- * `VT_OUT_DIR`: where to generate the results (default:
-   `{subtree}/output/{package}_{version}`)
+ * `VT_OUT_DIR`: directory under which to generate the
+   `{package}_{version}` result directory (default:
+   `{subtree}/output/`)
 
  * `VT_PKG`: name of the package (default: the base name of the
    top-level directory).
+
+ * `VT_REPO`: path to the code repository to validate (default: `.`)
 
  * `VT_TEST_ALLOW_SKIPS`: whether to allow skips when running the
    `VT_TEST_RUNNERS` scripts (default: `no`)

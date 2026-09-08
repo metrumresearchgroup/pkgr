@@ -13,38 +13,57 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v3"
+	"github.com/goccy/go-yaml"
 )
 
-const usageMessage = `usage: checkmat <yaml> <dir>
+const usageMessage = `usage: checkmat [<options>] <yaml> <dir>
 
 Run various checks on the traceability matrix defined in <yaml>.  Each file in
 <dir> is taken as the documentation for an entry point, where the base name maps
 to an entry point in <yaml> once the file extension is removed and underscores
 are substituted for spaces.
 
-Verify that
+Options:
+  -repo=<directory>
+   The top-level directory of the repository.  Paths in <yaml> should be
+   relative to this directory.
 
- [01] each file name is valid
+  -cmdprefix=<prefix>
+   Prepend '<prefix> ' when mapping from the documentation file to command name.
+   This makes it possible to name documentation files the subcommand alone
+   (e.g., sub.md instead of top_sub.md for command 'top sub').
 
-      To be considered "valid", a file name must be relative, must use "/" as
-      the path separator, and must not contain "." or ".." elements.
+   If the base name of the documentation file matches <prefix> exactly, the name
+   is left as is.
 
- [02] each named file exists
+  -skip=<check>[,<check>]
+   Skip the specified checks.  <check> should match they labels in the next
+   section (e.g., "03").
 
-      The current working directory is taken as the top-level project directory,
-      and the files should be relative to this.
+Checks:
 
- [03] the base file name for the documentation matches the entry point name
+ Verify that
 
- [04] no entry point has more than one entry in <yaml>
+   [01] each file name is valid
 
- [05] for each file in <dir>, an entry with a matching entry point is found in
-      <yaml>
+        To be considered "valid", a file name must be relative, must use "/" as
+        the path separator, and must not contain "." or ".." elements.
 
-      This check is skipped for any entries with a true "skip" value.
+   [02] each named file exists
 
-Exit with status 1 if any issues are found.
+        The current working directory is taken as the top-level project
+        directory, and the files should be relative to this.
+
+   [03] the base file name for the documentation matches the entry point name
+
+   [04] no entry point has more than one entry in <yaml>
+
+   [05] for each file in <dir>, an entry with a matching entry point is found in
+        <yaml>
+
+        This check is skipped for any entries with a true "skip" value.
+
+  Exit with status 1 if any issues are found.
 `
 
 func usage() {
@@ -126,24 +145,27 @@ func checkMissingFiles(es []entry, topdir string, w io.Writer) (int, error) {
 // top-level commands, and it assumes that none of the commands have an
 // underscore in their name.
 
-func docToEntrypoint(f string) string {
+func docToEntrypoint(f, prefix string) string {
 	base := filepath.Base(f)
 	name := strings.TrimSuffix(base, filepath.Ext(base))
+
+	if prefix != "" && name != prefix {
+		name = prefix + " " + name
+	}
 
 	return strings.ReplaceAll(name, "_", " ")
 }
 
-func checkEntrypointDocMismatch(es []entry, w io.Writer) (int, error) {
+func checkEntrypointDocMismatch(es []entry, prefix string, w io.Writer) (int, error) {
 	var bad int
 
 	for _, e := range es {
 		if e.Skip {
 			continue
 		}
-		if docToEntrypoint(e.Doc) != e.Entrypoint {
+		if docToEntrypoint(e.Doc, prefix) != e.Entrypoint {
 			bad++
-			fmt.Fprintf(w, "[03] entry point and doc file mismatch: %q != %q\n",
-				e.Entrypoint, e.Doc)
+			fmt.Fprintf(w, "[03] entry point and doc file mismatch: %q != %q\n", e.Entrypoint, e.Doc)
 		}
 	}
 
@@ -156,8 +178,7 @@ func checkDupEntrypoints(es []entry, w io.Writer) (int, error) {
 	cmds := make(map[string]bool)
 	for _, e := range es {
 		if _, found := cmds[e.Entrypoint]; found {
-			fmt.Fprintf(w, "[04] entry point %q defined more than once\n",
-				e.Entrypoint)
+			fmt.Fprintf(w, "[04] entry point %q defined more than once\n", e.Entrypoint)
 			bad++
 		} else {
 			cmds[e.Entrypoint] = true
@@ -167,7 +188,7 @@ func checkDupEntrypoints(es []entry, w io.Writer) (int, error) {
 	return bad, nil
 }
 
-func checkMissingEntries(es []entry, docdir string, w io.Writer) (int, error) {
+func checkMissingEntries(es []entry, docdir, prefix string, w io.Writer) (int, error) {
 	var bad int
 
 	fh, err := os.Open(docdir)
@@ -187,7 +208,11 @@ func checkMissingEntries(es []entry, docdir string, w io.Writer) (int, error) {
 	}
 
 	for _, f := range fnames {
-		if _, found := cmds[docToEntrypoint(f)]; !found {
+		if strings.HasPrefix(f, "README") {
+			continue
+		}
+
+		if _, found := cmds[docToEntrypoint(f, prefix)]; !found {
 			fmt.Fprintf(w, "[05] No yaml entry for %q\n", filepath.Join(docdir, f))
 			bad++
 		}
@@ -197,12 +222,17 @@ func checkMissingEntries(es []entry, docdir string, w io.Writer) (int, error) {
 }
 
 // check runs all the check functions on the traceability matrix defined in file
-// yaml and returns the total number of issues found.  docdir points to a
-// directory containing the documentation files.  topdir is an absolute path to
-// top-level directory to which files in `yaml` are specified as relative.
+// yaml and returns the total number of issues found.
+//
+// docdir points to a directory containing the documentation files.  The command
+// name is constructed from the base name of the file, prepending prefix and a
+// space if prefix is not empty.
+//
+// topdir is an absolute path to top-level directory to which files in `yaml`
+// are specified as relative.
 //
 // For each issue found, a message is written to w.
-func check(yaml string, docdir string, topdir string, w io.Writer) (int, error) {
+func check(yaml, docdir, topdir, prefix string, skip map[string]bool, w io.Writer) (int, error) {
 	var bad int
 
 	entries, err := readEntries(yaml)
@@ -210,20 +240,28 @@ func check(yaml string, docdir string, topdir string, w io.Writer) (int, error) 
 		return bad, err
 	}
 
+	labels := []string{"01", "02", "03", "04", "05"}
+
 	type check func([]entry, io.Writer) (int, error)
 	checks := []check{
 		checkValidFileNames,
 		func(es []entry, w io.Writer) (int, error) {
 			return checkMissingFiles(es, topdir, w)
 		},
-		checkEntrypointDocMismatch,
+		func(es []entry, w io.Writer) (int, error) {
+			return checkEntrypointDocMismatch(es, prefix, w)
+		},
 		checkDupEntrypoints,
 		func(es []entry, w io.Writer) (int, error) {
-			return checkMissingEntries(es, docdir, w)
+			return checkMissingEntries(es, docdir, prefix, w)
 		},
 	}
 
-	for _, f := range checks {
+	for i, f := range checks {
+		if skip[labels[i]] {
+			continue
+		}
+
 		n, err := f(entries, w)
 		if err != nil {
 			return bad, err
@@ -234,10 +272,33 @@ func check(yaml string, docdir string, topdir string, w io.Writer) (int, error) 
 	return bad, nil
 }
 
+func parseSkip(s string) (map[string]bool, error) {
+	m := map[string]bool{"01": false, "02": false, "03": false, "04": false, "05": false}
+	for _, label := range strings.Split(s, ",") {
+		label := strings.TrimSpace(label)
+		if label == "" {
+			continue
+		}
+
+		_, found := m[label]
+		if !found {
+			return nil, fmt.Errorf("skip: unknown check: %s", label)
+		}
+		m[label] = true
+	}
+
+	return m, nil
+}
+
 func main() {
 	if len(os.Args) > 1 && (os.Args[1] == "-h" || os.Args[1] == "--help") {
 		flag.CommandLine.SetOutput(os.Stdout)
 	}
+
+	repo := flag.String("repo", "", "")
+	cmdprefix := flag.String("cmdprefix", "", "")
+	skipChecks := flag.String("skip", "", "")
+
 	flag.Usage = usage
 	flag.Parse()
 	args := flag.Args()
@@ -246,13 +307,30 @@ func main() {
 		os.Exit(2)
 	}
 
-	wd, err := os.Getwd()
+	var topdir string
+	var err error
+	if *repo == "" {
+		topdir, err = os.Getwd()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "error:", err)
+			os.Exit(2)
+		}
+
+	} else {
+		topdir, err = filepath.Abs(*repo)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "error:", err)
+			os.Exit(2)
+		}
+	}
+
+	toSkip, err := parseSkip(*skipChecks)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(2)
 	}
 
-	bad, err := check(args[0], args[1], wd, os.Stdout)
+	bad, err := check(args[0], args[1], topdir, *cmdprefix, toSkip, os.Stdout)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(2)
