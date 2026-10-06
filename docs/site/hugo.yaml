@@ -1,6 +1,6 @@
 title: pkgr
 baseURL: https://metrumresearchgroup.github.io/pkgr/
-languageCode: en-us
+locale: en-us
 markup:
   highlight:
     noClasses: false
@@ -53,6 +53,8 @@ disableKinds:
   - term
 
 module:
+  hugoVersion:
+    min: "0.146.0"
   imports:
     - path: github.com/imfing/hextra
 params:

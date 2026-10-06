@@ -32,8 +32,8 @@ jobs:
           "$bin"/hugo version
           echo "$bin" >>"$GITHUB_PATH"
         env:
-          HUGO_VERSION: '0.133.0'
-          HUGO_SHA: '372530e2de9ae74087a987ca841429390a055123b8a4dec665cc601f10dc8e6e'
+          HUGO_VERSION: '0.166.0'
+          HUGO_SHA: '0e39b901e3f919f1daae05c8ff64f0c14c8a348ef46886d63f8e6d1bb2653885'
       - uses: actions/configure-pages@v5
         id: pages
       - name: Check URL match
